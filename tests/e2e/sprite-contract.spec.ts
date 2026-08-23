@@ -1,0 +1,80 @@
+import { expect, test } from "@playwright/test";
+import {
+  loadProductionSpriteCatalog,
+  validateManifestSpriteContract,
+} from "../framework/sprite-contract";
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/?testMode=1&scenario=temporal-loot-bob");
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+});
+
+test("registered sprite atlases decode at their declared dimensions", async ({
+  page,
+}) => {
+  const catalog = await loadProductionSpriteCatalog();
+  const expected = Object.values(catalog.assets).map((asset) => ({
+    url: asset.url,
+    width: asset.pixelWidth,
+    height: asset.pixelHeight,
+  }));
+  const decoded = await page.evaluate(async (assets) => {
+    return Promise.all(
+      assets.map(
+        (asset) =>
+          new Promise<{
+            url: string;
+            width: number;
+            height: number;
+            complete: boolean;
+          }>((resolve) => {
+            const image = new Image();
+            image.onload = () =>
+              resolve({
+                url: asset.url,
+                width: image.naturalWidth,
+                height: image.naturalHeight,
+                complete: image.complete,
+              });
+            image.onerror = () =>
+              resolve({ url: asset.url, width: 0, height: 0, complete: false });
+            image.src = asset.url;
+          }),
+      ),
+    );
+  }, expected);
+  expect(decoded).toEqual(
+    expected.map((asset) => ({ ...asset, complete: true })),
+  );
+});
+
+test("the real canvas uses atlas image draws for every manifested sprite", async ({
+  page,
+}) => {
+  const catalog = await loadProductionSpriteCatalog();
+  const evidence = await page.evaluate(() => {
+    const prototype = CanvasRenderingContext2D.prototype;
+    const original = prototype.drawImage;
+    let drawImageCalls = 0;
+    prototype.drawImage = function (
+      this: CanvasRenderingContext2D,
+      ...args: unknown[]
+    ) {
+      drawImageCalls += 1;
+      return (original as (...parameters: unknown[]) => void).apply(this, args);
+    } as typeof prototype.drawImage;
+    try {
+      window.__GAME_TEST__!.render();
+      return {
+        drawImageCalls,
+        manifest: window.__GAME_TEST__!.renderManifest(),
+      };
+    } finally {
+      prototype.drawImage = original;
+    }
+  });
+  const manifest = validateManifestSpriteContract(evidence.manifest, catalog);
+  expect(evidence.drawImageCalls).toBeGreaterThanOrEqual(
+    manifest.drawCalls.length + manifest.sceneSprites.length,
+  );
+});
