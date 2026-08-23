@@ -21,7 +21,7 @@ export interface ReplayResult {
 
 export function inputAtTick(tape: ReplayTapeV1, tick: number): InputState {
   const patch = tape.entries
-    .filter((entry) => entry.tick === tick)
+    .filter((entry) => entry.tick <= tick)
     .reduce<Partial<InputState>>(
       (current, entry) => ({ ...current, ...entry.input }),
       {},

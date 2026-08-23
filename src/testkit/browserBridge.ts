@@ -12,10 +12,12 @@ import {
   worldFromScenario,
   type ScenarioV1,
 } from "./scenarios";
+import { stateFromSnapshot } from "./stateSnapshots";
 
 export interface TestHost {
   getState(): GameState;
   startScenario(scenario: ScenarioV1): void;
+  startState(state: GameState): void;
   setInput(input: InputState): void;
   step(ticks?: number, input?: InputState): void;
   sampleInput?(): InputState;
@@ -29,6 +31,7 @@ export interface GameTestBridge {
   loadScenario(
     scenario: ScenarioV1 | string,
   ): ReturnType<typeof canonicalState>;
+  loadState(state: GameState | string): ReturnType<typeof canonicalState>;
   reset(): ReturnType<typeof canonicalState>;
   setInput(input: Partial<InputState>): void;
   queueInputs(
@@ -78,11 +81,19 @@ function resolveScenario(value: ScenarioV1 | string): ScenarioV1 {
   return cloneScenario(value);
 }
 
+function resolveState(value: GameState | string): GameState {
+  const parsed: unknown = typeof value === "string" ? JSON.parse(value) : value;
+  return stateFromSnapshot(parsed);
+}
+
 export function installGameTestBridge(
   host: TestHost,
   target: Window = window,
 ): GameTestBridge {
-  let initial: ScenarioV1 | undefined;
+  let initial:
+    | { kind: "scenario"; value: ScenarioV1 }
+    | { kind: "state"; value: GameState }
+    | undefined;
   let input: InputState = { ...EMPTY_INPUT };
   const queued = new Map<number, Partial<InputState>[]>();
   const applyInput = (): void =>
@@ -90,18 +101,30 @@ export function installGameTestBridge(
   const bridge: GameTestBridge = {
     ready: true,
     loadScenario(value) {
-      initial = resolveScenario(value);
+      const scenario = resolveScenario(value);
       input = { ...EMPTY_INPUT };
       queued.clear();
       // Validation/construction happens before host mutation: never patch a live world.
-      worldFromScenario(initial);
-      host.startScenario(cloneScenario(initial));
+      worldFromScenario(scenario);
+      initial = { kind: "scenario", value: cloneScenario(scenario) };
+      host.startScenario(cloneScenario(scenario));
+      applyInput();
+      return canonicalState(host.getState());
+    },
+    loadState(value) {
+      const state = resolveState(value);
+      input = { ...EMPTY_INPUT };
+      queued.clear();
+      initial = { kind: "state", value: structuredClone(state) };
+      host.startState(state);
       applyInput();
       return canonicalState(host.getState());
     },
     reset() {
       if (!initial) throw new Error("No scenario loaded");
-      return bridge.loadScenario(initial);
+      return initial.kind === "scenario"
+        ? bridge.loadScenario(initial.value)
+        : bridge.loadState(initial.value);
     },
     setInput(patch) {
       input = {

@@ -10,6 +10,7 @@ import type { GameState, InputState, Vec2 } from "../game/types";
 import { EMPTY_INPUT } from "../game/types";
 import type { ScenarioV1 } from "../testkit/scenarios";
 import { worldFromScenario } from "../testkit/scenarios";
+import { stateFromSnapshot } from "../testkit/stateSnapshots";
 import { CanvasRenderer } from "../render/CanvasRenderer";
 import type { RenderManifestV1 } from "../render/manifest";
 
@@ -41,6 +42,16 @@ export class GameHost {
   }
   startScenario(scenario: ScenarioV1): GameState {
     this.state = worldFromScenario(scenario);
+    this.renderer.camera = {
+      x: (this.state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS,
+      y: (this.state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS,
+      zoom: 1,
+    };
+    this.render();
+    return this.state;
+  }
+  startState(snapshot: GameState): GameState {
+    this.state = stateFromSnapshot(snapshot);
     this.renderer.camera = {
       x: (this.state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS,
       y: (this.state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS,

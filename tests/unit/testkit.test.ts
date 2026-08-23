@@ -18,6 +18,7 @@ import {
   BUILTIN_SCENARIOS,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
+import { stateFromSnapshot } from "../../src/testkit/stateSnapshots";
 
 describe("deterministic fixtures", () => {
   it("generates connected maps with stable digests across varied seeds", () => {
@@ -36,6 +37,26 @@ describe("deterministic fixtures", () => {
     expect(canonicalJson(first)).toBe(canonicalJson(second));
     expect(canonicalState(first)).toEqual(JSON.parse(canonicalJson(first)));
     expect(stateHash(first)).toBe(stateHash(second));
+  });
+
+  it("restores an exact internal snapshot without lossy tile conversion", () => {
+    const original = worldFromScenario(BUILTIN_SCENARIOS["mid-action"]!);
+    original.player.position.x += 137;
+    original.player.previousPosition.y -= 91;
+    original.rng.ai = { state: 0x1234abcd, draws: 37 };
+    const restored = stateFromSnapshot(canonicalState(original));
+    expect(restored).toEqual(original);
+    expect(restored).not.toBe(original);
+    expect(restored.player).not.toBe(original.player);
+    expect(stateHash(restored)).toBe(stateHash(original));
+  });
+
+  it("rejects structurally incomplete internal snapshots", () => {
+    const snapshot = structuredClone(
+      worldFromScenario(BUILTIN_SCENARIOS["animation-idle"]!),
+    ) as unknown as Record<string, unknown>;
+    delete snapshot.rng;
+    expect(() => stateFromSnapshot(snapshot)).toThrow("state.rng");
   });
 
   it("constructs a complete mid-action state without playing through setup", () => {
@@ -83,6 +104,26 @@ describe("deterministic fixtures", () => {
       32,
     );
     expect(second.hashes).toEqual(first.hashes);
+  });
+
+  it("treats replay entries as persistent input changes like the browser bridge", () => {
+    const tape: ReplayTapeV1 = {
+      version: 1,
+      entries: [
+        { tick: 0, input: { moveX: 1 } },
+        { tick: 4, input: { moveY: -1 } },
+        { tick: 8, input: { moveX: 0, moveY: 0 } },
+      ],
+    };
+    const result = playReplay(
+      worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!),
+      tape,
+      9,
+    );
+    expect(result.state.metrics.distanceUnits).toBeGreaterThan(
+      result.state.player.moveSpeed * 7,
+    );
+    expect(result.state.player.velocity).toEqual({ x: 0, y: 0 });
   });
 
   it("keeps named cosmetic RNG draws isolated from gameplay streams", () => {

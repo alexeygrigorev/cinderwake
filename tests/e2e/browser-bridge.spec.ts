@@ -43,6 +43,51 @@ test("accepts JSON fixture snapshots and drains per-tick events", async ({
   expect(result.player.health).toBe(73);
 });
 
+test("restores an exact canonical GameState snapshot and resets to it", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("mid-action");
+    window.__GAME_TEST__!.step(3, { render: true });
+    const state = window.__GAME_TEST__!.snapshot();
+    state.player.position.x += 137;
+    state.player.previousPosition.y -= 91;
+    const loaded = window.__GAME_TEST__!.loadState(state);
+    const hash = window.__GAME_TEST__!.stateHash();
+    window.__GAME_TEST__!.step(5);
+    const reset = window.__GAME_TEST__!.reset();
+    return {
+      loaded,
+      reset,
+      hash,
+      resetHash: window.__GAME_TEST__!.stateHash(),
+    };
+  });
+  expect(result.loaded).toEqual(result.reset);
+  expect(result.hash).toBe(result.resetHash);
+  expect(result.loaded.player.position.x % 1024).not.toBe(512);
+});
+
+test("rejects malformed state injection without mutating the live world", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("animation-idle");
+    const before = window.__GAME_TEST__!.stateHash();
+    const malformed: any = window.__GAME_TEST__!.snapshot();
+    delete malformed.rng;
+    let message = "";
+    try {
+      window.__GAME_TEST__!.loadState(malformed);
+    } catch (error) {
+      message = String(error);
+    }
+    return { before, after: window.__GAME_TEST__!.stateHash(), message };
+  });
+  expect(result.after).toBe(result.before);
+  expect(result.message).toContain("state.rng");
+});
+
 test("keyboard and pointer adapter feed deterministic input sampling", async ({
   page,
 }) => {
