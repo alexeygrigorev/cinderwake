@@ -87,6 +87,161 @@ function moveActor(
   return next;
 }
 
+const MONSTER_SEPARATION_GAP = 8;
+const MONSTER_SEPARATION_PASSES = 24;
+
+function stablePairDirection(firstId: string, secondId: string): Vec2 {
+  let hash = 2_166_136_261;
+  for (const character of `${firstId}\0${secondId}`) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16_777_619);
+  }
+  const directions = [
+    { x: 1024, y: 0 },
+    { x: 724, y: 724 },
+    { x: 0, y: 1024 },
+    { x: -724, y: 724 },
+    { x: -1024, y: 0 },
+    { x: -724, y: -724 },
+    { x: 0, y: -1024 },
+    { x: 724, y: -724 },
+  ] as const;
+  return directions[(hash >>> 0) % directions.length]!;
+}
+
+function separationCandidate(
+  position: Vec2,
+  direction: Vec2,
+  distance: number,
+): Vec2 {
+  return {
+    x: Math.round(position.x + direction.x * distance),
+    y: Math.round(position.y + direction.y * distance),
+  };
+}
+
+/**
+ * Resolves crowd penetration after navigation has produced each monster's
+ * intended movement. Pair order and the fallback axis are derived only from
+ * stable entity IDs, so identical state/input histories remain reproducible.
+ * Candidate positions still pass through the same wall/scenery predicate as
+ * ordinary actor movement.
+ */
+function separateLivingMonsters(
+  state: GameState,
+  scenery: SceneryCollisionFootprint[],
+): void {
+  const living = state.monsters
+    .filter((monster) => monster.health > 0)
+    .sort((first, second) => first.id.localeCompare(second.id));
+  for (let pass = 0; pass < MONSTER_SEPARATION_PASSES; pass += 1) {
+    let adjusted = false;
+    for (let firstIndex = 0; firstIndex < living.length; firstIndex += 1) {
+      const first = living[firstIndex]!;
+      for (
+        let secondIndex = firstIndex + 1;
+        secondIndex < living.length;
+        secondIndex += 1
+      ) {
+        const second = living[secondIndex]!;
+        const dx = second.position.x - first.position.x;
+        const dy = second.position.y - first.position.y;
+        const distance = Math.hypot(dx, dy);
+        const minimumDistance =
+          first.radius + second.radius + MONSTER_SEPARATION_GAP;
+        if (distance >= minimumDistance) continue;
+
+        const fallback = stablePairDirection(first.id, second.id);
+        const direction =
+          distance < 1
+            ? { x: fallback.x / 1024, y: fallback.y / 1024 }
+            : { x: dx / distance, y: dy / distance };
+        const penetration = minimumDistance - distance;
+        const firstDistance = Math.ceil(penetration / 2);
+        const secondDistance = penetration - firstDistance;
+        const firstHalf = separationCandidate(
+          first.position,
+          direction,
+          -firstDistance,
+        );
+        const secondHalf = separationCandidate(
+          second.position,
+          direction,
+          secondDistance,
+        );
+        const firstHalfWalkable = pointWalkable(
+          state,
+          firstHalf,
+          first.radius,
+          scenery,
+        );
+        const secondHalfWalkable = pointWalkable(
+          state,
+          secondHalf,
+          second.radius,
+          scenery,
+        );
+        if (firstHalfWalkable && secondHalfWalkable) {
+          first.position = firstHalf;
+          second.position = secondHalf;
+          adjusted = true;
+          continue;
+        }
+
+        // If scenery pins one participant, give the full correction to the
+        // other. The lower-ID actor receives the first deterministic attempt.
+        const firstFull = separationCandidate(
+          first.position,
+          direction,
+          -penetration,
+        );
+        if (pointWalkable(state, firstFull, first.radius, scenery)) {
+          first.position = firstFull;
+          adjusted = true;
+          continue;
+        }
+        const secondFull = separationCandidate(
+          second.position,
+          direction,
+          penetration,
+        );
+        if (pointWalkable(state, secondFull, second.radius, scenery)) {
+          second.position = secondFull;
+          adjusted = true;
+          continue;
+        }
+        // A narrow pocket may allow only a partial correction. It is still
+        // better to reduce penetration than to tunnel either actor through a
+        // wall or a scenery footprint.
+        if (firstHalfWalkable) {
+          first.position = firstHalf;
+          adjusted = true;
+        } else if (secondHalfWalkable) {
+          second.position = secondHalf;
+          adjusted = true;
+        }
+      }
+    }
+    if (!adjusted) break;
+  }
+
+  for (const monster of living) {
+    monster.velocity = {
+      x: monster.position.x - monster.previousPosition.x,
+      y: monster.position.y - monster.previousPosition.y,
+    };
+    if (
+      state.tick >= monster.animation.lockedUntilTick &&
+      ["idle", "walk"].includes(monster.animation.clip)
+    )
+      setAnimation(
+        monster,
+        monster.velocity.x !== 0 || monster.velocity.y !== 0 ? "walk" : "idle",
+        state.tick,
+      );
+  }
+}
+
 function setAnimation(
   actor: {
     animation: {
@@ -635,6 +790,7 @@ function updateMonsters(
       );
     }
   }
+  if (state.settings.ai) separateLivingMonsters(state, scenery);
 }
 
 function updateProjectiles(state: GameState): void {
