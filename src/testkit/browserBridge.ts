@@ -7,6 +7,7 @@ import {
 import type {
   CameraMode,
   CameraV1,
+  EntityMaskV1,
   RenderManifestV1,
 } from "../render/manifest";
 import { canonicalState, stateHash } from "./canonical";
@@ -28,6 +29,7 @@ export interface TestHost {
   render(interpolationAlpha?: number): void;
   getManifest(): RenderManifestV1;
   getCanvas(): HTMLCanvasElement | null;
+  captureEntityMask(entityId: string): EntityMaskV1;
   setCamera(camera: CameraV1, mode?: CameraMode): void;
   setCameraMode(mode: CameraMode): void;
   getCamera(): CameraV1;
@@ -58,6 +60,7 @@ export interface GameTestBridge {
   renderManifest(): RenderManifestV1;
   drainEvents(): GameEvent[];
   captureFrame(): string;
+  captureEntityMask(entityId: string): EntityMaskV1;
   captureSequence(
     ticks: number[],
     options?: { render?: boolean },
@@ -198,11 +201,11 @@ export function installGameTestBridge(
     renderManifest: () => host.getManifest(),
     drainEvents: () => host.getState().events.map((event) => ({ ...event })),
     captureFrame() {
-      host.render();
       const canvas = host.getCanvas();
       if (!canvas) throw new Error("Game canvas is unavailable");
       return canvas.toDataURL("image/png");
     },
+    captureEntityMask: (entityId) => host.captureEntityMask(entityId),
     captureSequence(ticks, options = {}) {
       return ticks.map((targetTick) => {
         const remaining = targetTick - host.getState().tick;

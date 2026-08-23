@@ -1,152 +1,653 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 const [timelineFile, outputFile] = process.argv.slice(2);
 if (!timelineFile)
   throw new Error(
     "Usage: node scripts/assess-sequence.mjs <render-manifest-timeline.json> [output.json]",
   );
+
 const timeline = JSON.parse(await fs.readFile(timelineFile, "utf8"));
-const frames = Array.isArray(timeline) ? timeline : (timeline.frames ?? []);
-const points = frames
-  .map((frame) => ({
+if (timeline.schemaVersion !== 2 || !Array.isArray(timeline.frames))
+  throw new Error("Sequence timeline must use schemaVersion 2");
+const frames = timeline.frames;
+const trackedEntityId = timeline.trackedEntityId ?? "player";
+const profile = timeline.profile ?? "pose";
+const presenceContract = timeline.presenceContract ?? "always";
+const profiles = new Set([
+  "pose",
+  "static-pose",
+  "loop",
+  "one-shot",
+  "one-shot-floating",
+  "death",
+  "anchored-motion",
+  "projectile",
+  "camera-smooth",
+]);
+if (!profiles.has(profile))
+  throw new Error(`Unknown quality profile ${profile}`);
+if (!new Set(["always", "present-until", "appears-at"]).has(presenceContract))
+  throw new Error(`Unknown presence contract ${presenceContract}`);
+
+const clipDefinitions = {
+  idle: { frameCount: 6, durationTicks: 60, looping: true },
+  walk: { frameCount: 8, durationTicks: 40, looping: true },
+  attack: { frameCount: 6, durationTicks: 26, looping: false },
+  ability: { frameCount: 8, durationTicks: 36, looping: false },
+  hurt: { frameCount: 4, durationTicks: 12, looping: false },
+  death: { frameCount: 8, durationTicks: 48, looping: false },
+  loot: { frameCount: 4, durationTicks: 48, looping: true },
+  projectile: { frameCount: 1, durationTicks: 1, looping: true },
+};
+
+function stateEntity(snapshot, entityId) {
+  if (entityId === "player") return snapshot?.player;
+  return [
+    ...(snapshot?.monsters ?? []),
+    ...(snapshot?.projectiles ?? []),
+    ...(snapshot?.loot ?? []),
+  ].find((entity) => entity.id === entityId);
+}
+
+function range(values) {
+  return values.length > 1 ? Math.max(...values) - Math.min(...values) : 0;
+}
+
+function maximum(values) {
+  return values.length > 0 ? Math.max(...values) : 0;
+}
+
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function close(a, b, tolerance = 0.000001) {
+  return (
+    Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance
+  );
+}
+
+function canonicalize(value, key) {
+  if (Array.isArray(value)) {
+    const items = value.map((item) => canonicalize(item));
+    if (
+      ["monsters", "pendingAttacks", "projectiles", "loot", "effects"].includes(
+        key,
+      )
+    )
+      items.sort((a, b) =>
+        String(a?.id ?? "").localeCompare(String(b?.id ?? "")),
+      );
+    return items;
+  }
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((name) => [name, canonicalize(value[name], name)]),
+    );
+  if (typeof value === "number" && !Number.isFinite(value))
+    return String(value);
+  return value;
+}
+
+function fnv1a(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+function snapshotHash(snapshot) {
+  return fnv1a(JSON.stringify(canonicalize(snapshot)));
+}
+
+function expectedFrame(call, presentationTick) {
+  const elapsed = Math.max(0, presentationTick - call.clipStartedAtTick);
+  if (["attack", "ability", "hurt", "death"].includes(call.clip))
+    return Math.min(
+      call.frameCount - 1,
+      Math.floor((elapsed * call.frameCount) / call.clipDurationTicks),
+    );
+  return Math.floor(
+    ((elapsed % call.clipDurationTicks) * call.frameCount) /
+      call.clipDurationTicks,
+  );
+}
+
+const observations = frames.map((frame, index) => {
+  if (
+    frame.tick !== frame.snapshot?.tick ||
+    frame.tick !== frame.manifest?.tick ||
+    frame.manifest?.simTick !== frame.snapshot?.tick ||
+    !Number.isFinite(frame.manifest?.presentationTick) ||
+    !Number.isFinite(frame.manifest?.interpolationAlpha) ||
+    frame.manifest.interpolationAlpha < 0 ||
+    frame.manifest.interpolationAlpha > 1
+  )
+    throw new Error(`Tick contract mismatch at capture index ${index}`);
+  const actor = frame.manifest?.drawCalls?.find?.(
+    (call) => call.entityId === trackedEntityId,
+  );
+  if (actor && !frame.mask)
+    throw new Error(`Pixel mask missing at capture index ${index}`);
+  if (!actor && frame.mask)
+    throw new Error(
+      `Mask exists without a draw call at capture index ${index}`,
+    );
+  if (frame.mask && frame.mask.entityId !== trackedEntityId)
+    throw new Error(`Mask entity mismatch at capture index ${index}`);
+  return {
+    index,
     tick: frame.tick,
+    presentationTick: frame.manifest.presentationTick ?? frame.tick,
     snapshot: frame.snapshot,
     manifest: frame.manifest,
-    actor: frame.manifest?.drawCalls?.find?.(
-      (call) => call.entityId === "player",
-    ),
-  }))
-  .filter((frame) => frame.actor);
+    actor,
+    entity: stateEntity(frame.snapshot, trackedEntityId),
+    mask: frame.mask,
+    stateHash: frame.stateHash,
+    files: frame.files,
+  };
+});
+const presence = observations.map(({ actor, mask }) => Boolean(actor && mask));
+for (let index = 1; index < observations.length; index += 1) {
+  if (
+    observations[index].tick < observations[index - 1].tick ||
+    observations[index].presentationTick <=
+      observations[index - 1].presentationTick
+  )
+    throw new Error(`Non-monotonic timeline at capture index ${index}`);
+}
+const firstAbsent = presence.indexOf(false);
+const firstPresent = presence.indexOf(true);
+const contiguousPresentPrefix =
+  firstAbsent < 0 || presence.slice(firstAbsent).every((value) => !value);
+const contiguousPresentSuffix =
+  firstPresent < 0 || presence.slice(firstPresent).every(Boolean);
+const presenceContractSatisfied =
+  presenceContract === "always"
+    ? presence.every(Boolean)
+    : presenceContract === "present-until"
+      ? presence[0] === true &&
+        presence.at(-1) === false &&
+        contiguousPresentPrefix
+      : presence[0] === false &&
+        presence.at(-1) === true &&
+        contiguousPresentSuffix;
+const points = observations.filter(({ actor, mask }) => actor && mask);
+if (points.length < 2)
+  throw new Error(
+    "A sequence needs at least two present tracked-entity frames",
+  );
 
-const ranges = (values) =>
-  values.length > 1 ? Math.max(...values) - Math.min(...values) : 0;
-const anchorsX = points
-  .map(({ actor }) => actor.footAnchor?.x)
-  .filter(Number.isFinite);
-const anchorsY = points
-  .map(({ actor }) => actor.footAnchor?.y)
-  .filter(Number.isFinite);
-const widths = points
-  .map(({ actor }) => actor.bounds?.width)
-  .filter(Number.isFinite);
-const heights = points
-  .map(({ actor }) => actor.bounds?.height)
-  .filter(Number.isFinite);
-const framesSeen = points
-  .map(({ actor }) => actor.frameIndex)
-  .filter(Number.isFinite);
+let stateHashMismatches = 0;
+let manifestContractErrors = 0;
+let artifactIntegrityErrors = 0;
+for (const observation of observations) {
+  if (snapshotHash(observation.snapshot) !== observation.stateHash)
+    stateHashMismatches += 1;
+}
+for (const point of points) {
+  const { actor, entity, manifest, mask } = point;
+  const definition = clipDefinitions[actor.clip];
+  if (!entity) {
+    manifestContractErrors += 1;
+    continue;
+  }
+  if (
+    !definition ||
+    actor.frameCount !== definition.frameCount ||
+    actor.clipDurationTicks !== definition.durationTicks ||
+    !Number.isInteger(actor.frameIndex) ||
+    actor.frameIndex < 0 ||
+    actor.frameIndex >= actor.frameCount ||
+    !Number.isFinite(actor.visualPhase) ||
+    actor.visualPhase < 0 ||
+    actor.visualPhase > 1
+  )
+    manifestContractErrors += 1;
+
+  const actorAnimation = entity?.animation;
+  if (
+    actorAnimation &&
+    (actor.clip !== actorAnimation.clip ||
+      actor.clipStartedAtTick !== actorAnimation.startedAtTick ||
+      actor.clipLockedUntilTick !== actorAnimation.lockedUntilTick)
+  )
+    manifestContractErrors += 1;
+  if (
+    !actorAnimation &&
+    (actor.clipStartedAtTick !==
+      (actor.type === "loot" ? -entity.bobOffset : 0) ||
+      actor.clipLockedUntilTick !== 0)
+  )
+    manifestContractErrors += 1;
+
+  const expectedType =
+    trackedEntityId === "player"
+      ? "player"
+      : entity?.kind && entity?.health !== undefined
+        ? "monster"
+        : entity?.hostile !== undefined
+          ? "projectile"
+          : "loot";
+  const expectedGeometry =
+    expectedType === "player"
+      ? `hero:${entity?.classId}`
+      : expectedType === "monster"
+        ? `monster:${entity?.kind}`
+        : expectedType === "projectile"
+          ? entity?.hostile
+            ? "projectile:hostile"
+            : "projectile:friendly"
+          : `loot:${entity?.kind}:${entity?.rarity}`;
+  const expectedClip = actorAnimation
+    ? actorAnimation.clip
+    : expectedType === "projectile"
+      ? "projectile"
+      : "loot";
+  const expectedScale =
+    expectedType === "monster"
+      ? (entity.elite ? 1.2 : 1) * (entity.kind === "stonekin" ? 1.12 : 1)
+      : expectedType === "loot"
+        ? entity.rarity === "relic"
+          ? 1.2
+          : entity.rarity === "tempered"
+            ? 1.1
+            : 1
+        : 1;
+  const tintMaps = {
+    player: {
+      vanguard: "#e49b51",
+      ranger: "#9fcb74",
+      arcanist: "#63d6cb",
+    },
+    monster: {
+      ashfang: "#d86555",
+      hexer: "#b86fda",
+      stonekin: "#aa7860",
+    },
+  };
+  const expectedTint =
+    expectedType === "player"
+      ? tintMaps.player[entity.classId]
+      : expectedType === "monster"
+        ? tintMaps.monster[entity.kind]
+        : expectedType === "projectile"
+          ? entity.color
+          : entity.kind === "gold"
+            ? "#f1be54"
+            : entity.kind === "tonic"
+              ? "#e65d76"
+              : "#8cdded";
+  if (
+    actor.type !== expectedType ||
+    actor.geometryId !== expectedGeometry ||
+    actor.clip !== expectedClip ||
+    !close(actor.scale, expectedScale) ||
+    actor.tint !== expectedTint
+  )
+    manifestContractErrors += 1;
+
+  const alpha = manifest.interpolationAlpha;
+  const previousPosition = entity?.previousPosition ?? entity?.position;
+  const expectedWorld = {
+    x: previousPosition.x + (entity.position.x - previousPosition.x) * alpha,
+    y: previousPosition.y + (entity.position.y - previousPosition.y) * alpha,
+  };
+  const expectedFacing =
+    expectedType === "projectile"
+      ? entity.velocity
+      : expectedType === "loot"
+        ? { x: 0, y: 0 }
+        : entity.facing;
+  const expectedScreen = {
+    x: 480 + (expectedWorld.x / 1024) * 48 - manifest.camera.x,
+    y: 270 + (expectedWorld.y / 1024) * 48 - manifest.camera.y,
+  };
+  const expectedVisualPhase =
+    expectedType === "loot"
+      ? ((((point.presentationTick + entity.bobOffset) % 48) + 48) % 48) / 48
+      : actor.frameCount <= 1
+        ? 0
+        : actor.frameIndex / (actor.frameCount - 1);
+  if (
+    !close(actor.worldAnchor.x, expectedWorld.x) ||
+    !close(actor.worldAnchor.y, expectedWorld.y) ||
+    !close(actor.facing.x, expectedFacing.x) ||
+    !close(actor.facing.y, expectedFacing.y) ||
+    !close(actor.screenAnchor.x, expectedScreen.x) ||
+    !close(actor.screenAnchor.y, expectedScreen.y) ||
+    !close(actor.footAnchor.x, actor.screenAnchor.x) ||
+    !close(actor.footAnchor.y, actor.screenAnchor.y) ||
+    !close(actor.visualPhase, expectedVisualPhase)
+  )
+    manifestContractErrors += 1;
+
+  const maskFile = point.files?.maskName;
+  if (
+    mask?.mode !== "isolated-draw-call" ||
+    mask?.maskInternalClipping ||
+    typeof maskFile !== "string" ||
+    path.basename(maskFile) !== maskFile ||
+    typeof mask?.artifactSha256 !== "string"
+  ) {
+    artifactIntegrityErrors += 1;
+    continue;
+  }
+  try {
+    const buffer = await fs.readFile(
+      path.join(path.dirname(timelineFile), maskFile),
+    );
+    const digest = createHash("sha256").update(buffer).digest("hex");
+    if (digest !== mask.artifactSha256) artifactIntegrityErrors += 1;
+  } catch {
+    artifactIntegrityErrors += 1;
+  }
+}
+
+const anchorsX = points.map(({ actor }) => actor.footAnchor.x);
+const anchorsY = points.map(({ actor }) => actor.footAnchor.y);
+const maskBottomOffsets = points.map(({ mask }) => mask.bottomOffset);
+const maskWidths = points.map(({ mask }) => mask.inkBounds.width);
+const maskHeights = points.map(({ mask }) => mask.inkBounds.height);
+const maskAreas = points.map(({ mask }) => mask.alphaPixels);
+const frameErrors = points.map(({ actor, presentationTick }) =>
+  Math.abs(actor.frameIndex - expectedFrame(actor, presentationTick)),
+);
 const worldSpeeds = [];
 const velocityErrors = [];
-const frameSkips = [];
+const frameAdvances = [];
+const centroidSteps = [];
+const centroidAccelerations = [];
+const inkWidthSteps = [];
+const inkHeightSteps = [];
+const cameraErrors = points.map(({ manifest }) =>
+  distance(manifest.camera, manifest.cameraTarget),
+);
+const cameraVelocities = [];
+let previousCentroidVelocity;
 let oneShotBackwardJumps = 0;
-const cameraAccelerations = [];
-let previousCameraVelocity;
+let recoveryTransitions = 0;
+let recoverySeamMismatches = 0;
+let loopWraps = 0;
 
 for (let index = 1; index < points.length; index += 1) {
   const previous = points[index - 1];
   const current = points[index];
-  const tickDelta = current.tick - previous.tick;
-  const worldDeltaX =
-    current.actor.worldAnchor.x - previous.actor.worldAnchor.x;
-  const worldDeltaY =
-    current.actor.worldAnchor.y - previous.actor.worldAnchor.y;
-  worldSpeeds.push(Math.hypot(worldDeltaX, worldDeltaY) / tickDelta);
-  const velocity = current.snapshot?.player?.velocity ?? { x: 0, y: 0 };
+  const tickDelta = current.presentationTick - previous.presentationTick;
+  if (tickDelta <= 0)
+    throw new Error(`Non-increasing presentation tick at index ${index}`);
+  const worldDelta = {
+    x: current.actor.worldAnchor.x - previous.actor.worldAnchor.x,
+    y: current.actor.worldAnchor.y - previous.actor.worldAnchor.y,
+  };
+  worldSpeeds.push(Math.hypot(worldDelta.x, worldDelta.y) / tickDelta);
+  const velocity = current.entity?.velocity ?? { x: 0, y: 0 };
   velocityErrors.push(
     Math.hypot(
-      worldDeltaX - velocity.x * tickDelta,
-      worldDeltaY - velocity.y * tickDelta,
+      worldDelta.x - velocity.x * tickDelta,
+      worldDelta.y - velocity.y * tickDelta,
     ),
   );
-  const frameCounts = {
-    idle: 6,
-    walk: 8,
-    attack: 6,
-    ability: 8,
-    hurt: 4,
-    death: 8,
-  };
-  const frameCount = frameCounts[current.actor.clip];
-  if (frameCount && current.actor.clip === previous.actor.clip) {
-    if (["idle", "walk"].includes(current.actor.clip)) {
-      frameSkips.push(
-        (current.actor.frameIndex - previous.actor.frameIndex + frameCount) %
-          frameCount,
-      );
-    } else {
-      frameSkips.push(current.actor.frameIndex - previous.actor.frameIndex);
-      if (current.actor.frameIndex < previous.actor.frameIndex)
-        oneShotBackwardJumps += 1;
-    }
+  if (current.actor.clip === previous.actor.clip) {
+    const looping = ["idle", "walk", "loot", "projectile"].includes(
+      current.actor.clip,
+    );
+    const advance = looping
+      ? (current.actor.frameIndex -
+          previous.actor.frameIndex +
+          current.actor.frameCount) %
+        current.actor.frameCount
+      : current.actor.frameIndex - previous.actor.frameIndex;
+    frameAdvances.push(advance);
+    if (looping && current.actor.frameIndex < previous.actor.frameIndex)
+      loopWraps += 1;
+    if (!looping && advance < 0) oneShotBackwardJumps += 1;
   }
-  const cameraVelocity = {
+  if (
+    ["attack", "ability", "hurt"].includes(previous.actor.clip) &&
+    previous.actor.frameIndex === previous.actor.frameCount - 1 &&
+    current.actor.clip === "idle"
+  ) {
+    recoveryTransitions += 1;
+    if (previous.mask.pixelHash !== current.mask.pixelHash)
+      recoverySeamMismatches += 1;
+  }
+  const centroidVelocity = {
+    x: (current.mask.centroid.x - previous.mask.centroid.x) / tickDelta,
+    y: (current.mask.centroid.y - previous.mask.centroid.y) / tickDelta,
+  };
+  centroidSteps.push(distance(current.mask.centroid, previous.mask.centroid));
+  if (previousCentroidVelocity)
+    centroidAccelerations.push(
+      distance(centroidVelocity, previousCentroidVelocity),
+    );
+  previousCentroidVelocity = centroidVelocity;
+  inkWidthSteps.push(
+    Math.abs(current.mask.inkBounds.width - previous.mask.inkBounds.width),
+  );
+  inkHeightSteps.push(
+    Math.abs(current.mask.inkBounds.height - previous.mask.inkBounds.height),
+  );
+  cameraVelocities.push({
     x: (current.manifest.camera.x - previous.manifest.camera.x) / tickDelta,
     y: (current.manifest.camera.y - previous.manifest.camera.y) / tickDelta,
-  };
-  if (previousCameraVelocity) {
-    cameraAccelerations.push(
-      Math.hypot(
-        cameraVelocity.x - previousCameraVelocity.x,
-        cameraVelocity.y - previousCameraVelocity.y,
-      ),
-    );
-  }
-  previousCameraVelocity = cameraVelocity;
+    duration: tickDelta,
+  });
 }
 
-const clipping = points.some(
-  ({ actor, manifest }) =>
-    actor.visible === false ||
-    !actor.bounds ||
-    actor.bounds.width <= 0 ||
-    actor.bounds.height <= 0 ||
-    actor.bounds.x < 0 ||
-    actor.bounds.y < 0 ||
-    actor.bounds.x + actor.bounds.width > manifest.viewport.width ||
-    actor.bounds.y + actor.bounds.height > manifest.viewport.height,
+const cameraAccelerations = cameraVelocities
+  .slice(1)
+  .map(
+    (velocity, index) =>
+      distance(velocity, cameraVelocities[index]) / velocity.duration,
+  );
+const actualInkClipping = points.some(({ actor, manifest, mask }) => {
+  const left = actor.screenAnchor.x + mask.inkBounds.x - mask.anchor.x;
+  const top = actor.screenAnchor.y + mask.inkBounds.y - mask.anchor.y;
+  return (
+    left < 0 ||
+    top < 0 ||
+    left + mask.inkBounds.width > manifest.viewport.width ||
+    top + mask.inkBounds.height > manifest.viewport.height
+  );
+});
+const renderedVisibility = points.map(({ mask }) => mask.renderVisible);
+const visualSignatures = new Map();
+let geometryEnvelopeViolations = 0;
+for (const { actor, mask } of points) {
+  const signature = JSON.stringify({
+    geometryId: actor.geometryId,
+    clip: actor.clip,
+    frameIndex: actor.frameIndex,
+    visualPhase: actor.visualPhase,
+    facing: actor.facing,
+    scale: actor.scale,
+    tint: actor.tint,
+  });
+  const hashes = visualSignatures.get(signature) ?? new Set();
+  hashes.add(mask.pixelHash);
+  visualSignatures.set(signature, hashes);
+  const minimumArea =
+    actor.type === "player" || actor.type === "monster"
+      ? 100
+      : actor.type === "loot"
+        ? 20
+        : 10;
+  const minimumDimension =
+    actor.type === "player" || actor.type === "monster" ? 10 : 3;
+  const aspect = mask.inkBounds.width / mask.inkBounds.height;
+  if (
+    mask.alphaPixels < minimumArea ||
+    mask.inkBounds.width < minimumDimension ||
+    mask.inkBounds.height < minimumDimension ||
+    aspect < 0.1 ||
+    aspect > 10
+  )
+    geometryEnvelopeViolations += 1;
+}
+const renderSignatureMismatches = [...visualSignatures.values()].filter(
+  (hashes) => hashes.size > 1,
+).length;
+const cameraErrorIncreases = cameraErrors
+  .slice(1)
+  .filter((error, index) => error > cameraErrors[index] + 0.001).length;
+const oneShotClips = points.filter(({ actor }) =>
+  ["attack", "ability", "hurt"].includes(actor.clip),
 );
-const measurements = {
-  frames: points.length,
-  uniqueAnimationFrames: new Set(framesSeen).size,
-  footAnchorJitterX: ranges(anchorsX),
-  footAnchorJitterY: ranges(anchorsY),
-  velocityError: velocityErrors.length ? Math.max(...velocityErrors) : 0,
-  speedDelta: ranges(worldSpeeds),
-  maximumFrameAdvance: frameSkips.length ? Math.max(...frameSkips) : 0,
-  oneShotBackwardJumps,
-  boundsWidthDelta: ranges(widths),
-  boundsHeightDelta: ranges(heights),
-  cameraAccelerationPeak: cameraAccelerations.length
-    ? Math.max(...cameraAccelerations)
-    : 0,
-  clipping,
-};
+const sawOneShotTerminal = oneShotClips.some(
+  ({ actor }) => actor.frameIndex === actor.frameCount - 1,
+);
+const sawOneShotStart = oneShotClips.some(
+  ({ actor }) => actor.frameIndex === 0,
+);
+const deathClips = points.filter(({ actor }) => actor.clip === "death");
+const sawDeathStart = deathClips.some(({ actor }) => actor.frameIndex === 0);
+const sawDeathTerminal = deathClips.some(
+  ({ actor }) => actor.frameIndex === actor.frameCount - 1,
+);
+const loopFrameCount = points[0]?.actor.frameCount ?? 0;
+const loopFramesCovered = new Set(points.map(({ actor }) => actor.frameIndex));
+const requiresMotion = ["anchored-motion", "projectile"].includes(profile);
+const requiresAnchor = [
+  "pose",
+  "one-shot",
+  "anchored-motion",
+  "death",
+].includes(profile);
+const requiresAnimation = [
+  "pose",
+  "loop",
+  "one-shot",
+  "one-shot-floating",
+  "death",
+  "anchored-motion",
+].includes(profile);
+const oneShotProfile = ["one-shot", "one-shot-floating"].includes(profile);
+
 const thresholds = {
-  footAnchorJitter: 0.25,
+  semanticFrameError: 0,
+  footAnchorRange: 0.25,
   velocityError: 0,
-  speedDelta: 0.01,
-  maximumFrameAdvance: 1,
-  boundsDelta: 0,
-  clipping: false,
+  speedRange: 0.01,
+  inkBottomRange: profile === "death" ? 18 : 1,
+  inkCentroidStep: profile === "death" ? 32 : 18,
+  inkCentroidAcceleration: profile === "death" ? 32 : 18,
+  inkDimensionStep: profile === "death" ? 48 : 32,
+  cameraAcceleration: 40,
+  cameraFinalError: 2,
+};
+const measurements = {
+  profile,
+  presenceContract,
+  trackedEntityId,
+  frames: observations.length,
+  presentFrames: points.length,
+  uniqueSemanticFrames: new Set(
+    points.map(({ actor }) => `${actor.clip}:${actor.frameIndex}`),
+  ).size,
+  uniquePixelMasks: new Set(points.map(({ mask }) => mask.pixelHash)).size,
+  footAnchorRangeX: range(anchorsX),
+  footAnchorRangeY: range(anchorsY),
+  velocityErrorPeak: maximum(velocityErrors),
+  speedRange: range(worldSpeeds),
+  maximumFrameAdvance: maximum(frameAdvances),
+  semanticFrameErrorPeak: maximum(frameErrors),
+  oneShotBackwardJumps,
+  recoveryTransitions,
+  recoverySeamMismatches,
+  loopWraps,
+  inkBottomRange: range(maskBottomOffsets),
+  inkWidthRange: range(maskWidths),
+  inkHeightRange: range(maskHeights),
+  inkAreaRange: range(maskAreas),
+  inkCentroidStepPeak: maximum(centroidSteps),
+  inkCentroidAccelerationPeak: maximum(centroidAccelerations),
+  inkWidthStepPeak: maximum(inkWidthSteps),
+  inkHeightStepPeak: maximum(inkHeightSteps),
+  actualInkClipping,
+  renderVisibleFrames: renderedVisibility.filter(Boolean).length,
+  cameraErrorStart: cameraErrors[0] ?? 0,
+  cameraErrorEnd: cameraErrors.at(-1) ?? 0,
+  cameraErrorIncreases,
+  cameraAccelerationPeak: maximum(cameraAccelerations),
+  stateHashMismatches,
+  manifestContractErrors,
+  artifactIntegrityErrors,
+  renderSignatureMismatches,
+  geometryEnvelopeViolations,
 };
 const checks = {
-  enoughFrames: measurements.frames >= 2,
-  footAnchorStable:
-    measurements.footAnchorJitterX <= thresholds.footAnchorJitter &&
-    measurements.footAnchorJitterY <= thresholds.footAnchorJitter,
-  velocityContinuous: measurements.velocityError <= thresholds.velocityError,
-  speedContinuous: measurements.speedDelta <= thresholds.speedDelta,
-  frameCadence:
-    measurements.maximumFrameAdvance <= thresholds.maximumFrameAdvance &&
-    measurements.oneShotBackwardJumps === 0,
-  proportionsStable:
-    measurements.boundsWidthDelta <= thresholds.boundsDelta &&
-    measurements.boundsHeightDelta <= thresholds.boundsDelta,
-  clipping: measurements.clipping === thresholds.clipping,
+  enoughFrames: measurements.frames >= 6 && measurements.presentFrames >= 2,
+  presenceContract: presenceContractSatisfied,
+  stateHashesExact: stateHashMismatches === 0,
+  stateManifestContract: manifestContractErrors === 0,
+  savedMaskArtifactsExact: artifactIntegrityErrors === 0,
+  renderSignatureDeterministic: renderSignatureMismatches === 0,
+  geometryEnvelope: geometryEnvelopeViolations === 0,
+  actualInkVisible: points.every(({ mask }) => mask.alphaPixels > 0),
+  trackedEntityVisibility:
+    profile === "camera-smooth"
+      ? renderedVisibility.at(-1) === true
+      : renderedVisibility.every(Boolean),
+  actualInkInsideViewport: profile === "camera-smooth" || !actualInkClipping,
+  semanticFrameExact:
+    measurements.semanticFrameErrorPeak <= thresholds.semanticFrameError,
+  animationNotStuck: !requiresAnimation || measurements.uniquePixelMasks >= 2,
+  semanticAnimationChanges:
+    !requiresAnimation || measurements.uniqueSemanticFrames >= 2,
+  semanticFrameCadence: measurements.maximumFrameAdvance <= 1,
+  loopLifecycle:
+    profile !== "loop" ||
+    (loopFramesCovered.size === loopFrameCount && loopWraps >= 1),
+  screenAnchorStable:
+    !requiresAnchor ||
+    (measurements.footAnchorRangeX <= thresholds.footAnchorRange &&
+      measurements.footAnchorRangeY <= thresholds.footAnchorRange),
+  actualGroundingStable:
+    !requiresAnchor || measurements.inkBottomRange <= thresholds.inkBottomRange,
+  actualPoseContinuous:
+    measurements.inkCentroidStepPeak <= thresholds.inkCentroidStep &&
+    measurements.inkCentroidAccelerationPeak <=
+      thresholds.inkCentroidAcceleration &&
+    measurements.inkWidthStepPeak <= thresholds.inkDimensionStep &&
+    measurements.inkHeightStepPeak <= thresholds.inkDimensionStep,
+  motionMatchesState:
+    !requiresMotion ||
+    measurements.velocityErrorPeak <= thresholds.velocityError,
+  constantMotion:
+    !requiresMotion || measurements.speedRange <= thresholds.speedRange,
+  oneShotFrameOrder: measurements.oneShotBackwardJumps === 0,
+  oneShotLifecycle:
+    !oneShotProfile ||
+    (sawOneShotStart &&
+      sawOneShotTerminal &&
+      measurements.recoveryTransitions >= 1),
+  oneShotRecoverySeam:
+    !oneShotProfile || measurements.recoverySeamMismatches === 0,
+  deathLifecycle:
+    profile !== "death" ||
+    (presenceContract === "present-until" &&
+      sawDeathStart &&
+      sawDeathTerminal &&
+      presence.at(-1) === false),
+  cameraConverges:
+    profile !== "camera-smooth" ||
+    (measurements.cameraErrorEnd < measurements.cameraErrorStart &&
+      measurements.cameraErrorIncreases === 0 &&
+      measurements.cameraErrorEnd <= thresholds.cameraFinalError),
+  cameraAcceleration:
+    profile !== "camera-smooth" ||
+    measurements.cameraAccelerationPeak <= thresholds.cameraAcceleration,
 };
 const result = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   thresholds,
   measurements,
   checks,

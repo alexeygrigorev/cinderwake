@@ -127,20 +127,30 @@ test("exposes deterministic sub-tick presentation frames for high-refresh displa
     const startX = window.__GAME_TEST__!.snapshot().player.position.x;
     window.__GAME_TEST__!.setInput({ moveX: 1 });
     window.__GAME_TEST__!.step(1);
+    const frames = [0, 0.25, 0.5, 0.75, 1].map((interpolationAlpha) => {
+      const manifest = window.__GAME_TEST__!.render({ interpolationAlpha });
+      const player = manifest.drawCalls.find(
+        (call) => call.entityId === "player",
+      )!;
+      return {
+        interpolationAlpha: manifest.interpolationAlpha,
+        presentationTick: manifest.presentationTick,
+        worldX: player.worldAnchor.x,
+        screenX: player.screenAnchor.x,
+      };
+    });
+    const beforeCapture = window.__GAME_TEST__!.render({
+      interpolationAlpha: 0.25,
+    });
+    const png = window.__GAME_TEST__!.captureFrame();
+    const afterCapture = window.__GAME_TEST__!.renderManifest();
     return {
       startX,
-      frames: [0, 0.25, 0.5, 0.75, 1].map((interpolationAlpha) => {
-        const manifest = window.__GAME_TEST__!.render({ interpolationAlpha });
-        const player = manifest.drawCalls.find(
-          (call) => call.entityId === "player",
-        )!;
-        return {
-          interpolationAlpha: manifest.interpolationAlpha,
-          presentationTick: manifest.presentationTick,
-          worldX: player.worldAnchor.x,
-          screenX: player.screenAnchor.x,
-        };
-      }),
+      frames,
+      capturePreservedPresentation:
+        beforeCapture.presentationTick === afterCapture.presentationTick &&
+        beforeCapture.interpolationAlpha === afterCapture.interpolationAlpha,
+      capturedPng: png.startsWith("data:image/png;base64,"),
     };
   });
   expect(samples.frames.map((frame) => frame.worldX)).toEqual(
@@ -150,6 +160,8 @@ test("exposes deterministic sub-tick presentation frames for high-refresh displa
     0, 0.25, 0.5, 0.75, 1,
   ]);
   expect(new Set(samples.frames.map((frame) => frame.screenX)).size).toBe(1);
+  expect(samples.capturePreservedPresentation).toBe(true);
+  expect(samples.capturedPng).toBe(true);
 });
 
 test("advances smooth camera once per simulation tick regardless of render count", async ({
@@ -224,4 +236,34 @@ test("honors cameraFollow false even when smooth mode is selected", async ({
     return { before, after: window.__GAME_TEST__!.camera() };
   });
   expect(result.after).toEqual(result.before);
+});
+
+test("measures actual transparent entity ink instead of declared bounds", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("animation-walk");
+    window.__GAME_TEST__!.setInput({ moveX: 1 });
+    const walk = [0, 5, 10, 15, 20, 25, 30, 35].map((targetTick) => {
+      const current = Number(window.__GAME_TEST__!.snapshot().tick);
+      window.__GAME_TEST__!.step(targetTick - current, { render: true });
+      return window.__GAME_TEST__!.captureEntityMask("player");
+    });
+    window.__GAME_TEST__!.loadScenario("combat-loot");
+    window.__GAME_TEST__!.setInput({ attack: true });
+    window.__GAME_TEST__!.step(1, { render: true });
+    window.__GAME_TEST__!.setInput({ attack: false });
+    window.__GAME_TEST__!.step(25, { render: true });
+    const terminal = window.__GAME_TEST__!.captureEntityMask("player");
+    window.__GAME_TEST__!.step(1, { render: true });
+    const idle = window.__GAME_TEST__!.captureEntityMask("player");
+    return { walk, terminal, idle };
+  });
+  expect(
+    new Set(result.walk.map((mask) => mask.pixelHash)).size,
+  ).toBeGreaterThan(3);
+  expect(new Set(result.walk.map((mask) => mask.bottomOffset)).size).toBe(1);
+  expect(result.walk.every((mask) => mask.alphaPixels > 100)).toBe(true);
+  expect(result.terminal.pixelHash).toBe(result.idle.pixelHash);
+  expect(result.terminal.inkBounds).toEqual(result.idle.inkBounds);
 });

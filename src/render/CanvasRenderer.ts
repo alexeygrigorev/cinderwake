@@ -11,6 +11,7 @@ import {
   type CameraMode,
   type CameraV1,
   type DrawCallV1,
+  type EntityMaskV1,
   type RenderManifestV1,
 } from "./manifest";
 
@@ -42,6 +43,7 @@ export class CanvasRenderer {
   camera: CameraV1 = { x: 0, y: 0, zoom: 1 };
   previousCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
   displayCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
+  private manifest?: RenderManifestV1;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -137,9 +139,9 @@ export class CanvasRenderer {
       cameraTarget: this.cameraTarget(state),
       cameraMode,
     });
+    this.manifest = manifest;
     for (const call of manifest.drawCalls) {
-      if (call.visible)
-        this.drawEntity(context, call, state, manifest.presentationTick);
+      if (call.visible) this.drawEntity(context, call, state);
     }
     for (const effect of state.effects) {
       this.drawEffect(
@@ -151,6 +153,92 @@ export class CanvasRenderer {
     }
     this.drawVignette(context);
     return manifest;
+  }
+
+  captureEntityMask(state: GameState, entityId: string): EntityMaskV1 {
+    const call = this.manifest?.drawCalls.find(
+      (entry) => entry.entityId === entityId,
+    );
+    if (!call) throw new Error(`Render entity ${entityId} is unavailable`);
+    const width = 220;
+    const height = 180;
+    const anchor = { x: width / 2, y: height - 28 };
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("Entity-mask Canvas 2D is unavailable");
+    const dx = anchor.x - call.screenAnchor.x;
+    const dy = anchor.y - call.screenAnchor.y;
+    const isolated: DrawCallV1 = {
+      ...call,
+      screenAnchor: { ...anchor },
+      footAnchor: { ...anchor },
+      bounds: {
+        ...call.bounds,
+        x: call.bounds.x + dx,
+        y: call.bounds.y + dy,
+      },
+      visible: true,
+    };
+    this.drawEntity(context, isolated, state, false, false);
+    const pixels = context.getImageData(0, 0, width, height).data;
+    let minX = width;
+    let minY = height;
+    let maxX = -1;
+    let maxY = -1;
+    let alphaPixels = 0;
+    let weightedX = 0;
+    let weightedY = 0;
+    let alphaWeight = 0;
+    let maskInternalClipping = false;
+    let hash = 0x811c9dc5;
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        const offset = (y * width + x) * 4;
+        const alpha = pixels[offset + 3]!;
+        for (let channel = 0; channel < 4; channel += 1) {
+          hash ^= pixels[offset + channel]!;
+          hash = Math.imul(hash, 0x01000193);
+        }
+        if (alpha === 0) continue;
+        if (x === 0 || y === 0 || x === width - 1 || y === height - 1)
+          maskInternalClipping = true;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        alphaPixels += 1;
+        alphaWeight += alpha;
+        weightedX += x * alpha;
+        weightedY += y * alpha;
+      }
+    }
+    if (alphaPixels === 0)
+      throw new Error(`Render entity ${entityId} is blank`);
+    return {
+      entityId,
+      mode: "isolated-draw-call",
+      renderVisible: call.visible,
+      width,
+      height,
+      anchor,
+      inkBounds: {
+        x: minX,
+        y: minY,
+        width: maxX - minX + 1,
+        height: maxY - minY + 1,
+      },
+      centroid: {
+        x: Math.round((weightedX / alphaWeight) * 1000) / 1000,
+        y: Math.round((weightedY / alphaWeight) * 1000) / 1000,
+      },
+      alphaPixels,
+      bottomOffset: maxY - anchor.y,
+      maskInternalClipping,
+      pixelHash: (hash >>> 0).toString(16).padStart(8, "0"),
+      image: canvas.toDataURL("image/png"),
+    };
   }
 
   private drawMap(
@@ -277,14 +365,15 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     call: DrawCallV1,
     state: GameState,
-    presentationTick: number,
+    drawHealth = true,
+    drawShadow = true,
   ): void {
     if (call.type === "projectile") {
       this.drawProjectile(context, call);
       return;
     }
     if (call.type === "loot") {
-      this.drawLoot(context, call, state, presentationTick);
+      this.drawLoot(context, call);
       return;
     }
 
@@ -296,22 +385,24 @@ export class CanvasRenderer {
     context.save();
     context.translate(call.screenAnchor.x, call.screenAnchor.y);
     context.scale(call.scale, call.scale);
-    context.fillStyle = "rgba(0, 0, 0, 0.42)";
-    context.beginPath();
-    context.ellipse(
-      0,
-      1,
-      call.type === "player" ? 16 : 18,
-      5,
-      0,
-      0,
-      Math.PI * 2,
-    );
-    context.fill();
+    if (drawShadow) {
+      context.fillStyle = "rgba(0, 0, 0, 0.42)";
+      context.beginPath();
+      context.ellipse(
+        0,
+        1,
+        call.type === "player" ? 16 : 18,
+        5,
+        0,
+        0,
+        Math.PI * 2,
+      );
+      context.fill();
+    }
     if (call.type === "player") this.drawHero(context, call, state);
     else this.drawMonster(context, call, state);
     context.restore();
-    if (actor.health > 0)
+    if (drawHealth && actor.health > 0)
       this.drawHealthBar(
         context,
         call,
@@ -515,7 +606,7 @@ export class CanvasRenderer {
     context.restore();
     if (ability >= 0) {
       context.strokeStyle = "#8bf4ea";
-      context.globalAlpha = 1 - ability * 0.5;
+      context.globalAlpha = 1 - ability;
       context.beginPath();
       context.arc(0, -24, 14 + ability * 8, 0, Math.PI * 2);
       context.stroke();
@@ -533,12 +624,12 @@ export class CanvasRenderer {
     const facingLeft = monster.facing.x < 0;
     const hurtOffset =
       call.clip === "hurt" ? -4 * (1 - animationProgress(call, 4)) : 0;
-    const deathAngle =
-      call.clip === "death" ? animationProgress(call, 8) * Math.PI * 0.48 : 0;
+    const deathCollapse =
+      call.clip === "death" ? animationProgress(call, 8) : 0;
     context.save();
     context.scale(facingLeft ? -1 : 1, 1);
     context.translate(hurtOffset, 0);
-    context.rotate(deathAngle);
+    context.scale(1 + deathCollapse * 0.08, 1 - deathCollapse * 0.68);
     if (monster.elite) {
       context.strokeStyle = "#f0a24b";
       context.lineWidth = 2;
@@ -562,7 +653,8 @@ export class CanvasRenderer {
       call.clip === "walk"
         ? Math.sin((call.frameIndex / 8) * Math.PI * 2) * 4
         : 0;
-    const bite = call.clip === "attack" ? animationProgress(call, 6) * 5 : 0;
+    const biteFrames = [0, 1, 5, 3, 1, 0];
+    const bite = call.clip === "attack" ? biteFrames[call.frameIndex]! : 0;
     for (const [x, offset] of [
       [-12, gait],
       [-3, -gait],
@@ -614,11 +706,14 @@ export class CanvasRenderer {
     context.fillStyle = "#f2a4ff";
     context.fillRect(2, -37, 3, 3);
     if (call.clip === "attack") {
+      const progress = animationProgress(call, 6);
       context.strokeStyle = "#e38df1";
+      context.globalAlpha = 1 - progress;
       context.lineWidth = 2;
       context.beginPath();
       context.arc(14, -28, 5 + call.frameIndex, 0, Math.PI * 2);
       context.stroke();
+      context.globalAlpha = 1;
     }
     context.restore();
   }
@@ -679,25 +774,18 @@ export class CanvasRenderer {
     context.restore();
   }
 
-  private drawLoot(
-    context: CanvasRenderingContext2D,
-    call: DrawCallV1,
-    state: GameState,
-    presentationTick: number,
-  ): void {
-    const loot = state.loot.find((entry) => entry.id === call.entityId);
-    if (!loot) return;
-    const bob = Math.sin((presentationTick + loot.bobOffset) / 12) * 3;
+  private drawLoot(context: CanvasRenderingContext2D, call: DrawCallV1): void {
+    const bob = Math.sin(call.visualPhase * Math.PI * 2) * 3;
     context.save();
     context.translate(call.screenAnchor.x, call.screenAnchor.y - 8 + bob);
     context.scale(call.scale, call.scale);
     context.fillStyle = call.tint;
     context.shadowColor = call.tint;
-    context.shadowBlur = loot.rarity === "relic" ? 17 : 10;
+    context.shadowBlur = call.geometryId.endsWith(":relic") ? 17 : 10;
     context.beginPath();
-    if (loot.kind === "tonic") {
+    if (call.geometryId.startsWith("loot:tonic:")) {
       context.roundRect(-6, -8, 12, 16, 3);
-    } else if (loot.kind === "weapon") {
+    } else if (call.geometryId.startsWith("loot:weapon:")) {
       context.moveTo(0, -11);
       context.lineTo(5, -1);
       context.lineTo(2, 10);

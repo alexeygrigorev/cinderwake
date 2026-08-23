@@ -337,6 +337,35 @@ describe("public temporal scenario catalog", () => {
       initialPositions,
     );
     expect(state.loot).toHaveLength(3);
+    advanceUntilStateTick(state, 48);
+    const looped = buildRenderManifest(state, camera).drawCalls.find(
+      ({ entityId }) => entityId === TEMPORAL_ENTITY_IDS.goldLoot,
+    )!;
+    expect(looped).toMatchObject({
+      frameIndex: frameAtZero,
+      frameCount: 4,
+      clipDurationTicks: 48,
+      visualPhase: 0,
+    });
+  });
+
+  it("declares a projectile as continuous motion rather than fake sprite frames", () => {
+    const state = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-friendly-projectile"]!,
+    );
+    const projectile = buildRenderManifest(state, {
+      x: 0,
+      y: 0,
+      zoom: 1,
+    }).drawCalls.find(
+      ({ entityId }) => entityId === TEMPORAL_ENTITY_IDS.friendlyProjectile,
+    );
+    expect(projectile).toMatchObject({
+      clip: "projectile",
+      frameIndex: 0,
+      frameCount: 1,
+      visualPhase: 0,
+    });
   });
 
   it("provides a distant smooth-camera target with a declared initial center", () => {

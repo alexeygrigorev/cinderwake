@@ -22,6 +22,11 @@ export interface DrawCallV1 {
   geometryId: string;
   clip: AnimationClip | "loot" | "projectile";
   frameIndex: number;
+  frameCount: number;
+  visualPhase: number;
+  clipDurationTicks: number;
+  clipStartedAtTick: number;
+  clipLockedUntilTick: number;
   facing: Vec2;
   worldAnchor: Vec2;
   screenAnchor: Vec2;
@@ -47,14 +52,26 @@ export interface RenderManifestV1 {
   drawCalls: DrawCallV1[];
 }
 
+export interface EntityMaskV1 {
+  entityId: string;
+  mode: "isolated-draw-call";
+  renderVisible: boolean;
+  width: number;
+  height: number;
+  anchor: Vec2;
+  inkBounds: { x: number; y: number; width: number; height: number };
+  centroid: Vec2;
+  alphaPixels: number;
+  bottomOffset: number;
+  maskInternalClipping: boolean;
+  pixelHash: string;
+  image: string;
+}
+
 export function screenFor(world: Vec2, camera: CameraV1): Vec2 {
   return {
-    x: Math.round(
-      VIEW_WIDTH / 2 + (world.x / UNITS_PER_TILE) * TILE_PIXELS - camera.x,
-    ),
-    y: Math.round(
-      VIEW_HEIGHT / 2 + (world.y / UNITS_PER_TILE) * TILE_PIXELS - camera.y,
-    ),
+    x: VIEW_WIDTH / 2 + (world.x / UNITS_PER_TILE) * TILE_PIXELS - camera.x,
+    y: VIEW_HEIGHT / 2 + (world.y / UNITS_PER_TILE) * TILE_PIXELS - camera.y,
   };
 }
 
@@ -98,8 +115,8 @@ export function buildRenderManifest(
   );
   const presentationTick = Math.max(0, state.tick - (1 - interpolationAlpha));
   const presented = (previous: Vec2, current: Vec2): Vec2 => ({
-    x: Math.round(previous.x + (current.x - previous.x) * interpolationAlpha),
-    y: Math.round(previous.y + (current.y - previous.y) * interpolationAlpha),
+    x: previous.x + (current.x - previous.x) * interpolationAlpha,
+    y: previous.y + (current.y - previous.y) * interpolationAlpha,
   });
   const calls: DrawCallV1[] = [];
   const add = (
@@ -145,6 +162,16 @@ export function buildRenderManifest(
         presentationTick,
         state.player.animation.startedAtTick,
       ),
+      frameCount: CLIP_FRAMES[state.player.animation.clip],
+      visualPhase:
+        actorFrame(
+          state.player.animation.clip,
+          presentationTick,
+          state.player.animation.startedAtTick,
+        ) / Math.max(1, CLIP_FRAMES[state.player.animation.clip] - 1),
+      clipDurationTicks: CLIP_DURATIONS[state.player.animation.clip],
+      clipStartedAtTick: state.player.animation.startedAtTick,
+      clipLockedUntilTick: state.player.animation.lockedUntilTick,
       facing: state.player.facing,
       worldAnchor: presented(
         state.player.previousPosition,
@@ -177,6 +204,16 @@ export function buildRenderManifest(
           presentationTick,
           monster.animation.startedAtTick,
         ),
+        frameCount: CLIP_FRAMES[monster.animation.clip],
+        visualPhase:
+          actorFrame(
+            monster.animation.clip,
+            presentationTick,
+            monster.animation.startedAtTick,
+          ) / Math.max(1, CLIP_FRAMES[monster.animation.clip] - 1),
+        clipDurationTicks: CLIP_DURATIONS[monster.animation.clip],
+        clipStartedAtTick: monster.animation.startedAtTick,
+        clipLockedUntilTick: monster.animation.lockedUntilTick,
         facing: monster.facing,
         worldAnchor: presented(monster.previousPosition, monster.position),
         scale,
@@ -189,6 +226,8 @@ export function buildRenderManifest(
   }
 
   for (const loot of state.loot) {
+    const lootPhaseTick =
+      (((presentationTick + loot.bobOffset) % 48) + 48) % 48;
     const tint =
       loot.kind === "gold"
         ? "#f1be54"
@@ -201,7 +240,12 @@ export function buildRenderManifest(
         type: "loot",
         geometryId: `loot:${loot.kind}:${loot.rarity}`,
         clip: "loot",
-        frameIndex: Math.floor((presentationTick + loot.bobOffset) / 12) % 4,
+        frameIndex: Math.floor(lootPhaseTick / 12),
+        frameCount: 4,
+        visualPhase: lootPhaseTick / 48,
+        clipDurationTicks: 48,
+        clipStartedAtTick: -loot.bobOffset,
+        clipLockedUntilTick: 0,
         facing: { x: 0, y: 0 },
         worldAnchor: loot.position,
         scale:
@@ -223,7 +267,12 @@ export function buildRenderManifest(
           ? "projectile:hostile"
           : "projectile:friendly",
         clip: "projectile",
-        frameIndex: Math.floor(presentationTick) % 4,
+        frameIndex: 0,
+        frameCount: 1,
+        visualPhase: 0,
+        clipDurationTicks: 1,
+        clipStartedAtTick: 0,
+        clipLockedUntilTick: 0,
         facing: projectile.velocity,
         worldAnchor: presented(
           projectile.previousPosition,

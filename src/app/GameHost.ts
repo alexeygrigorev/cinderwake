@@ -15,6 +15,7 @@ import { CanvasRenderer } from "../render/CanvasRenderer";
 import type {
   CameraMode,
   CameraV1,
+  EntityMaskV1,
   RenderManifestV1,
 } from "../render/manifest";
 
@@ -126,6 +127,9 @@ export class GameHost {
   }
   getManifest(): RenderManifestV1 {
     return this.manifest ?? this.render();
+  }
+  captureEntityMask(entityId: string): EntityMaskV1 {
+    return this.renderer.captureEntityMask(this.state, entityId);
   }
   render(interpolationAlpha = 1): RenderManifestV1 {
     const m = this.renderer.render(
