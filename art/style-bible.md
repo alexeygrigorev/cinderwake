@@ -12,7 +12,7 @@ Every asset prompt and review uses the same visual contract. “Dark fantasy” 
 
 ## Actor source brief
 
-Every actor supplies four 1024 × 1024 PNGs on the same strict 4 × 4 grid of 256 × 256 cells. The primary sheet uses [actor-source-template.svg](actor-source-template.svg):
+Every actor supplies six 1024 × 1024 PNGs on the same strict 4 × 4 grid of 256 × 256 cells. The primary sheet uses [actor-source-template.svg](actor-source-template.svg):
 
 1. idle breathing poses;
 2. locomotion loop key poses;
@@ -25,4 +25,6 @@ The `{actor}-actions-source.png` sheet contains six distinct attack frames in ce
 
 The `{actor}-reactions-source.png` sheet contains four articulated hurt/recoil poses, eight anatomy-specific collapse poses across rows two and three, and grounded terminal reserves in row four. Equipment and anatomy remain attached throughout; projectiles and large detached effects belong to their own runtime sprites.
 
-The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. The build reads `ActorAtlasV2` metadata, removes chroma and cross-cell fragments, normalizes all four sheets together, and packs a fixed 2048 × 3072 atlas. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.
+The `{actor}-direction-actions-source.png` sheet contains north attack, north ability, south attack, and south ability rows. The `{actor}-direction-reactions-source.png` sheet contains north hurt, north collapse, south hurt, and south collapse rows. These banks prevent a one-shot action from rotating a north/south-facing body to the east silhouette and back.
+
+The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. The build reads `ActorAtlasV2` metadata, removes chroma and cross-cell fragments, normalizes all six sheets together, and downsamples them into fixed 128 × 128 runtime cells in a 1024 × 2560 atlas. This preserves the 256 × 256 authoring template while reducing decoded mobile memory. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.

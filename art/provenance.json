@@ -73,6 +73,42 @@
       "reference": "art/source/actors/stonekin-source.png"
     },
     {
+      "file": "art/source/actors/vanguard-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/vanguard-source.png"
+    },
+    {
+      "file": "art/source/actors/ranger-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ranger-source.png"
+    },
+    {
+      "file": "art/source/actors/arcanist-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/arcanist-source.png"
+    },
+    {
+      "file": "art/source/actors/ashfang-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ashfang-source.png"
+    },
+    {
+      "file": "art/source/actors/hexer-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/hexer-source.png"
+    },
+    {
+      "file": "art/source/actors/stonekin-direction-actions-source.png",
+      "kind": "actor-cardinal-action-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/stonekin-source.png"
+    },
+    {
       "file": "art/source/actors/vanguard-directions-source.png",
       "kind": "actor-direction-source",
       "grid": "4x4",
@@ -141,6 +177,42 @@
     {
       "file": "art/source/actors/stonekin-reactions-source.png",
       "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/stonekin-source.png"
+    },
+    {
+      "file": "art/source/actors/vanguard-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/vanguard-source.png"
+    },
+    {
+      "file": "art/source/actors/ranger-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ranger-source.png"
+    },
+    {
+      "file": "art/source/actors/arcanist-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/arcanist-source.png"
+    },
+    {
+      "file": "art/source/actors/ashfang-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ashfang-source.png"
+    },
+    {
+      "file": "art/source/actors/hexer-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/hexer-source.png"
+    },
+    {
+      "file": "art/source/actors/stonekin-direction-reactions-source.png",
+      "kind": "actor-cardinal-reaction-source",
       "grid": "4x4",
       "reference": "art/source/actors/stonekin-source.png"
     },

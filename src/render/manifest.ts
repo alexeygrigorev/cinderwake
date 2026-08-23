@@ -418,7 +418,6 @@ export function buildRenderManifest(
     const destinationRect = destinationAt(screenAnchor, width, height);
     const directionalSpriteId =
       (bucket === "north" || bucket === "south") &&
-      (semantic.clip === "idle" || semantic.clip === "walk") &&
       (semantic.type === "player" || semantic.type === "monster")
         ? `${semantic.geometryId}:${bucket}`
         : semantic.geometryId;

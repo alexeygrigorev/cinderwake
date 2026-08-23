@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "id": "ActorAtlasV2",
-  "description": "The fixed Cinderwake actor rig. Every hero and monster supplies the same primary, direction, and reaction source sheets; the offline builder deterministically normalizes them into fixed, untrimmed atlas cells.",
+  "description": "The fixed Cinderwake actor rig. Every hero and monster supplies the same identity, direction, action, and reaction source families; the offline builder deterministically normalizes them into fixed, untrimmed atlas cells.",
   "source": {
     "pixelWidth": 1024,
     "pixelHeight": 1024,
@@ -14,7 +14,9 @@
       "primary": "{actor}-source.png",
       "directions": "{actor}-directions-source.png",
       "actions": "{actor}-actions-source.png",
-      "reactions": "{actor}-reactions-source.png"
+      "reactions": "{actor}-reactions-source.png",
+      "directionActions": "{actor}-direction-actions-source.png",
+      "directionReactions": "{actor}-direction-reactions-source.png"
     },
     "primaryRows": { "idle": 0, "walk": 1, "attack": 2, "ability": 3 },
     "directionRows": {
@@ -33,18 +35,30 @@
       "attackCells": [0, 1, 2, 3, 4, 5],
       "recoveryReserveCells": [6, 7],
       "abilityCells": [8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    "directionActionRows": {
+      "northAttack": 0,
+      "northAbility": 1,
+      "southAttack": 2,
+      "southAbility": 3
+    },
+    "directionReactionRows": {
+      "northHurt": 0,
+      "northDeath": 1,
+      "southHurt": 2,
+      "southDeath": 3
     }
   },
   "atlas": {
-    "pixelWidth": 2048,
-    "pixelHeight": 3072,
+    "pixelWidth": 1024,
+    "pixelHeight": 2560,
     "columns": 8,
-    "rows": 12,
-    "cellWidth": 256,
-    "cellHeight": 256,
-    "footAnchor": { "x": 128, "y": 232 },
-    "safeInkBounds": { "x": 10, "y": 8, "width": 236, "height": 224 },
-    "reservedRows": [10, 11]
+    "rows": 20,
+    "cellWidth": 128,
+    "cellHeight": 128,
+    "footAnchor": { "x": 64, "y": 116 },
+    "safeInkBounds": { "x": 5, "y": 4, "width": 118, "height": 112 },
+    "reservedRows": [18, 19]
   },
   "clips": {
     "idle": {
@@ -131,6 +145,72 @@
       "runtimeClip": "walk",
       "source": "directions",
       "sourceFrames": [12, 13, 14, 15, 12, 13, 14, 15]
+    },
+    "northAttack": {
+      "atlasRow": 10,
+      "runtimeClip": "attack",
+      "source": "directionActions",
+      "sourceFrames": [0, 1, 2, 2, 3, { "source": "directions", "cell": 0 }]
+    },
+    "northAbility": {
+      "atlasRow": 11,
+      "runtimeClip": "ability",
+      "source": "directionActions",
+      "sourceFrames": [
+        4,
+        5,
+        6,
+        6,
+        7,
+        7,
+        7,
+        { "source": "directions", "cell": 0 }
+      ]
+    },
+    "northHurt": {
+      "atlasRow": 12,
+      "runtimeClip": "hurt",
+      "source": "directionReactions",
+      "sourceFrames": [0, 1, 2, 3]
+    },
+    "northDeath": {
+      "atlasRow": 13,
+      "runtimeClip": "death",
+      "source": "directionReactions",
+      "sourceFrames": [4, 4, 5, 5, 6, 6, 7, 7]
+    },
+    "southAttack": {
+      "atlasRow": 14,
+      "runtimeClip": "attack",
+      "source": "directionActions",
+      "sourceFrames": [8, 9, 10, 10, 11, { "source": "directions", "cell": 8 }]
+    },
+    "southAbility": {
+      "atlasRow": 15,
+      "runtimeClip": "ability",
+      "source": "directionActions",
+      "sourceFrames": [
+        12,
+        13,
+        14,
+        14,
+        15,
+        15,
+        15,
+        { "source": "directions", "cell": 8 }
+      ]
+    },
+    "southHurt": {
+      "atlasRow": 16,
+      "runtimeClip": "hurt",
+      "source": "directionReactions",
+      "sourceFrames": [8, 9, 10, 11]
+    },
+    "southDeath": {
+      "atlasRow": 17,
+      "runtimeClip": "death",
+      "source": "directionReactions",
+      "sourceFrames": [12, 12, 13, 13, 14, 14, 15, 15]
     }
   },
   "facing": {
@@ -138,6 +218,6 @@
     "west": "primary-bank-horizontal-flip",
     "north": "authored-north-bank",
     "south": "authored-south-bank",
-    "actionFallback": "authored-east-action-bank"
+    "actionFallback": "none-all-cardinal-banks-authored"
   }
 }

@@ -38,6 +38,9 @@ export interface SpriteCatalogV1 {
   sprites: Record<string, SpriteDefinitionV1>;
 }
 
+type AuthoredFacing = "north" | "south";
+type DirectionalClipKey = `${AuthoredFacing}${Capitalize<AnimationClip>}`;
+
 interface ActorAtlasSpec {
   id: string;
   atlas: {
@@ -47,15 +50,13 @@ interface ActorAtlasSpec {
     cellHeight: number;
   };
   clips: Record<AnimationClip, { atlasRow: number }>;
-  directionalClips: Record<
-    "northIdle" | "northWalk" | "southIdle" | "southWalk",
-    { atlasRow: number }
-  >;
+  directionalClips: Record<DirectionalClipKey, { atlasRow: number }>;
 }
 
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
-export const SPRITE_CATALOG_REVISION = "actor-atlas-v2-2026-08-23";
-const CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
+export const SPRITE_CATALOG_REVISION = "actor-atlas-v2-cardinal-2026-08-23";
+const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
+const GRID_CELL = 256;
 
 function asset(
   id: string,
@@ -147,10 +148,9 @@ function actorSprite(
   const frames: Record<string, SourceRectV1> = {};
   const clips: Record<string, SpriteClipV1> = {};
   ACTOR_CLIPS.forEach((clip) => {
-    const directionalKey =
-      facing && (clip === "idle" || clip === "walk")
-        ? (`${facing}${clip[0]!.toUpperCase()}${clip.slice(1)}` as keyof ActorAtlasSpec["directionalClips"])
-        : undefined;
+    const directionalKey = facing
+      ? (`${facing}${clip[0]!.toUpperCase()}${clip.slice(1)}` as DirectionalClipKey)
+      : undefined;
     const row = directionalKey
       ? ACTOR_ATLAS_SPEC.directionalClips[directionalKey].atlasRow
       : ACTOR_ATLAS_SPEC.clips[clip].atlasRow;
@@ -160,10 +160,10 @@ function actorSprite(
     );
     frameIdentities.forEach((frameIdentity, frameIndex) => {
       frames[frameIdentity] = {
-        x: frameIndex * CELL,
-        y: row * CELL,
-        width: CELL,
-        height: CELL,
+        x: frameIndex * ACTOR_CELL,
+        y: row * ACTOR_CELL,
+        width: ACTOR_CELL,
+        height: ACTOR_CELL,
       };
     });
     clips[clip] = {
@@ -183,7 +183,12 @@ function staticSprite(
   const frames = Object.fromEntries(
     frameCells.map(({ identity, column, row }) => [
       identity,
-      { x: column * CELL, y: row * CELL, width: CELL, height: CELL },
+      {
+        x: column * GRID_CELL,
+        y: row * GRID_CELL,
+        width: GRID_CELL,
+        height: GRID_CELL,
+      },
     ]),
   );
   return {
@@ -213,10 +218,10 @@ function singleFrameSprite(
     assetId,
     frames: {
       [frameIdentity]: {
-        x: column * CELL,
-        y: row * CELL,
-        width: CELL,
-        height: CELL,
+        x: column * GRID_CELL,
+        y: row * GRID_CELL,
+        width: GRID_CELL,
+        height: GRID_CELL,
       },
     },
     clips: {
@@ -296,10 +301,10 @@ lootIds.forEach((id, itemIndex) => {
       return [
         frameIdentity,
         {
-          x: (cell % 8) * CELL,
-          y: Math.floor(cell / 8) * CELL,
-          width: CELL,
-          height: CELL,
+          x: (cell % 8) * GRID_CELL,
+          y: Math.floor(cell / 8) * GRID_CELL,
+          width: GRID_CELL,
+          height: GRID_CELL,
         },
       ];
     }),

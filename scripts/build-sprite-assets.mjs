@@ -7,7 +7,9 @@ import sharp from "sharp";
 const ROOT = process.cwd();
 const ACTOR_SPEC_PATH = path.join(ROOT, "art", "actor-atlas-v1.json");
 const ACTOR_SPEC = JSON.parse(await fs.readFile(ACTOR_SPEC_PATH, "utf8"));
-const CELL = ACTOR_SPEC.atlas.cellWidth;
+const ACTOR_CELL = ACTOR_SPEC.atlas.cellWidth;
+const SOURCE_CELL = ACTOR_SPEC.source.cellWidth;
+const GRID_CELL = ACTOR_SPEC.source.cellWidth;
 const SOURCE_SIZE = ACTOR_SPEC.source.pixelWidth;
 const ACTOR_ATLAS_WIDTH = ACTOR_SPEC.atlas.pixelWidth;
 const ACTOR_ATLAS_HEIGHT = ACTOR_SPEC.atlas.pixelHeight;
@@ -153,10 +155,10 @@ async function extractActorCells(source) {
   for (let index = 0; index < 16; index += 1) {
     const extracted = await sharp(source)
       .extract({
-        left: (index % 4) * CELL,
-        top: Math.floor(index / 4) * CELL,
-        width: CELL,
-        height: CELL,
+        left: (index % 4) * SOURCE_CELL,
+        top: Math.floor(index / 4) * SOURCE_CELL,
+        width: SOURCE_CELL,
+        height: SOURCE_CELL,
       })
       .png()
       .toBuffer();
@@ -180,7 +182,12 @@ async function reanchorCell(buffer) {
   const bounds = await alphaBounds(cleaned);
   const sprite = await sharp(cleaned).extract(bounds).png().toBuffer();
   return sharp({
-    create: { width: CELL, height: CELL, channels: 4, background: transparent },
+    create: {
+      width: ACTOR_CELL,
+      height: ACTOR_CELL,
+      channels: 4,
+      background: transparent,
+    },
   })
     .composite([
       {
@@ -227,8 +234,8 @@ async function normalizedActorCellSets(sources) {
       .toBuffer();
     const cell = await sharp({
       create: {
-        width: CELL,
-        height: CELL,
+        width: ACTOR_CELL,
+        height: ACTOR_CELL,
         channels: 4,
         background: transparent,
       },
@@ -301,8 +308,8 @@ async function buildActor(actorId) {
     for (const [frameIndex, recipe] of clip.sourceFrames.entries())
       composites.push({
         input: await frameFromRecipe(cellsBySource, clip.source, recipe),
-        left: frameIndex * CELL,
-        top: clip.atlasRow * CELL,
+        left: frameIndex * ACTOR_CELL,
+        top: clip.atlasRow * ACTOR_CELL,
       });
   }
   const destination = outputPath(`actor-${actorId}.png`);
@@ -342,18 +349,18 @@ async function buildTerrainAtlas(sourcePath, destination) {
   for (let index = 0; index < 16; index += 1) {
     const tile = await sharp(normalized)
       .extract({
-        left: (index % 4) * CELL + 3,
-        top: Math.floor(index / 4) * CELL + 3,
-        width: CELL - 6,
-        height: CELL - 6,
+        left: (index % 4) * GRID_CELL + 3,
+        top: Math.floor(index / 4) * GRID_CELL + 3,
+        width: GRID_CELL - 6,
+        height: GRID_CELL - 6,
       })
-      .resize(CELL, CELL, { fit: "fill", kernel: "lanczos3" })
+      .resize(GRID_CELL, GRID_CELL, { fit: "fill", kernel: "lanczos3" })
       .png()
       .toBuffer();
     composites.push({
       input: tile,
-      left: (index % 4) * CELL,
-      top: Math.floor(index / 4) * CELL,
+      left: (index % 4) * GRID_CELL,
+      top: Math.floor(index / 4) * GRID_CELL,
     });
   }
   await sharp({
@@ -386,10 +393,10 @@ async function buildLootAtlas(propsPath, effectsPath) {
   for (const [itemIndex, definition] of definitions.entries()) {
     const source = await sharp(definition.source)
       .extract({
-        left: (definition.cell % 4) * CELL,
-        top: Math.floor(definition.cell / 4) * CELL,
-        width: CELL,
-        height: CELL,
+        left: (definition.cell % 4) * GRID_CELL,
+        top: Math.floor(definition.cell / 4) * GRID_CELL,
+        width: GRID_CELL,
+        height: GRID_CELL,
       })
       .png()
       .toBuffer();
@@ -406,9 +413,12 @@ async function buildLootAtlas(propsPath, effectsPath) {
       const cellIndex = itemIndex * 4 + frame;
       composites.push({
         input: sprite,
-        left: (cellIndex % 8) * CELL + Math.round((CELL - width) / 2),
+        left: (cellIndex % 8) * GRID_CELL + Math.round((GRID_CELL - width) / 2),
         top:
-          Math.floor(cellIndex / 8) * CELL + 232 - height - [0, 4, 7, 3][frame],
+          Math.floor(cellIndex / 8) * GRID_CELL +
+          232 -
+          height -
+          [0, 4, 7, 3][frame],
       });
     }
   }

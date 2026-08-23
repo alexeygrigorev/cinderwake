@@ -10,7 +10,7 @@ Generation is an input to art direction, never a live rendering dependency. The 
 
 ## Atlas conventions
 
-Use power-of-two PNG atlases with transparent backgrounds, pinned canvas smoothing, no runtime trimming, and integer source/destination coordinates. Each atlas has a versioned JSON manifest with:
+Use fixed-grid PNG atlases with transparent backgrounds, power-of-two cells, pinned canvas smoothing, no runtime trimming, and integer source/destination coordinates. An atlas may use a non-power-of-two height when that avoids decoding unused transparent rows on memory-constrained mobile browsers. Each atlas has a versioned JSON manifest with:
 
 - atlas file name and content hash;
 - sprite key, category, source rectangle, native size, and trim/padding policy;
@@ -22,18 +22,20 @@ Frames in a clip share a declared canvas and anchor. Deliberate overhangs (weapo
 
 ### Actor source contract
 
-Every character is one actor ID with four 1024 × 1024, 4 × 4 source sheets. Each cell is exactly 256 × 256 pixels, uses the bottom-center foot anchor, and keeps the same identity, equipment, camera, lighting, proportions, and scale.
+Every character is one actor ID with six 1024 × 1024, 4 × 4 source sheets. Each authoring cell is exactly 256 × 256 pixels, uses the bottom-center foot anchor, and keeps the same identity, equipment, camera, lighting, proportions, and scale. This six-sheet template is the character-generation brief: a candidate that changes costume, viewpoint, light direction, body proportions, or cell placement is rejected before packing.
 
-| Source file                     | Cell contract                                                         |
-| ------------------------------- | --------------------------------------------------------------------- |
-| `{actor}-source.png`            | Rows: east idle, east walk, legacy attack poses, legacy ability poses |
-| `{actor}-directions-source.png` | Rows: north idle, north walk, south idle, south walk                  |
-| `{actor}-actions-source.png`    | Cells 0–5 attack, 6–7 reserve, 8–15 ability                           |
-| `{actor}-reactions-source.png`  | Row 0 hurt, cells 4–11 death, row 3 grounded reserve                  |
+| Source file                              | Cell contract                                                         |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `{actor}-source.png`                     | Rows: east idle, east walk, legacy attack poses, legacy ability poses |
+| `{actor}-directions-source.png`          | Rows: north idle, north walk, south idle, south walk                  |
+| `{actor}-actions-source.png`             | Cells 0–5 east attack, 6–7 reserve, 8–15 east ability                 |
+| `{actor}-reactions-source.png`           | Row 0 east hurt, cells 4–11 east death, row 3 grounded reserve        |
+| `{actor}-direction-actions-source.png`   | Rows: north attack, north ability, south attack, south ability        |
+| `{actor}-direction-reactions-source.png` | Rows: north hurt/death, south hurt/death                              |
 
 West is the only reflected facing and is derived by horizontally flipping east at render time. North and south are authored views. Cross-dissolves and translucent duplicate bodies are not production frames: movement and combat must use discrete, articulated poses. Large detached projectiles remain separate entities, while small contact flashes may stay attached to an action frame.
 
-`art/actor-atlas-v1.json` is the single machine-readable packing authority (its schema ID is `ActorAtlasV2`; the stable filename preserves existing tooling). `npm run art:build` chroma-keys the source, removes boundary-connected cross-cell fragments, computes shared safe bounds across all four sheets, reanchors every frame, and emits a fixed 2048 × 3072 runtime atlas. `npm run art:check` verifies source presence, declared cadence, dimensions, non-empty cells, padding, anchors, and content hashes. Adding a character therefore means supplying the four sheets and one actor ID, not writing character-specific animation code.
+`art/actor-atlas-v1.json` is the single machine-readable packing authority (its schema ID is `ActorAtlasV2`; the stable filename preserves existing tooling). `npm run art:build` chroma-keys the source, removes boundary-connected cross-cell fragments, computes one safe normalization envelope across all six sheets, reanchors every frame, downsamples authoring cells to 128 × 128 runtime cells, and emits a fixed 1024 × 2560 atlas. The 20 rows cover east, north, and south versions of every clip plus two reserves; west reflects east. This reduces decoded memory per actor from roughly 24 MiB to 10 MiB while retaining the 256-pixel originals for future repacking. `npm run art:check` verifies source presence, declared cadence, dimensions, non-empty cells, padding, anchors, and content hashes. Adding a character therefore means supplying the six sheets and one actor ID, not writing character-specific animation code.
 
 ## Deterministic integration
 

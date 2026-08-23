@@ -3,32 +3,32 @@
   "pipeline": "ActorAtlasV2",
   "actorSpec": {
     "source": "art/actor-atlas-v1.json",
-    "sha256": "5abf7ae05fd41f36d0ce6d3f1e572ef3998c11182118aad9a96cf37f2c194374"
+    "sha256": "b14c91d15d6ad258949bfc499b62787d0487ea61e397c1b5a3fe371bfb31ee9d"
   },
   "builtAt": "deterministic-from-committed-source",
   "outputs": {
     "actor-vanguard.png": {
-      "sha256": "8a8fdc423f2a4ca0021537e5ff9f32ba3516c491290dc30b3b77eec1fd0d5799",
+      "sha256": "87962956a5e0cf6531c86eef187cbec4891e05bb22fdfeabae1ed444bdda986d",
       "source": "public/assets/sprites/actor-vanguard.png"
     },
     "actor-ranger.png": {
-      "sha256": "c3a30f9b24de74826275f73550e1798e46f233d6c518b5b184a52483f063910f",
+      "sha256": "ba6c8cd9708713f1262e3e47ee2375bf65372e3868bc4b40616b09ba3044226a",
       "source": "public/assets/sprites/actor-ranger.png"
     },
     "actor-arcanist.png": {
-      "sha256": "53fd09b3e93883f475aff0f56f260e9033a0c84264ddfb395d42ab6c1a80fd90",
+      "sha256": "fbed99924640e2bc9534970290363ae0589998929150494ccab01824d9118b49",
       "source": "public/assets/sprites/actor-arcanist.png"
     },
     "actor-ashfang.png": {
-      "sha256": "8ed5335dc382c770d3f083f1cb76dd5f20d70e80153cc87bd73d671f50f40e11",
+      "sha256": "f8123c107dd520970b0af6f3157a1761cb414c2190a0e663983b4b38d612d7f0",
       "source": "public/assets/sprites/actor-ashfang.png"
     },
     "actor-hexer.png": {
-      "sha256": "6c1261638daa3cf19e2c0a75179ecd8c050894655e1b85b51213b8043e82ff0d",
+      "sha256": "bc401075592ae74556de0a27d3ecf4a6b8e08f99b80e7c329c703a1cc0ab2dfb",
       "source": "public/assets/sprites/actor-hexer.png"
     },
     "actor-stonekin.png": {
-      "sha256": "a604c26d9533be9464df5e9a8f826f4f307809209fa483d3cef31432cab62a3d",
+      "sha256": "025bfe46d0a6088f99bf1736b41126abf64303acc82f1370c8649aca32af9b73",
       "source": "public/assets/sprites/actor-stonekin.png"
     },
     "environment-terrain.png": {
