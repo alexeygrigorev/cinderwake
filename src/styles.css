@@ -576,6 +576,12 @@ button {
   }
 }
 
+@media (min-width: 761px) and (pointer: fine) {
+  .game .stage {
+    width: min(100vw, 177.778svh);
+  }
+}
+
 /* Mobile-first cinematic selection. The generated scene and portrait crops are
    raster sprites; CSS is limited to layout, legibility masks, and interaction. */
 .selection.selection-v2 {
@@ -598,6 +604,10 @@ button {
   background-repeat: no-repeat;
   background-size: cover;
   transform: scale(1.002);
+}
+
+.selection-v2[data-selected-class="arcanist"] .selection-art {
+  background-position: center 8%;
 }
 .selection-v2::after {
   position: absolute;
@@ -1193,6 +1203,404 @@ button {
 .sprite-lab-copy,
 .sprite-seed-label {
   justify-content: center;
+}
+
+/* Public-facing phone composition. The game-scoped specificity isolates these
+   rules from legacy deterministic-lab selectors later in the sheet. */
+@media (max-width: 760px), (pointer: coarse) {
+  .game {
+    width: 100vw;
+    height: 100svh;
+    min-height: 100svh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .game .stage {
+    width: 100vw;
+    height: 100svh;
+    max-width: none;
+    aspect-ratio: auto;
+    overflow: hidden;
+  }
+
+  .game .stage canvas {
+    position: absolute;
+    left: 50%;
+    width: auto;
+    min-width: 100%;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  .game .hud.top {
+    padding: max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right)) 10px
+      max(10px, env(safe-area-inset-left));
+  }
+
+  .game .brand {
+    font-size: 13px;
+  }
+
+  .game .counter {
+    width: 54px;
+    height: 54px;
+  }
+
+  .game .hud.bottom {
+    z-index: 6;
+    right: auto;
+    bottom: calc(108px + env(safe-area-inset-bottom));
+    left: 50%;
+    width: auto;
+    padding: 0;
+    transform: translateX(-50%);
+  }
+
+  .game .health {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-items: center;
+    filter: drop-shadow(0 3px 7px #000);
+  }
+
+  .game .health-label {
+    grid-column: 1 / 3;
+  }
+
+  .game .health b {
+    width: min(44vw, 170px);
+    height: 30px;
+  }
+
+  .game .mobile-controls {
+    position: fixed;
+    z-index: 7;
+    inset: auto 0 0;
+    display: flex;
+    height: calc(112px + env(safe-area-inset-bottom));
+    padding: 4px max(10px, env(safe-area-inset-right))
+      max(4px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    align-items: end;
+    justify-content: space-between;
+    pointer-events: none;
+    background: none;
+    border: 0;
+  }
+
+  .game .move-pad {
+    flex: 0 0 102px;
+    width: 102px;
+    height: 102px;
+    pointer-events: auto;
+    background-color: transparent;
+    background-image: var(--ui-atlas);
+    background-position: 100% 33.333%;
+    background-repeat: no-repeat;
+    background-size: 400% 400%;
+    filter: drop-shadow(0 5px 8px #000);
+  }
+
+  .game .move-ring {
+    inset: 13px;
+  }
+
+  .game .move-knob {
+    width: 40px;
+    height: 40px;
+    margin: -20px;
+  }
+
+  .game .move-pad small {
+    bottom: 4px;
+  }
+
+  .game .mobile-actions {
+    display: grid;
+    grid-template:
+      "ability primary" 50px
+      "tonic primary" 50px / 50px 82px;
+    gap: 4px 7px;
+    width: 139px;
+    pointer-events: auto;
+  }
+
+  .game .mobile-actions button {
+    width: 50px;
+    min-width: 50px;
+    height: 50px;
+    min-height: 50px;
+    padding: 8px 4px;
+    border: 0;
+    border-radius: 0;
+    background-color: transparent;
+    background-image: var(--ui-atlas);
+    background-repeat: no-repeat;
+    background-size: 400% 400%;
+    filter: drop-shadow(0 4px 7px #000);
+  }
+
+  .game .mobile-actions .primary-action {
+    grid-area: primary;
+    align-self: center;
+    width: 82px;
+    min-width: 82px;
+    height: 82px;
+    min-height: 82px;
+    background-color: transparent;
+    background-image: var(--ui-atlas);
+    background-position: 0 33.333%;
+    background-repeat: no-repeat;
+    background-size: 400% 400%;
+  }
+
+  .game .mobile-actions .ability-action {
+    grid-area: ability;
+    background-position: 33.333% 33.333%;
+  }
+
+  .game .mobile-actions .tonic-action {
+    grid-area: tonic;
+    background-position: 66.667% 33.333%;
+  }
+
+  .game .mobile-actions .sprite-action-label {
+    font-size: 10px;
+  }
+
+  .game .mobile-actions .sprite-action-detail,
+  .game #mobile-cd,
+  .game #mobile-tonics {
+    font-size: 8px;
+  }
+
+  .game > .lab-toggle {
+    top: max(8px, env(safe-area-inset-top));
+    right: 72px;
+    bottom: auto;
+    opacity: 0.62;
+  }
+
+  .selection.selection-v2 {
+    height: 100svh;
+    min-height: 100svh;
+  }
+
+  .selection-v2 .selection-art {
+    background-position: center 42%;
+  }
+
+  .selection-v2::after {
+    background:
+      linear-gradient(180deg, #030506d9 0, transparent 20%),
+      linear-gradient(0deg, #030506 0, #030506fa 22%, transparent 49%);
+  }
+
+  .selection-v2 .selection-header {
+    top: max(12px, env(safe-area-inset-top));
+  }
+
+  .selection-v2 .selection-header .eyebrow {
+    margin-bottom: 4px;
+  }
+
+  .selection-v2 .selection-header h1 {
+    font-size: clamp(40px, 12vw, 50px);
+    line-height: 0.9;
+  }
+
+  .selection-v2 .choose {
+    padding: 0 11px max(10px, env(safe-area-inset-bottom));
+  }
+
+  .selection-v2 .selected-class {
+    min-height: 48px;
+    margin-bottom: 5px;
+  }
+
+  .selection-v2 .selected-class h2 {
+    margin-bottom: 1px;
+    font-size: clamp(25px, 7.5vw, 32px);
+  }
+
+  .selection-v2 .selected-class .sprite-role {
+    font-size: 8px;
+  }
+
+  .selection-v2 .selected-class .sprite-stats {
+    font-size: 7px;
+  }
+
+  .selection-v2 .cards {
+    gap: 5px;
+  }
+
+  .selection-v2 .class-card,
+  .selection-v2 .class-card.selected {
+    min-height: 64px;
+    transform: none;
+  }
+
+  .selection-v2 .class-card strong {
+    bottom: 4px;
+    font-size: clamp(11px, 3.2vw, 14px);
+  }
+
+  .selection-v2 .run-controls {
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .selection-v2 .seed-label > .sprite-text {
+    height: 10px;
+    font-size: 6px;
+  }
+
+  .selection-v2 .seed-control,
+  .selection-v2 .begin {
+    min-height: 44px;
+  }
+
+  .selection-v2 .seed-control input {
+    min-height: 44px;
+  }
+
+  .selection-v2 .begin .sprite-text,
+  .selection-v2 .seed-display {
+    font-size: 9px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .selection.selection-v2 {
+    background-image: var(--selection-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+
+  .selection-v2 .selection-art {
+    background-position: 30% 43%;
+    background-size: auto 120%;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 7%,
+      #000 19%,
+      #000 50%,
+      transparent 63%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 7%,
+      #000 19%,
+      #000 50%,
+      transparent 63%
+    );
+  }
+
+  .selection-v2[data-selected-class="arcanist"] .selection-art {
+    background-position: 30% 38%;
+  }
+
+  .game .stage {
+    width: 100vw;
+    height: 100svh;
+    aspect-ratio: auto;
+  }
+
+  .game .stage canvas {
+    top: 50%;
+    left: 0;
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    min-height: 100%;
+    transform: translateY(-50%);
+  }
+
+  .game .mobile-controls {
+    height: calc(104px + env(safe-area-inset-bottom));
+  }
+
+  .game .hud.bottom {
+    bottom: max(7px, env(safe-area-inset-bottom));
+  }
+
+  .selection-v2 .selection-header {
+    top: max(10px, env(safe-area-inset-top));
+  }
+
+  .selection-v2 .selection-header h1 {
+    font-size: 40px;
+  }
+
+  .selection-v2 .choose {
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: min(45vw, 400px);
+  }
+
+  .selection-v2 .selected-class {
+    min-height: 34px;
+  }
+
+  .selection-v2 .selected-class h2 {
+    font-size: 23px;
+  }
+
+  .selection-v2 .class-card,
+  .selection-v2 .class-card.selected {
+    min-height: 56px;
+  }
+}
+
+/* The playfield is the product surface on every device. The 16:9 canvas is
+   cover-fitted inside this viewport frame; input mapping reads the canvas's
+   actual client rect, so the cropped edges remain semantically correct. */
+.game .stage {
+  width: 100vw;
+  height: 100svh;
+  max-width: none;
+  aspect-ratio: auto;
+  overflow: hidden;
+}
+
+@media (min-width: 761px) and (pointer: fine) {
+  .game .stage canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    min-width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (min-width: 761px) and (max-width: 900px) and (pointer: fine) {
+  .selection-v2 .selection-header {
+    top: 22px;
+    left: 24px;
+    width: 340px;
+    text-align: left;
+  }
+
+  .selection-v2 .selection-header h1 {
+    font-size: 50px;
+  }
+
+  .selection-v2 .choose {
+    right: 22px;
+    left: auto;
+    width: min(56vw, 448px);
+    padding-bottom: 22px;
+  }
+
+  .selection-v2 .class-card {
+    min-height: 82px;
+  }
 }
 .seed-label > .sprite-text {
   font-size: 12px;

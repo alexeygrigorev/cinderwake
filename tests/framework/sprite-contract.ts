@@ -55,6 +55,8 @@ export interface ManifestDrawCallV2 extends ManifestSpriteReferenceV2 {
   frameIndex: number;
   frameCount: number;
   clipDurationTicks: number;
+  destinationRect: { x: number; y: number; width: number; height: number };
+  opacity: number;
 }
 
 export interface ManifestSceneSpriteV2 extends ManifestSpriteReferenceV2 {
@@ -62,6 +64,8 @@ export interface ManifestSceneSpriteV2 extends ManifestSpriteReferenceV2 {
   kind: "tile" | "exit" | "prop";
   tile: { x: number; y: number };
   worldAnchor: { x: number; y: number };
+  destinationRect: { x: number; y: number; width: number; height: number };
+  opacity: number;
   zOrder: number;
 }
 
@@ -98,6 +102,8 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   "projectile:hostile": ["projectile"],
   "scenery:tile:floor": ["static"],
   "scenery:tile:wall": ["static"],
+  "scenery:edge:floor-blend": ["static"],
+  "scenery:boundary:stone": ["static"],
   "scenery:exit:locked": ["static"],
   "scenery:exit:open": ["static"],
 };
@@ -409,12 +415,8 @@ export function assertDeterministicScenePlacement(
         (item) => item.objectId === objectId,
       );
       if (!scene) fail(`missing deterministic scenery object ${objectId}`);
-      const expectedSprite =
-        state.map.tiles[y * state.map.width + x] === 0
-          ? "scenery:tile:floor"
-          : "scenery:tile:wall";
-      if (scene.kind !== "tile" || scene.spriteId !== expectedSprite)
-        fail(`${objectId} does not use ${expectedSprite}`);
+      if (scene.kind !== "tile" || scene.spriteId !== "scenery:tile:floor")
+        fail(`${objectId} does not use the shared scale-matched floor base`);
       if (scene.tile.x !== x || scene.tile.y !== y)
         fail(`${objectId} tile coordinates are not deterministic`);
       if (
@@ -422,8 +424,96 @@ export function assertDeterministicScenePlacement(
         scene.worldAnchor.y !== y * 1024 + 512
       )
         fail(`${objectId} world anchor is not the tile center`);
+      if (scene.opacity < 0.95)
+        fail(
+          `${objectId} shared floor base is visually absent at opacity ${scene.opacity}`,
+        );
+      const wall = state.map.tiles[y * state.map.width + x] === 1;
+      const wallOverlay = first.sceneSprites.find(
+        (item) => item.objectId === `wall-overlay:${x}:${y}`,
+      );
+      if (!wall && wallOverlay)
+        fail(`${objectId} walkable cell has a blocked-material overlay`);
+      if (
+        wall &&
+        (!wallOverlay ||
+          wallOverlay.spriteId !== "scenery:tile:wall" ||
+          wallOverlay.opacity < 0.3)
+      )
+        fail(`${objectId} collision topology is visually absent`);
     }
   }
+  const boundaryDirections = [
+    { id: "north", dx: 0, dy: -1 },
+    { id: "east", dx: 1, dy: 0 },
+    { id: "south", dx: 0, dy: 1 },
+    { id: "west", dx: -1, dy: 0 },
+  ] as const;
+  for (let y = 0; y < state.map.height; y += 1) {
+    for (let x = 0; x < state.map.width; x += 1) {
+      const wall = state.map.tiles[y * state.map.width + x] === 1;
+      if (!wall) continue;
+      const cardinalNeighborIsFloor = boundaryDirections.some(({ dx, dy }) => {
+        const neighborX = x + dx;
+        const neighborY = y + dy;
+        return (
+          neighborX >= 0 &&
+          neighborY >= 0 &&
+          neighborX < state.map.width &&
+          neighborY < state.map.height &&
+          state.map.tiles[neighborY * state.map.width + neighborX] === 0
+        );
+      });
+      if (cardinalNeighborIsFloor) {
+        const blend = first.sceneSprites.find(
+          ({ objectId }) => objectId === `edge-blend:${x}:${y}`,
+        );
+        if (!blend || blend.spriteId !== "scenery:edge:floor-blend")
+          fail(`missing floor-material blend at collision tile:${x}:${y}`);
+        if (blend.opacity < 0.2)
+          fail(`floor-material blend at collision tile:${x}:${y} is absent`);
+      }
+      for (const direction of boundaryDirections) {
+        const neighborX = x + direction.dx;
+        const neighborY = y + direction.dy;
+        if (
+          neighborX < 0 ||
+          neighborY < 0 ||
+          neighborX >= state.map.width ||
+          neighborY >= state.map.height ||
+          state.map.tiles[neighborY * state.map.width + neighborX] !== 0
+        )
+          continue;
+        const boundary = first.sceneSprites.find(
+          ({ objectId }) => objectId === `boundary:${direction.id}:${x}:${y}`,
+        );
+        if (!boundary || boundary.spriteId !== "scenery:boundary:stone")
+          fail(
+            `missing visible collision boundary ${direction.id} of tile:${x}:${y}`,
+          );
+        if (boundary.opacity < 0.1)
+          fail(
+            `collision boundary ${direction.id} of tile:${x}:${y} is visually absent`,
+          );
+      }
+    }
+  }
+  const player = first.drawCalls.find((item) => item.entityId === "player");
+  const spawnStructure = first.sceneSprites.find((item) =>
+    item.objectId.startsWith("structure:0:"),
+  );
+  if (!player) fail("missing player draw call for scene composition");
+  if (!spawnStructure) fail("missing spawn structure for scene composition");
+  const playerRect = player.destinationRect;
+  const structureRect = spawnStructure.destinationRect;
+  if (structureRect.width / playerRect.width < 1.45)
+    fail("spawn structure is too small relative to the player");
+  const overlaps =
+    playerRect.x < structureRect.x + structureRect.width &&
+    playerRect.x + playerRect.width > structureRect.x &&
+    playerRect.y < structureRect.y + structureRect.height &&
+    playerRect.y + playerRect.height > structureRect.y;
+  if (overlaps) fail("spawn structure destination overlaps the player");
   const exit = first.sceneSprites.find(
     (item) => item.objectId === "exit:rift-gate",
   );

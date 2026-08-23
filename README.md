@@ -1,6 +1,6 @@
 # Cinderwake
 
-[Play the public build](https://alexeygrigorev.com/cinderwake/) · [Open the public quality report](https://alexeygrigorev.com/cinderwake/quality/) · [Inspect character-generation evidence](https://alexeygrigorev.com/cinderwake/quality/generation-pipeline/)
+[Play the public build](https://alexeygrigorev.com/cinderwake/) · [Open the public quality report](https://alexeygrigorev.com/cinderwake/quality/) · [Inspect screen acceptance](https://alexeygrigorev.com/cinderwake/quality/screens/) · [Inspect actor animation evidence](https://alexeygrigorev.com/cinderwake/quality/actor-atlas-audit/)
 
 Cinderwake is an original browser action RPG and, more importantly, a reference framework for testing games from arbitrary state. A test can load a complete JSON world, apply semantic input at exact 60 Hz ticks, then retain three synchronized forms of evidence:
 
@@ -69,6 +69,8 @@ npm run check
 
 That command includes the fixed actor validator, exhaustive actor-animation audit, deterministic mobile-selection rebuild, and generation-ingress verifier. The animation audit checks all 144 actor/clip/facing banks, 720 authored-facing comparisons, and four injected negative controls; its inspectable strips and report are written to `quality-results/actor-atlas-audit/index.html`. The generation verifier preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
 
+`npm run report:screens` builds the 16-image public screen matrix. The report becomes accepted only when the committed independent-review record matches both the screen-contract hash and the ordered screenshot-set hash; any changed viewport, rule, landmark, or PNG automatically returns it to candidate status.
+
 Run the real Chromium input and visual suite:
 
 ```bash
@@ -124,6 +126,8 @@ The public quality report catalogs 23 explicit sequences: locomotion in four dir
 - [Scenario authoring guide](docs/scenario-authoring.md)
 - [Character generation and validation guide](art/generation/README.md)
 - [Sprite art pipeline](docs/art-pipeline.md)
+- [Screen test and review playbook](docs/screen-test-playbook.md)
+- [AI-driven reusable game workflow research](docs/research/ai-driven-game-development-2026.md)
 - [Chronological development decisions](docs/development-log.md)
 - [Architecture decision records](docs/decisions/)
 

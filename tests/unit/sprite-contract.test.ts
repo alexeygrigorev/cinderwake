@@ -344,4 +344,81 @@ describe("sprite atlas quality contract", () => {
       ).not.toThrow();
     }
   });
+
+  it("proves the scenery composition assessor rejects known visual regressions", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-idle"]!);
+    const valid = buildRenderManifest(state, CAMERA);
+    const mutations = [
+      {
+        expected: "collision topology is visually absent",
+        apply(manifest: typeof valid) {
+          manifest.sceneSprites.find(({ spriteId }) =>
+            spriteId.endsWith(":wall"),
+          )!.opacity = 0;
+        },
+      },
+      {
+        expected: "missing visible collision boundary",
+        apply(manifest: typeof valid) {
+          const index = manifest.sceneSprites.findIndex(({ objectId }) =>
+            objectId.startsWith("boundary:south:"),
+          );
+          manifest.sceneSprites.splice(index, 1);
+          manifest.sceneSprites.forEach((sprite, spriteIndex) => {
+            sprite.zOrder = spriteIndex;
+          });
+        },
+      },
+      {
+        expected: "missing floor-material blend",
+        apply(manifest: typeof valid) {
+          const boundary = manifest.sceneSprites.find(({ objectId }) =>
+            objectId.startsWith("boundary:"),
+          )!;
+          const [, , x, y] = boundary.objectId.split(":");
+          const index = manifest.sceneSprites.findIndex(
+            ({ objectId }) => objectId === `edge-blend:${x}:${y}`,
+          );
+          manifest.sceneSprites.splice(index, 1);
+          manifest.sceneSprites.forEach((sprite, spriteIndex) => {
+            sprite.zOrder = spriteIndex;
+          });
+        },
+      },
+      {
+        expected: "spawn structure is too small",
+        apply(manifest: typeof valid) {
+          manifest.sceneSprites.find(({ objectId }) =>
+            objectId.startsWith("structure:0:"),
+          )!.destinationRect.width = 100;
+        },
+      },
+      {
+        expected: "spawn structure destination overlaps",
+        apply(manifest: typeof valid) {
+          const player = manifest.drawCalls.find(
+            ({ entityId }) => entityId === "player",
+          )!;
+          const structure = manifest.sceneSprites.find(({ objectId }) =>
+            objectId.startsWith("structure:0:"),
+          )!;
+          structure.destinationRect.x = player.destinationRect.x;
+          structure.destinationRect.y = player.destinationRect.y;
+        },
+      },
+    ];
+    for (const mutation of mutations) {
+      const broken = structuredClone(valid);
+      mutation.apply(broken);
+      expect(() =>
+        assertDeterministicScenePlacement(
+          broken,
+          structuredClone(broken),
+          state,
+          catalog,
+        ),
+      ).toThrow(mutation.expected);
+    }
+  });
 });

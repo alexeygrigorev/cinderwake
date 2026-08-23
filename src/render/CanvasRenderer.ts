@@ -268,7 +268,7 @@ export class CanvasRenderer {
       scene.destinationRect,
       false,
       scene.opacity,
-      0,
+      scene.rotation ?? 0,
     );
   }
 
@@ -300,17 +300,11 @@ export class CanvasRenderer {
       this.rotationFor(call),
     );
     if (call.type !== "player" && call.type !== "monster") return;
-    const actor =
-      call.type === "player"
-        ? state.player
-        : state.monsters.find((monster) => monster.id === call.entityId);
-    if (actor && actor.health > 0)
-      this.drawHealthBar(
-        context,
-        call,
-        actor.health / actor.maxHealth,
-        call.type === "player",
-      );
+    const actor = state.monsters.find(
+      (monster) => monster.id === call.entityId,
+    );
+    if (call.type === "monster" && actor && actor.health > 0)
+      this.drawHealthBar(context, call, actor.health / actor.maxHealth);
   }
 
   private rotationFor(call: DrawCallV1): number {
@@ -341,9 +335,8 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     call: DrawCallV1,
     health: number,
-    player: boolean,
   ): void {
-    const width = player ? 46 : 38;
+    const width = 38;
     const height = 11;
     const destination = {
       x: Math.round(call.screenAnchor.x - width / 2),

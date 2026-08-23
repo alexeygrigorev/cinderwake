@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "project": "cinderwake",
+  "profiles": [
+    {
+      "id": "phone-portrait",
+      "viewport": { "width": 390, "height": 749 },
+      "touch": true,
+      "minStageCoverage": 0.98,
+      "maxControlHeightRatio": 0.2,
+      "minTargetPixels": 44
+    },
+    {
+      "id": "phone-landscape",
+      "viewport": { "width": 844, "height": 390 },
+      "touch": true,
+      "minStageCoverage": 0.98,
+      "maxControlHeightRatio": 0.28,
+      "minTargetPixels": 44
+    },
+    {
+      "id": "narrow-desktop",
+      "viewport": { "width": 800, "height": 600 },
+      "touch": false,
+      "minStageCoverage": 0.7,
+      "maxControlHeightRatio": 0,
+      "minTargetPixels": 36
+    },
+    {
+      "id": "desktop",
+      "viewport": { "width": 1440, "height": 900 },
+      "touch": false,
+      "minStageCoverage": 0.7,
+      "maxControlHeightRatio": 0,
+      "minTargetPixels": 36
+    }
+  ],
+  "screens": {
+    "selection": {
+      "route": "/",
+      "root": ".selection",
+      "ready": ".selection-art",
+      "required": [
+        ".selection-header h1",
+        ".selected-class",
+        ".class-card",
+        "#seed",
+        "#begin"
+      ],
+      "publicForbidden": [".selection-lab-toggle"],
+      "landmarks": {
+        "vanguard": [
+          { "id": "head", "x": 0.5, "y": 0.34 },
+          { "id": "weapon-hand", "x": 0.31, "y": 0.6 },
+          { "id": "shield-hand", "x": 0.61, "y": 0.51 },
+          { "id": "left-foot", "x": 0.42, "y": 0.84 },
+          { "id": "right-foot", "x": 0.57, "y": 0.84 }
+        ],
+        "ranger": [
+          { "id": "head", "x": 0.53, "y": 0.27 },
+          { "id": "bow-hand", "x": 0.46, "y": 0.57 },
+          { "id": "draw-hand", "x": 0.63, "y": 0.54 },
+          { "id": "left-foot", "x": 0.42, "y": 0.84 },
+          { "id": "right-foot", "x": 0.59, "y": 0.84 }
+        ],
+        "arcanist": [
+          { "id": "head", "x": 0.48, "y": 0.23 },
+          { "id": "free-hand", "x": 0.37, "y": 0.5 },
+          { "id": "staff-hand", "x": 0.63, "y": 0.39 },
+          { "id": "left-foot", "x": 0.42, "y": 0.83 },
+          { "id": "right-foot", "x": 0.58, "y": 0.83 }
+        ]
+      },
+      "appearance": [
+        "The selected hero is the dominant focal subject and is not cropped at the head, hands, or feet.",
+        "The title never crosses the hero face and occupies less than one fifth of screen height.",
+        "Class choices and launch controls form one compact group with an obvious selected state.",
+        "Phone portrait and landscape fit without scrolling; no control is hidden by browser safe areas.",
+        "All three character scenes use the same dark-gothic palette, lighting, camera language, and proportions."
+      ]
+    },
+    "game": {
+      "route": "/?captureMode=1",
+      "root": ".game",
+      "ready": "canvas",
+      "required": ["canvas", ".hud.top", ".health"],
+      "publicForbidden": [".game > .lab-toggle"],
+      "appearance": [
+        "The world is the dominant surface: no dashboard or black void competes with the playfield.",
+        "Buildings, props, ground, actors, and effects share one scale, perspective, palette, and light direction.",
+        "The player and nearby enemies are readable at actual play scale and never resemble attached scenery.",
+        "Mobile controls overlay the corners, remain at least 44 CSS pixels, and obscure at most one fifth of portrait height.",
+        "Health, enemy count, and abilities are readable without covering the player or central combat zone.",
+        "Movement, attacks, animation recovery, depth ordering, and camera follow look continuous across a frame sequence."
+      ]
+    }
+  }
+}

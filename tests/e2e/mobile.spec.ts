@@ -264,9 +264,10 @@ test("portrait game UI respects touch target and viewport bounds", async ({
   expect(layout.controlBox.bottom).toBeLessThanOrEqual(layout.viewport.height);
   expect(layout.stageBox.left).toBeGreaterThanOrEqual(0);
   expect(layout.stageBox.right).toBeLessThanOrEqual(layout.viewport.width);
-  expect(
-    Math.abs(layout.controlBox.top - layout.stageBox.bottom),
-  ).toBeLessThanOrEqual(1);
+  expect(layout.controlBox.top).toBeGreaterThanOrEqual(layout.stageBox.top);
+  expect(layout.controlBox.bottom).toBeLessThanOrEqual(
+    layout.stageBox.bottom + 1,
+  );
   expect(layout.targets.every((target) => target.height >= 44)).toBe(true);
   await expect(page.locator(".game")).toHaveScreenshot("mobile-game.png");
 });
@@ -304,7 +305,8 @@ test("landscape game canvas fits without scrolling and keeps controls reachable"
   expect(layout.document.height).toBeLessThanOrEqual(layout.viewport.height);
   expect(layout.stage.top).toBeGreaterThanOrEqual(0);
   expect(layout.stage.bottom).toBeLessThanOrEqual(layout.viewport.height + 1);
-  expect(layout.stage.width / layout.stage.height).toBeCloseTo(16 / 9, 2);
+  expect(layout.stage.width).toBeCloseTo(layout.viewport.width, 0);
+  expect(layout.stage.height).toBeCloseTo(layout.viewport.height, 0);
   expect(layout.controls.bottom).toBeLessThanOrEqual(layout.viewport.height);
   await expect(page.locator(".game")).toHaveScreenshot(
     "mobile-game-landscape.png",

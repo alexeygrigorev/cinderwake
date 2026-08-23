@@ -18,6 +18,7 @@
     "test:visual:update": "playwright test tests/visual --update-snapshots",
     "capture:sequence": "node scripts/capture-sequence.mjs",
     "capture:matrix": "node scripts/capture-matrix.mjs",
+    "report:screens": "node scripts/build-screen-report.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",

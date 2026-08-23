@@ -133,6 +133,7 @@ for (const actorId of actorIds) {
 for (const fileName of [
   "environment-terrain.png",
   "environment-ground.png",
+  "environment-floor.png",
   "environment-structures.png",
   "environment-props.png",
   "ui.png",
@@ -142,6 +143,131 @@ for (const fileName of [
   if (metadata.width !== 1024 || metadata.height !== 1024)
     throw new Error(`${fileName} must be exactly 1024x1024`);
 }
+
+function terrainMaterialEvidence(data, width, height) {
+  const cellMeans = [];
+  for (let cellY = 0; cellY < 4; cellY += 1) {
+    for (let cellX = 0; cellX < 4; cellX += 1) {
+      const sums = [0, 0, 0];
+      let samples = 0;
+      for (let y = cellY * 256; y < (cellY + 1) * 256; y += 4) {
+        for (let x = cellX * 256; x < (cellX + 1) * 256; x += 4) {
+          const offset = (y * width + x) * 3;
+          for (let channel = 0; channel < 3; channel += 1)
+            sums[channel] += data[offset + channel];
+          samples += 1;
+        }
+      }
+      cellMeans.push(sums.map((value) => value / samples));
+    }
+  }
+  const luma = cellMeans.map(
+    ([red, green, blue]) => 0.2126 * red + 0.7152 * green + 0.0722 * blue,
+  );
+  const redChroma = cellMeans.map(([red, green]) => red - green);
+  const blueChroma = cellMeans.map(([_red, green, blue]) => blue - green);
+  const range = (values) => Math.max(...values) - Math.min(...values);
+  const edgeDifference = (axis, first, second) => {
+    let total = 0;
+    let samples = 0;
+    if (axis === "x") {
+      for (let y = 0; y < height; y += 1) {
+        for (let channel = 0; channel < 3; channel += 1) {
+          total += Math.abs(
+            data[(y * width + first) * 3 + channel] -
+              data[(y * width + second) * 3 + channel],
+          );
+          samples += 1;
+        }
+      }
+    } else {
+      for (let x = 0; x < width; x += 1) {
+        for (let channel = 0; channel < 3; channel += 1) {
+          total += Math.abs(
+            data[(first * width + x) * 3 + channel] -
+              data[(second * width + x) * 3 + channel],
+          );
+          samples += 1;
+        }
+      }
+    }
+    return total / samples;
+  };
+  const internalX = [256, 512, 768].map((x) => edgeDifference("x", x - 1, x));
+  const internalY = [256, 512, 768].map((y) => edgeDifference("y", y - 1, y));
+  return {
+    lumaRange: range(luma),
+    redChromaRange: range(redChroma),
+    blueChromaRange: range(blueChroma),
+    wrapX: edgeDifference("x", 0, width - 1),
+    wrapY: edgeDifference("y", 0, height - 1),
+    internalXMax: Math.max(...internalX),
+    internalYMax: Math.max(...internalY),
+  };
+}
+
+function terrainMaterialViolations(evidence) {
+  const violations = [];
+  if (
+    evidence.lumaRange > 6 ||
+    evidence.redChromaRange > 3 ||
+    evidence.blueChromaRange > 3
+  )
+    violations.push("broad-lighting-gradient");
+  if (evidence.wrapX > evidence.internalXMax * 1.5 + 2)
+    violations.push("horizontal-wrap-seam");
+  if (evidence.wrapY > evidence.internalYMax * 1.5 + 2)
+    violations.push("vertical-wrap-seam");
+  return violations;
+}
+
+const floorPixels = await sharp(
+  path.join(atlasDirectory, "environment-floor.png"),
+)
+  .removeAlpha()
+  .raw()
+  .toBuffer({ resolveWithObject: true });
+const floorEvidence = terrainMaterialEvidence(
+  floorPixels.data,
+  floorPixels.info.width,
+  floorPixels.info.height,
+);
+const floorViolations = terrainMaterialViolations(floorEvidence);
+if (floorViolations.length > 0)
+  throw new Error(
+    `environment-floor.png material contract failed: ${floorViolations.join(", ")}`,
+  );
+
+const gradientMutation = Buffer.from(floorPixels.data);
+for (let y = 0; y < floorPixels.info.height; y += 1) {
+  for (let x = 0; x < floorPixels.info.width / 2; x += 1) {
+    const offset = (y * floorPixels.info.width + x) * 3;
+    gradientMutation[offset] = Math.min(255, gradientMutation[offset] + 40);
+  }
+}
+const seamMutation = Buffer.from(floorPixels.data);
+for (let y = 0; y < floorPixels.info.height; y += 1) {
+  const offset = (y * floorPixels.info.width + floorPixels.info.width - 1) * 3;
+  seamMutation.fill(255, offset, offset + 3);
+}
+const materialNegativeControls = [
+  terrainMaterialViolations(
+    terrainMaterialEvidence(
+      gradientMutation,
+      floorPixels.info.width,
+      floorPixels.info.height,
+    ),
+  ).includes("broad-lighting-gradient"),
+  terrainMaterialViolations(
+    terrainMaterialEvidence(
+      seamMutation,
+      floorPixels.info.width,
+      floorPixels.info.height,
+    ),
+  ).includes("horizontal-wrap-seam"),
+];
+if (!materialNegativeControls.every(Boolean))
+  throw new Error("Terrain material negative controls were not detected");
 
 const fixedDimensions = {
   "loot.png": [2048, 2048],

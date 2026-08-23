@@ -9,17 +9,19 @@ import {
 import { GameHost } from "./app/GameHost";
 import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
-import { preloadSpriteAssets } from "./render/sprites";
+import { preloadSpriteAssets, SPRITE_CATALOG } from "./render/sprites";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const assetBase = import.meta.env.BASE_URL;
+const spriteAssetCount = Object.keys(SPRITE_CATALOG.assets).length;
 let selected: CharacterClass = "vanguard",
   seed = "cinder-041",
   host: GameHost | undefined,
   input: InputController | undefined,
   activeScenario: ScenarioV1 | undefined;
 const query = new URLSearchParams(location.search),
-  testMode = query.get("testMode") === "1";
+  testMode = query.get("testMode") === "1",
+  captureMode = query.get("captureMode") === "1";
 
 function escapeAttribute(value: string): string {
   return value
@@ -86,7 +88,7 @@ function screen(): void {
     )
     .join(
       "",
-    )}</div><div class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></div></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
+    )}</div><form class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" type="submit" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></form></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
   app.querySelectorAll<HTMLButtonElement>("[data-class]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -99,24 +101,30 @@ function screen(): void {
     app.querySelector<HTMLElement>(".seed-display")!.innerHTML =
       spriteGlyphs(seed);
   };
-  app.querySelector<HTMLButtonElement>("#begin")!.onclick = () =>
+  app.querySelector<HTMLFormElement>(".run-controls")!.onsubmit = (event) => {
+    event.preventDefault();
     void boot(createRunScenario(seed || "cinder-041", selected));
+  };
   const selectionLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
   if (selectionLab) selectionLab.onclick = () => lab();
 }
 async function boot(scenario: ScenarioV1): Promise<void> {
   activeScenario = scenario;
-  app.innerHTML = `<main class="loading" aria-busy="true" style="--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Cinderwake</h1><p class="loading-status" aria-live="polite">${spriteText("Waking the atlas 0 / 14", "sprite-loading")}</p></main>`;
+  app.innerHTML = `<main class="loading" aria-busy="true" style="--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Cinderwake</h1><p class="loading-status" aria-live="polite">${spriteText(`Waking the atlas 0 / ${spriteAssetCount}`, "sprite-loading")}</p></main>`;
   try {
-    await preloadSpriteAssets((loaded, total) => {
-      const status = app.querySelector<HTMLElement>(".loading-status");
-      if (status)
-        setSpriteLabel(
-          status,
-          `Waking the atlas ${loaded} / ${total}`,
-          "sprite-loading",
-        );
-    });
+    const requestedTimeout = Number(query.get("assetTimeoutMs"));
+    await preloadSpriteAssets(
+      (loaded, total) => {
+        const status = app.querySelector<HTMLElement>(".loading-status");
+        if (status)
+          setSpriteLabel(
+            status,
+            `Waking the atlas ${loaded} / ${total}`,
+            "sprite-loading",
+          );
+      },
+      testMode && requestedTimeout > 0 ? requestedTimeout : undefined,
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     app.innerHTML = `<main class="loading loading-failed" style="--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Atlas failed.</h1><p>${spriteText(message, "sprite-loading-error")}</p><div><button data-loading="retry" aria-label="Retry loading">${spriteText("Retry", "sprite-button-label")}</button><button data-loading="back" aria-label="Back to character selection">${spriteText("Back", "sprite-button-label")}</button></div></main>`;
@@ -130,7 +138,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
-  host = new GameHost(canvas, testMode);
+  host = new GameHost(canvas, testMode || captureMode);
   input = new InputController(
     canvas,
     (x, y) => host!.worldAt(x, y),

@@ -1,4 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
+import { SPRITE_CATALOG } from "../../src/render/sprites";
+
+const SPRITE_ASSET_COUNT = Object.keys(SPRITE_CATALOG.assets).length;
 
 const ALLOWED_TITLES = new Set([
   "Atlas failed.",
@@ -77,7 +80,7 @@ test("selection exposes only approved title text and renders the editable seed w
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
+  await page.goto("/?testMode=1&selection=1");
   await expect(page.locator(".selection")).toBeVisible();
   await expectTitleOnlyText(page);
   await expectSpriteBacked(page, [
@@ -118,6 +121,21 @@ test("selection exposes only approved title text and renders the editable seed w
   expect(seedPresentation.overlap).toBe(false);
 });
 
+test("ordinary selection and gameplay do not expose developer controls", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".selection-lab-toggle")).toHaveCount(0);
+  await page.locator("#seed").fill("qa-enter-0042");
+  await page.locator("#seed").press("Enter");
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator(".brand small")).toHaveAttribute(
+    "aria-label",
+    "qa-enter-0042",
+  );
+  await expect(page.locator(".game > .lab-toggle")).toHaveCount(0);
+});
+
 test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph atlas", async ({
   page,
 }) => {
@@ -136,7 +154,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   await expectTitleOnlyText(page);
   await expect(page.locator(".loading-status")).toHaveAttribute(
     "aria-label",
-    /Waking the atlas \d+ \/ 14/,
+    new RegExp(`Waking the atlas \\d+ / ${SPRITE_ASSET_COUNT}`),
   );
 
   releaseEffects!();
@@ -198,6 +216,41 @@ test("an atlas failure becomes a retryable error instead of an endless loading s
   await expect(page.locator(".loading-failed")).toBeVisible();
   await expect(page.locator("[data-loading='retry']")).toBeVisible();
   await expect(page.locator("[data-loading='back']")).toBeVisible();
+  await page.unroute("**/assets/sprites/actor-vanguard.png");
+  await page.locator("[data-loading='retry']").click();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+});
+
+test("a stalled atlas request reaches a recoverable error deadline", async ({
+  page,
+}) => {
+  let releaseRequest: (() => void) | undefined;
+  let finishHandler: (() => void) | undefined;
+  const handlerFinished = new Promise<void>((resolve) => {
+    finishHandler = resolve;
+  });
+  await page.route("**/assets/sprites/actor-ranger.png", async (route) => {
+    await new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
+    await route.abort("failed");
+    finishHandler?.();
+  });
+  await page.goto("/?testMode=1&selection=1&assetTimeoutMs=150");
+  await page.locator("#begin").click();
+  await expect(page.locator(".loading-failed")).toBeVisible({
+    timeout: 2_000,
+  });
+  await expect(page.locator(".sprite-loading-error")).toHaveAttribute(
+    "aria-label",
+    /Timed out loading sprite atlas/,
+  );
+  await expect(page.locator("[data-loading='retry']")).toBeVisible();
+  await expect(page.locator("[data-loading='back']")).toBeVisible();
+  releaseRequest?.();
+  await handlerFinished;
+  await page.unroute("**/assets/sprites/actor-ranger.png");
   await page.locator("[data-loading='back']").click();
   await expect(page.locator(".selection")).toBeVisible();
 });

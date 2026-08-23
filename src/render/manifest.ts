@@ -75,6 +75,7 @@ export interface SceneSpriteV2 extends SpriteReferenceV2 {
   zOrder: number;
   visible: boolean;
   opacity: number;
+  rotation?: number;
 }
 
 export interface RenderManifestV1 {
@@ -228,12 +229,15 @@ function buildSceneSprites(
     layer: "terrain",
     zOrder: 0,
     visible: intersectsViewport(groundDestination),
-    opacity: 1,
+    // This full-map image is only an underlay for sub-pixel gaps at canvas
+    // edges. The visible ground is assembled from scale-matched atlas cells
+    // below, so collision topology can never expose a differently scaled
+    // square "debug patch".
+    opacity: 0.22,
   });
   for (let y = 0; y < state.map.height; y += 1) {
     for (let x = 0; x < state.map.width; x += 1) {
       const wall = state.map.tiles[y * state.map.width + x] === 1;
-      const spriteId = wall ? "scenery:tile:wall" : "scenery:tile:floor";
       const worldAnchor = {
         x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
         y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
@@ -241,23 +245,168 @@ function buildSceneSprites(
       const screenAnchor = screenFor(worldAnchor, camera);
       const destinationRect = destinationAt(
         screenAnchor,
-        TILE_PIXELS + 2,
-        TILE_PIXELS + 2,
+        TILE_PIXELS,
+        TILE_PIXELS,
         { x: 128, y: 128 },
       );
       scene.push({
-        ...sceneReference(spriteId, sceneVariant(state, x, y, wall ? 4 : 8)),
+        // Every cell receives the same contiguous floor material at the same
+        // scale. Blocked terrain is a second translucent material pass. This
+        // removes the visible map-sized rectangle caused by mixing a stretched
+        // background with cell-sized walkable-floor fragments.
+        ...sceneReference("scenery:tile:floor", (y % 16) * 16 + (x % 16)),
         objectId: `tile:${x}:${y}`,
         kind: "tile",
         tile: { x, y },
         worldAnchor,
         screenAnchor,
         destinationRect,
-        layer: wall ? "structures" : "terrain",
+        layer: "terrain",
         zOrder: scene.length,
         visible: intersectsViewport(destinationRect),
-        opacity: wall ? 1 : 0.08,
+        opacity: 1,
       });
+      if (!wall) continue;
+
+      let cardinalFloor = 0;
+      let diagonalFloor = 0;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const neighborX = x + dx;
+          const neighborY = y + dy;
+          if (
+            neighborX < 0 ||
+            neighborY < 0 ||
+            neighborX >= state.map.width ||
+            neighborY >= state.map.height ||
+            state.map.tiles[neighborY * state.map.width + neighborX] !== 0
+          )
+            continue;
+          if (dx === 0 || dy === 0) cardinalFloor += 1;
+          else diagonalFloor += 1;
+        }
+      }
+      const wallOpacity =
+        cardinalFloor > 0 ? 0.34 : diagonalFloor > 0 ? 0.48 : 0.62;
+      scene.push({
+        ...sceneReference("scenery:tile:wall", (y % 16) * 16 + (x % 16)),
+        objectId: `wall-overlay:${x}:${y}`,
+        kind: "tile",
+        tile: { x, y },
+        worldAnchor,
+        screenAnchor,
+        destinationRect,
+        layer: "terrain",
+        zOrder: scene.length,
+        visible: intersectsViewport(destinationRect),
+        opacity: wallOpacity,
+      });
+    }
+  }
+
+  for (let y = 0; y < state.map.height; y += 1) {
+    for (let x = 0; x < state.map.width; x += 1) {
+      if (state.map.tiles[y * state.map.width + x] === 0) continue;
+      let cardinalFloor = 0;
+      let diagonalFloor = 0;
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const neighborX = x + dx;
+          const neighborY = y + dy;
+          if (
+            neighborX < 0 ||
+            neighborY < 0 ||
+            neighborX >= state.map.width ||
+            neighborY >= state.map.height ||
+            state.map.tiles[neighborY * state.map.width + neighborX] !== 0
+          )
+            continue;
+          if (dx === 0 || dy === 0) cardinalFloor += 1;
+          else diagonalFloor += 1;
+        }
+      }
+      const opacity = cardinalFloor > 0 ? 0.24 : diagonalFloor > 0 ? 0.11 : 0;
+      if (opacity === 0) continue;
+      const worldAnchor = {
+        x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+        y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+      };
+      const screenAnchor = screenFor(worldAnchor, camera);
+      const destinationRect = destinationAt(
+        screenAnchor,
+        TILE_PIXELS,
+        TILE_PIXELS,
+        { x: 128, y: 128 },
+      );
+      scene.push({
+        ...sceneReference("scenery:edge:floor-blend", (y % 16) * 16 + (x % 16)),
+        objectId: `edge-blend:${x}:${y}`,
+        kind: "tile",
+        tile: { x, y },
+        worldAnchor,
+        screenAnchor,
+        destinationRect,
+        layer: "terrain",
+        zOrder: scene.length,
+        visible: intersectsViewport(destinationRect),
+        opacity,
+      });
+    }
+  }
+
+  // Thin raster masonry follows every blocked/walkable transition. Rotating
+  // one authored strip produces a continuous room outline without stamping a
+  // full facade onto every wall cell or obscuring the painted ground.
+  const boundaryDirections = [
+    { id: "north", dx: 0, dy: -1, ax: 0.5, ay: 0, rotation: 0 },
+    { id: "east", dx: 1, dy: 0, ax: 1, ay: 0.5, rotation: Math.PI / 2 },
+    { id: "south", dx: 0, dy: 1, ax: 0.5, ay: 1, rotation: 0 },
+    { id: "west", dx: -1, dy: 0, ax: 0, ay: 0.5, rotation: Math.PI / 2 },
+  ] as const;
+  for (let y = 0; y < state.map.height; y += 1) {
+    for (let x = 0; x < state.map.width; x += 1) {
+      const wall = state.map.tiles[y * state.map.width + x] === 1;
+      if (!wall) continue;
+      for (const direction of boundaryDirections) {
+        const neighborX = x + direction.dx;
+        const neighborY = y + direction.dy;
+        if (
+          neighborX < 0 ||
+          neighborY < 0 ||
+          neighborX >= state.map.width ||
+          neighborY >= state.map.height ||
+          state.map.tiles[neighborY * state.map.width + neighborX] !== 0
+        )
+          continue;
+        const worldAnchor = {
+          x: (x + direction.ax) * UNITS_PER_TILE,
+          y: (y + direction.ay) * UNITS_PER_TILE,
+        };
+        const screenAnchor = screenFor(worldAnchor, camera);
+        const destinationRect = destinationAt(screenAnchor, 54, 12, {
+          x: 128,
+          y: 128,
+        });
+        scene.push({
+          ...sceneReference(
+            "scenery:boundary:stone",
+            (direction.rotation ? y : x) % 4,
+          ),
+          objectId: `boundary:${direction.id}:${x}:${y}`,
+          kind: "prop",
+          tile: { x, y },
+          worldAnchor,
+          screenAnchor,
+          destinationRect,
+          layer: "terrain",
+          zOrder: scene.length,
+          visible: intersectsViewport(destinationRect),
+          opacity: 0.13,
+          rotation: direction.rotation,
+        });
+      }
     }
   }
 
@@ -301,16 +450,36 @@ function buildSceneSprites(
     if (roomIndex % 2 === 0 || roomIndex === decorativeRooms.length - 1) {
       const x = room.x + Math.floor(room.width / 2);
       const y = room.y + 1;
-      const name = state.map.rooms.length
-        ? structureNames[sceneVariant(state, x, y, structureNames.length)]!
-        : "chapel";
+      const name =
+        roomIndex === 0
+          ? "forge"
+          : state.map.rooms.length
+            ? structureNames[sceneVariant(state, x, y, structureNames.length)]!
+            : "chapel";
       const spriteId = `scenery:structure:${name}`;
       const worldAnchor = {
         x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-        y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+        // Pull the first row of architecture behind the spawn actor. The
+        // bottom anchor still participates in the shared depth queue, but the
+        // opaque building silhouette no longer touches the hero at rest.
+        y: y * UNITS_PER_TILE - UNITS_PER_TILE / 4,
       };
       const screenAnchor = screenFor(worldAnchor, camera);
-      const destinationRect = destinationAt(screenAnchor, 196, 196);
+      const structureSize =
+        name === "ruined-house"
+          ? 158
+          : name === "dead-tree"
+            ? 172
+            : name === "well" || name === "wagon"
+              ? 154
+              : name === "obelisk" || name === "rubble"
+                ? 144
+                : 196;
+      const destinationRect = destinationAt(
+        screenAnchor,
+        structureSize,
+        structureSize,
+      );
       scene.push({
         ...sceneReference(spriteId),
         objectId: `structure:${roomIndex}:${name}`,
@@ -467,8 +636,8 @@ export function buildRenderManifest(
       opacity: 1,
       layer: "actors",
     },
-    110,
-    110,
+    124,
+    124,
   );
 
   for (const monster of state.monsters) {

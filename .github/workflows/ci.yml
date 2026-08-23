@@ -38,6 +38,8 @@ jobs:
         run: npm run art:generation:check
       - run: npm test
       - run: npm run test:e2e
+      - name: Build candidate screen gallery
+        run: npm run report:screens
       - name: Capture temporal quality matrix
         run: npm run capture:matrix
       - name: Upload Playwright report
@@ -60,6 +62,13 @@ jobs:
         with:
           name: quality-sequences
           path: quality-results/sequences/
+          if-no-files-found: error
+      - name: Upload candidate screen gallery
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-screens
+          path: quality-results/screens/
           if-no-files-found: error
       - name: Upload generation-pipeline evidence
         if: ${{ success() }}
@@ -107,6 +116,11 @@ jobs:
         with:
           name: quality-sequences
           path: site/quality/sequences
+      - name: Download candidate screen gallery
+        uses: actions/download-artifact@v8
+        with:
+          name: quality-screens
+          path: site/quality/screens
       - name: Download generation-pipeline evidence
         uses: actions/download-artifact@v8
         with:

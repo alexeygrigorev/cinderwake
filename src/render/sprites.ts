@@ -118,6 +118,7 @@ const assets: Record<string, SpriteAssetV1> = {
     1024,
   ),
   "atlas:ground": asset("atlas:ground", "environment-ground.png", 1024, 1024),
+  "atlas:floor": asset("atlas:floor", "environment-floor.png", 1024, 1024),
   "atlas:structures": asset(
     "atlas:structures",
     "environment-structures.png",
@@ -175,29 +176,33 @@ function actorSprite(
   return { id, assetId, frames, clips };
 }
 
-function staticSprite(
+function textureSprite(
   id: string,
   assetId: string,
-  frameCells: Array<{ identity: string; column: number; row: number }>,
+  cellsPerAxis = 16,
 ): SpriteDefinitionV1 {
-  const frames = Object.fromEntries(
-    frameCells.map(({ identity, column, row }) => [
-      identity,
-      {
-        x: column * GRID_CELL,
-        y: row * GRID_CELL,
-        width: GRID_CELL,
-        height: GRID_CELL,
-      },
-    ]),
+  const cellSize = 1024 / cellsPerAxis;
+  const frameIdentities = Array.from(
+    { length: cellsPerAxis * cellsPerAxis },
+    (_, index) => `${id}:variant:${index}`,
   );
   return {
     id,
     assetId,
-    frames,
+    frames: Object.fromEntries(
+      frameIdentities.map((identity, index) => [
+        identity,
+        {
+          x: (index % cellsPerAxis) * cellSize,
+          y: Math.floor(index / cellsPerAxis) * cellSize,
+          width: cellSize,
+          height: cellSize,
+        },
+      ]),
+    ),
     clips: {
       static: {
-        frameIdentities: [frameCells[0]!.identity],
+        frameIdentities: [frameIdentities[0]!],
         durationTicks: 1,
         looping: true,
       },
@@ -329,28 +334,27 @@ register(
 register(
   singleFrameSprite("projectile:hostile", "atlas:effects", 2, 0, "projectile"),
 );
-register(
-  staticSprite(
-    "scenery:tile:floor",
-    "atlas:terrain",
-    Array.from({ length: 8 }, (_, index) => ({
-      identity: `scenery:tile:floor:variant:${index}`,
-      column: index % 4,
-      row: Math.floor(index / 4),
-    })),
-  ),
+register(textureSprite("scenery:tile:floor", "atlas:floor"));
+register(textureSprite("scenery:tile:wall", "atlas:ground"));
+register(textureSprite("scenery:edge:floor-blend", "atlas:floor"));
+const stoneBoundaryFrames = Object.fromEntries(
+  Array.from({ length: 4 }, (_, index) => [
+    `scenery:boundary:stone:variant:${index}`,
+    { x: index * GRID_CELL, y: GRID_CELL * 2, width: GRID_CELL, height: 64 },
+  ]),
 );
-register(
-  staticSprite(
-    "scenery:tile:wall",
-    "atlas:terrain",
-    Array.from({ length: 4 }, (_, index) => ({
-      identity: `scenery:tile:wall:variant:${index}`,
-      column: index,
-      row: 2,
-    })),
-  ),
-);
+register({
+  id: "scenery:boundary:stone",
+  assetId: "atlas:terrain",
+  frames: stoneBoundaryFrames,
+  clips: {
+    static: {
+      frameIdentities: ["scenery:boundary:stone:variant:0"],
+      durationTicks: 1,
+      looping: true,
+    },
+  },
+});
 register(singleFrameSprite("scenery:exit:locked", "atlas:structures", 3, 1));
 register(singleFrameSprite("scenery:exit:open", "atlas:structures", 3, 3));
 register(singleFrameSprite("scenery:backdrop", "atlas:terrain", 0, 3));
@@ -446,6 +450,7 @@ export function resolveSpriteAssetUrl(url: string): string {
 
 export function preloadSpriteAssets(
   onProgress: SpriteLoadProgress = () => undefined,
+  timeoutMs = 15_000,
 ): Promise<void> {
   const definitions = Object.values(SPRITE_CATALOG.assets);
   onProgress(loadedImages.size, definitions.length);
@@ -463,24 +468,46 @@ export function preloadSpriteAssets(
             return;
           }
           const image = new Image();
+          let settled = false;
+          const finish = (callback: () => void): void => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeout);
+            callback();
+          };
+          const timeout = setTimeout(
+            () =>
+              finish(() =>
+                reject(
+                  new Error(`Timed out loading sprite atlas ${definition.id}`),
+                ),
+              ),
+            timeoutMs,
+          );
           image.onload = () => {
             if (
               image.naturalWidth !== definition.pixelWidth ||
               image.naturalHeight !== definition.pixelHeight
             ) {
-              reject(
-                new Error(
-                  `Sprite atlas ${definition.id} decoded at ${image.naturalWidth}x${image.naturalHeight}`,
+              finish(() =>
+                reject(
+                  new Error(
+                    `Sprite atlas ${definition.id} decoded at ${image.naturalWidth}x${image.naturalHeight}`,
+                  ),
                 ),
               );
               return;
             }
-            loadedImages.set(definition.id, image);
-            onProgress(loadedImages.size, definitions.length);
-            resolve();
+            finish(() => {
+              loadedImages.set(definition.id, image);
+              onProgress(loadedImages.size, definitions.length);
+              resolve();
+            });
           };
           image.onerror = () =>
-            reject(new Error(`Unable to load sprite atlas ${definition.id}`));
+            finish(() =>
+              reject(new Error(`Unable to load sprite atlas ${definition.id}`)),
+            );
           image.src = resolveSpriteAssetUrl(definition.url);
         }),
     ),
