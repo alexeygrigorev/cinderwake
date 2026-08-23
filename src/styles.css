@@ -886,10 +886,217 @@ button {
 .skills #tonics {
   display: flex;
 }
+.sprite-eyebrow,
+.sprite-loading,
+.sprite-button-label,
+.sprite-hud-label,
+.sprite-shortcut,
+.sprite-action-label,
+.sprite-action-detail,
+.sprite-panel-label,
+.sprite-control-label,
+.sprite-outcome-label,
+.sprite-field-label,
+.sprite-scenario-value,
+.sprite-lab-copy,
+.sprite-seed-label {
+  justify-content: center;
+}
+.seed-label > .sprite-text {
+  font-size: 12px;
+}
+.seed-control {
+  position: relative;
+  display: block;
+  min-height: 46px;
+  margin-top: 7px;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+}
+.seed-control input {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: 13px;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: #f5ecdf;
+}
+.seed-control:focus-within {
+  outline: 2px solid #d99b58;
+  outline-offset: 2px;
+}
+.seed-display {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  padding: 13px;
+  font-size: 12px;
+  pointer-events: none;
+}
+.begin .sprite-text,
+.begin .sprite-word {
+  float: none;
+  font-size: inherit;
+  line-height: 1;
+}
+.begin > .sprite-text {
+  justify-content: center;
+}
+.selection-lab-toggle {
+  position: static;
+  display: flex;
+  width: max-content;
+  min-width: 96px;
+  min-height: 44px;
+  margin: 14px 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+.health-label .sprite-text,
+.health-label .sprite-word {
+  display: flex;
+  margin: 0;
+  font-size: 9px;
+}
+.skills .sprite-text {
+  width: 100%;
+  justify-content: center;
+}
+.skills .sprite-glyph {
+  color: inherit;
+  font-size: inherit;
+}
+.skills .sprite-shortcut {
+  color: #dba35f;
+  font-size: 8px;
+}
+.skills .sprite-action-label {
+  margin-top: 3px;
+  font-size: 10px;
+}
+.loot-log strong > .sprite-text {
+  font-size: 10px;
+}
+.move-pad small > .sprite-text {
+  font-size: 8px;
+}
+.mobile-actions .sprite-text,
+.mobile-actions .sprite-word {
+  margin: 0;
+  text-transform: none;
+}
+.mobile-actions .sprite-text {
+  display: flex;
+  justify-content: center;
+}
+.mobile-actions .sprite-action-label {
+  font-size: 10px;
+}
+.mobile-actions .sprite-action-detail {
+  font-size: 7px;
+}
+.outcome p > .sprite-text {
+  font-size: 11px;
+}
+.lab {
+  border: 0;
+  background-color: #121819;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 100% 66.667%;
+  background-repeat: no-repeat;
+}
+.lab .close {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-content: center;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 33.333%;
+  background-repeat: no-repeat;
+}
+.lab .eyebrow > .sprite-text {
+  justify-content: flex-start;
+  padding-right: 38px;
+  font-size: 10px;
+}
+.lab .lab-field {
+  display: block;
+  margin: 0;
+}
+.lab-field-label > .sprite-text {
+  justify-content: flex-start;
+  font-size: 10px;
+}
+.lab .scenario-chooser {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  gap: 4px;
+  margin: 7px 0 9px;
+}
+.scenario-chooser button {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+}
+.scenario-value {
+  display: grid;
+  min-width: 0;
+  height: 44px;
+  padding: 0 8px;
+  place-content: center;
+  overflow: hidden;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 66.667% 0;
+  background-repeat: no-repeat;
+}
+.scenario-value > .sprite-text {
+  flex-wrap: nowrap;
+  justify-content: center;
+  font-size: 9px;
+}
+.lab .lab-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin: 9px 0;
+}
+.lab-actions button {
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 3px;
+}
+.lab > [data-lab="capture"] {
+  width: 100%;
+  min-height: 44px;
+}
+.lab button > .sprite-text {
+  font-size: 9px;
+}
+.lab .frame > .sprite-text {
+  justify-content: flex-start;
+  font-size: 9px;
+}
 
 @media (min-width: 761px) {
   .selection {
-    padding: clamp(28px, 5vw, 80px);
+    padding: clamp(28px, 4vw, 64px);
   }
 }
 

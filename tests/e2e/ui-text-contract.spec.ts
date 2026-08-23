@@ -1,0 +1,184 @@
+import { expect, test, type Page } from "@playwright/test";
+
+const ALLOWED_TITLES = new Set([
+  "Arcanist",
+  "Cinderwake",
+  "CINDERWAKE",
+  "Cinders quieted.",
+  "Ranger",
+  "Run ended.",
+  "Test lab",
+  "Vanguard",
+]);
+
+async function inspectVisibleText(page: Page): Promise<{
+  offenders: string[];
+  titles: string[];
+}> {
+  return page.evaluate(() => {
+    const visible = (element: Element): boolean => {
+      let current: Element | null = element;
+      while (current) {
+        const style = getComputedStyle(current);
+        if (
+          style.display === "none" ||
+          style.visibility === "hidden" ||
+          Number(style.opacity) === 0
+        )
+          return false;
+        current = current.parentElement;
+      }
+      return element.getClientRects().length > 0;
+    };
+    const offenders: string[] = [],
+      titles: string[] = [],
+      walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    let textNode = walker.nextNode();
+    while (textNode) {
+      const value = textNode.textContent?.trim() ?? "";
+      const parent = textNode.parentElement;
+      if (value && parent && visible(parent)) {
+        const title = parent.closest<HTMLElement>("[data-ui-title]");
+        if (title) titles.push(value);
+        else
+          offenders.push(
+            `${parent.tagName.toLowerCase()}${parent.id ? `#${parent.id}` : ""}${parent.className ? `.${String(parent.className).replaceAll(" ", ".")}` : ""}: ${value}`,
+          );
+      }
+      textNode = walker.nextNode();
+    }
+    return { offenders, titles };
+  });
+}
+
+async function expectTitleOnlyText(page: Page): Promise<void> {
+  const audit = await inspectVisibleText(page);
+  expect(audit.offenders).toEqual([]);
+  expect(audit.titles.every((title) => ALLOWED_TITLES.has(title))).toBe(true);
+}
+
+async function expectSpriteBacked(
+  page: Page,
+  selectors: string[],
+): Promise<void> {
+  const missing = await page.evaluate((items) => {
+    return items.filter((selector) => {
+      const element = document.querySelector<HTMLElement>(selector);
+      return (
+        !element || !getComputedStyle(element).backgroundImage.includes("url(")
+      );
+    });
+  }, selectors);
+  expect(missing).toEqual([]);
+}
+
+test("selection exposes only approved title text and renders the editable seed with glyph sprites", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await expect(page.locator(".selection")).toBeVisible();
+  await expectTitleOnlyText(page);
+  await expectSpriteBacked(page, [
+    ".class-card",
+    ".seed-control",
+    ".begin",
+    ".selection-lab-toggle",
+  ]);
+
+  const seed = page.locator("#seed");
+  await seed.fill("ash-123");
+  await expect(seed).toHaveValue("ash-123");
+  await expect(page.locator(".seed-display .sprite-glyph")).toHaveCount(7);
+  const seedPresentation = await page.evaluate(() => {
+    const input = document.querySelector<HTMLInputElement>("#seed")!,
+      arcanist = document
+        .querySelector<HTMLElement>("[data-class='arcanist']")!
+        .getBoundingClientRect(),
+      labToggle = document
+        .querySelector<HTMLElement>(".selection-lab-toggle")!
+        .getBoundingClientRect();
+    const overlap = !(
+      labToggle.left >= arcanist.right ||
+      labToggle.right <= arcanist.left ||
+      labToggle.top >= arcanist.bottom ||
+      labToggle.bottom <= arcanist.top
+    );
+    return {
+      inputFill: getComputedStyle(input).webkitTextFillColor,
+      labPosition: getComputedStyle(
+        document.querySelector<HTMLElement>(".selection-lab-toggle")!,
+      ).position,
+      overlap,
+    };
+  });
+  expect(seedPresentation.inputFill).toBe("rgba(0, 0, 0, 0)");
+  expect(seedPresentation.labPosition).toBe("static");
+  expect(seedPresentation.overlap).toBe(false);
+});
+
+test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph atlas", async ({
+  page,
+}) => {
+  let releaseEffects: (() => void) | undefined;
+  const effectsHeld = new Promise<void>((resolve) => {
+    releaseEffects = resolve;
+  });
+  await page.route("**/assets/sprites/effects.png", async (route) => {
+    await effectsHeld;
+    await route.continue();
+  });
+  await page.goto("/?testMode=1&scenario=animation-idle", {
+    waitUntil: "domcontentloaded",
+  });
+  await expect(page.locator(".loading")).toBeVisible();
+  await expectTitleOnlyText(page);
+  await expect(page.locator(".loading .sprite-glyph")).toHaveCount(17);
+
+  releaseEffects!();
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  await expectTitleOnlyText(page);
+  await expectSpriteBacked(page, [
+    ".health b",
+    ".skills [data-action='attack']",
+    ".mobile-controls",
+    ".mobile-actions [data-action='ability']",
+    ".loot-log",
+    ".game > .lab-toggle",
+  ]);
+
+  await page.locator(".game > .lab-toggle").click();
+  await expect(page.locator(".lab")).toBeVisible();
+  await expectTitleOnlyText(page);
+  await expectSpriteBacked(page, [
+    ".lab",
+    ".scenario-value",
+    ".lab [data-lab='scenario-next']",
+    ".lab [data-lab='load']",
+    ".lab [data-lab='capture']",
+  ]);
+  const firstScenario = await page
+    .locator(".scenario-value")
+    .getAttribute("aria-label");
+  await page.locator("[data-lab='scenario-next']").click();
+  await expect(page.locator(".scenario-value")).not.toHaveAttribute(
+    "aria-label",
+    firstScenario!,
+  );
+  const pause = page.locator("[data-lab='pause']");
+  await pause.click();
+  await expect(pause).toHaveAttribute("aria-label", "Resume");
+  await pause.click();
+  await expect(pause).toHaveAttribute("aria-label", "Pause");
+  await expectTitleOnlyText(page);
+
+  await page.locator(".lab .close").click();
+  await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("temporal-run-loss");
+    window.__GAME_TEST__!.step(48, { render: true });
+  });
+  await expect(page.locator("#outcome")).toBeVisible();
+  await expect(page.locator("#outcome h2")).toHaveText("Run ended.");
+  await expectTitleOnlyText(page);
+  await expect(page.locator("#outcome button .sprite-glyph")).toHaveCount(8);
+});
