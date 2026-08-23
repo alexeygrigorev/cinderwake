@@ -919,6 +919,213 @@ function arenaRows(width = 22, height = 15): string[] {
   });
 }
 
+export const TEMPORAL_ENTITY_IDS = {
+  heroTarget: "monster:temporal-target",
+  ashfangAttacker: "monster:temporal-ashfang",
+  hexerAttacker: "monster:temporal-hexer",
+  stonekinAttacker: "monster:temporal-stonekin",
+  deathSubject: "monster:temporal-death",
+  deathContact: "attack:temporal-death-contact",
+  friendlyProjectile: "projectile:temporal-friendly",
+  goldLoot: "loot:temporal-gold",
+  tonicLoot: "loot:temporal-tonic",
+  weaponLoot: "loot:temporal-weapon",
+  lossAttacker: "monster:temporal-loss",
+  lossContact: "attack:temporal-loss-contact",
+} as const;
+
+export type TemporalInputAction = "attack" | "ability" | "move-right" | null;
+
+export interface TemporalScenarioContract {
+  scenarioId: string;
+  subjectId: string;
+  targetId?: string;
+  inputAction: TemporalInputAction;
+  /** Simulation event tick, before stepGame increments the state tick. */
+  contactEventTick?: number;
+  /** Exact state ticks recommended for synchronized state/manifest/PNG capture. */
+  captureTicks: readonly number[];
+}
+
+/**
+ * Public temporal-quality catalog. These names and entity IDs are stable test API:
+ * capture/report tooling may refer to them without inspecting scenario internals.
+ */
+export const TEMPORAL_SCENARIO_CONTRACTS = {
+  "temporal-vanguard-primary": {
+    scenarioId: "temporal-vanguard-primary",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "attack",
+    contactEventTick: 8,
+    captureTicks: [0, 4, 8, 9, 16, 26, 27],
+  },
+  "temporal-vanguard-ability": {
+    scenarioId: "temporal-vanguard-ability",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "ability",
+    contactEventTick: 12,
+    captureTicks: [0, 6, 12, 13, 24, 36, 37],
+  },
+  "temporal-ranger-primary": {
+    scenarioId: "temporal-ranger-primary",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "attack",
+    contactEventTick: 23,
+    captureTicks: [0, 3, 6, 7, 16, 24, 26, 27],
+  },
+  "temporal-ranger-ability": {
+    scenarioId: "temporal-ranger-ability",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "ability",
+    contactEventTick: 27,
+    captureTicks: [0, 5, 10, 11, 20, 28, 36, 37],
+  },
+  "temporal-arcanist-primary": {
+    scenarioId: "temporal-arcanist-primary",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "attack",
+    contactEventTick: 29,
+    captureTicks: [0, 4, 8, 9, 20, 27, 30, 36, 37],
+  },
+  "temporal-arcanist-ability": {
+    scenarioId: "temporal-arcanist-ability",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "ability",
+    contactEventTick: 12,
+    captureTicks: [0, 6, 12, 13, 24, 36, 37],
+  },
+  "temporal-ashfang-attack": {
+    scenarioId: "temporal-ashfang-attack",
+    subjectId: TEMPORAL_ENTITY_IDS.ashfangAttacker,
+    targetId: "player",
+    inputAction: null,
+    contactEventTick: 7,
+    captureTicks: [0, 1, 4, 7, 8, 18, 26, 27],
+  },
+  "temporal-hexer-attack": {
+    scenarioId: "temporal-hexer-attack",
+    subjectId: TEMPORAL_ENTITY_IDS.hexerAttacker,
+    targetId: "player",
+    inputAction: null,
+    contactEventTick: 43,
+    captureTicks: [0, 1, 6, 12, 13, 24, 27, 36, 44],
+  },
+  "temporal-stonekin-attack": {
+    scenarioId: "temporal-stonekin-attack",
+    subjectId: TEMPORAL_ENTITY_IDS.stonekinAttacker,
+    targetId: "player",
+    inputAction: null,
+    contactEventTick: 10,
+    captureTicks: [0, 1, 5, 10, 11, 20, 26, 27],
+  },
+  "temporal-enemy-death": {
+    scenarioId: "temporal-enemy-death",
+    subjectId: TEMPORAL_ENTITY_IDS.deathSubject,
+    targetId: TEMPORAL_ENTITY_IDS.deathSubject,
+    inputAction: null,
+    contactEventTick: 0,
+    captureTicks: [0, 1, 8, 16, 24, 32, 40, 48, 49],
+  },
+  "temporal-friendly-projectile": {
+    scenarioId: "temporal-friendly-projectile",
+    subjectId: TEMPORAL_ENTITY_IDS.friendlyProjectile,
+    inputAction: null,
+    captureTicks: [0, 1, 12, 24, 36, 48, 60],
+  },
+  "temporal-loot-bob": {
+    scenarioId: "temporal-loot-bob",
+    subjectId: TEMPORAL_ENTITY_IDS.goldLoot,
+    inputAction: null,
+    captureTicks: [0, 6, 12, 18, 24, 36, 48],
+  },
+  "temporal-camera-track": {
+    scenarioId: "temporal-camera-track",
+    subjectId: "player",
+    inputAction: null,
+    captureTicks: [0, 1, 4, 8, 12, 20, 30, 45, 60],
+  },
+  "temporal-run-win": {
+    scenarioId: "temporal-run-win",
+    subjectId: "player",
+    inputAction: null,
+    contactEventTick: 0,
+    captureTicks: [0, 1, 12, 24, 36, 48],
+  },
+  "temporal-run-loss": {
+    scenarioId: "temporal-run-loss",
+    subjectId: "player",
+    targetId: "player",
+    inputAction: null,
+    contactEventTick: 0,
+    captureTicks: [0, 1, 8, 16, 24, 32, 40, 48, 49],
+  },
+} as const satisfies Record<string, TemporalScenarioContract>;
+
+function temporalHeroAction(
+  classId: CharacterClass,
+  action: "primary" | "ability",
+): ScenarioV1 {
+  const scenarioId = `temporal-${classId}-${action}`;
+  const isMelee =
+    classId === "vanguard" || (classId === "arcanist" && action === "ability");
+  const targetTile: VecTuple = isMelee ? [10.2, 7] : [13, 7];
+  return {
+    schemaVersion: 1,
+    id: scenarioId,
+    seed: `quality-${classId}-${action}-01`,
+    classId,
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [9, 7], facing: [1024, 0], power: 0 },
+    monsters: [
+      {
+        id: TEMPORAL_ENTITY_IDS.heroTarget,
+        kind: "ashfang",
+        tile: targetTile,
+        health: 120,
+        maxHealth: 120,
+        armor: 0,
+        attackReadyTick: 10_000,
+      },
+    ],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  };
+}
+
+function temporalEnemyAttack(kind: MonsterKind): ScenarioV1 {
+  const entityId =
+    kind === "ashfang"
+      ? TEMPORAL_ENTITY_IDS.ashfangAttacker
+      : kind === "hexer"
+        ? TEMPORAL_ENTITY_IDS.hexerAttacker
+        : TEMPORAL_ENTITY_IDS.stonekinAttacker;
+  const monsterTile: VecTuple =
+    kind === "hexer" ? [13, 7] : kind === "ashfang" ? [9.6, 7] : [9.8, 7];
+  return {
+    schemaVersion: 1,
+    id: `temporal-${kind}-attack`,
+    seed: `quality-${kind}-attack-01`,
+    classId: "vanguard",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [9, 7], health: 100, maxHealth: 100, armor: 0 },
+    monsters: [
+      {
+        id: entityId,
+        kind,
+        tile: monsterTile,
+        attackReadyTick: 0,
+        guaranteedLoot: false,
+      },
+    ],
+    settings: { ai: true, autoPickup: false, cameraFollow: true },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1026,6 +1233,169 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
       },
     ],
     settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-vanguard-primary": temporalHeroAction("vanguard", "primary"),
+  "temporal-vanguard-ability": temporalHeroAction("vanguard", "ability"),
+  "temporal-ranger-primary": temporalHeroAction("ranger", "primary"),
+  "temporal-ranger-ability": temporalHeroAction("ranger", "ability"),
+  "temporal-arcanist-primary": temporalHeroAction("arcanist", "primary"),
+  "temporal-arcanist-ability": temporalHeroAction("arcanist", "ability"),
+  "temporal-ashfang-attack": temporalEnemyAttack("ashfang"),
+  "temporal-hexer-attack": temporalEnemyAttack("hexer"),
+  "temporal-stonekin-attack": temporalEnemyAttack("stonekin"),
+  "temporal-enemy-death": {
+    schemaVersion: 1,
+    id: "temporal-enemy-death",
+    seed: "quality-enemy-death-01",
+    classId: "vanguard",
+    tick: 0,
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: {
+      tile: [9, 7],
+      facing: [1024, 0],
+      animation: { clip: "attack", startedAtTick: 0, lockedUntilTick: 26 },
+    },
+    monsters: [
+      {
+        id: TEMPORAL_ENTITY_IDS.deathSubject,
+        kind: "ashfang",
+        tile: [10.2, 7],
+        health: 1,
+        maxHealth: 36,
+        guaranteedLoot: true,
+      },
+    ],
+    pendingAttacks: [
+      {
+        id: TEMPORAL_ENTITY_IDS.deathContact,
+        ownerId: "player",
+        kind: "primary",
+        impactTick: 0,
+        originTile: [9, 7],
+        direction: [1024, 0],
+        range: 1638,
+        damage: 18,
+      },
+    ],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-friendly-projectile": {
+    schemaVersion: 1,
+    id: "temporal-friendly-projectile",
+    seed: "quality-friendly-projectile-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [9, 7], facing: [1024, 0] },
+    monsters: [],
+    projectiles: [
+      {
+        id: TEMPORAL_ENTITY_IDS.friendlyProjectile,
+        owner: "player",
+        hostile: false,
+        tile: [5, 7],
+        previousTile: [4.90625, 7],
+        velocity: [96, 0],
+        radius: 155,
+        damage: 15,
+        expiresAtTick: 120,
+        color: ARCHETYPES.arcanist.accent,
+        pierce: 2,
+        spawnedAtTick: -1,
+        hitTargets: [],
+      },
+    ],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-loot-bob": {
+    schemaVersion: 1,
+    id: "temporal-loot-bob",
+    seed: "quality-loot-bob-01",
+    classId: "ranger",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [9, 7] },
+    monsters: [],
+    loot: [
+      {
+        id: TEMPORAL_ENTITY_IDS.goldLoot,
+        kind: "gold",
+        rarity: "common",
+        tile: [7, 6],
+        amount: 6,
+        sourceId: "temporal-fixture",
+        bobOffset: 0,
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.tonicLoot,
+        kind: "tonic",
+        rarity: "tempered",
+        tile: [8, 6],
+        amount: 1,
+        sourceId: "temporal-fixture",
+        bobOffset: 8,
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.weaponLoot,
+        kind: "weapon",
+        rarity: "relic",
+        tile: [9, 6],
+        amount: 6,
+        sourceId: "temporal-fixture",
+        bobOffset: 16,
+      },
+    ],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-camera-track": {
+    schemaVersion: 1,
+    id: "temporal-camera-track",
+    seed: "quality-camera-track-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(38, 12) },
+    player: { tile: [26, 6] },
+    monsters: [],
+    camera: { mode: "smooth", centerTile: [4, 6] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-run-win": {
+    schemaVersion: 1,
+    id: "temporal-run-win",
+    seed: "quality-run-win-01",
+    classId: "vanguard",
+    map: { mode: "explicit", rows: arenaRows(22, 15) },
+    player: { tile: [19, 2] },
+    monsters: [],
+    exitUnlocked: true,
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-run-loss": {
+    schemaVersion: 1,
+    id: "temporal-run-loss",
+    seed: "quality-run-loss-01",
+    classId: "vanguard",
+    map: { mode: "explicit", rows: arenaRows(22, 15) },
+    player: { tile: [9, 7], health: 1, maxHealth: 160, armor: 0 },
+    monsters: [
+      {
+        id: TEMPORAL_ENTITY_IDS.lossAttacker,
+        kind: "stonekin",
+        tile: [9.8, 7],
+        attackReadyTick: 10_000,
+        animation: { clip: "attack", startedAtTick: 0, lockedUntilTick: 26 },
+      },
+    ],
+    pendingAttacks: [
+      {
+        id: TEMPORAL_ENTITY_IDS.lossContact,
+        ownerId: TEMPORAL_ENTITY_IDS.lossAttacker,
+        kind: "primary",
+        impactTick: 0,
+        originTile: [9.8, 7],
+        direction: [-1024, 0],
+        range: 1050,
+        damage: 10,
+      },
+    ],
+    settings: { ai: true, autoPickup: false, cameraFollow: true },
   },
   "generated-run": {
     schemaVersion: 1,
