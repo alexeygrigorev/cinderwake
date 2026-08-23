@@ -2,8 +2,11 @@ import type { InputState, Vec2 } from "../game/types";
 import { EMPTY_INPUT } from "../game/types";
 
 export class InputController {
+  private static readonly TAP_ARRIVAL_DISTANCE = 96;
+  private static readonly TAP_AXIS_DEAD_ZONE = 32;
   private keys = new Set<string>();
   private touchMove: { x: -1 | 0 | 1; y: -1 | 0 | 1 } = { x: 0, y: 0 };
+  private touchTarget: Vec2 | null = null;
   private aim: Vec2 | null = null;
   private attack = false;
   private ability = false;
@@ -12,6 +15,7 @@ export class InputController {
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly toWorld: (x: number, y: number) => Vec2,
+    private readonly getPlayerPosition: () => Vec2,
   ) {
     window.addEventListener(
       "keydown",
@@ -29,6 +33,19 @@ export class InputController {
         )
           event.preventDefault();
         this.keys.add(event.key.toLowerCase());
+        if (
+          [
+            "arrowup",
+            "arrowdown",
+            "arrowleft",
+            "arrowright",
+            "w",
+            "a",
+            "s",
+            "d",
+          ].includes(event.key.toLowerCase())
+        )
+          this.touchTarget = null;
         if (event.key.toLowerCase() === "q") this.tonic = true;
       },
       { signal: this.listeners.signal },
@@ -50,8 +67,13 @@ export class InputController {
       (event) => {
         event.preventDefault();
         this.aim = this.point(event);
-        if (event.button === 0) this.attack = true;
-        if (event.button === 2) this.ability = true;
+        if (event.pointerType === "mouse") {
+          this.touchTarget = null;
+          if (event.button === 0) this.attack = true;
+          if (event.button === 2) this.ability = true;
+        } else if (event.isPrimary) {
+          this.touchTarget = { ...this.aim };
+        }
       },
       { signal: this.listeners.signal },
     );
@@ -101,6 +123,7 @@ export class InputController {
       "pointerdown",
       (event) => {
         event.preventDefault();
+        this.touchTarget = null;
         activePointer = event.pointerId;
         element.setPointerCapture(event.pointerId);
         update(event);
@@ -134,6 +157,24 @@ export class InputController {
     this.listeners.abort();
     this.keys.clear();
     this.touchMove = { x: 0, y: 0 };
+    this.touchTarget = null;
+  }
+  private tapMove(): { x: -1 | 0 | 1; y: -1 | 0 | 1 } {
+    if (!this.touchTarget) return { x: 0, y: 0 };
+    const player = this.getPlayerPosition();
+    const dx = this.touchTarget.x - player.x;
+    const dy = this.touchTarget.y - player.y;
+    if (Math.hypot(dx, dy) <= InputController.TAP_ARRIVAL_DISTANCE) {
+      this.touchTarget = null;
+      return { x: 0, y: 0 };
+    }
+    const axis = (delta: number): -1 | 0 | 1 =>
+      Math.abs(delta) <= InputController.TAP_AXIS_DEAD_ZONE
+        ? 0
+        : delta < 0
+          ? -1
+          : 1;
+    return { x: axis(dx), y: axis(dy) };
   }
   sample(): InputState {
     const moveX =
@@ -142,10 +183,17 @@ export class InputController {
     const moveY =
       (this.keys.has("w") || this.keys.has("arrowup") ? -1 : 0) +
       (this.keys.has("s") || this.keys.has("arrowdown") ? 1 : 0);
+    const tapMove = this.tapMove();
     const input = {
       ...EMPTY_INPUT,
-      moveX: Math.max(-1, Math.min(1, moveX || this.touchMove.x)) as -1 | 0 | 1,
-      moveY: Math.max(-1, Math.min(1, moveY || this.touchMove.y)) as -1 | 0 | 1,
+      moveX: Math.max(
+        -1,
+        Math.min(1, moveX || this.touchMove.x || tapMove.x),
+      ) as -1 | 0 | 1,
+      moveY: Math.max(
+        -1,
+        Math.min(1, moveY || this.touchMove.y || tapMove.y),
+      ) as -1 | 0 | 1,
       aim: this.aim,
       attack: this.attack,
       ability: this.ability,

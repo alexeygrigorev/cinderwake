@@ -77,7 +77,7 @@ function selectionScene(classId: CharacterClass): string {
 
 function screen(): void {
   const archetype = ARCHETYPES[selected];
-  app.innerHTML = `<main class="selection selection-v2" data-selected-class="${selected}" style="--selection-art:url('${selectionScene(selected)}');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="selection-art" role="img" aria-label="${escapeAttribute(`${archetype.name} standing before the ruined settlement`)}"></div><header class="selection-header"><p class="eyebrow">${spriteText("Choose your ember", "sprite-eyebrow")}</p><h1 data-ui-title>Cinderwake</h1></header><section class="choose" aria-label="Character selection"><div class="selected-class"><h2 data-ui-title>${archetype.name}</h2>${spriteText(archetype.role, "sprite-role")}${spriteText(`HP ${archetype.health} / ARM ${archetype.armor}`, "sprite-stats")}</div><div class="cards" role="group" aria-label="Playable characters">${Object.values(
+  app.innerHTML = `<main class="selection selection-v2${testMode ? " test-mode" : ""}" data-selected-class="${selected}" style="--selection-art:url('${selectionScene(selected)}');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="selection-art" role="img" aria-label="${escapeAttribute(`${archetype.name} standing before the ruined settlement`)}"></div><header class="selection-header"><p class="eyebrow">${spriteText("Choose your ember", "sprite-eyebrow")}</p><h1 data-ui-title>Cinderwake</h1></header><section class="choose" aria-label="Character selection"><div class="selected-class"><h2 data-ui-title>${archetype.name}</h2>${spriteText(archetype.role, "sprite-role")}${spriteText(`HP ${archetype.health} / ARM ${archetype.armor}`, "sprite-stats")}</div><div class="cards" role="group" aria-label="Playable characters">${Object.values(
     ARCHETYPES,
   )
     .map(
@@ -86,7 +86,7 @@ function screen(): void {
     )
     .join(
       "",
-    )}</div><div class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></div></section><button class="lab-toggle selection-lab-toggle" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button></main>`;
+    )}</div><div class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></div></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
   app.querySelectorAll<HTMLButtonElement>("[data-class]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -101,7 +101,8 @@ function screen(): void {
   };
   app.querySelector<HTMLButtonElement>("#begin")!.onclick = () =>
     void boot(createRunScenario(seed || "cinder-041", selected));
-  app.querySelector<HTMLButtonElement>(".lab-toggle")!.onclick = () => lab();
+  const selectionLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
+  if (selectionLab) selectionLab.onclick = () => lab();
 }
 async function boot(scenario: ScenarioV1): Promise<void> {
   activeScenario = scenario;
@@ -125,12 +126,16 @@ async function boot(scenario: ScenarioV1): Promise<void> {
       () => screen();
     return;
   }
-  app.innerHTML = `<main class="game" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav><button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button></main>`;
+  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
   host = new GameHost(canvas, testMode);
-  input = new InputController(canvas, (x, y) => host!.worldAt(x, y));
+  input = new InputController(
+    canvas,
+    (x, y) => host!.worldAt(x, y),
+    () => host!.getState().player.position,
+  );
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
   host.onRender = updateHud;
@@ -144,7 +149,8 @@ async function boot(scenario: ScenarioV1): Promise<void> {
         (b.onclick = () =>
           input!.press(b.dataset.action as "attack" | "ability" | "tonic")),
     );
-  app.querySelector<HTMLButtonElement>(".lab-toggle")!.onclick = () => lab();
+  const gameLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
+  if (gameLab) gameLab.onclick = () => lab();
 }
 function updateHud(state: GameState): void {
   const p = state.player;

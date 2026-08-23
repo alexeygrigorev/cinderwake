@@ -138,7 +138,7 @@ test("touch landscape selection keeps every interactive surface inside the viewp
   ).toBe(true);
 });
 
-test("touch movement, canvas aim, and action buttons feed the real input adapter", async ({
+test("joystick movement and action buttons feed the real input adapter", async ({
   page,
 }) => {
   await page.goto("/?testMode=1&scenario=animation-idle");
@@ -169,13 +169,59 @@ test("touch movement, canvas aim, and action buttons feed the real input adapter
       (event: { type: string }) => event.type === "ability_started",
     ),
   ).toBe(true);
+});
 
-  await page.touchscreen.tap(330, 100);
-  const attack = await page.evaluate(() => {
-    window.__GAME_TEST__!.step(1, { useBrowserInput: true });
-    return window.__GAME_TEST__!.snapshot();
+test("tapping the ground persistently moves without striking; Strike attacks", async ({
+  page,
+}) => {
+  await page.goto("/?testMode=1&scenario=animation-idle");
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+
+  const tapPoint = await page.evaluate(() => {
+    const canvas = document.querySelector("canvas")!;
+    const bounds = canvas.getBoundingClientRect();
+    const player = window
+      .__GAME_TEST__!.renderManifest()
+      .drawCalls.find((call) => call.entityId === "player")!;
+    return {
+      x: bounds.left + ((player.screenAnchor.x + 96) / 960) * bounds.width,
+      y: bounds.top + (player.screenAnchor.y / 540) * bounds.height,
+    };
   });
-  expect(attack.player.facing.x).toBeGreaterThan(0);
+  const before = await page.evaluate(
+    () => window.__GAME_TEST__!.snapshot().player.position,
+  );
+  await page.touchscreen.tap(tapPoint.x, tapPoint.y);
+  const movement = await page.evaluate(() => {
+    const first = window.__GAME_TEST__!.step(1, {
+      useBrowserInput: true,
+    });
+    const later = window.__GAME_TEST__!.step(3, {
+      useBrowserInput: true,
+    });
+    return {
+      first: first.player.position,
+      later: later.player.position,
+      eventLog: later.eventLog,
+    };
+  });
+  expect(movement.first.x).toBeGreaterThan(before.x);
+  expect(movement.later.x).toBeGreaterThan(movement.first.x);
+  expect(
+    movement.eventLog.some(
+      (event: { type: string }) => event.type === "attack_started",
+    ),
+  ).toBe(false);
+
+  await page.locator(".mobile-actions [data-action='attack']").tap();
+  const strike = await page.evaluate(() =>
+    window.__GAME_TEST__!.step(1, { useBrowserInput: true }),
+  );
+  expect(
+    strike.eventLog.some(
+      (event: { type: string }) => event.type === "attack_started",
+    ),
+  ).toBe(true);
 });
 
 test("portrait game UI respects touch target and viewport bounds", async ({
