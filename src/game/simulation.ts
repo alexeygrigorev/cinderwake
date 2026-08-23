@@ -6,6 +6,7 @@ import {
   UNITS_PER_TILE,
 } from "./constants";
 import { isFloor, tileCenter } from "./dungeon";
+import { navigationDirection } from "./navigation";
 import { createRng, randomFloat } from "./rng";
 import {
   overlapsScenery,
@@ -447,17 +448,20 @@ function updatePlayer(
     moveX = Math.round((moveX * DIAGONAL_SCALE) / DIRECTION_SCALE);
     moveY = Math.round((moveY * DIAGONAL_SCALE) / DIRECTION_SCALE);
   }
-  player.velocity = { x: moveX, y: moveY };
   if (input.aim) player.facing = normalized(player.position, input.aim);
   else if (moveX !== 0 || moveY !== 0)
     player.facing = normalized({ x: 0, y: 0 }, { x: moveX, y: moveY });
   player.position = moveActor(
     state,
     player.position,
-    player.velocity,
+    { x: moveX, y: moveY },
     player.radius,
     scenery,
   );
+  player.velocity = {
+    x: player.position.x - player.previousPosition.x,
+    y: player.position.y - player.previousPosition.y,
+  };
   state.metrics.distanceUnits += Math.round(
     Math.hypot(
       player.position.x - player.previousPosition.x,
@@ -476,7 +480,7 @@ function updatePlayer(
   else if (state.tick >= player.animation.lockedUntilTick)
     setAnimation(
       player,
-      moveX !== 0 || moveY !== 0 ? "walk" : "idle",
+      player.velocity.x !== 0 || player.velocity.y !== 0 ? "walk" : "idle",
       state.tick,
     );
 }
@@ -550,18 +554,42 @@ function updateMonsters(
     monster.facing = direction;
     monster.velocity = { x: 0, y: 0 };
     if (monster.kind === "hexer" && distance < 3 * UNITS_PER_TILE) {
-      monster.velocity = {
-        x: -Math.round((direction.x * monster.moveSpeed) / 1024),
-        y: -Math.round((direction.y * monster.moveSpeed) / 1024),
+      const retreatTarget = {
+        x: monster.position.x - direction.x * 4,
+        y: monster.position.y - direction.y * 4,
       };
+      const retreat = navigationDirection(
+        state.map,
+        scenery,
+        monster.position,
+        retreatTarget,
+        monster.radius,
+      );
+      if (retreat) {
+        monster.facing = retreat;
+        monster.velocity = {
+          x: Math.round((retreat.x * monster.moveSpeed) / 1024),
+          y: Math.round((retreat.y * monster.moveSpeed) / 1024),
+        };
+      }
     } else if (
       distance > monster.attackRange * 0.85 &&
       distance < 9 * UNITS_PER_TILE
     ) {
-      monster.velocity = {
-        x: Math.round((direction.x * monster.moveSpeed) / 1024),
-        y: Math.round((direction.y * monster.moveSpeed) / 1024),
-      };
+      const pursuit = navigationDirection(
+        state.map,
+        scenery,
+        monster.position,
+        state.player.position,
+        monster.radius,
+      );
+      if (pursuit) {
+        monster.facing = pursuit;
+        monster.velocity = {
+          x: Math.round((pursuit.x * monster.moveSpeed) / 1024),
+          y: Math.round((pursuit.y * monster.moveSpeed) / 1024),
+        };
+      }
     }
     monster.position = moveActor(
       state,
@@ -570,6 +598,10 @@ function updateMonsters(
       monster.radius,
       scenery,
     );
+    monster.velocity = {
+      x: monster.position.x - monster.previousPosition.x,
+      y: monster.position.y - monster.previousPosition.y,
+    };
     if (
       distance <= monster.attackRange &&
       state.tick >= monster.attackReadyTick

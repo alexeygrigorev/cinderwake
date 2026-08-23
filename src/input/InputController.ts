@@ -1,12 +1,23 @@
 import type { InputState, Vec2 } from "../game/types";
 import { EMPTY_INPUT } from "../game/types";
 
+export type TouchRouteResolver = (
+  from: Vec2,
+  requestedTarget: Vec2,
+) => readonly Vec2[];
+
 export class InputController {
   private static readonly TAP_ARRIVAL_DISTANCE = 96;
   private static readonly TAP_AXIS_DEAD_ZONE = 32;
   private keys = new Set<string>();
   private touchMove: { x: -1 | 0 | 1; y: -1 | 0 | 1 } = { x: 0, y: 0 };
-  private touchTarget: Vec2 | null = null;
+  private touchRoute: Vec2[] = [];
+  private lastTouchPosition: Vec2 | null = null;
+  private lastTouchCommand: { x: -1 | 0 | 1; y: -1 | 0 | 1 } = {
+    x: 0,
+    y: 0,
+  };
+  private blockedTouchTicks = 0;
   private aim: Vec2 | null = null;
   private attack = false;
   private ability = false;
@@ -16,6 +27,7 @@ export class InputController {
     private readonly canvas: HTMLCanvasElement,
     private readonly toWorld: (x: number, y: number) => Vec2,
     private readonly getPlayerPosition: () => Vec2,
+    private readonly resolveTouchRoute?: TouchRouteResolver,
   ) {
     window.addEventListener(
       "keydown",
@@ -45,7 +57,7 @@ export class InputController {
             "d",
           ].includes(event.key.toLowerCase())
         )
-          this.touchTarget = null;
+          this.cancelTouchNavigation();
         if (event.key.toLowerCase() === "q") this.tonic = true;
       },
       { signal: this.listeners.signal },
@@ -68,11 +80,19 @@ export class InputController {
         event.preventDefault();
         this.aim = this.point(event);
         if (event.pointerType === "mouse") {
-          this.touchTarget = null;
+          this.cancelTouchNavigation(false);
           if (event.button === 0) this.attack = true;
           if (event.button === 2) this.ability = true;
         } else if (event.isPrimary) {
-          this.touchTarget = { ...this.aim };
+          const player = this.getPlayerPosition();
+          const route = this.resolveTouchRoute?.(player, this.aim) ?? [
+            this.aim,
+          ];
+          this.touchRoute = route.map((point) => ({ ...point }));
+          this.lastTouchPosition = null;
+          this.lastTouchCommand = { x: 0, y: 0 };
+          this.blockedTouchTicks = 0;
+          if (this.touchRoute.length === 0) this.cancelTouchNavigation();
         }
       },
       { signal: this.listeners.signal },
@@ -123,7 +143,7 @@ export class InputController {
       "pointerdown",
       (event) => {
         event.preventDefault();
-        this.touchTarget = null;
+        this.cancelTouchNavigation();
         activePointer = event.pointerId;
         element.setPointerCapture(event.pointerId);
         update(event);
@@ -157,24 +177,57 @@ export class InputController {
     this.listeners.abort();
     this.keys.clear();
     this.touchMove = { x: 0, y: 0 };
-    this.touchTarget = null;
+    this.cancelTouchNavigation();
+  }
+  private cancelTouchNavigation(clearAim = true): void {
+    this.touchRoute = [];
+    this.lastTouchPosition = null;
+    this.lastTouchCommand = { x: 0, y: 0 };
+    this.blockedTouchTicks = 0;
+    if (clearAim) this.aim = null;
   }
   private tapMove(): { x: -1 | 0 | 1; y: -1 | 0 | 1 } {
-    if (!this.touchTarget) return { x: 0, y: 0 };
+    if (this.touchRoute.length === 0) return { x: 0, y: 0 };
     const player = this.getPlayerPosition();
-    const dx = this.touchTarget.x - player.x;
-    const dy = this.touchTarget.y - player.y;
-    if (Math.hypot(dx, dy) <= InputController.TAP_ARRIVAL_DISTANCE) {
-      this.touchTarget = null;
+    if (
+      this.lastTouchPosition &&
+      (this.lastTouchCommand.x !== 0 || this.lastTouchCommand.y !== 0) &&
+      player.x === this.lastTouchPosition.x &&
+      player.y === this.lastTouchPosition.y
+    )
+      this.blockedTouchTicks += 1;
+    else this.blockedTouchTicks = 0;
+    if (this.blockedTouchTicks >= 12) {
+      this.cancelTouchNavigation();
       return { x: 0, y: 0 };
     }
+    while (this.touchRoute.length > 0) {
+      const waypoint = this.touchRoute[0]!;
+      if (
+        Math.hypot(waypoint.x - player.x, waypoint.y - player.y) >
+        InputController.TAP_ARRIVAL_DISTANCE
+      )
+        break;
+      this.touchRoute.shift();
+    }
+    const waypoint = this.touchRoute[0];
+    if (!waypoint) {
+      this.cancelTouchNavigation();
+      return { x: 0, y: 0 };
+    }
+    this.aim = { ...waypoint };
+    const dx = waypoint.x - player.x;
+    const dy = waypoint.y - player.y;
     const axis = (delta: number): -1 | 0 | 1 =>
       Math.abs(delta) <= InputController.TAP_AXIS_DEAD_ZONE
         ? 0
         : delta < 0
           ? -1
           : 1;
-    return { x: axis(dx), y: axis(dy) };
+    const command = { x: axis(dx), y: axis(dy) };
+    this.lastTouchPosition = { ...player };
+    this.lastTouchCommand = command;
+    return command;
   }
   sample(): InputState {
     const moveX =
@@ -183,6 +236,8 @@ export class InputController {
     const moveY =
       (this.keys.has("w") || this.keys.has("arrowup") ? -1 : 0) +
       (this.keys.has("s") || this.keys.has("arrowdown") ? 1 : 0);
+    if (moveX !== 0 || moveY !== 0 || this.touchMove.x || this.touchMove.y)
+      this.cancelTouchNavigation();
     const tapMove = this.tapMove();
     const input = {
       ...EMPTY_INPUT,
