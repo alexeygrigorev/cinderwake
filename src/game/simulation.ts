@@ -7,6 +7,11 @@ import {
 } from "./constants";
 import { isFloor, tileCenter } from "./dungeon";
 import { createRng, randomFloat } from "./rng";
+import {
+  overlapsScenery,
+  sceneryCollisions,
+  type SceneryCollisionFootprint,
+} from "./sceneryLayout";
 import type {
   AnimationClip,
   GameEvent,
@@ -42,19 +47,27 @@ function normalized(from: Vec2, to: Vec2, scale = DIRECTION_SCALE): Vec2 {
   };
 }
 
-function pointWalkable(state: GameState, point: Vec2, radius: number): boolean {
+function pointWalkable(
+  state: GameState,
+  point: Vec2,
+  radius: number,
+  scenery: SceneryCollisionFootprint[],
+): boolean {
   const offsets = [
     [-radius, -radius],
     [radius, -radius],
     [-radius, radius],
     [radius, radius],
   ] as const;
-  return offsets.every(([dx, dy]) =>
-    isFloor(
-      state.map,
-      Math.floor((point.x + dx) / UNITS_PER_TILE),
-      Math.floor((point.y + dy) / UNITS_PER_TILE),
-    ),
+  return (
+    offsets.every(([dx, dy]) =>
+      isFloor(
+        state.map,
+        Math.floor((point.x + dx) / UNITS_PER_TILE),
+        Math.floor((point.y + dy) / UNITS_PER_TILE),
+      ),
+    ) &&
+    scenery.every((collision) => !overlapsScenery(point, radius, collision))
   );
 }
 
@@ -63,12 +76,13 @@ function moveActor(
   position: Vec2,
   velocity: Vec2,
   radius: number,
+  scenery: SceneryCollisionFootprint[],
 ): Vec2 {
   const next = { ...position };
   const candidateX = { x: position.x + velocity.x, y: position.y };
-  if (pointWalkable(state, candidateX, radius)) next.x = candidateX.x;
+  if (pointWalkable(state, candidateX, radius, scenery)) next.x = candidateX.x;
   const candidateY = { x: next.x, y: position.y + velocity.y };
-  if (pointWalkable(state, candidateY, radius)) next.y = candidateY.y;
+  if (pointWalkable(state, candidateY, radius, scenery)) next.y = candidateY.y;
   return next;
 }
 
@@ -420,7 +434,11 @@ function queuePlayerAttack(
   else state.player.attackReadyTick = state.tick + definition.attackCooldown;
 }
 
-function updatePlayer(state: GameState, input: InputState): void {
+function updatePlayer(
+  state: GameState,
+  input: InputState,
+  scenery: SceneryCollisionFootprint[],
+): void {
   const player = state.player;
   player.previousPosition = { ...player.position };
   let moveX = input.moveX * player.moveSpeed;
@@ -438,6 +456,7 @@ function updatePlayer(state: GameState, input: InputState): void {
     player.position,
     player.velocity,
     player.radius,
+    scenery,
   );
   state.metrics.distanceUnits += Math.round(
     Math.hypot(
@@ -503,7 +522,10 @@ function damagePlayer(
   } else setAnimation(state.player, "hurt", state.tick, 8);
 }
 
-function updateMonsters(state: GameState): void {
+function updateMonsters(
+  state: GameState,
+  scenery: SceneryCollisionFootprint[],
+): void {
   for (const monster of [...state.monsters].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {
@@ -546,6 +568,7 @@ function updateMonsters(state: GameState): void {
       monster.position,
       monster.velocity,
       monster.radius,
+      scenery,
     );
     if (
       distance <= monster.attackRange &&
@@ -677,8 +700,9 @@ export function stepGame(state: GameState, input: InputState): GameState {
     return state;
   }
   state.events = [];
-  updatePlayer(state, input);
-  updateMonsters(state);
+  const scenery = sceneryCollisions(state.map);
+  updatePlayer(state, input, scenery);
+  updateMonsters(state, scenery);
   resolvePendingAttacks(state);
   updateProjectiles(state);
   resolveDeaths(state);

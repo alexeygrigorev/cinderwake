@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "project": "cinderwake",
   "verdict": "ACCEPT",
-  "reviewedAt": "2026-08-23",
+  "reviewedAt": "2026-08-24",
   "reviewer": "independent visual-audit agent",
   "reviewerTask": "/root/visual_audit",
   "scope": "Four public-route gameplay screens and all three character selections in each of four viewport/input profiles, reviewed at original resolution after machine gates passed.",
   "contractSha256": "9943223e46752cfa420348d649126fc5d51ae6e706f219fc23cb9ede414219d2",
-  "snapshotSetSha256": "33ff7f8f07dc7103474a6c864b6ee2ac1c742e15e8cebd9e92e57e3f757e48fd",
+  "snapshotSetSha256": "18b503515346ffa9ffdf0edb46fdc60c817524ba47baeb60be640a3da3cb9964",
   "measurements": {
     "unobstructedCollisionSamples": 10,
     "medianCollisionContrast": 4.82,
@@ -19,7 +19,8 @@
     "Gameplay has no map-sized material rectangle, short-period color band, checkerboard collision ribbon, or abrupt two-scale terrain transition.",
     "The forge and player remain separated and credibly scaled in every viewport.",
     "Mobile Move, Strike, Ability, Tonic, cooldown, and Vitality presentation remains readable at native size.",
-    "The structural, landmark, and rendered-pixel checks catch the previously rejected composition classes."
+    "The structural, landmark, and rendered-pixel checks catch the previously rejected composition classes.",
+    "The 118-pixel player remains readable and proportionate in all four gameplay profiles; the accepted Vanguard primary and south Arcanist ability strips show no scale pop, detached effect, foot shift, or recovery snap."
   ],
   "promotionRule": "This verdict applies only while both the contract and ordered screenshot-set hashes match. CI must downgrade the gallery to candidate if either hash changes."
 }

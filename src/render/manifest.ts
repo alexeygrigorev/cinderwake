@@ -6,6 +6,7 @@ import {
   VIEW_HEIGHT,
   VIEW_WIDTH,
 } from "../game/constants";
+import { buildSceneryLayout } from "../game/sceneryLayout";
 import type { AnimationClip, GameState, Vec2 } from "../game/types";
 import {
   SPRITE_CATALOG,
@@ -76,6 +77,13 @@ export interface SceneSpriteV2 extends SpriteReferenceV2 {
   visible: boolean;
   opacity: number;
   rotation?: number;
+  collision?: {
+    mode: "solid" | "passable";
+    shape: "ellipse";
+    worldCenter: Vec2;
+    halfWidth: number;
+    halfHeight: number;
+  } | null;
 }
 
 export interface RenderManifestV1 {
@@ -189,11 +197,6 @@ function destinationAt(
     width: Math.round(width),
     height: Math.round(height),
   };
-}
-
-function sceneVariant(state: GameState, x: number, y: number, count: number) {
-  const digest = Number.parseInt(state.map.digest.slice(0, 8), 16) || 0;
-  return Math.abs((digest ^ (x * 73_856_093) ^ (y * 19_349_663)) | 0) % count;
 }
 
 function buildSceneSprites(
@@ -410,116 +413,50 @@ function buildSceneSprites(
     }
   }
 
-  const decorativeRooms = state.map.rooms.length
-    ? state.map.rooms
-    : [
-        {
-          x: Math.max(1, state.map.spawn.x - 3),
-          y: Math.max(1, state.map.spawn.y - 3),
-          width: 7,
-          height: 6,
-        },
-      ];
-  const structureNames = [
-    "chapel",
-    "watchtower",
-    "forge",
-    "ruined-house",
-    "mausoleum",
-    "dead-tree",
-    "well",
-    "wagon",
-    "obelisk",
-    "rubble",
-  ];
-  const propNames = [
-    "ember-brazier",
-    "witchlight-lantern",
-    "sarcophagus",
-    "grave-markers",
-    "merchant-crates",
-    "weapon-rack",
-    "barrels",
-    "saint-statue",
-    "thorn-pillar",
-    "chain-cage",
-    "ritual-totem",
-    "barricade",
-  ];
-  decorativeRooms.forEach((room, roomIndex) => {
-    if (roomIndex % 2 === 0 || roomIndex === decorativeRooms.length - 1) {
-      const x = room.x + Math.floor(room.width / 2);
-      const y = room.y + 1;
-      const name =
-        roomIndex === 0
-          ? "forge"
-          : state.map.rooms.length
-            ? structureNames[sceneVariant(state, x, y, structureNames.length)]!
-            : "chapel";
-      const spriteId = `scenery:structure:${name}`;
-      const worldAnchor = {
-        x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-        // Pull the first row of architecture behind the spawn actor. The
-        // bottom anchor still participates in the shared depth queue, but the
-        // opaque building silhouette no longer touches the hero at rest.
-        y: y * UNITS_PER_TILE - UNITS_PER_TILE / 4,
-      };
-      const screenAnchor = screenFor(worldAnchor, camera);
-      const structureSize =
-        name === "ruined-house"
-          ? 158
-          : name === "dead-tree"
-            ? 172
-            : name === "well" || name === "wagon"
-              ? 154
-              : name === "obelisk" || name === "rubble"
-                ? 144
-                : 196;
-      const destinationRect = destinationAt(
-        screenAnchor,
-        structureSize,
-        structureSize,
-      );
-      scene.push({
-        ...sceneReference(spriteId),
-        objectId: `structure:${roomIndex}:${name}`,
-        kind: "prop",
-        tile: { x, y },
-        worldAnchor,
-        screenAnchor,
-        destinationRect,
-        layer: "structures",
-        zOrder: scene.length,
-        visible: intersectsViewport(destinationRect),
-        opacity: 1,
-      });
-    }
-    for (let propIndex = 0; propIndex < 2; propIndex += 1) {
-      const x = room.x + 1 + propIndex * Math.max(1, room.width - 3);
-      const y = room.y + Math.max(1, room.height - 2);
-      const name = propNames[sceneVariant(state, x, y, propNames.length)]!;
-      const spriteId = `scenery:prop:${name}`;
-      const worldAnchor = {
-        x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-        y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-      };
-      const screenAnchor = screenFor(worldAnchor, camera);
-      const destinationRect = destinationAt(screenAnchor, 82, 82);
-      scene.push({
-        ...sceneReference(spriteId),
-        objectId: `prop:${roomIndex}:${propIndex}:${name}`,
-        kind: "prop",
-        tile: { x, y },
-        worldAnchor,
-        screenAnchor,
-        destinationRect,
-        layer: "props",
-        zOrder: scene.length,
-        visible: intersectsViewport(destinationRect),
-        opacity: 1,
-      });
-    }
-  });
+  for (const placement of buildSceneryLayout(state.map)) {
+    const spriteId = `scenery:${placement.kind}:${placement.name}`;
+    const screenAnchor = screenFor(placement.worldAnchor, camera);
+    const structureSize =
+      placement.name === "ruined-house"
+        ? 158
+        : placement.name === "dead-tree"
+          ? 172
+          : placement.name === "well" || placement.name === "wagon"
+            ? 154
+            : placement.name === "obelisk" || placement.name === "rubble"
+              ? 144
+              : 196;
+    const size = placement.kind === "structure" ? structureSize : 82;
+    const destinationRect = destinationAt(screenAnchor, size, size);
+    scene.push({
+      ...sceneReference(spriteId),
+      objectId: placement.id,
+      kind: "prop",
+      tile: { ...placement.tile },
+      worldAnchor: { ...placement.worldAnchor },
+      screenAnchor,
+      destinationRect,
+      layer: placement.kind === "structure" ? "structures" : "props",
+      zOrder: scene.length,
+      visible: intersectsViewport(destinationRect),
+      opacity: 1,
+      collision: placement.collision
+        ? {
+            mode: "solid",
+            shape: placement.collision.shape,
+            worldCenter: { ...placement.collision.center },
+            halfWidth: placement.collision.halfWidth,
+            halfHeight: placement.collision.halfHeight,
+          }
+        : {
+            mode: "passable",
+            shape: "ellipse",
+            worldCenter: { ...placement.worldAnchor },
+            halfWidth: 0,
+            halfHeight: 0,
+          },
+    });
+  }
 
   const exitTile = state.map.exit;
   const exitWorld = {
@@ -614,6 +551,7 @@ export function buildRenderManifest(
     presentationTick,
     state.player.animation.startedAtTick,
   );
+  const playerSpritePixels = 118;
   add(
     {
       entityId: "player",
@@ -631,13 +569,13 @@ export function buildRenderManifest(
         state.player.previousPosition,
         state.player.position,
       ),
-      scale: 0.43,
+      scale: playerSpritePixels / 256,
       tint: "#ffffff",
       opacity: 1,
       layer: "actors",
     },
-    124,
-    124,
+    playerSpritePixels,
+    playerSpritePixels,
   );
 
   for (const monster of state.monsters) {

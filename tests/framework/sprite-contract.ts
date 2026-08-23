@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { buildSceneryLayout } from "../../src/game/sceneryLayout";
 import type { GameState } from "../../src/game/types";
 
 export interface SourceRectV1 {
@@ -56,6 +57,7 @@ export interface ManifestDrawCallV2 extends ManifestSpriteReferenceV2 {
   frameCount: number;
   clipDurationTicks: number;
   destinationRect: { x: number; y: number; width: number; height: number };
+  scale: number;
   opacity: number;
 }
 
@@ -67,6 +69,13 @@ export interface ManifestSceneSpriteV2 extends ManifestSpriteReferenceV2 {
   destinationRect: { x: number; y: number; width: number; height: number };
   opacity: number;
   zOrder: number;
+  collision?: {
+    mode: "solid" | "passable";
+    shape: "ellipse";
+    worldCenter: { x: number; y: number };
+    halfWidth: number;
+    halfHeight: number;
+  } | null;
 }
 
 export interface RenderManifestV2Shape {
@@ -376,6 +385,12 @@ export function validateManifestSpriteContract(
       );
     if (call.frameIdentity !== clip.frameIdentities[frameIndex])
       fail(`${pathName}.frameIdentity does not match clip frameIndex`);
+    if (call.type === "player" || call.type === "monster") {
+      if (typeof call.scale !== "number" || !Number.isFinite(call.scale))
+        fail(`${pathName}.scale must be a finite number`);
+      if (Math.abs(call.scale * 256 - call.destinationRect.width) > 0.51)
+        fail(`${pathName}.scale does not match destination width`);
+    }
   }
   for (const [index, sceneValue] of sceneSprites.entries())
     assertSpriteReference(
@@ -442,6 +457,30 @@ export function assertDeterministicScenePlacement(
       )
         fail(`${objectId} collision topology is visually absent`);
     }
+  }
+  for (const placement of buildSceneryLayout(state.map)) {
+    const sprite = first.sceneSprites.find(
+      ({ objectId }) => objectId === placement.id,
+    );
+    if (!sprite) fail(`missing visible scenery placement ${placement.id}`);
+    if (!sprite.collision)
+      fail(`missing collision declaration for scenery ${placement.id}`);
+    if (sprite.collision.mode !== placement.collisionMode)
+      fail(`collision mode differs for scenery ${placement.id}`);
+    if (placement.collision) {
+      if (
+        sprite.collision.shape !== placement.collision.shape ||
+        sprite.collision.worldCenter.x !== placement.collision.center.x ||
+        sprite.collision.worldCenter.y !== placement.collision.center.y ||
+        sprite.collision.halfWidth !== placement.collision.halfWidth ||
+        sprite.collision.halfHeight !== placement.collision.halfHeight
+      )
+        fail(`collision footprint differs for scenery ${placement.id}`);
+    } else if (
+      sprite.collision.halfWidth !== 0 ||
+      sprite.collision.halfHeight !== 0
+    )
+      fail(`passable scenery ${placement.id} has a solid footprint`);
   }
   const boundaryDirections = [
     { id: "north", dx: 0, dy: -1 },

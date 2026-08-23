@@ -54,6 +54,8 @@ The `dungeon-v1` generator begins with a wall-filled 44 by 32 grid, carves a cen
 
 The generation result includes a stable digest. Tests verify that a seed repeats byte-for-byte, every walkable tile is connected, entrance and exit are walkable, and a different seed changes the layout.
 
+Buildings and solid props have deterministic elliptical collision footprints around the part of each sprite that touches the ground. Players and monsters cannot cross a forge, tree trunk, wagon, grave marker, crate stack, cage, pillar, or other solid object, but axis-separated movement lets them slide along its base. Low rubble is the only explicit passable decoration; the rift exit remains enterable. Placement, visible sprite identity, and collision all derive from the same map layout, so restoring an arbitrary state cannot move an invisible collider away from its art.
+
 ## Enemies
 
 | Enemy      | Behavior                               | HP / armor | Attack                                                      |

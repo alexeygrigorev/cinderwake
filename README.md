@@ -17,7 +17,7 @@ npm ci
 npm run dev
 ```
 
-Choose Vanguard, Ranger, or Arcanist, enter a repeatable seed, clear the generated ruin, collect deterministic drops, and enter the opened rift. Use WASD or arrow keys to move, the pointer to aim, left click to strike, right click for the class ability, and Q to drink a tonic. The interface also works with touch action buttons.
+Choose Vanguard, Ranger, or Arcanist, enter a repeatable seed, clear the generated ruin, collect deterministic drops, and enter the opened rift. Use WASD or arrow keys to move, the pointer to aim, left click to strike, right click for the class ability, and Q to drink a tonic. The interface also works with touch action buttons. Buildings and solid props block both heroes and monsters at their painted ground footprint; movement slides along their base instead of passing through the sprite.
 
 This project takes inspiration from the readable top-down combat loop of classic action RPGs, but its world, characters, enemies, art, names, and implementation are original.
 

@@ -303,7 +303,7 @@ for (const point of points) {
   };
   const expectedScale =
     expectedType === "player"
-      ? 0.43
+      ? 118 / 256
       : expectedType === "monster"
         ? (monsterNativeWidths[entity.kind] / 256) * (entity.elite ? 1.16 : 1)
         : expectedType === "loot"

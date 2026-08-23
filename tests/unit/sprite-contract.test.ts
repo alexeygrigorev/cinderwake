@@ -351,11 +351,27 @@ describe("sprite atlas quality contract", () => {
     const valid = buildRenderManifest(state, CAMERA);
     const mutations = [
       {
+        expected: "scale does not match destination width",
+        apply(manifest: typeof valid) {
+          manifest.drawCalls.find(
+            ({ entityId }) => entityId === "player",
+          )!.scale = 0.43;
+        },
+      },
+      {
         expected: "collision topology is visually absent",
         apply(manifest: typeof valid) {
           manifest.sceneSprites.find(({ spriteId }) =>
             spriteId.endsWith(":wall"),
           )!.opacity = 0;
+        },
+      },
+      {
+        expected: "missing collision declaration for scenery",
+        apply(manifest: typeof valid) {
+          manifest.sceneSprites.find(({ objectId }) =>
+            objectId.startsWith("structure:0:"),
+          )!.collision = undefined;
         },
       },
       {
