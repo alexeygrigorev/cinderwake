@@ -311,12 +311,13 @@ export class CanvasRenderer {
     if (call.type === "player") this.drawHero(context, call, state);
     else this.drawMonster(context, call, state);
     context.restore();
-    this.drawHealthBar(
-      context,
-      call,
-      actor.health / actor.maxHealth,
-      call.type === "player",
-    );
+    if (actor.health > 0)
+      this.drawHealthBar(
+        context,
+        call,
+        actor.health / actor.maxHealth,
+        call.type === "player",
+      );
   }
 
   private drawHero(
@@ -530,8 +531,14 @@ export class CanvasRenderer {
     const monster = state.monsters.find((entry) => entry.id === call.entityId);
     if (!monster) return;
     const facingLeft = monster.facing.x < 0;
+    const hurtOffset =
+      call.clip === "hurt" ? -4 * (1 - animationProgress(call, 4)) : 0;
+    const deathAngle =
+      call.clip === "death" ? animationProgress(call, 8) * Math.PI * 0.48 : 0;
     context.save();
     context.scale(facingLeft ? -1 : 1, 1);
+    context.translate(hurtOffset, 0);
+    context.rotate(deathAngle);
     if (monster.elite) {
       context.strokeStyle = "#f0a24b";
       context.lineWidth = 2;

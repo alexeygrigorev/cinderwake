@@ -206,6 +206,10 @@ export function stateFromSnapshot(input: unknown): GameState {
       nonNegative(item[field], `${path}.${field}`);
     boolean(item.elite, `${path}.elite`);
     boolean(item.guaranteedLoot, `${path}.guaranteedLoot`);
+    if (item.deathTick !== null)
+      nonNegative(item.deathTick, `${path}.deathTick`);
+    if (item.removeAtTick !== null)
+      nonNegative(item.removeAtTick, `${path}.removeAtTick`);
   }
 
   for (const [index, attackValue] of array(
@@ -242,6 +246,11 @@ export function stateFromSnapshot(input: unknown): GameState {
     nonNegative(item.expiresAtTick, `${path}.expiresAtTick`);
     string(item.color, `${path}.color`);
     number(item.pierce, `${path}.pierce`);
+    number(item.spawnedAtTick, `${path}.spawnedAtTick`);
+    array(item.hitTargets, `${path}.hitTargets`).forEach(
+      (target, targetIndex) =>
+        string(target, `${path}.hitTargets[${targetIndex}]`),
+    );
   }
 
   for (const [index, lootValue] of array(root.loot, "state.loot").entries()) {

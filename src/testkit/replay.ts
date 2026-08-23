@@ -41,6 +41,18 @@ export function playReplay(
 ): ReplayResult {
   if (tape.version !== 1)
     throw new Error(`Unsupported replay version: ${String(tape.version)}`);
+  if (tape.scenarioId && tape.scenarioId !== initial.scenarioId)
+    throw new Error(
+      `Replay scenario mismatch: expected ${tape.scenarioId}, got ${initial.scenarioId}`,
+    );
+  for (const entry of tape.entries) {
+    if (!Number.isInteger(entry.tick) || entry.tick < 0)
+      throw new Error(`Replay entry tick is invalid: ${entry.tick}`);
+  }
+  for (const checkpoint of tape.checkpoints ?? []) {
+    if (!Number.isInteger(checkpoint.tick) || checkpoint.tick < 0)
+      throw new Error(`Replay checkpoint tick is invalid: ${checkpoint.tick}`);
+  }
   const lastEntry = tape.entries.reduce(
     (max, entry) => Math.max(max, entry.tick),
     -1,
@@ -48,7 +60,8 @@ export function playReplay(
   const lastCheckpoint =
     tape.checkpoints?.reduce((max, entry) => Math.max(max, entry.tick), -1) ??
     -1;
-  const count = ticks ?? Math.max(lastEntry, lastCheckpoint) + 1;
+  const requiredFinalTick = Math.max(lastEntry + 1, lastCheckpoint);
+  const count = ticks ?? Math.max(0, requiredFinalTick - initial.tick);
   const hashes: ReplayResult["hashes"] = [];
   for (let index = 0; index < count; index += 1) {
     stepGame(initial, inputAtTick(tape, initial.tick));

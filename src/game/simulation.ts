@@ -1,5 +1,10 @@
 import { ARCHETYPES, MONSTERS } from "./content";
-import { DIAGONAL_SCALE, DIRECTION_SCALE, UNITS_PER_TILE } from "./constants";
+import {
+  CLIP_DURATIONS,
+  DIAGONAL_SCALE,
+  DIRECTION_SCALE,
+  UNITS_PER_TILE,
+} from "./constants";
 import { isFloor, tileCenter } from "./dungeon";
 import { createRng, randomFloat } from "./rng";
 import type {
@@ -99,6 +104,7 @@ function applyDamageToMonster(
   rawDamage: number,
   sourceId: string,
 ): void {
+  if (monster.health <= 0) return;
   const damage = Math.max(
     1,
     Math.floor((rawDamage * 100) / (100 + monster.armor)),
@@ -109,7 +115,7 @@ function applyDamageToMonster(
     monster,
     monster.health <= 0 ? "death" : "hurt",
     state.tick,
-    monster.health <= 0 ? 48 : 8,
+    monster.health <= 0 ? CLIP_DURATIONS.death : CLIP_DURATIONS.hurt,
   );
   emit(state, {
     type: "damage",
@@ -149,7 +155,7 @@ function spawnLoot(state: GameState, monster: MonsterState): void {
     position: { ...monster.position },
     amount,
     sourceId: monster.id,
-    bobOffset: state.nextEntityId * 7,
+    bobOffset: Math.floor(randomFloat(rng) * 72),
   };
   state.nextEntityId += 1;
   state.loot.push(loot);
@@ -163,10 +169,13 @@ function spawnLoot(state: GameState, monster: MonsterState): void {
 }
 
 function resolveDeaths(state: GameState): void {
-  const dead = state.monsters
-    .filter((monster) => monster.health <= 0)
+  const newlyDead = state.monsters
+    .filter((monster) => monster.health <= 0 && monster.deathTick === null)
     .sort((a, b) => a.id.localeCompare(b.id));
-  for (const monster of dead) {
+  for (const monster of newlyDead) {
+    monster.deathTick = state.tick;
+    monster.removeAtTick = state.tick + CLIP_DURATIONS.death;
+    monster.velocity = { x: 0, y: 0 };
     state.metrics.kills += 1;
     state.player.xp += MONSTERS[monster.kind].xp;
     emit(state, {
@@ -176,9 +185,14 @@ function resolveDeaths(state: GameState): void {
     });
     spawnLoot(state, monster);
   }
-  if (dead.length > 0)
-    state.monsters = state.monsters.filter((monster) => monster.health > 0);
-  if (!state.exitUnlocked && state.monsters.length === 0) {
+  state.monsters = state.monsters.filter(
+    (monster) =>
+      monster.removeAtTick === null || monster.removeAtTick > state.tick,
+  );
+  if (
+    !state.exitUnlocked &&
+    state.monsters.every((monster) => monster.health <= 0)
+  ) {
     state.exitUnlocked = true;
     emit(state, { type: "exit_unlocked", detail: "The rift gate is open" });
   }
@@ -193,6 +207,7 @@ function hitCone(
   for (const monster of [...state.monsters].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {
+    if (monster.health <= 0) continue;
     if (distanceSquared(attack.origin, monster.position) > rangeSquared)
       continue;
     const direction = normalized(attack.origin, monster.position);
@@ -227,6 +242,8 @@ function createProjectile(
     expiresAtTick: state.tick + Math.ceil(definition.attackRange / speed),
     color: definition.accent,
     pierce,
+    spawnedAtTick: state.tick,
+    hitTargets: [],
   };
   state.nextEntityId += 1;
   return projectile;
@@ -248,6 +265,45 @@ function resolvePendingAttacks(state: GameState): void {
     (attack) => attack.impactTick > state.tick,
   );
   for (const attack of due) {
+    if (attack.ownerId !== "player") {
+      const monster = state.monsters.find(
+        (entry) => entry.id === attack.ownerId && entry.health > 0,
+      );
+      if (!monster) continue;
+      if (monster.kind === "hexer") {
+        state.projectiles.push({
+          id: `projectile:${state.nextEntityId}`,
+          owner: monster.id,
+          hostile: true,
+          position: { ...monster.position },
+          previousPosition: { ...monster.position },
+          velocity: {
+            x: Math.round((attack.direction.x * 120) / DIRECTION_SCALE),
+            y: Math.round((attack.direction.y * 120) / DIRECTION_SCALE),
+          },
+          radius: 130,
+          damage: attack.damage,
+          expiresAtTick: state.tick + 100,
+          color: "#d36de7",
+          pierce: 0,
+          spawnedAtTick: state.tick,
+          hitTargets: [],
+        });
+        state.nextEntityId += 1;
+      } else {
+        const inRange =
+          distanceSquared(attack.origin, state.player.position) <=
+          attack.range * attack.range;
+        const towardPlayer = normalized(attack.origin, state.player.position);
+        const dot =
+          (towardPlayer.x * attack.direction.x +
+            towardPlayer.y * attack.direction.y) /
+          DIRECTION_SCALE;
+        if (inRange && dot >= 384)
+          damagePlayer(state, attack.damage, attack.ownerId);
+      }
+      continue;
+    }
     const classId = state.player.classId;
     if (classId === "vanguard") {
       hitCone(state, attack, attack.kind === "ability" ? 512 : 724);
@@ -281,8 +337,9 @@ function resolvePendingAttacks(state: GameState): void {
     } else if (attack.kind === "ability") {
       for (const monster of state.monsters) {
         if (
-          distanceSquared(state.player.position, monster.position) <=
-          attack.range * attack.range
+          monster.health > 0 &&
+          distanceSquared(attack.origin, monster.position) <=
+            attack.range * attack.range
         ) {
           applyDamageToMonster(state, monster, attack.damage, "player");
         }
@@ -290,7 +347,7 @@ function resolvePendingAttacks(state: GameState): void {
       state.effects.push({
         id: `effect:${attack.id}`,
         kind: "nova",
-        position: { ...state.player.position },
+        position: { ...attack.origin },
         color: ARCHETYPES.arcanist.accent,
         startedAtTick: state.tick,
         expiresAtTick: state.tick + 18,
@@ -423,11 +480,22 @@ function damagePlayer(
 }
 
 function updateMonsters(state: GameState): void {
-  if (!state.settings.ai) return;
   for (const monster of [...state.monsters].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {
     monster.previousPosition = { ...monster.position };
+    if (monster.health <= 0) {
+      monster.velocity = { x: 0, y: 0 };
+      continue;
+    }
+    if (!state.settings.ai) continue;
+    if (
+      ["attack", "hurt"].includes(monster.animation.clip) &&
+      state.tick < monster.animation.lockedUntilTick
+    ) {
+      monster.velocity = { x: 0, y: 0 };
+      continue;
+    }
     const definition = MONSTERS[monster.kind];
     const distance = Math.sqrt(
       distanceSquared(monster.position, state.player.position),
@@ -460,26 +528,26 @@ function updateMonsters(state: GameState): void {
       state.tick >= monster.attackReadyTick
     ) {
       monster.attackReadyTick = state.tick + definition.attackCooldown;
-      setAnimation(monster, "attack", state.tick, 20);
-      if (monster.kind === "hexer") {
-        state.projectiles.push({
-          id: `projectile:${state.nextEntityId}`,
-          owner: monster.id,
-          hostile: true,
-          position: { ...monster.position },
-          previousPosition: { ...monster.position },
-          velocity: {
-            x: Math.round((direction.x * 120) / 1024),
-            y: Math.round((direction.y * 120) / 1024),
-          },
-          radius: 130,
-          damage: monster.attackDamage,
-          expiresAtTick: state.tick + 100,
-          color: "#d36de7",
-          pierce: 0,
-        });
-        state.nextEntityId += 1;
-      } else damagePlayer(state, monster.attackDamage, monster.id);
+      setAnimation(monster, "attack", state.tick, CLIP_DURATIONS.attack);
+      const impactDelay =
+        monster.kind === "ashfang" ? 7 : monster.kind === "stonekin" ? 10 : 12;
+      state.pendingAttacks.push({
+        id: `attack:${state.nextEntityId}`,
+        ownerId: monster.id,
+        kind: "primary",
+        impactTick: state.tick + impactDelay,
+        origin: { ...monster.position },
+        direction: { ...direction },
+        range: monster.attackRange,
+        damage: monster.attackDamage,
+      });
+      state.nextEntityId += 1;
+      emit(state, {
+        type: "attack_started",
+        sourceId: monster.id,
+        targetId: "player",
+        detail: monster.kind,
+      });
     } else if (state.tick >= monster.animation.lockedUntilTick) {
       setAnimation(
         monster,
@@ -495,6 +563,10 @@ function updateProjectiles(state: GameState): void {
   for (const projectile of [...state.projectiles].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {
+    if (projectile.spawnedAtTick === state.tick) {
+      survivors.push(projectile);
+      continue;
+    }
     projectile.previousPosition = { ...projectile.position };
     projectile.position.x += projectile.velocity.x;
     projectile.position.y += projectile.velocity.y;
@@ -519,12 +591,15 @@ function updateProjectiles(state: GameState): void {
       for (const monster of [...state.monsters].sort((a, b) =>
         a.id.localeCompare(b.id),
       )) {
+        if (monster.health <= 0 || projectile.hitTargets.includes(monster.id))
+          continue;
         const radius = projectile.radius + monster.radius;
         if (
           distanceSquared(projectile.position, monster.position) <=
           radius * radius
         ) {
           applyDamageToMonster(state, monster, projectile.damage, "player");
+          projectile.hitTargets.push(monster.id);
           projectile.pierce -= 1;
           if (projectile.pierce < 0) consumed = true;
           if (consumed) break;

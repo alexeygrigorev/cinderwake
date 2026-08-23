@@ -82,6 +82,8 @@ export interface MonsterState {
   attackReadyTick: number;
   elite: boolean;
   guaranteedLoot: boolean;
+  deathTick: number | null;
+  removeAtTick: number | null;
   animation: AnimationState;
 }
 
@@ -108,6 +110,8 @@ export interface ProjectileState {
   expiresAtTick: number;
   color: string;
   pierce: number;
+  spawnedAtTick: number;
+  hitTargets: string[];
 }
 
 export interface LootState {

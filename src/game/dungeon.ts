@@ -138,15 +138,25 @@ export function explicitDungeon(rows: string[]): DungeonMap {
     throw new Error("Every explicit map row must have equal width");
   let spawn: Vec2 | undefined;
   let exit: Vec2 | undefined;
+  let spawnCount = 0;
+  let exitCount = 0;
   const tiles: number[] = [];
   rows.forEach((row, y) => {
     [...row].forEach((value, x) => {
+      if (!["#", ".", "P", "E"].includes(value))
+        throw new Error(`Unknown explicit map tile ${JSON.stringify(value)}`);
       tiles.push(value === "#" ? 1 : 0);
-      if (value === "P") spawn = { x, y };
-      if (value === "E") exit = { x, y };
+      if (value === "P") {
+        spawn = { x, y };
+        spawnCount += 1;
+      }
+      if (value === "E") {
+        exit = { x, y };
+        exitCount += 1;
+      }
     });
   });
-  if (!spawn || !exit)
+  if (!spawn || !exit || spawnCount !== 1 || exitCount !== 1)
     throw new Error("Explicit maps require exactly one P spawn and one E exit");
   const map: DungeonMap = {
     width,

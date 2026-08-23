@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  explicitDungeon,
   generateDungeon,
   reachableFloorCount,
   totalFloorCount,
@@ -78,6 +79,75 @@ describe("deterministic fixtures", () => {
     const malformed = structuredClone(BUILTIN_SCENARIOS["mid-action"]!);
     malformed.projectiles![0]!.id = "monster:winding-up";
     expect(() => worldFromScenario(malformed)).toThrow("Duplicate entity id");
+  });
+
+  it.each([
+    ["unknown top-level field", { typoField: true }],
+    ["non-numeric player health", { player: { health: "73" } }],
+    [
+      "invalid monster animation",
+      {
+        monsters: [
+          {
+            id: "monster:bad",
+            kind: "ashfang",
+            tile: [8, 7],
+            animation: { clip: "teleport" },
+          },
+        ],
+      },
+    ],
+    ["non-boolean setting", { settings: { ai: "sometimes" } }],
+    ["incomplete RNG stream", { rng: { combat: { state: 123 } } }],
+    [
+      "invalid loot kind",
+      { loot: [{ id: "loot:bad", kind: "armor", tile: [8, 7] }] },
+    ],
+    [
+      "reserved player entity ID",
+      { monsters: [{ id: "player", kind: "ashfang", tile: [8, 7] }] },
+    ],
+    [
+      "unsupported generated dimensions",
+      { map: { mode: "generated", width: 8, height: 6 } },
+    ],
+  ])("rejects ScenarioV1 with %s", (_label, patch) => {
+    const base = structuredClone(BUILTIN_SCENARIOS["animation-idle"]!) as any;
+    Object.assign(base, patch);
+    expect(() => worldFromScenario(base)).toThrow();
+  });
+
+  it("strictly validates explicit map symbols and unique landmarks", () => {
+    expect(() => explicitDungeon(["#####", "#PPE#", "#####"])).toThrow(
+      "exactly one",
+    );
+    expect(() => explicitDungeon(["#####", "#PXE#", "#####"])).toThrow(
+      "Unknown explicit map tile",
+    );
+    expect(() => explicitDungeon(["#####", "#P.E#", "####"])).toThrow(
+      "equal width",
+    );
+  });
+
+  it("supports deterministic connected generation at accepted minimum dimensions", () => {
+    const first = worldFromScenario({
+      schemaVersion: 1,
+      id: "minimum-generated",
+      seed: "minimum-generated",
+      classId: "ranger",
+      map: { mode: "generated", width: 20, height: 16 },
+      monsters: [],
+    });
+    const second = worldFromScenario({
+      schemaVersion: 1,
+      id: "minimum-generated",
+      seed: "minimum-generated",
+      classId: "ranger",
+      map: { mode: "generated", width: 20, height: 16 },
+      monsters: [],
+    });
+    expect(first.map).toEqual(second.map);
+    expect(reachableFloorCount(first.map)).toBe(totalFloorCount(first.map));
   });
 
   it("replays an input tape with the same checkpoint hashes", () => {
