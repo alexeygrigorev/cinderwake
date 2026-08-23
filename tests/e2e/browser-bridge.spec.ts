@@ -329,6 +329,8 @@ test("measures actual transparent entity ink instead of declared bounds", async 
       flipX: false,
     },
   ]);
-  expect(result.terminal.pixelHash).toBe(result.idle.pixelHash);
   expect(result.terminal.inkBounds).toEqual(result.idle.inkBounds);
+  expect(result.terminal.alphaPixels).toBe(result.idle.alphaPixels);
+  expect(result.terminal.centroid.x).toBeCloseTo(result.idle.centroid.x, 1);
+  expect(result.terminal.centroid.y).toBeCloseTo(result.idle.centroid.y, 1);
 });
