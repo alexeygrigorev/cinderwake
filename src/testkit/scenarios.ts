@@ -1087,7 +1087,10 @@ function temporalHeroAction(
   const scenarioId = `temporal-${classId}-${action}`;
   const isMelee =
     classId === "vanguard" || (classId === "arcanist" && action === "ability");
-  const targetTile: VecTuple = isMelee ? [10.2, 7] : [13, 7];
+  // Keep melee subjects inside the 1.6-tile hit range while leaving enough
+  // screen-space separation for both authored silhouettes and the contact VFX
+  // to remain inspectable in temporal evidence.
+  const targetTile: VecTuple = isMelee ? [10.55, 7] : [13, 7];
   return {
     schemaVersion: 1,
     id: scenarioId,
@@ -1169,7 +1172,7 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
       {
         id: "monster:target",
         kind: "ashfang",
-        tile: [10.2, 7],
+        tile: [10.55, 7],
         health: 20,
         elite: true,
         guaranteedLoot: true,
