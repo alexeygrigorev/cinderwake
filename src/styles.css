@@ -39,7 +39,7 @@ button {
 }
 .hero h1 {
   font-family: Georgia, serif;
-  font-size: clamp(62px, 9vw, 126px);
+  font-size: clamp(62px, 6.5vw, 96px);
   line-height: 0.82;
   margin: 18px 0;
   color: #f6ecdc;

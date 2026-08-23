@@ -60,7 +60,7 @@ export function actorFrame(
   const elapsed = Math.max(0, tick - startedAtTick);
   const duration = CLIP_DURATIONS[clip];
   const frameCount = CLIP_FRAMES[clip];
-  if (clip === "death")
+  if (["attack", "ability", "hurt", "death"].includes(clip))
     return Math.min(
       frameCount - 1,
       Math.floor((elapsed * frameCount) / duration),

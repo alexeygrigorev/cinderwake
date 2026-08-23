@@ -1,0 +1,150 @@
+import { describe, expect, it } from "vitest";
+import {
+  generateDungeon,
+  reachableFloorCount,
+  totalFloorCount,
+} from "../../src/game/dungeon";
+import { createRngStreams, randomFloat } from "../../src/game/rng";
+import { stepGame } from "../../src/game/simulation";
+import { EMPTY_INPUT } from "../../src/game/types";
+import { buildRenderManifest } from "../../src/render/manifest";
+import {
+  canonicalJson,
+  canonicalState,
+  stateHash,
+} from "../../src/testkit/canonical";
+import { playReplay, type ReplayTapeV1 } from "../../src/testkit/replay";
+import {
+  BUILTIN_SCENARIOS,
+  worldFromScenario,
+} from "../../src/testkit/scenarios";
+
+describe("deterministic fixtures", () => {
+  it("generates connected maps with stable digests across varied seeds", () => {
+    for (let index = 0; index < 40; index += 1) {
+      const first = generateDungeon(`seed-${index}`);
+      const second = generateDungeon(`seed-${index}`);
+      expect(first.digest).toBe(second.digest);
+      expect(reachableFloorCount(first)).toBe(totalFloorCount(first));
+    }
+  });
+
+  it("round-trips canonical snapshots and resets scenarios identically", () => {
+    const scenario = BUILTIN_SCENARIOS["combat-loot"]!;
+    const first = worldFromScenario(scenario);
+    const second = worldFromScenario(JSON.parse(JSON.stringify(scenario)));
+    expect(canonicalJson(first)).toBe(canonicalJson(second));
+    expect(canonicalState(first)).toEqual(JSON.parse(canonicalJson(first)));
+    expect(stateHash(first)).toBe(stateHash(second));
+  });
+
+  it("constructs a complete mid-action state without playing through setup", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["mid-action"]!);
+    expect(state.tick).toBe(240);
+    expect(state.player.animation).toMatchObject({
+      clip: "ability",
+      startedAtTick: 234,
+      lockedUntilTick: 270,
+    });
+    expect(state.pendingAttacks).toHaveLength(1);
+    expect(state.projectiles).toHaveLength(1);
+    expect(state.effects).toHaveLength(1);
+    expect(state.monsters[0]?.animation.clip).toBe("attack");
+    expect(worldFromScenario(BUILTIN_SCENARIOS["mid-action"]!)).toEqual(state);
+  });
+
+  it("rejects malformed arbitrary states before mutating a world", () => {
+    const malformed = structuredClone(BUILTIN_SCENARIOS["mid-action"]!);
+    malformed.projectiles![0]!.id = "monster:winding-up";
+    expect(() => worldFromScenario(malformed)).toThrow("Duplicate entity id");
+  });
+
+  it("replays an input tape with the same checkpoint hashes", () => {
+    const tape: ReplayTapeV1 = {
+      version: 1,
+      scenarioId: "animation-walk",
+      entries: [
+        { tick: 0, input: { moveX: 1 } },
+        { tick: 12, input: { moveY: -1 } },
+        { tick: 25, input: { moveX: 0, moveY: 0 } },
+      ],
+    };
+    const first = playReplay(
+      worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!),
+      tape,
+      32,
+    );
+    tape.checkpoints = first.hashes.filter((entry) =>
+      [1, 13, 32].includes(entry.tick),
+    );
+    const second = playReplay(
+      worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!),
+      tape,
+      32,
+    );
+    expect(second.hashes).toEqual(first.hashes);
+  });
+
+  it("keeps named cosmetic RNG draws isolated from gameplay streams", () => {
+    const streams = createRngStreams("isolation");
+    const before = structuredClone(streams);
+    randomFloat(streams.cosmetic);
+    randomFloat(streams.cosmetic);
+    expect(streams.map).toEqual(before.map);
+    expect(streams.combat).toEqual(before.combat);
+    expect(streams.loot).toEqual(before.loot);
+    expect(streams.ai).toEqual(before.ai);
+  });
+
+  it("resolves vanguard combat on its documented impact tick and collects guaranteed loot", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["combat-loot"]!);
+    stepGame(state, { ...EMPTY_INPUT, attack: true });
+    expect(state.pendingAttacks).toHaveLength(1);
+    for (let index = 0; index < 8; index += 1) stepGame(state, EMPTY_INPUT);
+    expect(state.metrics.kills).toBe(1);
+    expect(state.loot).toHaveLength(1);
+    expect(state.eventLog.map((event) => event.type)).toContain("loot_dropped");
+  });
+
+  it("moves through floor but rejects a wall collision", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
+    const start = { ...state.player.position };
+    stepGame(state, { ...EMPTY_INPUT, moveX: 1 });
+    expect(state.player.position.x).toBeGreaterThan(start.x);
+    for (let index = 0; index < 999; index += 1)
+      stepGame(state, { ...EMPTY_INPUT, moveX: -1 });
+    expect(state.player.position.x).toBeGreaterThanOrEqual(state.player.radius);
+  });
+
+  it("records deterministic animation clip starts at exact input ticks", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-idle"]!);
+    stepGame(state, { ...EMPTY_INPUT, moveX: 1 });
+    expect(state.player.animation).toMatchObject({
+      clip: "walk",
+      startedAtTick: 0,
+    });
+    stepGame(state, EMPTY_INPUT);
+    expect(state.player.animation).toMatchObject({
+      clip: "idle",
+      startedAtTick: 1,
+    });
+  });
+
+  it("keeps an idle render foot anchor fixed while animation frames advance", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-idle"]!);
+    const camera = {
+      x: (state.player.position.x / 1024) * 48,
+      y: (state.player.position.y / 1024) * 48,
+      zoom: 1,
+    };
+    const first = buildRenderManifest(state, camera).drawCalls.find(
+      (call) => call.entityId === "player",
+    )!;
+    for (let index = 0; index < 12; index += 1) stepGame(state, EMPTY_INPUT);
+    const later = buildRenderManifest(state, camera).drawCalls.find(
+      (call) => call.entityId === "player",
+    )!;
+    expect(later.footAnchor).toEqual(first.footAnchor);
+    expect(later.frameIndex).not.toBe(first.frameIndex);
+  });
+});

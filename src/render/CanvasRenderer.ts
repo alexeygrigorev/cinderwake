@@ -290,6 +290,8 @@ export class CanvasRenderer {
       clip === "death" ? -animationProgress(call, 8) * Math.PI * 0.48 : 0;
     const attackProgress = clip === "attack" ? animationProgress(call, 6) : 0;
     const abilityProgress = clip === "ability" ? animationProgress(call, 8) : 0;
+    const attackPose = clip === "attack" ? attackProgress : -1;
+    const abilityPose = clip === "ability" ? abilityProgress : -1;
 
     context.save();
     context.scale(facingLeft ? -1 : 1, 1);
@@ -341,10 +343,10 @@ export class CanvasRenderer {
     context.fillRect(-12, -17, 26, 5);
 
     if (state.player.classId === "vanguard")
-      this.drawVanguardEquipment(context, attackProgress, abilityProgress);
+      this.drawVanguardEquipment(context, attackPose, abilityPose);
     else if (state.player.classId === "ranger")
-      this.drawRangerEquipment(context, attackProgress, abilityProgress);
-    else this.drawArcanistEquipment(context, attackProgress, abilityProgress);
+      this.drawRangerEquipment(context, attackPose, abilityPose);
+    else this.drawArcanistEquipment(context, attackPose, abilityPose);
 
     context.fillStyle = "#edc8a6";
     context.beginPath();
@@ -377,11 +379,13 @@ export class CanvasRenderer {
     context.arc(-12, -25, 3, 0, Math.PI * 2);
     context.stroke();
 
+    const attackAngles = [0.35, -1, -0.1, 0.75, 0.5, 0.35];
+    const abilityAngles = [0.35, -1.3, -0.85, -0.25, 0.5, 1.05, 0.6, 0.35];
     const swing =
-      attack > 0
-        ? -1.15 + attack * 2.45
-        : ability > 0
-          ? -1.55 + ability * 3.1
+      attack >= 0
+        ? attackAngles[Math.round(attack * (attackAngles.length - 1))]!
+        : ability >= 0
+          ? abilityAngles[Math.round(ability * (abilityAngles.length - 1))]!
           : 0.35;
     const hand = { x: 9, y: -25 };
     const tip = {
@@ -404,7 +408,14 @@ export class CanvasRenderer {
     attack: number,
     ability: number,
   ): void {
-    const draw = Math.max(attack, ability);
+    const attackDraw = [0.8, 0, 0.15, 0, 0, 0];
+    const abilityDraw = [0.85, 0.2, 0.8, 0.15, 0.75, 0.1, 0, 0];
+    const draw =
+      attack >= 0
+        ? attackDraw[Math.round(attack * (attackDraw.length - 1))]!
+        : ability >= 0
+          ? abilityDraw[Math.round(ability * (abilityDraw.length - 1))]!
+          : 0;
     line(context, { x: -8, y: -29 }, { x: 8 - draw * 5, y: -25 }, 5, "#d3a17f");
     context.strokeStyle = "#a87a49";
     context.lineWidth = 3;
@@ -435,7 +446,8 @@ export class CanvasRenderer {
     ability: number,
   ): void {
     line(context, { x: 9, y: -31 }, { x: 15, y: -5 }, 3, "#6e513b");
-    const glow = 1 + Math.sin((attack + ability) * Math.PI) * 0.4;
+    const activeProgress = Math.max(0, attack, ability);
+    const glow = 1 + Math.sin(activeProgress * Math.PI) * 0.4;
     context.save();
     context.translate(9, -35);
     context.scale(glow, glow);
@@ -450,7 +462,7 @@ export class CanvasRenderer {
     context.closePath();
     context.fill();
     context.restore();
-    if (ability > 0) {
+    if (ability >= 0) {
       context.strokeStyle = "#8bf4ea";
       context.globalAlpha = 1 - ability * 0.5;
       context.beginPath();

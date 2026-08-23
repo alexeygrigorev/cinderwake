@@ -79,13 +79,18 @@ function updateHud(state: GameState): void {
     state.tick >= p.abilityReadyTick
       ? "READY"
       : `${((p.abilityReadyTick - state.tick) / 60).toFixed(1)}s`;
-  const events = state.events.slice(-2);
-  if (events.length)
-    log!.innerHTML = events
-      .map(
-        (e) => e.type.replaceAll("_", " ") + (e.amount ? ` +${e.amount}` : ""),
-      )
-      .join("<br>");
+  const events = (state.events.length ? state.events : state.eventLog).slice(
+    -2,
+  );
+  log!.innerHTML = events.length
+    ? events
+        .map(
+          (event) =>
+            event.type.replaceAll("_", " ") +
+            (event.amount ? ` +${event.amount}` : ""),
+        )
+        .join("<br>")
+    : "The cinders stir.";
   if (state.phase !== "playing") {
     const out = document.querySelector<HTMLElement>("#outcome")!;
     out.classList.remove("hidden");
