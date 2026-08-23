@@ -27,6 +27,41 @@ test("mobile character selection is scrollable, readable, and has no horizontal 
   });
 });
 
+test("touch landscape selection keeps every interactive surface inside the viewport", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.goto("/");
+  await expect(page.locator(".selection")).toBeVisible();
+  const layout = await page.evaluate(() => ({
+    viewportWidth: innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+    surfaces: [
+      ...document.querySelectorAll<HTMLElement>(
+        ".class-card, #begin, .selection-lab-toggle",
+      ),
+    ].map((element) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+      };
+    }),
+  }));
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+  expect(
+    layout.surfaces.every(
+      ({ left, right, width, height }) =>
+        left >= 0 &&
+        right <= layout.viewportWidth &&
+        width >= 44 &&
+        height >= 44,
+    ),
+  ).toBe(true);
+});
+
 test("touch movement, canvas aim, and action buttons feed the real input adapter", async ({
   page,
 }) => {
