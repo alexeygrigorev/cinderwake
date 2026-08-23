@@ -8,7 +8,7 @@ The shipped vertical slice is intentionally shorter than a commercial ARPG run. 
 
 1. Choose one of three heroes and enter a run seed.
 2. Enter a newly generated connected ruin.
-3. Explore rooms with keyboard, pointer, or touch controls.
+3. Read the objective compass, survive the visible opening pack, and explore rooms with keyboard, pointer, or touch controls.
 4. Fight three enemy types with a class-specific primary attack and ability.
 5. Collect gold, restorative tonics, and weapon-power drops.
 6. Clear every enemy to unlock the rift gate.
@@ -54,6 +54,10 @@ The `dungeon-v1` generator begins with a wall-filled 44 by 32 grid, carves a cen
 
 The generation result includes a stable digest. Tests verify that a seed repeats byte-for-byte, every walkable tile is connected, entrance and exit are walkable, and a different seed changes the layout.
 
+Each run opens with one Stonekin, one Ashfang, and one Rift Hexer in deterministic mirrored slots around the player. The slots are selected from walkable positions clear of solid scenery and staged inside the center slice retained by a portrait phone. The other eleven enemies remain more than eight tiles from spawn and populate the larger ruin. This preserves procedural exploration while making the first player decision immediate and visually testable instead of opening on an empty floor.
+
+Generated rooms receive passable ground-story sprites such as scorch, blood, bones, ritual paint, broken boards, and rubble. These marks share the Cinderwake raster palette, sit below actors and buildings, and never create invisible collision. The first scorch mark is locked to the forge anchor so the building has a repeatable contact treatment.
+
 Buildings and solid props have deterministic elliptical collision footprints around the part of each sprite that touches the ground. Players and monsters cannot cross a forge, tree trunk, wagon, grave marker, crate stack, cage, pillar, or other solid object, but axis-separated movement lets them slide along its base. Low rubble is the only explicit passable decoration; the rift exit remains enterable. Placement, visible sprite identity, and collision all derive from the same map layout, so restoring an arbitrary state cannot move an invisible collider away from its art.
 
 ## Enemies
@@ -64,7 +68,7 @@ Buildings and solid props have deterministic elliptical collision footprints aro
 | Rift Hexer | keeps distance and retreats if crowded |     28 / 0 | hostile crystal projectile, 7 raw damage, 105-tick cooldown |
 | Stonekin   | slow, durable pursuer                  |    80 / 20 | 10 raw damage, 110-tick cooldown                            |
 
-AI iterates in sorted entity-ID order and uses only simulation state. The generated run includes one elite Stonekin with doubled health, an amber ring, and a guaranteed drop. Test scenarios can disable AI completely to isolate animation or collision.
+AI iterates in sorted entity-ID order and uses only simulation state. Pursuit uses deterministic obstacle routes instead of pushing forever into walls or scenery, and touch navigation cancels a route after twelve ticks without progress. The generated run includes one elite Stonekin with doubled health, an amber ring, and a guaranteed drop. Test scenarios can disable AI completely to isolate animation or collision.
 
 ## Loot and outcomes
 

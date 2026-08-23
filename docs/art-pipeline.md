@@ -49,6 +49,12 @@ Run `npm run art:generation:check` to verify prompt/reference/candidate existenc
 
 Mechanical acceptance is deliberately narrower than art approval. Hashes, square input, keyed background, nonblank cells, atlas geometry, anchors, safe bounds, and deterministic packing can be gated. Identity, pose semantics, coherent anatomy, natural weight, effect restraint, and same-style judgment still require visual review. A trial can therefore pass as pipeline evidence while remaining rejected as a production replacement.
 
+### Environmental decal ingress
+
+`art/source/environment/decals-source.png` is the immutable generated source for a 4 × 4 set of ground marks: scorch, blood, bones, ritual paint, chain, boards, rubble, roots, candles, bramble, armor, embers, cloth, statue fragments, tracks, and flowers. The exact pre-generation prompt and reference hashes live under `art/generation/`. The built-in image generator returned a light checker-like matte instead of transparency, so the accepted source is preserved honestly and the deterministic packer owns removal of that matte; the provenance record does not claim the raw image was transparent.
+
+`npm run art:build` keys the light connected field, decontaminates pale fringe pixels, removes boundary fragments, recenters every object within a 220 × 208 safe envelope, and writes `public/assets/sprites/environment-decals.png`. `npm run art:check` requires sixteen nonblank cells, at least 35% transparency, at least 1,200 ink pixels per cell, and a six-pixel transparent border. Generated-map layout treats every decal as passable terrain-layer art and anchors the first scorch ring exactly under the spawn forge. Explicit temporal fixtures receive no generated decals, avoiding unrelated baseline churn.
+
 ## Deterministic integration
 
 An asset loader resolves manifest entries in stable key order, validates rectangles against decoded atlas dimensions, waits for every required image to decode before declaring capture readiness, and never lets network timing choose a fallback frame. Missing, duplicate, invalid, or unloaded sprite keys fail loudly in test mode. Pixel ratio, canvas smoothing, color mode, viewport (960 × 540 logical pixels at DPR 1 for baselines), and browser version are pinned in capture metadata.
