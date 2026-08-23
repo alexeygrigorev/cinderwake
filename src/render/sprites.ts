@@ -431,6 +431,7 @@ export const SPRITE_CATALOG: SpriteCatalogV1 = {
 
 const loadedImages = new Map<string, HTMLImageElement>();
 let loadPromise: Promise<void> | undefined;
+type SpriteLoadProgress = (loaded: number, total: number) => void;
 
 export function resolveSpriteAssetUrl(url: string): string {
   const environment = (
@@ -443,16 +444,24 @@ export function resolveSpriteAssetUrl(url: string): string {
   return `${base.replace(/\/$/, "")}${url}`;
 }
 
-export function preloadSpriteAssets(): Promise<void> {
+export function preloadSpriteAssets(
+  onProgress: SpriteLoadProgress = () => undefined,
+): Promise<void> {
+  const definitions = Object.values(SPRITE_CATALOG.assets);
+  onProgress(loadedImages.size, definitions.length);
   if (loadPromise) return loadPromise;
   if (typeof Image === "undefined")
     return Promise.reject(
       new Error("Sprite assets require a browser Image API"),
     );
   loadPromise = Promise.all(
-    Object.values(SPRITE_CATALOG.assets).map(
+    definitions.map(
       (definition) =>
         new Promise<void>((resolve, reject) => {
+          if (loadedImages.has(definition.id)) {
+            resolve();
+            return;
+          }
           const image = new Image();
           image.onload = () => {
             if (
@@ -467,6 +476,7 @@ export function preloadSpriteAssets(): Promise<void> {
               return;
             }
             loadedImages.set(definition.id, image);
+            onProgress(loadedImages.size, definitions.length);
             resolve();
           };
           image.onerror = () =>
@@ -474,7 +484,12 @@ export function preloadSpriteAssets(): Promise<void> {
           image.src = resolveSpriteAssetUrl(definition.url);
         }),
     ),
-  ).then(() => undefined);
+  )
+    .then(() => undefined)
+    .catch((error: unknown) => {
+      loadPromise = undefined;
+      throw error;
+    });
   return loadPromise;
 }
 

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const ALLOWED_TITLES = new Set([
+  "Atlas failed.",
   "Arcanist",
   "Cinderwake",
   "CINDERWAKE",
@@ -80,7 +81,7 @@ test("selection exposes only approved title text and renders the editable seed w
   await expect(page.locator(".selection")).toBeVisible();
   await expectTitleOnlyText(page);
   await expectSpriteBacked(page, [
-    ".class-card",
+    ".class-portrait",
     ".seed-control",
     ".begin",
     ".selection-lab-toggle",
@@ -113,7 +114,7 @@ test("selection exposes only approved title text and renders the editable seed w
     };
   });
   expect(seedPresentation.inputFill).toBe("rgba(0, 0, 0, 0)");
-  expect(seedPresentation.labPosition).toBe("static");
+  expect(seedPresentation.labPosition).toBe("fixed");
   expect(seedPresentation.overlap).toBe(false);
 });
 
@@ -133,7 +134,10 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   });
   await expect(page.locator(".loading")).toBeVisible();
   await expectTitleOnlyText(page);
-  await expect(page.locator(".loading .sprite-glyph")).toHaveCount(17);
+  await expect(page.locator(".loading-status")).toHaveAttribute(
+    "aria-label",
+    /Waking the atlas \d+ \/ 14/,
+  );
 
   releaseEffects!();
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
@@ -181,4 +185,19 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   await expect(page.locator("#outcome h2")).toHaveText("Run ended.");
   await expectTitleOnlyText(page);
   await expect(page.locator("#outcome button .sprite-glyph")).toHaveCount(8);
+});
+
+test("an atlas failure becomes a retryable error instead of an endless loading screen", async ({
+  page,
+}) => {
+  await page.route("**/assets/sprites/actor-vanguard.png", (route) =>
+    route.abort("failed"),
+  );
+  await page.goto("/?testMode=1&selection=1");
+  await page.locator("#begin").click();
+  await expect(page.locator(".loading-failed")).toBeVisible();
+  await expect(page.locator("[data-loading='retry']")).toBeVisible();
+  await expect(page.locator("[data-loading='back']")).toBeVisible();
+  await page.locator("[data-loading='back']").click();
+  await expect(page.locator(".selection")).toBeVisible();
 });

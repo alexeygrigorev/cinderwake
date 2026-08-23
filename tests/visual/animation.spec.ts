@@ -9,10 +9,10 @@ test("character selection is stable with decoded local key art", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.locator(".hero-lineup").waitFor();
+  await page.locator(".selection-art").waitFor();
   const spriteUrls = await page
     .locator(
-      ".selection, .hero-lineup span, .class-portrait, .class-card, .sprite-glyph",
+      ".selection-art, .class-portrait, .seed-control, .begin, .selection-lab-toggle, .sprite-glyph",
     )
     .evaluateAll((elements) => [
       ...new Set(
@@ -26,7 +26,7 @@ test("character selection is stable with decoded local key art", async ({
           .filter(Boolean),
       ),
     ]);
-  expect(spriteUrls.length).toBeGreaterThanOrEqual(6);
+  expect(spriteUrls.length).toBeGreaterThanOrEqual(5);
   await page.evaluate(async (urls) => {
     await Promise.all(
       urls.map(async (url) => {
@@ -39,16 +39,29 @@ test("character selection is stable with decoded local key art", async ({
   }, spriteUrls);
   const layout = await page.evaluate(() => {
     const selection = document.querySelector<HTMLElement>(".selection")!;
+    const choose = document.querySelector<HTMLElement>(".choose")!;
+    const title = document
+      .querySelector<HTMLElement>(".selection-header h1")!
+      .getBoundingClientRect();
     const cards = [...document.querySelectorAll<HTMLElement>(".class-card")];
+    const chooseBox = choose.getBoundingClientRect();
     return {
       selectionHeight: selection.getBoundingClientRect().height,
       viewportHeight: innerHeight,
-      cardsContained: cards.every((card) => {
+      titleContained: title.left >= 0 && title.right <= innerWidth,
+      controlsContained:
+        chooseBox.left >= 0 &&
+        chooseBox.right <= innerWidth &&
+        chooseBox.bottom <= innerHeight,
+      portraitsFillCards: cards.every((card) => {
         const cardBox = card.getBoundingClientRect();
-        const statsBox = card
-          .querySelector<HTMLElement>(".sprite-stats")!
+        const portraitBox = card
+          .querySelector<HTMLElement>(".class-portrait")!
           .getBoundingClientRect();
-        return statsBox.bottom <= cardBox.bottom;
+        return (
+          Math.abs(portraitBox.width - cardBox.width) <= 2 &&
+          Math.abs(portraitBox.height - cardBox.height) <= 2
+        );
       }),
       wordsStayWhole: [...document.querySelectorAll(".sprite-word")].every(
         (word) =>
@@ -61,7 +74,9 @@ test("character selection is stable with decoded local key art", async ({
     };
   });
   expect(layout.selectionHeight).toBeLessThanOrEqual(layout.viewportHeight);
-  expect(layout.cardsContained).toBe(true);
+  expect(layout.titleContained).toBe(true);
+  expect(layout.controlsContained).toBe(true);
+  expect(layout.portraitsFillCards).toBe(true);
   expect(layout.wordsStayWhole).toBe(true);
   await expect(page.locator(".selection")).toHaveScreenshot(
     "character-selection.png",

@@ -7,7 +7,7 @@ test.use({
   isMobile: true,
 });
 
-test("mobile character selection is scrollable, readable, and has no horizontal overflow", async ({
+test("mobile character selection fills the viewport and has no horizontal overflow", async ({
   page,
 }) => {
   await page.goto("/");
@@ -19,12 +19,88 @@ test("mobile character selection is scrollable, readable, and has no horizontal 
     viewportHeight: window.innerHeight,
   }));
   expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(layout.scrollHeight).toBeGreaterThan(layout.viewportHeight);
-  await page.locator("#begin").scrollIntoViewIfNeeded();
+  expect(layout.scrollHeight).toBeLessThanOrEqual(layout.viewportHeight);
   await expect(page.locator("#begin")).toBeInViewport();
   await expect(page).toHaveScreenshot("mobile-character-selection.png", {
     fullPage: true,
   });
+});
+
+test("the real mobile selection path starts the chosen hero and every action control changes state", async ({
+  page,
+}) => {
+  await page.goto("/?testMode=1&selection=1");
+  const ranger = page.locator("[data-class='ranger']");
+  await ranger.tap();
+  await expect(page.locator(".selection")).toHaveAttribute(
+    "data-selected-class",
+    "ranger",
+  );
+  await expect(ranger).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".selection-art")).toHaveCSS(
+    "background-image",
+    /ranger-v2\.webp/,
+  );
+
+  await page.locator("#begin").tap();
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  expect(
+    await page.evaluate(() => window.__GAME_TEST__!.snapshot().player.classId),
+  ).toBe("ranger");
+
+  const pad = page.locator(".move-pad");
+  const box = await pad.boundingBox();
+  if (!box) throw new Error("Movement pad has no bounds");
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.9, box.y + box.height / 2);
+  const movement = await page.evaluate(() => {
+    const before = window.__GAME_TEST__!.snapshot().player.position.x;
+    const after = window.__GAME_TEST__!.step(1, {
+      useBrowserInput: true,
+    }).player.position.x;
+    return { before, after };
+  });
+  await page.mouse.up();
+  expect(movement.after).toBeGreaterThan(movement.before);
+
+  await page.locator(".mobile-actions [data-action='ability']").tap();
+  const ability = await page.evaluate(() =>
+    window.__GAME_TEST__!.step(1, { useBrowserInput: true }),
+  );
+  expect(
+    ability.eventLog.some(
+      (event: { type: string }) => event.type === "ability_started",
+    ),
+  ).toBe(true);
+
+  await page.evaluate(() => window.__GAME_TEST__!.step(120));
+  await page.locator(".mobile-actions [data-action='attack']").tap();
+  const attack = await page.evaluate(() =>
+    window.__GAME_TEST__!.step(1, { useBrowserInput: true }),
+  );
+  expect(
+    attack.eventLog.some(
+      (event: { type: string }) => event.type === "attack_started",
+    ),
+  ).toBe(true);
+
+  await page.evaluate(() => {
+    const state = window.__GAME_TEST__!.snapshot();
+    state.player.health = state.player.maxHealth - 30;
+    state.player.tonics = 1;
+    window.__GAME_TEST__!.loadState(state);
+  });
+  const beforeTonic = await page.evaluate(
+    () => window.__GAME_TEST__!.snapshot().player,
+  );
+  await page.locator(".mobile-actions [data-action='tonic']").tap();
+  const afterTonic = await page.evaluate(
+    () => window.__GAME_TEST__!.step(1, { useBrowserInput: true }).player,
+  );
+  expect(afterTonic.health).toBeGreaterThan(beforeTonic.health);
+  expect(afterTonic.tonics).toBe(beforeTonic.tonics - 1);
 });
 
 test("touch landscape selection keeps every interactive surface inside the viewport", async ({

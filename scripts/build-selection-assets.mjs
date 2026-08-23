@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -26,6 +26,7 @@ try {
     const output = checkOnly
       ? path.join(temporaryRoot, path.basename(asset.productionFile))
       : path.join(root, asset.productionFile);
+    await mkdir(path.dirname(output), { recursive: true });
     await sharp(candidate)
       .resize({
         width: manifest.transformation.resize.width,

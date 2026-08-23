@@ -576,6 +576,298 @@ button {
   }
 }
 
+/* Mobile-first cinematic selection. The generated scene and portrait crops are
+   raster sprites; CSS is limited to layout, legibility masks, and interaction. */
+.selection.selection-v2 {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  min-height: 100svh;
+  padding: 0;
+  overflow: hidden;
+  background: #050708;
+}
+.selection-v2 .selection-art {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  background-color: #050708;
+  background-image: var(--selection-art);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform: scale(1.002);
+}
+.selection-v2::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, #030506dc 0, transparent 24%),
+    linear-gradient(0deg, #030506 0, #030506f4 24%, transparent 57%);
+}
+.selection-v2 .selection-header {
+  position: absolute;
+  z-index: 2;
+  top: max(18px, env(safe-area-inset-top));
+  left: 18px;
+  width: calc(100% - 36px);
+  text-align: center;
+  filter: drop-shadow(0 3px 8px #000);
+}
+.selection-v2 .selection-header .eyebrow {
+  margin: 0 0 7px;
+}
+.selection-v2 .selection-header h1 {
+  max-width: 100%;
+  margin: 0;
+  color: #f4ead9;
+  font:
+    700 clamp(40px, 13.5vw, 68px) / 0.88 Georgia,
+    serif;
+  letter-spacing: -0.055em;
+  text-wrap: nowrap;
+}
+.selection-v2 .choose {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(100%, 560px);
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 14px max(14px, env(safe-area-inset-bottom));
+}
+.selection-v2 .selected-class {
+  min-height: 58px;
+  margin-bottom: 7px;
+  text-align: center;
+  text-shadow: 0 3px 10px #000;
+}
+.selection-v2 .selected-class h2 {
+  margin: 0 0 3px;
+  color: #f0c17b;
+  font:
+    700 clamp(27px, 8vw, 38px) / 1 Georgia,
+    serif;
+}
+.selection-v2 .selected-class > .sprite-text {
+  justify-content: center;
+  margin: 3px auto 0;
+}
+.selection-v2 .selected-class .sprite-role {
+  font-size: 10px;
+  color: #e9e0d1;
+}
+.selection-v2 .selected-class .sprite-stats {
+  font-size: 8px;
+  color: #bcae98;
+}
+.selection-v2 .cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+.selection-v2 .class-card {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 78px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #746550;
+  border-radius: 2px;
+  background: #111;
+  color: #f3e8d5;
+  box-shadow: inset 0 -32px 24px #020303e8;
+  transform: none;
+}
+.selection-v2 .class-card:hover,
+.selection-v2 .class-card.selected {
+  border: 1px solid #f2bd6a;
+  background: #111;
+  box-shadow:
+    inset 0 -34px 24px #020303ea,
+    0 0 0 2px #1b1209,
+    0 0 16px #e7982d55;
+  transform: translateY(-2px);
+}
+.selection-v2 .class-card:focus-visible,
+.selection-v2 .begin:focus-visible,
+.selection-v2 .selection-lab-toggle:focus-visible {
+  outline: 3px solid #fff2c9;
+  outline-offset: 2px;
+}
+.selection-v2 .class-portrait {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background-image: var(--portrait);
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: saturate(0.72) brightness(0.72);
+}
+.selection-v2 .class-card.selected .class-portrait {
+  filter: saturate(1) brightness(1);
+}
+.selection-v2 .class-card strong {
+  position: absolute;
+  z-index: 1;
+  right: 4px;
+  bottom: 6px;
+  left: 4px;
+  display: block;
+  color: inherit;
+  font:
+    700 clamp(12px, 3.6vw, 16px) / 1 Georgia,
+    serif;
+  text-align: center;
+  text-shadow: 0 2px 5px #000;
+}
+.selection-v2 .run-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 8px;
+  margin-top: 9px;
+}
+.selection-v2 .seed-label {
+  min-width: 0;
+  margin: 0;
+}
+.selection-v2 .seed-label > .sprite-text {
+  height: 13px;
+  margin-left: 5px;
+  font-size: 8px;
+}
+.selection-v2 .seed-control,
+.selection-v2 .begin {
+  min-height: 48px;
+  margin: 0;
+}
+.selection-v2 .seed-control {
+  margin-top: 2px;
+}
+.selection-v2 .begin {
+  align-self: end;
+  padding: 0 12px;
+  background-position: 0 0;
+}
+.selection-v2 .begin .sprite-text {
+  justify-content: center;
+  font-size: 11px;
+}
+.selection-v2 .selection-lab-toggle {
+  top: max(14px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: auto;
+  width: 48px;
+  min-height: 44px;
+  padding: 6px;
+  opacity: 0.72;
+}
+.selection-v2 .selection-lab-toggle .sprite-text {
+  justify-content: center;
+  font-size: 9px;
+}
+.loading .loading-status {
+  min-height: 18px;
+}
+.loading-failed {
+  padding: 24px;
+}
+.loading-failed h1 {
+  font-size: clamp(36px, 10vw, 64px);
+}
+.loading-failed > div {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.loading-failed button {
+  min-width: 112px;
+  min-height: 48px;
+  border: 0;
+  background-color: #171412;
+  background-image: var(--ui-atlas);
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  color: #f2ddbf;
+}
+
+@media (min-width: 761px) {
+  .selection-v2 .selection-art {
+    background-position: center 30%;
+  }
+  .selection-v2 .selection-header {
+    top: clamp(28px, 5vh, 58px);
+  }
+  .selection-v2 .choose {
+    width: min(640px, 54vw);
+    padding-bottom: clamp(24px, 5vh, 54px);
+  }
+  .selection-v2 .class-card {
+    min-height: 108px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .selection.selection-v2 {
+    display: block;
+    padding: 0;
+    overflow: hidden;
+  }
+  .selection-v2 .selection-header {
+    top: 14px;
+    left: 18px;
+    width: auto;
+    text-align: left;
+  }
+  .selection-v2 .selection-header h1 {
+    font-size: 44px;
+  }
+  .selection-v2 .choose {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: auto;
+    width: min(58vw, 500px);
+    padding: 0;
+  }
+  .selection-v2 .selected-class {
+    min-height: 38px;
+    margin-bottom: 4px;
+  }
+  .selection-v2 .selected-class h2 {
+    font-size: 26px;
+  }
+  .selection-v2 .selected-class .sprite-stats {
+    display: none;
+  }
+  .selection-v2 .class-card {
+    min-height: 62px;
+  }
+  .selection-v2 .run-controls {
+    margin-top: 6px;
+  }
+  .selection-v2 .seed-control,
+  .selection-v2 .begin {
+    min-height: 44px;
+  }
+  .selection-v2 .selection-lab-toggle {
+    min-height: 44px;
+  }
+}
+
 /* Sprite-backed presentation. CSS positions and crops committed raster art;
    it does not invent visible game decoration. */
 .loading {
@@ -1194,4 +1486,20 @@ button {
   .loot-log {
     display: none;
   }
+}
+
+/* Keep this final because legacy selection rules above remain shared by the
+   test lab and outcome panels. */
+.selection-v2 .selection-lab-toggle {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  bottom: auto;
+  display: flex;
+  width: 48px;
+  min-width: 48px;
+  min-height: 44px;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
 }
