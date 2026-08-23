@@ -87,6 +87,17 @@ function moveActor(
   return next;
 }
 
+/**
+ * Extra world-space breathing room claimed by each living monster. Collision
+ * radii describe feet/contact only; this semantic padding keeps the much
+ * broader painted bodies readable without coupling simulation to sprite or
+ * manifest dimensions. 740 units is a little under one floor tile per side.
+ */
+export const MONSTER_PERSONAL_SPACE_PADDING = 740;
+// Combatants compress their formation near attack range so a crowd can still
+// surround and reach its target, while retaining substantially more space than
+// bare collision discs. This remains gameplay semantics, not sprite geometry.
+const ENGAGED_MONSTER_PERSONAL_SPACE_PADDING = 400;
 const MONSTER_SEPARATION_GAP = 8;
 const MONSTER_SEPARATION_PASSES = 24;
 
@@ -134,6 +145,11 @@ function separateLivingMonsters(
   const living = state.monsters
     .filter((monster) => monster.health > 0)
     .sort((first, second) => first.id.localeCompare(second.id));
+  const personalSpace = (monster: MonsterState): number =>
+    distanceSquared(monster.position, state.player.position) <=
+    (monster.attackRange + MONSTER_PERSONAL_SPACE_PADDING) ** 2
+      ? ENGAGED_MONSTER_PERSONAL_SPACE_PADDING
+      : MONSTER_PERSONAL_SPACE_PADDING;
   for (let pass = 0; pass < MONSTER_SEPARATION_PASSES; pass += 1) {
     let adjusted = false;
     for (let firstIndex = 0; firstIndex < living.length; firstIndex += 1) {
@@ -148,7 +164,11 @@ function separateLivingMonsters(
         const dy = second.position.y - first.position.y;
         const distance = Math.hypot(dx, dy);
         const minimumDistance =
-          first.radius + second.radius + MONSTER_SEPARATION_GAP;
+          first.radius +
+          second.radius +
+          personalSpace(first) +
+          personalSpace(second) +
+          MONSTER_SEPARATION_GAP;
         if (distance >= minimumDistance) continue;
 
         const fallback = stablePairDirection(first.id, second.id);

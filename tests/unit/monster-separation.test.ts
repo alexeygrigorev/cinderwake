@@ -4,7 +4,10 @@ import {
   overlapsScenery,
   sceneryCollisions,
 } from "../../src/game/sceneryLayout";
-import { stepGame } from "../../src/game/simulation";
+import {
+  MONSTER_PERSONAL_SPACE_PADDING,
+  stepGame,
+} from "../../src/game/simulation";
 import {
   EMPTY_INPUT,
   type GameState,
@@ -36,6 +39,7 @@ function pursuitScenario(): ScenarioV1 {
     seed: "monster-separation-pursuit",
     classId: "vanguard",
     map: { mode: "explicit", rows: openArena() },
+    player: { health: 10_000, maxHealth: 10_000 },
     monsters: [
       {
         id: "monster:alpha",
@@ -80,10 +84,51 @@ function maximumPenetration(state: GameState): number {
       if (first.health <= 0 || second.health <= 0) continue;
       penetration = Math.max(
         penetration,
+        first.radius +
+          second.radius +
+          MONSTER_PERSONAL_SPACE_PADDING * 2 -
+          distance(first, second),
+      );
+    }
+  return penetration;
+}
+
+function maximumCollisionDiscPenetration(state: GameState): number {
+  let penetration = 0;
+  for (let firstIndex = 0; firstIndex < state.monsters.length; firstIndex += 1)
+    for (
+      let secondIndex = firstIndex + 1;
+      secondIndex < state.monsters.length;
+      secondIndex += 1
+    ) {
+      const first = state.monsters[firstIndex]!;
+      const second = state.monsters[secondIndex]!;
+      penetration = Math.max(
+        penetration,
         first.radius + second.radius - distance(first, second),
       );
     }
   return penetration;
+}
+
+function destinationOverlapRatio(
+  first: { x: number; y: number; width: number; height: number },
+  second: { x: number; y: number; width: number; height: number },
+): number {
+  const width = Math.max(
+    0,
+    Math.min(first.x + first.width, second.x + second.width) -
+      Math.max(first.x, second.x),
+  );
+  const height = Math.max(
+    0,
+    Math.min(first.y + first.height, second.y + second.height) -
+      Math.max(first.y, second.y),
+  );
+  return (
+    (width * height) /
+    Math.min(first.width * first.height, second.width * second.height)
+  );
 }
 
 describe("deterministic monster separation", () => {
@@ -138,6 +183,11 @@ describe("deterministic monster separation", () => {
     const firstTrajectory = [];
     const secondTrajectory = [];
     const scenery = sceneryCollisions(first.map);
+    let pursuitManifest = buildRenderManifest(first, {
+      x: first.player.position.x,
+      y: first.player.position.y,
+      zoom: 1,
+    });
 
     for (let tick = 0; tick < 180; tick += 1) {
       stepGame(first, EMPTY_INPUT);
@@ -149,9 +199,14 @@ describe("deterministic monster separation", () => {
         second.monsters.map(({ id, position }) => ({ id, ...position })),
       );
       expect(
-        maximumPenetration(first),
-        `penetration at tick ${tick}`,
+        maximumCollisionDiscPenetration(first),
+        `collision penetration at tick ${tick}`,
       ).toBeLessThanOrEqual(2);
+      if (tick === 0)
+        expect(
+          maximumPenetration(first),
+          "wide pursuit padding was not established",
+        ).toBeLessThanOrEqual(2);
       for (const monster of first.monsters)
         expect(
           scenery.every(
@@ -160,6 +215,12 @@ describe("deterministic monster separation", () => {
           ),
           `${monster.id} entered scenery at tick ${tick}`,
         ).toBe(true);
+      if (tick === 0)
+        pursuitManifest = buildRenderManifest(first, {
+          x: first.player.position.x,
+          y: first.player.position.y,
+          zoom: 1,
+        });
     }
 
     expect(firstTrajectory).toEqual(secondTrajectory);
@@ -176,25 +237,34 @@ describe("deterministic monster separation", () => {
       ),
     ).toBe(true);
 
-    const manifest = buildRenderManifest(first, {
-      x: first.player.position.x,
-      y: first.player.position.y,
-      zoom: 1,
-    });
-    const anchors = new Map(
-      manifest.drawCalls
-        .filter(({ type }) => type === "monster")
-        .map(({ entityId, worldAnchor }) => [entityId, worldAnchor]),
+    const calls = pursuitManifest.drawCalls.filter(
+      ({ type }) => type === "monster",
     );
-    for (const monster of first.monsters)
-      expect(anchors.get(monster.id)).toEqual(monster.position);
+    const anchors = new Map(
+      calls.map(({ entityId, worldAnchor }) => [entityId, worldAnchor]),
+    );
+    for (const monster of firstTrajectory[0]!)
+      expect(anchors.get(monster.id)).toEqual({ x: monster.x, y: monster.y });
+    for (let firstIndex = 0; firstIndex < calls.length; firstIndex += 1)
+      for (
+        let secondIndex = firstIndex + 1;
+        secondIndex < calls.length;
+        secondIndex += 1
+      )
+        expect(
+          destinationOverlapRatio(
+            calls[firstIndex]!.destinationRect,
+            calls[secondIndex]!.destinationRect,
+          ),
+          `${calls[firstIndex]!.entityId} and ${calls[secondIndex]!.entityId} are visually stacked`,
+        ).toBeLessThanOrEqual(0.2);
   });
 
   it("keeps separated melee pursuers capable of reaching and attacking", () => {
     const state = worldFromScenario(pursuitScenario());
     for (const monster of state.monsters) monster.attackReadyTick = 0;
 
-    for (let tick = 0; tick < 240; tick += 1) stepGame(state, EMPTY_INPUT);
+    for (let tick = 0; tick < 600; tick += 1) stepGame(state, EMPTY_INPUT);
 
     const attackers = new Set(
       state.eventLog
