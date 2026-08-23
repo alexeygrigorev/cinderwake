@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "id": "ActorAtlasV1",
+  "description": "The fixed Cinderwake actor rig. All heroes and monsters use these exact cells, rows, anchors, and clip cadences.",
+  "source": {
+    "pixelWidth": 1024,
+    "pixelHeight": 1024,
+    "columns": 4,
+    "rows": 4,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "background": "#ff00ff",
+    "rowsByPurpose": {
+      "idle": 0,
+      "walk": 1,
+      "attack": 2,
+      "ability": 3
+    }
+  },
+  "atlas": {
+    "pixelWidth": 2048,
+    "pixelHeight": 2048,
+    "columns": 8,
+    "rows": 8,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "footAnchor": { "x": 128, "y": 232 },
+    "safeInkBounds": { "x": 10, "y": 8, "width": 236, "height": 226 },
+    "reservedRows": [6, 7]
+  },
+  "clips": {
+    "idle": {
+      "atlasRow": 0,
+      "frameCount": 6,
+      "durationTicks": 60,
+      "looping": true,
+      "sourceCells": [0, 1, 2, 3, 2, 1]
+    },
+    "walk": {
+      "atlasRow": 1,
+      "frameCount": 8,
+      "durationTicks": 40,
+      "looping": true,
+      "sourceCells": [4, 5, 6, 7, 4, 5, 6, 7]
+    },
+    "attack": {
+      "atlasRow": 2,
+      "frameCount": 6,
+      "durationTicks": 26,
+      "looping": false,
+      "sourceCells": [8, 8, 9, 10, 10, 11]
+    },
+    "ability": {
+      "atlasRow": 3,
+      "frameCount": 8,
+      "durationTicks": 36,
+      "looping": false,
+      "sourceCells": [12, 12, 13, 13, 14, 14, 15, 15]
+    },
+    "hurt": {
+      "atlasRow": 4,
+      "frameCount": 4,
+      "durationTicks": 12,
+      "looping": false,
+      "sourceCells": [0, 1, 2, 3],
+      "derived": "hurt-flash"
+    },
+    "death": {
+      "atlasRow": 5,
+      "frameCount": 8,
+      "durationTicks": 48,
+      "looping": false,
+      "sourceCells": [0, 0, 0, 0, 0, 0, 0, 0],
+      "derived": "grounded-collapse"
+    }
+  },
+  "facing": {
+    "authored": "east",
+    "west": "horizontal-flip",
+    "northSouth": "east-bank-v1",
+    "futureDirectionalBanks": ["north", "south"]
+  }
+}

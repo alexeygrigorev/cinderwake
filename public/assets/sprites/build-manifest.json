@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "pipeline": "ActorAtlasV1",
+  "builtAt": "deterministic-from-committed-source",
+  "outputs": {
+    "actor-vanguard.png": {
+      "sha256": "175d86de6db7690b3a1627295ebdec1b6833ad8c82d2e3d1c90cbb3c56588648",
+      "source": "public/assets/sprites/actor-vanguard.png"
+    },
+    "actor-ranger.png": {
+      "sha256": "ea34790407f96b7b20687f23aae29cc43f09f9510da873ac89e3689a203e3562",
+      "source": "public/assets/sprites/actor-ranger.png"
+    },
+    "actor-arcanist.png": {
+      "sha256": "10d4b7fbbf227544e832b0313574f889f096d2fe9ccc4e3f8308d05086e046c4",
+      "source": "public/assets/sprites/actor-arcanist.png"
+    },
+    "actor-ashfang.png": {
+      "sha256": "2f815452bec8289b26bc56eedec730be794f0588f105fe475ef66552c8a8431a",
+      "source": "public/assets/sprites/actor-ashfang.png"
+    },
+    "actor-hexer.png": {
+      "sha256": "70a51680aeb56903423517dc30bb85caf530224fb5a3ddedaddbee65422a49ea",
+      "source": "public/assets/sprites/actor-hexer.png"
+    },
+    "actor-stonekin.png": {
+      "sha256": "dd9be3b9d189e094a8a47458bcc8f420ccd55df55c169d99401dfeea265a225c",
+      "source": "public/assets/sprites/actor-stonekin.png"
+    },
+    "environment-terrain.png": {
+      "sha256": "784544359ef109884ed554e44ca29149248e08e1cdd826cc44b72e584d75dcf2",
+      "source": "public/assets/sprites/environment-terrain.png"
+    },
+    "environment-structures.png": {
+      "sha256": "b7d94fac72c4814d74e68041432cfe1262eac67aaebdb4860792085703a9f7a8",
+      "source": "public/assets/sprites/environment-structures.png"
+    },
+    "environment-props.png": {
+      "sha256": "43c769f42cb3bf3bd674a13d29da7edff033738fa8457aab3b6c46635501fea0",
+      "source": "public/assets/sprites/environment-props.png"
+    },
+    "ui.png": {
+      "sha256": "353518d1a3990ee687b1da42a36dd962dd37968ec6a7bb4292d8f58b2b787e09",
+      "source": "public/assets/sprites/ui.png"
+    },
+    "effects.png": {
+      "sha256": "59c2bccc5cf703cef52d3dddd9902fea324c667ecfb5e98b1d341ac7277289a8",
+      "source": "public/assets/sprites/effects.png"
+    },
+    "loot.png": {
+      "sha256": "b1e68d03adb12540cc672b9eff5c5e52f66e00f58f7bce684514df3376707815",
+      "source": "public/assets/sprites/loot.png"
+    }
+  }
+}

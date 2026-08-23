@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#ff00ff"/>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.72" stroke-width="2">
+    <path d="M256 0v1024M512 0v1024M768 0v1024M0 256h1024M0 512h1024M0 768h1024"/>
+  </g>
+  <g fill="none" stroke="#00ffff" stroke-opacity="0.72" stroke-width="2" stroke-dasharray="8 8">
+    <path d="M128 0v1024M384 0v1024M640 0v1024M896 0v1024"/>
+    <path d="M0 232h1024M0 488h1024M0 744h1024M0 1000h1024"/>
+  </g>
+  <g font-family="monospace" font-size="18" fill="#ffffff">
+    <text x="12" y="26">IDLE 0</text><text x="268" y="26">IDLE 1</text><text x="524" y="26">IDLE 2</text><text x="780" y="26">IDLE 3</text>
+    <text x="12" y="282">WALK 0</text><text x="268" y="282">WALK 1</text><text x="524" y="282">WALK 2</text><text x="780" y="282">WALK 3</text>
+    <text x="12" y="538">ATTACK 0</text><text x="268" y="538">ATTACK 1</text><text x="524" y="538">ATTACK 2</text><text x="780" y="538">ATTACK 3</text>
+    <text x="12" y="794">ABILITY 0</text><text x="268" y="794">ABILITY 1</text><text x="524" y="794">ABILITY 2</text><text x="780" y="794">ABILITY 3</text>
+  </g>
+</svg>

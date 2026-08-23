@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "created": "2026-08-23",
+  "tool": "OpenAI image generation tool",
+  "styleBrief": "art/style-bible.md",
+  "thirdPartyImageInputs": [],
+  "notes": "Original Cinderwake source sheets generated from text-only briefs. No third-party game art, screenshots, logos, or copyrighted character references were supplied as image inputs.",
+  "sources": [
+    {
+      "file": "art/source/actors/vanguard-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/ranger-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/arcanist-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/hexer-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "kind": "actor-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/environment/terrain-source.png",
+      "kind": "terrain-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/environment/structures-source.png",
+      "kind": "structure-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/environment/props-source.png",
+      "kind": "prop-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/ui/ui-source.png",
+      "kind": "ui-source",
+      "grid": "4x4"
+    },
+    {
+      "file": "art/source/ui/effects-source.png",
+      "kind": "effects-source",
+      "grid": "4x4"
+    }
+  ]
+}
