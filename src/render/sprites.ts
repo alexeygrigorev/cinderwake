@@ -54,7 +54,7 @@ interface ActorAtlasSpec {
 }
 
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
-export const SPRITE_CATALOG_REVISION = "actor-atlas-v2-cardinal-2026-08-23";
+export const SPRITE_CATALOG_REVISION = "cinder-node-v1-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
 
@@ -126,6 +126,7 @@ const assets: Record<string, SpriteAssetV1> = {
     1024,
   ),
   "atlas:props": asset("atlas:props", "environment-props.png", 1024, 1024),
+  "atlas:decals": asset("atlas:decals", "environment-decals.png", 1024, 1024),
   "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
   "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
   "atlas:ui": asset("atlas:ui", "ui.png", 1024, 1024),
@@ -412,6 +413,35 @@ propNames.forEach((name, index) =>
     singleFrameSprite(
       `scenery:prop:${name}`,
       "atlas:props",
+      index % 4,
+      Math.floor(index / 4),
+    ),
+  ),
+);
+
+const decalNames = [
+  "scorch-ring",
+  "blood-smear",
+  "bone-pile",
+  "occult-circle",
+  "chain-coil",
+  "broken-boards",
+  "grave-rubble",
+  "burnt-roots",
+  "melted-candles",
+  "dead-bramble",
+  "discarded-armor",
+  "cracked-embers",
+  "banner-scrap",
+  "saint-fragments",
+  "claw-tracks",
+  "grave-flowers",
+] as const;
+decalNames.forEach((name, index) =>
+  register(
+    singleFrameSprite(
+      `scenery:decal:${name}`,
+      "atlas:decals",
       index % 4,
       Math.floor(index / 4),
     ),

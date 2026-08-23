@@ -241,6 +241,12 @@
       "grid": "4x4"
     },
     {
+      "file": "art/source/environment/decals-source.png",
+      "kind": "ground-decal-source",
+      "grid": "4x4",
+      "generationRecord": "art/generation/environment-decals-v1.json"
+    },
+    {
       "file": "art/source/ui/ui-source.png",
       "kind": "ui-source",
       "grid": "4x4"

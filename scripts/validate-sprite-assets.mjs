@@ -136,12 +136,51 @@ for (const fileName of [
   "environment-floor.png",
   "environment-structures.png",
   "environment-props.png",
+  "environment-decals.png",
   "ui.png",
   "effects.png",
 ]) {
   const metadata = await sharp(path.join(atlasDirectory, fileName)).metadata();
   if (metadata.width !== 1024 || metadata.height !== 1024)
     throw new Error(`${fileName} must be exactly 1024x1024`);
+}
+
+const decalPath = path.join(atlasDirectory, "environment-decals.png");
+for (let cellIndex = 0; cellIndex < 16; cellIndex += 1) {
+  const cellSize = 256;
+  const { data } = await sharp(decalPath)
+    .extract({
+      left: (cellIndex % 4) * cellSize,
+      top: Math.floor(cellIndex / 4) * cellSize,
+      width: cellSize,
+      height: cellSize,
+    })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let ink = 0;
+  let transparent = 0;
+  let edgeInk = 0;
+  for (let y = 0; y < cellSize; y += 1) {
+    for (let x = 0; x < cellSize; x += 1) {
+      const alpha = data[(y * cellSize + x) * 4 + 3];
+      if (alpha >= 8) {
+        ink += 1;
+        if (x < 6 || y < 6 || x >= cellSize - 6 || y >= cellSize - 6)
+          edgeInk += 1;
+      } else transparent += 1;
+    }
+  }
+  if (ink < 1_200)
+    throw new Error(`environment-decals.png cell ${cellIndex} is blank`);
+  if (transparent / (cellSize * cellSize) < 0.35)
+    throw new Error(
+      `environment-decals.png cell ${cellIndex} retained a background field`,
+    );
+  if (edgeInk > 0)
+    throw new Error(
+      `environment-decals.png cell ${cellIndex} crosses its safe cell boundary`,
+    );
 }
 
 function terrainMaterialEvidence(data, width, height) {

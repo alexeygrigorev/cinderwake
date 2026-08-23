@@ -1,0 +1,19 @@
+Use case: stylized-concept
+Asset type: production game sprite source sheet for Cinderwake environmental ground decals
+Input images: Image 1 and Image 2 are strict style, palette, material, isometric perspective, and rendering-quality references; Image 3 is the current gameplay scene showing where the decals will be used.
+Primary request: create exactly sixteen distinct passable ground-clutter sprites arranged in an exact 4 by 4 contact sheet, one object per equal square cell.
+Subjects, in reading order: ashen scorch ring; dark dried blood smear; small scattered human bone pile; faint broken cyan occult circle; rusted chain coil; splintered black wagon boards; small grave-stone rubble; burnt root cluster; three melted candles; thorny dead bramble; discarded dented armor pieces; embers in cracked charcoal; torn dark banner scrap; cracked stone saint fragments; muddy claw tracks; sparse pale grave flowers.
+Style/medium: match the supplied Cinderwake sprites exactly—premium dark Gothic isometric ARPG raster art, realistic weathered materials, fine painterly detail, restrained charcoal/iron/bone palette, tiny ember orange and witchlight cyan accents only where specified.
+Composition/framing: strict 4x4 grid logic but do not draw grid lines; each sprite centered inside its own equal cell; consistent isometric three-quarter top-down view; consistent ground plane; generous transparent padding; no object crosses or touches a cell boundary; each object occupies roughly 55–68 percent of its cell and remains readable when reduced to 48–82 pixels.
+Lighting/mood: low directional moonlight from upper left, subtle warm bounce on ember/candle subjects, soft contact shadow immediately under each object.
+Constraints: genuinely transparent background and transparent gaps between every sprite; exactly sixteen isolated subjects; one subject per cell; no buildings, characters, monsters, weapons held by people, UI, text, border, grid, logos, watermark, colored matte, checkerboard, floor texture, or scenic background; do not merge neighboring cells; do not crop any subject.
+
+Targeted background-extraction follow-up:
+
+Use case: background-extraction
+Asset type: production game sprite source sheet
+Input images: Image 1 is the exact edit target.
+Primary request: remove only the white and light-gray checkerboard background from Image 1 and replace it with genuine transparent alpha, including every gap between all sixteen sprites.
+Constraints: preserve the exact sixteen objects, their pixels, positions, sizes, lighting, contact shadows, 4x4 arrangement, and full 1254-by-1254 framing; change only the checkerboard/background into true transparency; retain fine edges, holes inside chains and brambles, and soft shadows without white halos; no new objects, no recoloring, no rearrangement, no grid, no text, no matte, no watermark.
+
+The generator returned a 1254 x 1254 true-color PNG with a baked light checkerboard despite the transparent-background request. Production therefore begins at the immutable raw source hash and deterministically resizes and light-keys it; the raw output is not described as having alpha.

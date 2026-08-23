@@ -131,6 +131,47 @@ async function normalizeSource(filePath, keyMode) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
+async function normalizeDecalSource(filePath) {
+  const keyed = await normalizeSource(filePath, "light");
+  const { data, info } = await sharp(keyed)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const matte = 238;
+  for (let offset = 0; offset < data.length; offset += 4) {
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    const spread = Math.max(red, green, blue) - Math.min(red, green, blue);
+    const brightness = (red + green + blue) / 3;
+    if (spread < 40 && brightness > 150) {
+      const neutralAlpha = Math.max(
+        0,
+        Math.min(255, Math.round(((230 - brightness) / 80) * 255)),
+      );
+      data[offset + 3] = Math.min(data[offset + 3], neutralAlpha);
+    }
+    const alpha = data[offset + 3] / 255;
+    if (alpha <= 0) {
+      data[offset] = 0;
+      data[offset + 1] = 0;
+      data[offset + 2] = 0;
+      continue;
+    }
+    if (alpha < 1) {
+      for (let channel = 0; channel < 3; channel += 1)
+        data[offset + channel] = Math.max(
+          0,
+          Math.min(
+            255,
+            Math.round((data[offset + channel] - matte * (1 - alpha)) / alpha),
+          ),
+        );
+    }
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
 async function alphaBounds(buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -455,6 +496,43 @@ async function buildGrid(sourcePath, destination, mode = undefined) {
   return destination;
 }
 
+async function buildDecalAtlas(sourcePath, destination) {
+  const normalized = await normalizeDecalSource(sourcePath);
+  const cells = await extractActorCells(normalized);
+  const composites = [];
+  for (const [index, extracted] of cells.entries()) {
+    const cleaned = await cleanLowAlpha(extracted, 18);
+    const bounds = await alphaBounds(cleaned);
+    const scale = Math.min(220 / bounds.width, 208 / bounds.height, 1);
+    const width = Math.max(1, Math.round(bounds.width * scale));
+    const height = Math.max(1, Math.round(bounds.height * scale));
+    const sprite = await sharp(cleaned)
+      .extract(bounds)
+      .resize(width, height, { fit: "fill", kernel: "lanczos3" })
+      .png()
+      .toBuffer();
+    composites.push({
+      input: sprite,
+      left: (index % 4) * GRID_CELL + Math.round((GRID_CELL - width) / 2),
+      top:
+        Math.floor(index / 4) * GRID_CELL +
+        Math.round((GRID_CELL - height) / 2),
+    });
+  }
+  await sharp({
+    create: {
+      width: SOURCE_SIZE,
+      height: SOURCE_SIZE,
+      channels: 4,
+      background: transparent,
+    },
+  })
+    .composite(composites)
+    .png({ compressionLevel: 9, palette: true, quality: 100 })
+    .toFile(destination);
+  return destination;
+}
+
 async function buildTerrainAtlas(sourcePath, destination) {
   const normalized = await sharp(sourcePath)
     .resize(SOURCE_SIZE, SOURCE_SIZE, { fit: "fill", kernel: "lanczos3" })
@@ -624,6 +702,10 @@ if (!OPTIONS.actorsOnly) {
     outputPath("environment-props.png"),
     "magenta",
   );
+  const decalsPath = await buildDecalAtlas(
+    inputPath("environment", "decals-source.png"),
+    outputPath("environment-decals.png"),
+  );
   const uiPath = await buildGrid(
     inputPath("ui", "ui-source.png"),
     outputPath("ui.png"),
@@ -640,6 +722,7 @@ if (!OPTIONS.actorsOnly) {
     floorPath,
     structuresPath,
     propsPath,
+    decalsPath,
     uiPath,
     effectsPath,
     await buildLootAtlas(propsPath, effectsPath),

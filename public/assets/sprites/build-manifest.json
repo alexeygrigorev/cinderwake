@@ -51,6 +51,10 @@
       "sha256": "e0cf84c5a665fff67fa69408154d51d5628d88cbd6dc95a33625db679bbfb25c",
       "source": "public/assets/sprites/environment-props.png"
     },
+    "environment-decals.png": {
+      "sha256": "532a8081ae6c519fa409178d469dc600162dff8deff7789d9611bd521099c28c",
+      "source": "public/assets/sprites/environment-decals.png"
+    },
     "ui.png": {
       "sha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
       "source": "public/assets/sprites/ui.png"

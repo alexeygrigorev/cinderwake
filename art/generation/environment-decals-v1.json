@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "environment-decals-v1",
+  "status": "accepted-after-deterministic-preparation",
+  "created": "2026-08-24",
+  "tool": "OpenAI built-in image generation tool",
+  "artifactId": "exec-e8ae2ee8-d21a-4d1a-9445-f86de1c045cb",
+  "source": {
+    "file": "art/source/environment/decals-source.png",
+    "sha256": "37f2843ba0aaa937dd812ba1f0d4627f9ef98d2a8ba99cdfe0bcea9718ee062e",
+    "observedWidth": 1254,
+    "observedHeight": 1254,
+    "observedChannels": "srgb",
+    "knownIngressDefect": "The requested transparent background was returned as a baked light checkerboard. The deterministic light-key stage removes it; raw bytes are retained unchanged."
+  },
+  "prompt": "art/generation/prompts/environment-decals-v1.txt",
+  "references": [
+    {
+      "file": "public/assets/sprites/environment-props.png",
+      "sha256": "e0cf84c5a665fff67fa69408154d51d5628d88cbd6dc95a33625db679bbfb25c"
+    },
+    {
+      "file": "public/assets/sprites/environment-structures.png",
+      "sha256": "b7d94fac72c4814d74e68041432cfe1262eac67aaebdb4860792085703a9f7a8"
+    },
+    {
+      "file": "quality-results/screens/images/desktop-game.png",
+      "sha256": "bddec9253d675ee359329fce862a613aec708e5261f5592df6c9dd4cdf79f8c6"
+    }
+  ],
+  "preparation": {
+    "command": "npm run art:build",
+    "operation": "resize to 1024 x 1024, key and decontaminate the near-neutral baked matte, remove boundary-connected cross-cell fragments, normalize each cell into a 220 x 208 safe envelope, recenter it, and emit a palette PNG with alpha"
+  },
+  "output": {
+    "file": "public/assets/sprites/environment-decals.png",
+    "sha256": "532a8081ae6c519fa409178d469dc600162dff8deff7789d9611bd521099c28c",
+    "width": 1024,
+    "height": 1024,
+    "channels": "srgba"
+  },
+  "review": {
+    "intendedUse": "passable deterministic environmental storytelling decals",
+    "accepted": true,
+    "notes": "All sixteen cells have distinct readable Gothic ground stories, coherent isometric perspective, consistent material rendering, and generous cell padding. Runtime promotion remains conditional on atlas validation and composed-screen review."
+  }
+}
