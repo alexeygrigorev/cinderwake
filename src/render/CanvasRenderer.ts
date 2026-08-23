@@ -1,0 +1,709 @@
+import {
+  TILE_PIXELS,
+  UNITS_PER_TILE,
+  VIEW_HEIGHT,
+  VIEW_WIDTH,
+} from "../game/constants";
+import type { GameState, Vec2 } from "../game/types";
+import {
+  buildRenderManifest,
+  screenFor,
+  type CameraV1,
+  type DrawCallV1,
+  type RenderManifestV1,
+} from "./manifest";
+
+const FLOOR_COLORS = ["#20272a", "#252d2f", "#1c2327"];
+
+function line(
+  ctx: CanvasRenderingContext2D,
+  from: Vec2,
+  to: Vec2,
+  width: number,
+  color: string,
+): void {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(from.x, from.y);
+  ctx.lineTo(to.x, to.y);
+  ctx.stroke();
+}
+
+function animationProgress(call: DrawCallV1, frameCount: number): number {
+  return frameCount <= 1 ? 0 : call.frameIndex / (frameCount - 1);
+}
+
+export class CanvasRenderer {
+  readonly canvas: HTMLCanvasElement;
+  readonly context: CanvasRenderingContext2D;
+  camera: CameraV1 = { x: 0, y: 0, zoom: 1 };
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.canvas.width = VIEW_WIDTH;
+    this.canvas.height = VIEW_HEIGHT;
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("Canvas 2D is unavailable");
+    this.context = context;
+  }
+
+  updateCamera(state: GameState, snap: boolean): void {
+    const targetX = (state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS;
+    const targetY = (state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS;
+    const mapWidth = state.map.width * TILE_PIXELS;
+    const mapHeight = state.map.height * TILE_PIXELS;
+    const clampedX =
+      mapWidth <= VIEW_WIDTH
+        ? mapWidth / 2
+        : Math.max(
+            VIEW_WIDTH / 2,
+            Math.min(mapWidth - VIEW_WIDTH / 2, targetX),
+          );
+    const clampedY =
+      mapHeight <= VIEW_HEIGHT
+        ? mapHeight / 2
+        : Math.max(
+            VIEW_HEIGHT / 2,
+            Math.min(mapHeight - VIEW_HEIGHT / 2, targetY),
+          );
+
+    if (snap) {
+      this.camera.x = clampedX;
+      this.camera.y = clampedY;
+      return;
+    }
+    this.camera.x += (clampedX - this.camera.x) * 0.13;
+    this.camera.y += (clampedY - this.camera.y) * 0.13;
+  }
+
+  render(state: GameState, snap = false): RenderManifestV1 {
+    this.updateCamera(state, snap);
+    const context = this.context;
+    context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    context.fillStyle = "#111619";
+    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    this.drawMap(context, state);
+
+    const exit = screenFor(
+      {
+        x: (state.map.exit.x + 0.5) * UNITS_PER_TILE,
+        y: (state.map.exit.y + 0.5) * UNITS_PER_TILE,
+      },
+      this.camera,
+    );
+    this.drawExit(context, exit, state.exitUnlocked, state.tick);
+
+    const manifest = buildRenderManifest(state, this.camera);
+    for (const call of manifest.drawCalls) {
+      if (call.visible) this.drawEntity(context, call, state);
+    }
+    for (const effect of state.effects) {
+      this.drawEffect(
+        context,
+        screenFor(effect.position, this.camera),
+        effect,
+        state.tick,
+      );
+    }
+    this.drawVignette(context);
+    return manifest;
+  }
+
+  private drawMap(context: CanvasRenderingContext2D, state: GameState): void {
+    const { map } = state;
+    const startX = Math.max(
+      0,
+      Math.floor((this.camera.x - VIEW_WIDTH / 2) / TILE_PIXELS) - 1,
+    );
+    const startY = Math.max(
+      0,
+      Math.floor((this.camera.y - VIEW_HEIGHT / 2) / TILE_PIXELS) - 1,
+    );
+    const endX = Math.min(
+      map.width,
+      startX + Math.ceil(VIEW_WIDTH / TILE_PIXELS) + 3,
+    );
+    const endY = Math.min(
+      map.height,
+      startY + Math.ceil(VIEW_HEIGHT / TILE_PIXELS) + 3,
+    );
+    for (let y = startY; y < endY; y += 1) {
+      for (let x = startX; x < endX; x += 1) {
+        this.drawTile(context, x, y, map.tiles[y * map.width + x] === 1);
+      }
+    }
+  }
+
+  private drawTile(
+    context: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    wall: boolean,
+  ): void {
+    const screenX = Math.round(
+      VIEW_WIDTH / 2 + x * TILE_PIXELS - this.camera.x,
+    );
+    const screenY = Math.round(
+      VIEW_HEIGHT / 2 + y * TILE_PIXELS - this.camera.y,
+    );
+    if (!wall) {
+      context.fillStyle = FLOOR_COLORS[(x * 7 + y * 11) % FLOOR_COLORS.length]!;
+      context.fillRect(screenX, screenY, TILE_PIXELS, TILE_PIXELS);
+      context.strokeStyle = "#30383b";
+      context.globalAlpha = 0.45;
+      context.strokeRect(
+        screenX + 0.5,
+        screenY + 0.5,
+        TILE_PIXELS - 1,
+        TILE_PIXELS - 1,
+      );
+      if ((x * 17 + y * 29) % 11 === 0) {
+        line(
+          context,
+          { x: screenX + 10, y: screenY + 19 },
+          { x: screenX + 22, y: screenY + 23 },
+          1,
+          "#465052",
+        );
+        line(
+          context,
+          { x: screenX + 22, y: screenY + 23 },
+          { x: screenX + 27, y: screenY + 31 },
+          1,
+          "#465052",
+        );
+      }
+      context.globalAlpha = 1;
+      return;
+    }
+
+    context.fillStyle = "#30363b";
+    context.fillRect(screenX, screenY, TILE_PIXELS, TILE_PIXELS);
+    context.fillStyle = "#4a4d50";
+    context.fillRect(screenX + 3, screenY + 3, TILE_PIXELS - 6, 11);
+    context.fillStyle = "#252a2e";
+    context.fillRect(screenX, screenY + 17, TILE_PIXELS, TILE_PIXELS - 17);
+    context.fillStyle = "#34393d";
+    context.fillRect(screenX + 4, screenY + 21, TILE_PIXELS - 8, 3);
+    context.strokeStyle = "#555b5e";
+    context.strokeRect(
+      screenX + 0.5,
+      screenY + 0.5,
+      TILE_PIXELS - 1,
+      TILE_PIXELS - 1,
+    );
+  }
+
+  private drawExit(
+    context: CanvasRenderingContext2D,
+    point: Vec2,
+    unlocked: boolean,
+    tick: number,
+  ): void {
+    context.save();
+    const pulse = 1 + Math.sin(tick / 8) * 0.08;
+    context.translate(point.x, point.y + 8);
+    context.scale(pulse, pulse);
+    context.fillStyle = unlocked ? "#66d8c4" : "#8f4e5b";
+    context.globalAlpha = 0.2;
+    context.beginPath();
+    context.arc(0, 0, 25, 0, Math.PI * 2);
+    context.fill();
+    context.globalAlpha = 1;
+    context.strokeStyle = unlocked ? "#b5ffdf" : "#d2868b";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.arc(0, 0, 14, 0, Math.PI * 2);
+    context.stroke();
+    context.fillStyle = "#171d20";
+    context.fillRect(-8, -11, 16, 22);
+    context.fillStyle = unlocked ? "#79e6cf" : "#6e3843";
+    context.fillRect(-3, -6, 6, 12);
+    context.restore();
+  }
+
+  private drawEntity(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+    state: GameState,
+  ): void {
+    if (call.type === "projectile") {
+      this.drawProjectile(context, call);
+      return;
+    }
+    if (call.type === "loot") {
+      this.drawLoot(context, call, state);
+      return;
+    }
+
+    const actor =
+      call.type === "player"
+        ? state.player
+        : state.monsters.find((monster) => monster.id === call.entityId);
+    if (!actor) return;
+    context.save();
+    context.translate(call.screenAnchor.x, call.screenAnchor.y);
+    context.scale(call.scale, call.scale);
+    context.fillStyle = "rgba(0, 0, 0, 0.42)";
+    context.beginPath();
+    context.ellipse(
+      0,
+      1,
+      call.type === "player" ? 16 : 18,
+      5,
+      0,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+    if (call.type === "player") this.drawHero(context, call, state);
+    else this.drawMonster(context, call, state);
+    context.restore();
+    this.drawHealthBar(
+      context,
+      call,
+      actor.health / actor.maxHealth,
+      call.type === "player",
+    );
+  }
+
+  private drawHero(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+    state: GameState,
+  ): void {
+    const frame = call.frameIndex;
+    const clip = call.clip;
+    const facingLeft = state.player.facing.x < 0;
+    const walkCycle = Math.sin((frame / 8) * Math.PI * 2);
+    const bodyBob =
+      clip === "walk"
+        ? -Math.abs(walkCycle) * 1.4
+        : clip === "idle"
+          ? -Math.sin((frame / 6) * Math.PI * 2) * 0.6
+          : 0;
+    const hurtOffset =
+      clip === "hurt" ? -3 * (1 - animationProgress(call, 4)) : 0;
+    const deathAngle =
+      clip === "death" ? -animationProgress(call, 8) * Math.PI * 0.48 : 0;
+    const attackProgress = clip === "attack" ? animationProgress(call, 6) : 0;
+    const abilityProgress = clip === "ability" ? animationProgress(call, 8) : 0;
+
+    context.save();
+    context.scale(facingLeft ? -1 : 1, 1);
+    context.rotate(deathAngle);
+    context.translate(hurtOffset, 0);
+
+    const leftFoot = clip === "walk" ? Math.round(walkCycle * 5) : 0;
+    const rightFoot = clip === "walk" ? -Math.round(walkCycle * 5) : 0;
+    line(
+      context,
+      { x: -5, y: -14 + bodyBob },
+      { x: -6 + leftFoot, y: -2 },
+      6,
+      "#252b2d",
+    );
+    line(
+      context,
+      { x: 5, y: -14 + bodyBob },
+      { x: 6 + rightFoot, y: -2 },
+      6,
+      "#31383a",
+    );
+    line(
+      context,
+      { x: -8 + leftFoot, y: -1 },
+      { x: -3 + leftFoot, y: -1 },
+      4,
+      "#111719",
+    );
+    line(
+      context,
+      { x: 4 + rightFoot, y: -1 },
+      { x: 9 + rightFoot, y: -1 },
+      4,
+      "#111719",
+    );
+
+    context.save();
+    context.translate(0, bodyBob);
+    context.fillStyle = call.tint;
+    context.beginPath();
+    context.moveTo(-12, -34);
+    context.lineTo(11, -34);
+    context.lineTo(14, -13);
+    context.lineTo(-11, -13);
+    context.closePath();
+    context.fill();
+    context.fillStyle = "#20292c";
+    context.fillRect(-12, -17, 26, 5);
+
+    if (state.player.classId === "vanguard")
+      this.drawVanguardEquipment(context, attackProgress, abilityProgress);
+    else if (state.player.classId === "ranger")
+      this.drawRangerEquipment(context, attackProgress, abilityProgress);
+    else this.drawArcanistEquipment(context, attackProgress, abilityProgress);
+
+    context.fillStyle = "#edc8a6";
+    context.beginPath();
+    context.arc(2, -41, 7, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle =
+      state.player.classId === "arcanist" ? "#17272e" : "#302a25";
+    context.beginPath();
+    context.arc(1, -43, 7, Math.PI, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#172024";
+    context.fillRect(5, -41, 2, 2);
+    context.restore();
+    context.restore();
+  }
+
+  private drawVanguardEquipment(
+    context: CanvasRenderingContext2D,
+    attack: number,
+    ability: number,
+  ): void {
+    context.fillStyle = "#6f513b";
+    context.strokeStyle = "#d0a068";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.arc(-12, -25, 10, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.arc(-12, -25, 3, 0, Math.PI * 2);
+    context.stroke();
+
+    const swing =
+      attack > 0
+        ? -1.15 + attack * 2.45
+        : ability > 0
+          ? -1.55 + ability * 3.1
+          : 0.35;
+    const hand = { x: 9, y: -25 };
+    const tip = {
+      x: hand.x + Math.cos(swing) * 27,
+      y: hand.y + Math.sin(swing) * 27,
+    };
+    line(context, { x: 6, y: -29 }, hand, 5, "#d3a17f");
+    line(context, hand, tip, 4, "#d9d1ba");
+    line(
+      context,
+      { x: hand.x - 4, y: hand.y + 2 },
+      { x: hand.x + 4, y: hand.y - 2 },
+      3,
+      "#3b2921",
+    );
+  }
+
+  private drawRangerEquipment(
+    context: CanvasRenderingContext2D,
+    attack: number,
+    ability: number,
+  ): void {
+    const draw = Math.max(attack, ability);
+    line(context, { x: -8, y: -29 }, { x: 8 - draw * 5, y: -25 }, 5, "#d3a17f");
+    context.strokeStyle = "#a87a49";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(12, -43);
+    context.quadraticCurveTo(22, -26, 12, -9);
+    context.stroke();
+    context.strokeStyle = "#d8d1b6";
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(12, -43);
+    context.lineTo(12 - draw * 9, -26);
+    context.lineTo(12, -9);
+    context.stroke();
+    line(context, { x: 1 - draw * 4, y: -26 }, { x: 24, y: -26 }, 2, "#d6cfb3");
+    context.fillStyle = "#9fc96d";
+    context.beginPath();
+    context.moveTo(25, -26);
+    context.lineTo(20, -30);
+    context.lineTo(20, -22);
+    context.closePath();
+    context.fill();
+  }
+
+  private drawArcanistEquipment(
+    context: CanvasRenderingContext2D,
+    attack: number,
+    ability: number,
+  ): void {
+    line(context, { x: 9, y: -31 }, { x: 15, y: -5 }, 3, "#6e513b");
+    const glow = 1 + Math.sin((attack + ability) * Math.PI) * 0.4;
+    context.save();
+    context.translate(9, -35);
+    context.scale(glow, glow);
+    context.fillStyle = "#8bf4ea";
+    context.shadowColor = "#54d4c7";
+    context.shadowBlur = 12;
+    context.beginPath();
+    context.moveTo(0, -8);
+    context.lineTo(6, 0);
+    context.lineTo(0, 7);
+    context.lineTo(-6, 0);
+    context.closePath();
+    context.fill();
+    context.restore();
+    if (ability > 0) {
+      context.strokeStyle = "#8bf4ea";
+      context.globalAlpha = 1 - ability * 0.5;
+      context.beginPath();
+      context.arc(0, -24, 14 + ability * 8, 0, Math.PI * 2);
+      context.stroke();
+      context.globalAlpha = 1;
+    }
+  }
+
+  private drawMonster(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+    state: GameState,
+  ): void {
+    const monster = state.monsters.find((entry) => entry.id === call.entityId);
+    if (!monster) return;
+    const facingLeft = monster.facing.x < 0;
+    context.save();
+    context.scale(facingLeft ? -1 : 1, 1);
+    if (monster.elite) {
+      context.strokeStyle = "#f0a24b";
+      context.lineWidth = 2;
+      context.globalAlpha = 0.7;
+      context.beginPath();
+      context.ellipse(0, 1, 24, 7, 0, 0, Math.PI * 2);
+      context.stroke();
+      context.globalAlpha = 1;
+    }
+    if (monster.kind === "ashfang") this.drawAshfang(context, call);
+    else if (monster.kind === "hexer") this.drawHexer(context, call);
+    else this.drawStonekin(context, call);
+    context.restore();
+  }
+
+  private drawAshfang(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+  ): void {
+    const gait =
+      call.clip === "walk"
+        ? Math.sin((call.frameIndex / 8) * Math.PI * 2) * 4
+        : 0;
+    const bite = call.clip === "attack" ? animationProgress(call, 6) * 5 : 0;
+    for (const [x, offset] of [
+      [-12, gait],
+      [-3, -gait],
+      [8, -gait],
+      [15, gait],
+    ] as const) {
+      line(context, { x, y: -12 }, { x: x + offset, y: -1 }, 4, "#532d2b");
+    }
+    context.fillStyle = call.tint;
+    context.beginPath();
+    context.ellipse(-1, -17, 20, 12, 0, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.moveTo(12, -22);
+    context.lineTo(25 + bite, -18);
+    context.lineTo(14, -11);
+    context.closePath();
+    context.fill();
+    context.fillStyle = "#f6d46f";
+    context.fillRect(17 + bite, -20, 3, 2);
+    context.strokeStyle = "#3b2022";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(-17, -22);
+    context.lineTo(-24, -31);
+    context.stroke();
+  }
+
+  private drawHexer(context: CanvasRenderingContext2D, call: DrawCallV1): void {
+    const float = Math.sin((call.frameIndex / 6) * Math.PI * 2) * 1.5;
+    context.save();
+    context.translate(0, float);
+    context.fillStyle = "#3b2947";
+    context.beginPath();
+    context.moveTo(0, -42);
+    context.lineTo(20, -5);
+    context.lineTo(0, -9);
+    context.lineTo(-20, -5);
+    context.closePath();
+    context.fill();
+    context.fillStyle = call.tint;
+    context.beginPath();
+    context.arc(0, -35, 11, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#160f1d";
+    context.beginPath();
+    context.arc(0, -35, 6, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "#f2a4ff";
+    context.fillRect(2, -37, 3, 3);
+    if (call.clip === "attack") {
+      context.strokeStyle = "#e38df1";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(14, -28, 5 + call.frameIndex, 0, Math.PI * 2);
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  private drawStonekin(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+  ): void {
+    const gait =
+      call.clip === "walk"
+        ? Math.sin((call.frameIndex / 8) * Math.PI * 2) * 3
+        : 0;
+    const slam =
+      call.clip === "attack"
+        ? Math.sin(animationProgress(call, 6) * Math.PI) * 8
+        : 0;
+    line(context, { x: -11, y: -19 }, { x: -12 + gait, y: -2 }, 10, "#55423a");
+    line(context, { x: 10, y: -19 }, { x: 11 - gait, y: -2 }, 10, "#624a3e");
+    context.fillStyle = call.tint;
+    context.beginPath();
+    context.moveTo(-20, -46);
+    context.lineTo(17, -43);
+    context.lineTo(21, -17);
+    context.lineTo(-18, -16);
+    context.closePath();
+    context.fill();
+    line(context, { x: -18, y: -36 }, { x: -27 + slam, y: -14 }, 11, "#8f6652");
+    line(context, { x: 17, y: -35 }, { x: 29 + slam, y: -13 }, 11, "#a47459");
+    context.fillStyle = "#41342f";
+    context.beginPath();
+    context.moveTo(-9, -49);
+    context.lineTo(10, -48);
+    context.lineTo(13, -36);
+    context.lineTo(-12, -36);
+    context.closePath();
+    context.fill();
+    context.fillStyle = "#ffc16e";
+    context.fillRect(4, -44, 4, 3);
+  }
+
+  private drawProjectile(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+  ): void {
+    context.save();
+    context.translate(call.screenAnchor.x, call.screenAnchor.y);
+    context.rotate(Math.atan2(call.facing.y, call.facing.x));
+    context.fillStyle = call.tint;
+    context.shadowColor = call.tint;
+    context.shadowBlur = 12;
+    context.beginPath();
+    context.moveTo(9, 0);
+    context.lineTo(-6, -4);
+    context.lineTo(-3, 0);
+    context.lineTo(-6, 4);
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
+  private drawLoot(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+    state: GameState,
+  ): void {
+    const loot = state.loot.find((entry) => entry.id === call.entityId);
+    if (!loot) return;
+    const bob = Math.sin((state.tick + loot.bobOffset) / 12) * 3;
+    context.save();
+    context.translate(call.screenAnchor.x, call.screenAnchor.y - 8 + bob);
+    context.scale(call.scale, call.scale);
+    context.fillStyle = call.tint;
+    context.shadowColor = call.tint;
+    context.shadowBlur = loot.rarity === "relic" ? 17 : 10;
+    context.beginPath();
+    if (loot.kind === "tonic") {
+      context.roundRect(-6, -8, 12, 16, 3);
+    } else if (loot.kind === "weapon") {
+      context.moveTo(0, -11);
+      context.lineTo(5, -1);
+      context.lineTo(2, 10);
+      context.lineTo(-3, 3);
+      context.lineTo(-5, -3);
+    } else {
+      context.moveTo(0, -9);
+      context.lineTo(8, 0);
+      context.lineTo(0, 9);
+      context.lineTo(-8, 0);
+    }
+    context.closePath();
+    context.fill();
+    context.restore();
+  }
+
+  private drawHealthBar(
+    context: CanvasRenderingContext2D,
+    call: DrawCallV1,
+    health: number,
+    player: boolean,
+  ): void {
+    const width = player ? 34 : 30;
+    const y = call.bounds.y + 2;
+    context.fillStyle = "rgba(8, 10, 12, 0.84)";
+    context.fillRect(call.screenAnchor.x - width / 2 - 1, y - 1, width + 2, 5);
+    context.fillStyle = player ? "#77d491" : "#e06b61";
+    context.fillRect(
+      call.screenAnchor.x - width / 2,
+      y,
+      width * Math.max(0, health),
+      3,
+    );
+  }
+
+  private drawEffect(
+    context: CanvasRenderingContext2D,
+    point: Vec2,
+    effect: GameState["effects"][number],
+    tick: number,
+  ): void {
+    const progress =
+      (tick - effect.startedAtTick) /
+      (effect.expiresAtTick - effect.startedAtTick);
+    context.save();
+    context.strokeStyle = effect.color;
+    context.globalAlpha = 1 - progress;
+    context.lineWidth = 3;
+    context.translate(point.x, point.y);
+    context.beginPath();
+    if (effect.kind === "slash")
+      context.arc(0, 0, 14 + (effect.radius / 1024) * 18 * progress, -1.1, 1.1);
+    else
+      context.arc(
+        0,
+        0,
+        8 + (effect.radius / 1024) * 22 * progress,
+        0,
+        Math.PI * 2,
+      );
+    context.stroke();
+    context.restore();
+  }
+
+  private drawVignette(context: CanvasRenderingContext2D): void {
+    const gradient = context.createRadialGradient(
+      VIEW_WIDTH / 2,
+      VIEW_HEIGHT / 2,
+      150,
+      VIEW_WIDTH / 2,
+      VIEW_HEIGHT / 2,
+      560,
+    );
+    gradient.addColorStop(0.55, "rgba(0, 0, 0, 0)");
+    gradient.addColorStop(1, "rgba(4, 6, 8, 0.68)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+  }
+}

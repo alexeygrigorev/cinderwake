@@ -1,0 +1,374 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #090d0f;
+  color: #f1ebe0;
+  font-family:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+.selection {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(500px, 1.2fr);
+  align-items: center;
+  gap: clamp(30px, 7vw, 120px);
+  padding: clamp(28px, 8vw, 110px);
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 75%, #273333 0, transparent 27%),
+    linear-gradient(125deg, #11191b, #090c0e 58%);
+}
+.hero {
+  max-width: 480px;
+}
+.eyebrow {
+  color: #c68955;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+.hero h1 {
+  font-family: Georgia, serif;
+  font-size: clamp(62px, 9vw, 126px);
+  line-height: 0.82;
+  margin: 18px 0;
+  color: #f6ecdc;
+}
+.hero > p:not(.eyebrow) {
+  color: #a9aaa4;
+  line-height: 1.65;
+}
+.hero img {
+  width: min(420px, 100%);
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 24px 32px #0009);
+  margin-top: 16px;
+}
+.choose {
+  max-width: 680px;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.class-card {
+  text-align: left;
+  min-height: 212px;
+  padding: 20px 16px;
+  background: #171d1e;
+  border: 1px solid #30393a;
+  color: #e7e2d5;
+  border-radius: 4px;
+  transition: 0.18s;
+}
+.class-card:hover,
+.class-card.selected {
+  border-color: var(--accent);
+  background: linear-gradient(155deg, #202a2a, #14191a);
+  transform: translateY(-3px);
+  box-shadow: 0 13px 25px #0004;
+}
+.class-card strong {
+  display: block;
+  color: var(--accent);
+  font-size: 19px;
+}
+.class-card span,
+.class-card small,
+.class-card i {
+  display: block;
+  margin-top: 10px;
+  font-style: normal;
+}
+.class-card small {
+  color: #aeb0a9;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.class-card i {
+  color: #737f78;
+  font-size: 10px;
+}
+.seed-label {
+  display: block;
+  margin: 26px 0 12px;
+  color: #aeb0a9;
+  font-size: 12px;
+}
+.seed-label input,
+.lab select {
+  display: block;
+  width: 100%;
+  background: #0d1112;
+  border: 1px solid #3e4744;
+  color: #f5ecdf;
+  padding: 13px;
+  margin-top: 7px;
+  outline-color: #d99b58;
+}
+.begin {
+  width: 100%;
+  padding: 17px;
+  background: #d6954f;
+  border: 0;
+  color: #171412;
+  font-weight: bold;
+  font-size: 15px;
+}
+.begin span {
+  float: right;
+  font-size: 24px;
+  line-height: 10px;
+}
+.hint {
+  color: #68716d;
+  font-size: 10px;
+  margin-top: 17px;
+}
+.lab-toggle {
+  position: fixed;
+  right: 18px;
+  bottom: 17px;
+  z-index: 9;
+  border: 1px solid #58615d;
+  background: #151b1c;
+  color: #cdd3cc;
+  padding: 9px 12px;
+  font-size: 11px;
+}
+.game {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  background: #070a0c;
+}
+.stage {
+  position: relative;
+  width: min(960px, 100vw);
+  aspect-ratio: 16/9;
+  box-shadow: 0 30px 90px #000;
+}
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+.hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+.hud.top {
+  top: 0;
+  padding: 14px;
+}
+.brand {
+  font-family: Georgia, serif;
+  letter-spacing: 0.08em;
+  font-size: 18px;
+  text-shadow: 0 2px 4px #000;
+}
+.brand small {
+  display: block;
+  font-family:
+    ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 9px;
+  color: #adb5ac;
+  margin-top: 2px;
+  letter-spacing: 0;
+}
+.counter {
+  font-size: 11px;
+  color: #e5c18d;
+  background: #121718c9;
+  padding: 8px 10px;
+  height: max-content;
+}
+.hud.bottom {
+  bottom: 0;
+  align-items: end;
+  padding: 14px;
+  background: linear-gradient(transparent, #080b0de8);
+}
+.health span {
+  display: block;
+  font-size: 9px;
+  color: #b4b6ae;
+}
+.health b {
+  display: inline-block;
+  width: 180px;
+  height: 9px;
+  background: #241719;
+  border: 1px solid #684346;
+  margin: 5px 8px 0 0;
+}
+.health b i {
+  display: block;
+  height: 100%;
+  background: #d2665d;
+}
+.health em {
+  font-size: 10px;
+  font-style: normal;
+}
+.skills {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+.skills button {
+  color: #e9e7df;
+  background: #1a2121e6;
+  border: 1px solid #4b5751;
+  padding: 7px;
+  font-size: 10px;
+}
+.skills kbd {
+  color: #dba35f;
+}
+.skills i {
+  display: block;
+  font-size: 8px;
+  color: #83d0b1;
+  margin-top: 3px;
+}
+.loot-log {
+  position: absolute;
+  right: 14px;
+  top: 60px;
+  width: 160px;
+  color: #aeb3aa;
+  background: #101516bb;
+  border-left: 2px solid #a66b43;
+  padding: 8px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.loot-log strong {
+  color: #e9ddc9;
+}
+.outcome {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: #080b0ddd;
+}
+.outcome p {
+  color: #d39a5a;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 11px;
+}
+.outcome h2 {
+  font:
+    800 42px Georgia,
+    serif;
+  margin: 4px 0 25px;
+}
+.outcome button,
+.lab button {
+  border: 1px solid #af7d4c;
+  background: #d6954f;
+  color: #171412;
+  padding: 10px;
+}
+.hidden {
+  display: none;
+}
+.lab {
+  position: fixed;
+  z-index: 10;
+  right: 15px;
+  bottom: 62px;
+  width: 290px;
+  padding: 17px;
+  background: #121819;
+  border: 1px solid #56605c;
+  box-shadow: 0 15px 45px #000b;
+  color: #d9ddd5;
+}
+.lab h2 {
+  font:
+    600 28px Georgia,
+    serif;
+  margin: 4px 0 15px;
+}
+.lab label {
+  font-size: 10px;
+  color: #9aa39c;
+}
+.lab select {
+  padding: 8px;
+}
+.lab div {
+  display: flex;
+  gap: 5px;
+  margin: 9px 0;
+}
+.lab .close {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  background: none;
+  border: 0;
+  color: #fff;
+  padding: 3px;
+  font-size: 18px;
+}
+.lab .frame {
+  font-size: 9px;
+  color: #879088;
+}
+.mini {
+  width: 100%;
+  background: #090c0d;
+  border: 1px solid #313a38;
+}
+@media (max-width: 760px) {
+  .selection {
+    grid-template-columns: 1fr;
+    padding: 36px 24px;
+  }
+  .hero img {
+    display: none;
+  }
+  .hero h1 {
+    font-size: 66px;
+  }
+  .cards {
+    grid-template-columns: 1fr;
+  }
+  .class-card {
+    min-height: 120px;
+  }
+  .class-card small {
+    max-width: 270px;
+  }
+  .loot-log {
+    display: none;
+  }
+  .skills button {
+    font-size: 8px;
+  }
+  .health b {
+    width: 100px;
+  }
+}

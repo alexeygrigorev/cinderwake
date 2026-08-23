@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-arbitrary-state",
+  "seed": "fixture-2026",
+  "classId": "arcanist",
+  "tick": 120,
+  "phase": "playing",
+  "nextEntityId": 40,
+  "map": {
+    "mode": "explicit",
+    "rows": [
+      "############",
+      "#..........#",
+      "#....E.....#",
+      "#..........#",
+      "#....P.....#",
+      "#..........#",
+      "############"
+    ]
+  },
+  "player": {
+    "tile": [5, 4],
+    "previousTile": [4.95, 4],
+    "velocity": [52, 0],
+    "health": 73,
+    "facing": [1024, 0],
+    "power": 4,
+    "attackReadyTick": 125,
+    "abilityReadyTick": 280,
+    "animation": {
+      "clip": "hurt",
+      "startedAtTick": 118,
+      "lockedUntilTick": 126
+    }
+  },
+  "monsters": [
+    {
+      "id": "monster:fixture",
+      "kind": "ashfang",
+      "tile": [8, 4],
+      "health": 18,
+      "guaranteedLoot": true,
+      "attackReadyTick": 170,
+      "animation": {
+        "clip": "attack",
+        "startedAtTick": 116,
+        "lockedUntilTick": 136
+      }
+    }
+  ],
+  "loot": [
+    {
+      "id": "loot:fixture",
+      "kind": "gold",
+      "rarity": "tempered",
+      "tile": [6, 4],
+      "amount": 10
+    }
+  ],
+  "pendingAttacks": [
+    {
+      "id": "attack:fixture",
+      "kind": "primary",
+      "impactTick": 126,
+      "originTile": [5, 4],
+      "direction": [1024, 0],
+      "range": 8192,
+      "damage": 19
+    }
+  ],
+  "projectiles": [
+    {
+      "id": "projectile:fixture",
+      "owner": "player",
+      "hostile": false,
+      "tile": [6.5, 3.5],
+      "previousTile": [6.35, 3.5],
+      "velocity": [175, 0],
+      "radius": 155,
+      "damage": 19,
+      "expiresAtTick": 150,
+      "color": "#63d6cb"
+    }
+  ],
+  "effects": [
+    {
+      "id": "effect:fixture",
+      "kind": "impact",
+      "tile": [7, 4],
+      "color": "#8bf4ea",
+      "startedAtTick": 117,
+      "expiresAtTick": 129,
+      "radius": 1024
+    }
+  ],
+  "rng": { "combat": { "state": 123456, "draws": 4 } },
+  "eventLog": [
+    {
+      "tick": 118,
+      "type": "player_damaged",
+      "sourceId": "monster:fixture",
+      "targetId": "player",
+      "amount": 5
+    }
+  ],
+  "metrics": { "damageTaken": 5, "distanceUnits": 5120 },
+  "exitUnlocked": false,
+  "settings": { "ai": false, "autoPickup": false, "cameraFollow": true }
+}
