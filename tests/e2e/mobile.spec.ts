@@ -59,8 +59,7 @@ test("touch movement, canvas aim, and action buttons feed the real input adapter
     ),
   ).toBe(true);
 
-  const canvas = page.locator("canvas");
-  await canvas.tap({ position: { x: 330, y: 100 } });
+  await page.touchscreen.tap(330, 100);
   const attack = await page.evaluate(() => {
     window.__GAME_TEST__!.step(1, { useBrowserInput: true });
     return window.__GAME_TEST__!.snapshot();
@@ -108,6 +107,9 @@ test("portrait game UI respects touch target and viewport bounds", async ({
   expect(layout.controlBox.bottom).toBeLessThanOrEqual(layout.viewport.height);
   expect(layout.stageBox.left).toBeGreaterThanOrEqual(0);
   expect(layout.stageBox.right).toBeLessThanOrEqual(layout.viewport.width);
+  expect(
+    Math.abs(layout.controlBox.top - layout.stageBox.bottom),
+  ).toBeLessThanOrEqual(1);
   expect(layout.targets.every((target) => target.height >= 44)).toBe(true);
   await expect(page.locator(".game")).toHaveScreenshot("mobile-game.png");
 });

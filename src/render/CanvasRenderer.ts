@@ -418,7 +418,9 @@ export class CanvasRenderer {
   ): void {
     const frame = call.frameIndex;
     const clip = call.clip;
-    const facingLeft = state.player.facing.x < 0;
+    const facingLeft = call.facing.x < 0;
+    const verticalFacing = Math.abs(call.facing.y) > Math.abs(call.facing.x);
+    const facingAway = verticalFacing && call.facing.y < 0;
     const walkCycle = Math.sin((frame / 8) * Math.PI * 2);
     const bodyBob =
       clip === "walk"
@@ -437,6 +439,7 @@ export class CanvasRenderer {
 
     context.save();
     context.scale(facingLeft ? -1 : 1, 1);
+    if (verticalFacing) context.scale(0.94, 1);
     context.rotate(deathAngle);
     context.translate(hurtOffset, 0);
 
@@ -499,8 +502,17 @@ export class CanvasRenderer {
     context.beginPath();
     context.arc(1, -43, 7, Math.PI, Math.PI * 2);
     context.fill();
-    context.fillStyle = "#172024";
-    context.fillRect(5, -41, 2, 2);
+    if (facingAway) {
+      context.fillStyle =
+        state.player.classId === "arcanist" ? "#17272e" : "#302a25";
+      context.fillRect(-4, -43, 12, 6);
+    } else {
+      context.fillStyle = "#172024";
+      if (verticalFacing) {
+        context.fillRect(-2, -41, 2, 2);
+        context.fillRect(5, -41, 2, 2);
+      } else context.fillRect(5, -41, 2, 2);
+    }
     context.restore();
     context.restore();
   }
@@ -684,7 +696,10 @@ export class CanvasRenderer {
   }
 
   private drawHexer(context: CanvasRenderingContext2D, call: DrawCallV1): void {
-    const float = Math.sin((call.frameIndex / 6) * Math.PI * 2) * 1.5;
+    const float =
+      call.clip === "attack"
+        ? Math.sin(animationProgress(call, 6) * Math.PI) * 1.5
+        : Math.sin((call.frameIndex / 6) * Math.PI * 2) * 1.5;
     context.save();
     context.translate(0, float);
     context.fillStyle = "#3b2947";

@@ -249,6 +249,17 @@ test("measures actual transparent entity ink instead of declared bounds", async 
       window.__GAME_TEST__!.step(targetTick - current, { render: true });
       return window.__GAME_TEST__!.captureEntityMask("player");
     });
+    const directionMasks = [
+      { moveX: 1 as const },
+      { moveX: -1 as const },
+      { moveY: -1 as const },
+      { moveY: 1 as const },
+    ].map((input) => {
+      window.__GAME_TEST__!.loadScenario("animation-walk");
+      window.__GAME_TEST__!.setInput(input);
+      window.__GAME_TEST__!.step(6, { render: true });
+      return window.__GAME_TEST__!.captureEntityMask("player");
+    });
     window.__GAME_TEST__!.loadScenario("combat-loot");
     window.__GAME_TEST__!.setInput({ attack: true });
     window.__GAME_TEST__!.step(1, { render: true });
@@ -257,13 +268,16 @@ test("measures actual transparent entity ink instead of declared bounds", async 
     const terminal = window.__GAME_TEST__!.captureEntityMask("player");
     window.__GAME_TEST__!.step(1, { render: true });
     const idle = window.__GAME_TEST__!.captureEntityMask("player");
-    return { walk, terminal, idle };
+    return { walk, directionMasks, terminal, idle };
   });
   expect(
     new Set(result.walk.map((mask) => mask.pixelHash)).size,
   ).toBeGreaterThan(3);
   expect(new Set(result.walk.map((mask) => mask.bottomOffset)).size).toBe(1);
   expect(result.walk.every((mask) => mask.alphaPixels > 100)).toBe(true);
+  expect(
+    new Set(result.directionMasks.map((mask) => mask.pixelHash)).size,
+  ).toBe(4);
   expect(result.terminal.pixelHash).toBe(result.idle.pixelHash);
   expect(result.terminal.inkBounds).toEqual(result.idle.inkBounds);
 });
