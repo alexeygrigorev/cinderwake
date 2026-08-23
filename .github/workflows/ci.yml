@@ -31,10 +31,8 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run test:e2e
-      - name: Capture walking quality sequence
-        run: npm run capture:sequence -- --scenario animation-walk --frames 16 --step 2
-      - name: Capture attack quality sequence
-        run: npm run capture:sequence -- --scenario combat-loot --action attack --frames 16 --step 2
+      - name: Capture temporal quality matrix
+        run: npm run capture:matrix
       - name: Upload Playwright report
         if: ${{ always() && hashFiles('playwright-report/**') != '' }}
         uses: actions/upload-artifact@v7

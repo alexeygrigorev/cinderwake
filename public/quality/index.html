@@ -49,7 +49,7 @@
         margin: 36px 0;
       }
 
-      a.card {
+      .card {
         min-height: 150px;
         padding: 22px;
         color: inherit;
@@ -73,8 +73,32 @@
       }
 
       .card span {
+        display: block;
         color: #9dafaa;
         line-height: 1.5;
+      }
+
+      .card small {
+        display: block;
+        margin-top: 16px;
+        color: #6f827c;
+        font-family: ui-monospace, monospace;
+      }
+
+      .card.pass {
+        border-top: 3px solid #73c992;
+      }
+
+      .card.fail {
+        border-top: 3px solid #e36f64;
+      }
+
+      .summary.pass {
+        color: #73c992;
+      }
+
+      .summary.fail {
+        color: #e36f64;
       }
 
       code {
@@ -105,20 +129,6 @@
           semantic animation checks, and screenshot comparisons.
         </span>
       </a>
-      <a class="card" href="./sequences/animation-walk/report.html">
-        <strong>Walking sequence</strong>
-        <span>
-          Sixteen exact-tick close-ups with the declared foot anchor marked for
-          checking speed, camera tracking, cadence, and foot sliding.
-        </span>
-      </a>
-      <a class="card" href="./sequences/combat-loot/report.html">
-        <strong>Attack sequence</strong>
-        <span>
-          Wind-up, contact, follow-through, recovery, enemy death, and loot in a
-          deterministic frame strip.
-        </span>
-      </a>
       <a class="card" href="../">
         <strong>Play Cinderwake</strong>
         <span>
@@ -127,12 +137,17 @@
         </span>
       </a>
     </main>
+    <h2>Temporal quality matrix</h2>
+    <p id="matrix-summary" class="summary">Loading CI evidence catalog…</p>
+    <section id="matrix" class="grid" aria-live="polite"></section>
     <h2>Hard acceptance gates</h2>
     <p>
-      The sequence assessor requires foot-anchor jitter ≤ <code>0.25 px</code>,
-      velocity error <code>0</code>, speed delta ≤ <code>0.01</code>, at most
-      one animation-frame advance per capture, no one-shot backward frame jump,
-      stable actor bounds, and no viewport clipping.
+      The assessor independently checks state hashes, state-to-render
+      projection, saved PNG hashes, plausible ink geometry, visibility and
+      presence lifecycles, exact clip cadence, pose continuity, grounded-edge
+      drift, motion velocity, one-shot recovery, full loop wrap, death despawn,
+      and deterministic camera convergence. Interpolated captures include
+      quarter-tick presentation frames.
     </p>
     <footer>
       <p>
@@ -141,5 +156,43 @@
         silhouettes, coherent camera movement, and accidental pose pops.
       </p>
     </footer>
+    <script type="module">
+      const matrix = document.querySelector("#matrix");
+      const summary = document.querySelector("#matrix-summary");
+
+      function text(tag, value) {
+        const element = document.createElement(tag);
+        element.textContent = value;
+        return element;
+      }
+
+      try {
+        const response = await fetch("./sequences/index.json", {
+          cache: "no-store",
+        });
+        if (!response.ok)
+          throw new Error(`catalog request returned ${response.status}`);
+        const catalog = await response.json();
+        summary.textContent = `${catalog.passed}/${catalog.total} synchronized sequences passed`;
+        summary.classList.add(catalog.pass ? "pass" : "fail");
+        for (const entry of catalog.entries) {
+          const card = document.createElement("a");
+          card.className = `card ${entry.pass ? "pass" : "fail"}`;
+          card.href = `./sequences/${entry.report}`;
+          card.append(
+            text("strong", `${entry.pass ? "PASS" : "FAIL"} · ${entry.label}`),
+            text(
+              "span",
+              `${entry.category} · ${entry.profile} · track ${entry.trackedEntityId}`,
+            ),
+            text("small", entry.scenario),
+          );
+          matrix.append(card);
+        }
+      } catch (error) {
+        summary.textContent = `Quality catalog unavailable: ${error.message}`;
+        summary.classList.add("fail");
+      }
+    </script>
   </body>
 </html>
