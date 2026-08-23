@@ -240,7 +240,15 @@ function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
         Math.abs(x - state.map.spawn.x) <= 1
       )
         nearCandidates.push({ x, y });
-      else if (distance > 8 && (x + y) % 3 === 0)
+      // Keep the exploration population beyond the entire opening camera,
+      // including a one-tile actor margin. A simple Manhattan threshold left
+      // half-creatures and detached health bars clipped at the wide-screen
+      // edges even though the authored trio itself was device-safe.
+      else if (
+        (Math.abs(x - state.map.spawn.x) >= 12 ||
+          Math.abs(y - state.map.spawn.y) >= 9) &&
+        (x + y) % 3 === 0
+      )
         distantCandidates.push({ x, y });
     }
   }

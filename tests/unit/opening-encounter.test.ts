@@ -103,6 +103,10 @@ describe("generated opening encounter", () => {
           visibleOpeningIds.has(monster.id),
           `${monster.id} offscreen for seed ${index}`,
         ).toBe(true);
+      expect(
+        [...visibleOpeningIds].sort(),
+        `only the authored opening trio intersects the camera for seed ${index}`,
+      ).toEqual(openingGroup.map(({ id }) => id));
     }
   });
 

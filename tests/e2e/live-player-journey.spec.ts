@@ -135,7 +135,7 @@ test("ordinary production route advances in real time and opens on a visible enc
       rejectedCellTopGap,
     };
   });
-  expect(initial.visibleMonsters).toBeGreaterThanOrEqual(3);
+  expect(initial.visibleMonsters).toBe(3);
   expect(initial.objectiveTarget).toMatch(/^monster:/);
   expect(initial.objectiveState).toBe("hunt");
   expect(initial.openingCount).toBe(3);
