@@ -70,6 +70,8 @@ Buildings and solid props have deterministic elliptical collision footprints aro
 
 AI iterates in sorted entity-ID order and uses only simulation state. Pursuit uses deterministic obstacle routes instead of pushing forever into walls or scenery, and touch navigation cancels a route after twelve ticks without progress. The generated run includes one elite Stonekin with doubled health, an amber ring, and a guaranteed drop. Test scenarios can disable AI completely to isolate animation or collision.
 
+Projectiles share the movement world's collision truth. A shot stops at the first swept contact with a blocked tile or solid scenery, even when it travels farther than the obstacle in one tick, and produces a short state-backed impact at that point. Buildings therefore provide real cover for both player and enemy fire instead of acting as movement-only decoration.
+
 ## Loot and outcomes
 
 Each monster has an entity-keyed loot stream derived from `run seed + monster ID`. Killing an unrelated monster first therefore cannot change another monster's drop. A drop is gold, a tonic, or a weapon in common, tempered, or relic rarity. The pickup radius is deterministic and pickup emits a typed event.

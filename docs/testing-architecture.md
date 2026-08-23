@@ -24,6 +24,13 @@ The renderer emits a **render manifest** alongside each capture. It records logi
 
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
 
+Collision checks use deliberate tunneling inputs as negative controls. A
+projectile is advanced far enough to cross an entire solid object within one
+tick; the replay must retain the earliest swept contact, remove the projectile,
+prevent damage behind cover, and render the state-backed impact. This proves
+that shared solid-world behavior holds between sampled endpoints rather than
+only at ordinary gameplay speeds.
+
 Captures include single screenshots and multi-frame strips (adjacent frames at named ticks, with tick labels/metadata). The capturer also draws each tracked entity alone to a transparent canvas and records actual alpha-pixel ink bounds, centroid, bottom offset, count, and hash. This is pixel evidence for proportions, anchor adherence, and clipping; it is deliberately stronger than inferring those facts from a semantic rectangle. Screenshots, masks, and manifests are output from the same tick/state.
 
 Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
