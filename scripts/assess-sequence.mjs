@@ -542,6 +542,7 @@ const thresholds = {
   inkDimensionStep: profile === "death" ? 48 : 32,
   cameraAcceleration: 40,
   cameraFinalError: 2,
+  oneShotVisualPoses: 5,
 };
 const measurements = {
   profile,
@@ -600,6 +601,9 @@ const checks = {
   semanticFrameExact:
     measurements.semanticFrameErrorPeak <= thresholds.semanticFrameError,
   animationNotStuck: !requiresAnimation || measurements.uniquePixelMasks >= 2,
+  oneShotVisualPoses:
+    !oneShotProfile ||
+    measurements.uniquePixelMasks >= thresholds.oneShotVisualPoses,
   semanticAnimationChanges:
     !requiresAnimation || measurements.uniqueSemanticFrames >= 2,
   semanticFrameCadence: measurements.maximumFrameAdvance <= 1,

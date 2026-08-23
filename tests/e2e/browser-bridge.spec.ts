@@ -51,6 +51,28 @@ test("projects bridge-loaded scenario identity into the visible HUD", async ({
   await expect(page.locator("#monsters")).toHaveText("1 foe");
 });
 
+test("lets the complete death animation play before showing the loss modal", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("temporal-run-loss");
+    window.__GAME_TEST__!.step(47, { render: true });
+  });
+  await expect(page.locator("#outcome")).toBeHidden();
+  const terminal = await page.evaluate(() => {
+    const manifest = window.__GAME_TEST__!.step(1, { render: true });
+    return {
+      tick: manifest.tick,
+      frame: window
+        .__GAME_TEST__!.renderManifest()
+        .drawCalls.find((call) => call.entityId === "player")?.frameIndex,
+    };
+  });
+  expect(terminal).toEqual({ tick: 48, frame: 7 });
+  await expect(page.locator("#outcome")).toBeVisible();
+  await expect(page.locator("#outcome h2")).toHaveText("Run ended.");
+});
+
 test("restores an exact canonical GameState snapshot and resets to it", async ({
   page,
 }) => {

@@ -44,12 +44,12 @@ function processThroughTick(
 
 describe("combat and lifecycle contracts", () => {
   it.each([
-    ["vanguard", "primary", 8, 18, 1, "effect"],
-    ["vanguard", "ability", 12, 32, 1, "effect"],
+    ["vanguard", "primary", 8, 18, 2, "effect"],
+    ["vanguard", "ability", 12, 32, 2, "effect"],
     ["ranger", "primary", 6, 13, 1, "projectile"],
     ["ranger", "ability", 10, 21, 3, "projectile"],
     ["arcanist", "primary", 8, 15, 1, "projectile"],
-    ["arcanist", "ability", 12, 28, 1, "effect"],
+    ["arcanist", "ability", 12, 28, 2, "effect"],
   ] as const)(
     "%s %s resolves on its declared contact tick",
     (classId, kind, delay, damage, spawnedCount, output) => {

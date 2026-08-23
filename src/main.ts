@@ -103,7 +103,11 @@ function updateHud(state: GameState): void {
         .join("<br>")
     : "The cinders stir.";
   const out = document.querySelector<HTMLElement>("#outcome")!;
-  if (state.phase !== "playing") {
+  const deathStillPlaying =
+    state.phase === "lost" &&
+    state.player.animation.clip === "death" &&
+    state.tick < state.player.animation.lockedUntilTick;
+  if (state.phase !== "playing" && !deathStillPlaying) {
     out.classList.remove("hidden");
     out.innerHTML = `<p>${state.phase === "won" ? "Rift sealed" : "The wake consumes you"}</p><h2>${state.phase === "won" ? "Cinders quieted." : "Run ended."}</h2><button>Try again</button>`;
     out.querySelector("button")!.onclick = () => boot(activeScenario!);

@@ -117,6 +117,19 @@ function applyDamageToMonster(
     state.tick,
     monster.health <= 0 ? CLIP_DURATIONS.death : CLIP_DURATIONS.hurt,
   );
+  state.effects.push({
+    id: `effect:${state.nextEntityId}`,
+    kind: "impact",
+    position: { ...monster.position },
+    color:
+      sourceId === "player"
+        ? ARCHETYPES[state.player.classId].accent
+        : MONSTERS[monster.kind].color,
+    startedAtTick: state.tick,
+    expiresAtTick: state.tick + 8,
+    radius: 900,
+  });
+  state.nextEntityId += 1;
   emit(state, {
     type: "damage",
     sourceId,
@@ -471,6 +484,17 @@ function damagePlayer(
     targetId: "player",
     amount: damage,
   });
+  const source = state.monsters.find((monster) => monster.id === sourceId);
+  state.effects.push({
+    id: `effect:${state.nextEntityId}`,
+    kind: "impact",
+    position: { ...state.player.position },
+    color: source ? MONSTERS[source.kind].color : "#ef7868",
+    startedAtTick: state.tick,
+    expiresAtTick: state.tick + 8,
+    radius: 900,
+  });
+  state.nextEntityId += 1;
   if (state.player.health <= 0) {
     state.player.health = 0;
     state.phase = "lost";
@@ -646,6 +670,9 @@ function checkExit(state: GameState): void {
 export function stepGame(state: GameState, input: InputState): GameState {
   if (state.phase !== "playing") {
     state.events = [];
+    state.effects = state.effects.filter(
+      (effect) => effect.expiresAtTick > state.tick,
+    );
     state.tick += 1;
     return state;
   }

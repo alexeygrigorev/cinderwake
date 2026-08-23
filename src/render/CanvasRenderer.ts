@@ -476,7 +476,7 @@ export class CanvasRenderer {
 
     context.save();
     context.translate(0, bodyBob);
-    context.fillStyle = call.tint;
+    context.fillStyle = clip === "hurt" ? "#ffe0c9" : call.tint;
     context.beginPath();
     context.moveTo(-12, -34);
     context.lineTo(11, -34);
@@ -493,7 +493,7 @@ export class CanvasRenderer {
       this.drawRangerEquipment(context, attackPose, abilityPose);
     else this.drawArcanistEquipment(context, attackPose, abilityPose);
 
-    context.fillStyle = "#edc8a6";
+    context.fillStyle = clip === "hurt" ? "#fff0de" : "#edc8a6";
     context.beginPath();
     context.arc(2, -41, 7, 0, Math.PI * 2);
     context.fill();
@@ -665,8 +665,12 @@ export class CanvasRenderer {
       call.clip === "walk"
         ? Math.sin((call.frameIndex / 8) * Math.PI * 2) * 4
         : 0;
-    const biteFrames = [0, 1, 5, 3, 1, 0];
+    const lungeFrames = [-3, 10, 7, 4, 1, 0];
+    const lunge = call.clip === "attack" ? lungeFrames[call.frameIndex]! : 0;
+    const biteFrames = [0, 8, 6, 4, 2, 0];
     const bite = call.clip === "attack" ? biteFrames[call.frameIndex]! : 0;
+    context.save();
+    context.translate(lunge, 0);
     for (const [x, offset] of [
       [-12, gait],
       [-3, -gait],
@@ -693,6 +697,11 @@ export class CanvasRenderer {
     context.moveTo(-17, -22);
     context.lineTo(-24, -31);
     context.stroke();
+    if (call.clip === "attack" && call.frameIndex === 1) {
+      line(context, { x: 22, y: -25 }, { x: 34, y: -29 }, 2, "#f4b16c");
+      line(context, { x: 23, y: -17 }, { x: 36, y: -14 }, 2, "#f4b16c");
+    }
+    context.restore();
   }
 
   private drawHexer(context: CanvasRenderingContext2D, call: DrawCallV1): void {
@@ -741,12 +750,15 @@ export class CanvasRenderer {
       call.clip === "walk"
         ? Math.sin((call.frameIndex / 8) * Math.PI * 2) * 3
         : 0;
-    const slam =
-      call.clip === "attack"
-        ? Math.sin(animationProgress(call, 6) * Math.PI) * 8
-        : 0;
+    const attackFrame = call.clip === "attack" ? call.frameIndex : 5;
+    const bodyX = [-2, -3, 5, 3, 1, 0][attackFrame]!;
+    const bodyY = [0, -5, 1, 1, 0, 0][attackFrame]!;
+    const armReach = [-2, -5, 13, 9, 4, 0][attackFrame]!;
+    const armLift = [3, 14, 0, 0, 0, 0][attackFrame]!;
     line(context, { x: -11, y: -19 }, { x: -12 + gait, y: -2 }, 10, "#55423a");
     line(context, { x: 10, y: -19 }, { x: 11 - gait, y: -2 }, 10, "#624a3e");
+    context.save();
+    context.translate(bodyX, bodyY);
     context.fillStyle = call.tint;
     context.beginPath();
     context.moveTo(-20, -46);
@@ -755,8 +767,20 @@ export class CanvasRenderer {
     context.lineTo(-18, -16);
     context.closePath();
     context.fill();
-    line(context, { x: -18, y: -36 }, { x: -27 + slam, y: -14 }, 11, "#8f6652");
-    line(context, { x: 17, y: -35 }, { x: 29 + slam, y: -13 }, 11, "#a47459");
+    line(
+      context,
+      { x: -18, y: -36 },
+      { x: -27 + armReach, y: -14 - armLift },
+      11,
+      "#8f6652",
+    );
+    line(
+      context,
+      { x: 17, y: -35 },
+      { x: 29 + armReach, y: -13 - armLift },
+      11,
+      "#a47459",
+    );
     context.fillStyle = "#41342f";
     context.beginPath();
     context.moveTo(-9, -49);
@@ -767,6 +791,11 @@ export class CanvasRenderer {
     context.fill();
     context.fillStyle = "#ffc16e";
     context.fillRect(4, -44, 4, 3);
+    if (call.clip === "attack" && call.frameIndex === 2) {
+      line(context, { x: 26, y: -6 }, { x: 43, y: -1 }, 3, "#f0b26e");
+      line(context, { x: 30, y: -9 }, { x: 39, y: -15 }, 2, "#c98958");
+    }
+    context.restore();
   }
 
   private drawProjectile(
@@ -853,7 +882,17 @@ export class CanvasRenderer {
     context.beginPath();
     if (effect.kind === "slash")
       context.arc(0, 0, 14 + (effect.radius / 1024) * 18 * progress, -1.1, 1.1);
-    else
+    else if (effect.kind === "impact") {
+      const radius = 7 + (effect.radius / 1024) * 14 * progress;
+      for (let index = 0; index < 6; index += 1) {
+        const angle = (index / 6) * Math.PI * 2;
+        context.moveTo(
+          Math.cos(angle) * radius * 0.35,
+          Math.sin(angle) * radius * 0.35,
+        );
+        context.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+      }
+    } else
       context.arc(
         0,
         0,
