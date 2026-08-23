@@ -30,6 +30,8 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run art:check
+      - name: Rebuild mobile selection sprites byte-for-byte
+        run: npm run art:selection:check
       - name: Verify generation ingress and deterministic actor builds
         run: npm run art:generation:check
       - run: npm test

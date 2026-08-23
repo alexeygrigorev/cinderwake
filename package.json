@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run art:generation:check && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run art:selection:check && npm run art:generation:check && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -20,6 +20,8 @@
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
+    "art:selection:build": "node scripts/build-selection-assets.mjs",
+    "art:selection:check": "node scripts/build-selection-assets.mjs --check",
     "art:generation:check": "node scripts/test-generation-pipeline.mjs"
   },
   "devDependencies": {

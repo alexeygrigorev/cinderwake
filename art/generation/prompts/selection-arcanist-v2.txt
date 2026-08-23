@@ -1,0 +1,11 @@
+Use case: stylized-concept
+Asset type: portrait mobile game character-selection background sprite
+Primary request: Create a finished Cinderwake character-selection scene centered on the Arcanist from the references.
+Input images: Image 1 is the authoritative character identity and overall painterly style reference; Image 2 is the authoritative Arcanist robes, staff, rust-orange trim, cyan crystal, and silhouette reference; Image 3 supplies the isometric gothic building and prop vocabulary.
+Scene/backdrop: A ruined gothic archive and shrine at the edge of a dead settlement, with a shattered observatory, stone stairs, chained arches, ritual braziers, scattered books, astrolabes, gravestones, masonry, dead trees, and a distant cyan-lit portal. The scenery must feel constructed and explorable rather than like a repeated texture.
+Subject: Exactly one Arcanist: silver-haired older male spellcaster, layered charcoal robes and leather armor with rust-orange trim, tall dark staff crowned by a compact cyan-violet crystal. Controlled ready stance, believable anatomy, both boots grounded; magic is a subtle glow, not a giant effect.
+Style/medium: Match Image 1 closely: premium painterly dark-fantasy RPG key art, crisp material detail, restrained color, realistic proportions, no cartoon or mobile-ad style.
+Composition/framing: Vertical 2:3 portrait. Full body, large and dominant, occupying roughly the middle 58% of the canvas. Keep the upper 12% dark and low-detail for a title. Keep the lower 24% darker, with stone steps and foreground props but no focal object, for real HTML controls. Strong depth from foreground masonry through the archive to the distant settlement.
+Lighting/mood: Warm ember candle light from one side, cold cyan-violet crystal and portal rim light from the other, deep charcoal shadows, smoky air, ominous but readable silhouette.
+Constraints: No text, lettering, numbers, UI, frames, logos, watermark, extra people, monsters, duplicated limbs, floating staff, oversized magic, cropped head, cropped boots, or magenta background. Preserve the named character identity and equipment. This is a single flattened raster background sprite, not a sprite sheet.
+Avoid: generic empty cave, repeating tiled wall, huge spell effects, excessive bloom, muddy silhouette, anime styling, photorealistic photography.

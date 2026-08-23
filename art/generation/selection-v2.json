@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeSelectionArtV1",
+  "created": "2026-08-23",
+  "purpose": "Production mobile character-selection scenes replacing atlas-cell crops and repeated terrain with full-height characters, buildings, and authored props.",
+  "sharedReferences": [
+    {
+      "file": "public/assets/cinderwake-heroes.png",
+      "sha256": "356839becfa6c541566b828e608fb78d101fc17f0f0333b2557fd0ea75068102",
+      "role": "character identity and painterly style"
+    },
+    {
+      "file": "art/source/environment/structures-source.png",
+      "sha256": "347a890ce51dc3cfe7621c615133912d4103ef70d4fbd8d0bbbb96851643e9f3",
+      "role": "gothic architecture and prop vocabulary"
+    }
+  ],
+  "transformation": {
+    "tool": "sharp 0.34.4",
+    "command": "npm run art:selection:build",
+    "resize": {
+      "width": 768,
+      "withoutEnlargement": true
+    },
+    "format": "webp",
+    "quality": 88,
+    "smartSubsample": true
+  },
+  "assets": [
+    {
+      "id": "vanguard",
+      "promptFile": "art/generation/prompts/selection-vanguard-v2.txt",
+      "identityReference": {
+        "file": "art/source/actors/vanguard-source.png",
+        "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+      },
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-42de761a-faac-4645-ba19-8aea9f2bb517.png"
+      },
+      "candidateFile": "art/generation/candidates/selection-v2/vanguard.png",
+      "candidateSha256": "ad7a41e3a71a99654cac6ad54faa91acfa0de98e3093c16984378380f833c487",
+      "productionFile": "public/assets/selection/vanguard-v2.webp",
+      "productionSha256": "d79c95245da65d95477b41e68b9b078464ea56d4ae557220e21579d055a226cd",
+      "evaluation": {
+        "status": "accepted-for-selection",
+        "notes": "One grounded Vanguard with preserved equipment, a readable silhouette, dense gatehouse scenery, strong warm/cool depth, and reserved title/control regions. Not animation-source art."
+      }
+    },
+    {
+      "id": "ranger",
+      "promptFile": "art/generation/prompts/selection-ranger-v2.txt",
+      "identityReference": {
+        "file": "art/source/actors/ranger-source.png",
+        "sha256": "46606ad8d09e1ebd60799560487d5fedd28e0f5181c4c7819319c03295ddf0d2"
+      },
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-21997651-f5c0-40b8-8c86-d1c20b506460.png"
+      },
+      "candidateFile": "art/generation/candidates/selection-v2/ranger.png",
+      "candidateSha256": "40c972d43236412b1ebe318cc94d6c2e774a9e4b85b718bb717f985559c87d7f",
+      "productionFile": "public/assets/selection/ranger-v2.webp",
+      "productionSha256": "b5d2005b49b7865f81b36242e044dd9a777ddeb6dfc9307dce88e703b6a21e76",
+      "evaluation": {
+        "status": "accepted-for-selection",
+        "notes": "One grounded Ranger with coherent bow and quiver, a readable silhouette, layered watch-post scenery, strong warm/cool depth, and reserved title/control regions. Not animation-source art."
+      }
+    },
+    {
+      "id": "arcanist",
+      "promptFile": "art/generation/prompts/selection-arcanist-v2.txt",
+      "identityReference": {
+        "file": "art/source/actors/arcanist-source.png",
+        "sha256": "afa2492fc7b4937475a9802ca6bcafeacdbd25277c4aada2f5fabd06d3f2a537"
+      },
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-4afb5692-05ce-4043-a6ee-a4fd29445e49.png"
+      },
+      "candidateFile": "art/generation/candidates/selection-v2/arcanist.png",
+      "candidateSha256": "f33340e50e2637e99238e0c82bb5024078010251281525903744d8f04b5d7820",
+      "productionFile": "public/assets/selection/arcanist-v2.webp",
+      "productionSha256": "fff83e2ca41981d9e0a836b4ae98e558c27e9ce7f8ac73879ef55ec3b4bce7dc",
+      "evaluation": {
+        "status": "accepted-for-selection",
+        "notes": "One grounded Arcanist with restrained crystal light, a readable silhouette, dense archive/observatory scenery, strong warm/cool depth, and reserved title/control regions. Not animation-source art."
+      }
+    }
+  ]
+}
