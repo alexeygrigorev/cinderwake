@@ -165,7 +165,7 @@ function terrainMaterialEvidence(data, width, height) {
     ([red, green, blue]) => 0.2126 * red + 0.7152 * green + 0.0722 * blue,
   );
   const redChroma = cellMeans.map(([red, green]) => red - green);
-  const blueChroma = cellMeans.map(([_red, green, blue]) => blue - green);
+  const blueChroma = cellMeans.map((channels) => channels[2] - channels[1]);
   const range = (values) => Math.max(...values) - Math.min(...values);
   const edgeDifference = (axis, first, second) => {
     let total = 0;
