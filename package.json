@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:candidate:check && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -23,6 +23,7 @@
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",
     "art:selection:check": "node scripts/build-selection-assets.mjs --check",
+    "art:candidate:check": "node scripts/assess-actor-candidate.mjs --actor ashfang --family primary --profile ashfang-primary-v1 --candidate art/generation/prepared/ashfang-primary-trial-v2.png --output quality-results/actor-candidate-calibration/ashfang-primary-trial-v2",
     "art:animation:audit": "node scripts/audit-actor-atlases.mjs --report-only",
     "art:animation:check": "node scripts/audit-actor-atlases.mjs",
     "quality:environment:check": "node scripts/assess-environment-composition.mjs",

@@ -52,6 +52,27 @@ West is the only runtime mirror and is derived from east. North and south are al
 8. Open `quality-results/generation-pipeline/index.html` and inspect the raw normalized cells, prepared source, and packed runtime preview. Mechanical PASS cannot settle identity, anatomy, pose order, natural weight, or style.
 9. To promote a candidate, obtain independent visual acceptance, replace only the intended production source in a focused commit, then run `npm run art:build`, `npm run art:check`, browser visual tests, and `npm run capture:matrix`. Review changed temporal strips before updating any baseline.
 
+For a prepared primary candidate, run the reusable calibration gate as well:
+
+```bash
+node scripts/assess-actor-candidate.mjs \
+  --actor <actor-id> \
+  --family primary \
+  --profile <calibration-profile> \
+  --candidate art/generation/prepared/<trial>.png \
+  --output quality-results/actor-candidate-calibration/<trial>
+```
+
+It measures every one of the sixteen keyed cells, ink bounds, source-space
+ground anchor, the shared six-family runtime scale, and idle/walk loop height
+and centroid continuity. It writes a guided 4×4 contact sheet, a same-scale
+actor comparison, JSON, and HTML. Thresholds live in
+`art/actor-calibration-v1.json`, so a new actor profile does not require a new
+assessor. Three paired mutations must be rejected: a
+bad edge cut, one oversized frame that shrinks the complete rig, and a raised
+walk frame that would jump in motion. This remains a mechanical gate; it cannot
+approve anatomy, camera, material style, or action meaning.
+
 ## What the verifier proves
 
 - trial prompts, references, candidates, legacy briefs, and manifests exist and have current hashes;
@@ -70,6 +91,7 @@ The report is regenerated and published by CI. `quality-results/` is intentional
 - Vanguard `directions`: raw and prepared art are rejected because preparation cannot repair the incomplete gait or identity-contract mistake.
 - Ranger `actions`: raw and prepared art are rejected because preparation cannot repair the oversized effect or action-cell semantic mismatch.
 - Stonekin `reactions`: raw art is mechanically rejected; its prepared source is accepted only for pipeline proof because shared-scale grounding repairs the raster contract while preserving the visually coherent collapse.
+- Ashfang `primary` v2: its prepared idle/walk cut passes the measurable scale and continuity window (78.5-pixel median idle height), but raw and prepared art remain rejected. Independent review found a glossy style mismatch, a still-lateral camera, an airborne attack, and an oversized ground burst; preparation cannot repair those authored decisions.
 
 `accepted-production.json` covers all six accepted source families for those same actors. Exact historical prompts were not retained, so those entries point to `legacy-briefs/` marked `reconstructed-after-generation`; they preserve source hashes and generated artifact IDs without fabricating history.
 

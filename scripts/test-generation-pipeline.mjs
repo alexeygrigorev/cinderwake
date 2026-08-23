@@ -25,6 +25,14 @@ const REPORT_DIRECTORY = path.join(
 const BUILDER_PATH = path.join(ROOT, "scripts", "build-sprite-assets.mjs");
 const PRODUCTION_DIRECTORY = path.join(ROOT, "public", "assets", "sprites");
 const REPRESENTATIVE_ACTORS = ["vanguard", "ranger", "stonekin"];
+const TRIAL_ACTORS = [
+  "vanguard",
+  "ranger",
+  "arcanist",
+  "ashfang",
+  "hexer",
+  "stonekin",
+];
 const ALLOWED_TRIAL_STATUSES = new Set([
   "pending",
   "accepted-for-pipeline-proof",
@@ -325,10 +333,7 @@ async function validateTrials(
     assertNonEmptyString(trial.id, `${label}.id`);
     assert(!trialIds.has(trial.id), `${label}.id is duplicated`);
     trialIds.add(trial.id);
-    assert(
-      REPRESENTATIVE_ACTORS.includes(trial.actorId),
-      `${label}.actorId is not a representative actor`,
-    );
+    assert(TRIAL_ACTORS.includes(trial.actorId), `${label}.actorId is unknown`);
     assert(
       SOURCE_FAMILIES.includes(trial.sourceFamily),
       `${label}.sourceFamily is unknown`,

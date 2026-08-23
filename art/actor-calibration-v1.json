@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeActorCalibrationProfilesV1",
+  "description": "Data-driven measurable profiles for prepared actor candidates. These profiles cover raster mechanics only and never imply visual or production approval.",
+  "profiles": {
+    "ashfang-primary-v1": {
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "acceptanceBrief": "docs/research/ashfang-regeneration-brief.md",
+      "thresholds": {
+        "minimumForegroundPixels": 120,
+        "literalMagentaRatioMinimum": 0.2,
+        "sourceGroundTolerancePixels": 1,
+        "runtimeIdleMinimumHeight": 72,
+        "runtimeIdleMedianHeightMinimum": 76,
+        "runtimeIdleMedianHeightMaximum": 86,
+        "runtimeIdleMaximumAspectRatio": 1.5,
+        "runtimeLoopMaximumHeightStep": 8,
+        "runtimeLoopMaximumCentroidStep": 5,
+        "runtimeIdleWalkMaximumMedianHeightDifference": 8
+      }
+    }
+  }
+}

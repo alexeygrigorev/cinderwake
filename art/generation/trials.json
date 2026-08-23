@@ -176,6 +176,76 @@
         "status": "accepted-for-pipeline-proof",
         "notes": "Deterministic preparation creates literal chroma, removes cross-cell boundary fragments, applies one shared scale, and grounds all sixteen cells. Independent review found the underlying Stonekin recoil/collapse art visually coherent; this remains non-production trial evidence."
       }
+    },
+    {
+      "id": "ashfang-primary-v2-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v2.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v2.png",
+      "candidateSha256": "fbc49b811a368f43ec98a52b5ccc33f641113a2c5dd47be34434f48ceab924b1",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        },
+        {
+          "file": "art/source/actors/ashfang-directions-source.png",
+          "sha256": "952b82482a28e01d2be2240af1023dfaa7cafac277805bf7ee041be269055d01"
+        },
+        {
+          "file": "art/source/actors/stonekin-source.png",
+          "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-e8f61fb8-f553-4554-825e-78db57bc4333.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The raw generated background is a bright graded pink field rather than literal #ff00ff."
+          },
+          {
+            "kind": "visual",
+            "code": "style-material-mismatch",
+            "detail": "The glossy, high-contrast creature rendering does not match Cinderwake's rough painted environmental materials."
+          },
+          {
+            "kind": "visual",
+            "code": "camera-too-lateral",
+            "detail": "Visible top planes improved over production Ashfang, but the creature still reads mostly side-on rather than at the requested elevated world camera."
+          },
+          {
+            "kind": "visual",
+            "code": "airborne-attack-pose",
+            "detail": "Primary cell 10 is a disconnected airborne lunge despite the compact grounded attack requirement."
+          },
+          {
+            "kind": "visual",
+            "code": "oversized-ground-effect",
+            "detail": "Primary cell 14 adds a large ground-burst envelope that violates the attached-contact-only effect requirement and changes the grounding silhouette."
+          }
+        ],
+        "notes": "The generated identity is coherent and substantially more upright than production Ashfang, but independent review rejected its glossy style, still-lateral camera, airborne attack, and oversized ground burst. It is immutable calibration evidence only and must not replace a production source."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v2.png --output art/generation/prepared/ashfang-primary-trial-v2.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v2.png",
+        "sha256": "24a1f6c3454cb1db99e04f501eb724556b3e527debb8b8ce04d8674ab8ab68fb",
+        "status": "rejected",
+        "notes": "Deterministic preparation repairs the 4x4 cut, keyed background, shared cell scale, and foot anchors. The primary idle/walk metrics are useful calibration evidence, but raster preparation cannot repair style, camera, or authored action semantics."
+      }
     }
   ]
 }
