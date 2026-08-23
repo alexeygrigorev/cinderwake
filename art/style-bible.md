@@ -9,6 +9,7 @@ Every asset prompt and review uses the same visual contract. “Dark fantasy” 
 - Background values are quieter than actors. Ember-orange and cyan are gameplay signals, not decoration spread evenly across the scene.
 - Pure `#ff00ff` is a source-only chroma key. It cannot appear in approved production atlases.
 - Generated candidates remain source material. The deterministic build normalizes, keys, anchors, packs, hashes, and validates the committed runtime atlas.
+- Character-selection scenes use the same identity, material, and palette contract but may use a straight-on cinematic camera. They require one dominant full-height hero, constructed architecture and props, a quiet title region, and a dark control region; they are never repurposed as animation frames.
 
 ## Actor source brief
 

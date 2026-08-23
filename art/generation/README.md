@@ -72,3 +72,16 @@ The report is regenerated and published by CI. `quality-results/` is intentional
 - Stonekin `reactions`: raw art is mechanically rejected; its prepared source is accepted only for pipeline proof because shared-scale grounding repairs the raster contract while preserving the visually coherent collapse.
 
 `accepted-production.json` covers all six accepted source families for those same actors. Exact historical prompts were not retained, so those entries point to `legacy-briefs/` marked `reconstructed-after-generation`; they preserve source hashes and generated artifact IDs without fabricating history.
+
+## Mobile selection scenes
+
+Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.
+
+[`selection-v2.json`](selection-v2.json) records the three exact prompts, shared and actor-specific reference hashes, built-in generation artifact IDs, immutable source PNG hashes, review verdicts, and deterministic public WebP hashes. Rebuild or verify them with:
+
+```bash
+npm run art:selection:build
+npm run art:selection:check
+```
+
+Each scene reserves a quiet title region and a dark lower control region, contains exactly one grounded hero, and supplies real buildings and props rather than a repeated texture. `accepted-for-selection` never implies that the raster is valid animation-source art.

@@ -67,7 +67,7 @@ Run every source-level gate:
 npm run check
 ```
 
-That command includes the fixed actor validator and the generation-ingress verifier. The latter preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
+That command includes the fixed actor validator, deterministic mobile-selection rebuild, and generation-ingress verifier. The latter preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
 
 Run the real Chromium input and visual suite:
 
@@ -98,6 +98,8 @@ Each reproducibility bundle also includes `initial-state.json`, `commands.json`,
 Every actor uses the same six 4 × 4 semantic source families: primary identity/east movement, north/south movement, east actions, east reactions, north/south actions, and north/south reactions. Generated rasters are normalized onto a fixed 1024 × 1024 contract grid, then every frame is keyed, jointly scaled, grounded, and packed into the same 128-pixel-cell runtime atlas. New characters therefore inherit clip order, cadence, anchors, cardinal-facing behavior, and tests from metadata instead of adding bespoke crop logic.
 
 The [character generation guide](art/generation/README.md) gives exact cell positions, prompt/reference provenance rules, three same-style example prompts, the safe non-destructive trial workflow, and production-promotion gates. Prompt preservation makes the request auditable; immutable accepted source hashes and the deterministic packer make builds reproducible.
+
+The same guide records the separate production selection-art contract. `npm run art:selection:check` regenerates all three mobile WebP scenes from immutable source PNGs and proves their bytes match. To test the ordinary player path while retaining the state bridge, open `?testMode=1&selection=1`; this is also the route used by the browser test that selects a hero, starts the game, and exercises every touch action.
 
 ## Display, touch, and public evidence
 
