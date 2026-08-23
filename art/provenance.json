@@ -114,6 +114,11 @@
       "grid": "4x4"
     },
     {
+      "file": "art/source/environment/ground-source.png",
+      "kind": "continuous-ground-source",
+      "grid": "none"
+    },
+    {
       "file": "art/source/environment/structures-source.png",
       "kind": "structure-source",
       "grid": "4x4"

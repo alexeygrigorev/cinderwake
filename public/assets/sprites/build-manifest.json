@@ -35,6 +35,10 @@
       "sha256": "784544359ef109884ed554e44ca29149248e08e1cdd826cc44b72e584d75dcf2",
       "source": "public/assets/sprites/environment-terrain.png"
     },
+    "environment-ground.png": {
+      "sha256": "ab2af44a82c9f5acb46b9903b27342a1dd059944ba515908f8eabf6b9fa93626",
+      "source": "public/assets/sprites/environment-ground.png"
+    },
     "environment-structures.png": {
       "sha256": "b7d94fac72c4814d74e68041432cfe1262eac67aaebdb4860792085703a9f7a8",
       "source": "public/assets/sprites/environment-structures.png"

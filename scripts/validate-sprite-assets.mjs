@@ -53,7 +53,12 @@ for (const [clipName, clip] of Object.entries(spec.clips)) {
 async function cellEvidence(filePath, row, column) {
   const cell = spec.atlas.cellWidth;
   const { data } = await sharp(filePath)
-    .extract({ left: column * cell, top: row * cell, width: cell, height: cell })
+    .extract({
+      left: column * cell,
+      top: row * cell,
+      width: cell,
+      height: cell,
+    })
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
@@ -127,6 +132,7 @@ for (const actorId of actorIds) {
 
 for (const fileName of [
   "environment-terrain.png",
+  "environment-ground.png",
   "environment-structures.png",
   "environment-props.png",
   "ui.png",

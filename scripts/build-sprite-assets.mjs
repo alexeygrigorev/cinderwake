@@ -39,10 +39,7 @@ function keyedAlpha(red, green, blue, mode) {
     // color so those connected fields cannot survive as rectangular halos.
     if (magentaDominance >= 28 && magentaBalance <= 110) return 0;
     if (magentaDominance > 12 && magentaBalance < 130)
-      return Math.max(
-        0,
-        Math.round(((28 - magentaDominance) / 16) * 255),
-      );
+      return Math.max(0, Math.round(((28 - magentaDominance) / 16) * 255));
     const distance = Math.hypot(255 - red, green, 255 - blue);
     if (distance <= 24) return 0;
     if (distance < 115) return Math.round(((distance - 24) / 91) * 255);
@@ -125,9 +122,15 @@ async function removeBoundaryArtifacts(buffer) {
       const y = Math.floor(pixel / info.width);
       if (x === 0 || y === 0 || x === info.width - 1 || y === info.height - 1)
         touchesBoundary = true;
-      const neighbors = [pixel - 1, pixel + 1, pixel - info.width, pixel + info.width];
+      const neighbors = [
+        pixel - 1,
+        pixel + 1,
+        pixel - info.width,
+        pixel + info.width,
+      ];
       for (const neighbor of neighbors) {
-        if (neighbor < 0 || neighbor >= pixelCount || visited[neighbor]) continue;
+        if (neighbor < 0 || neighbor >= pixelCount || visited[neighbor])
+          continue;
         const neighborX = neighbor % info.width;
         if (Math.abs(neighborX - x) > 1 || data[neighbor * 4 + 3] < 8) continue;
         visited[neighbor] = 1;
@@ -138,7 +141,8 @@ async function removeBoundaryArtifacts(buffer) {
   }
   const largest = Math.max(...components.map(({ pixels }) => pixels.length));
   for (const component of components) {
-    if (!component.touchesBoundary || component.pixels.length === largest) continue;
+    if (!component.touchesBoundary || component.pixels.length === largest)
+      continue;
     for (const pixel of component.pixels) data[pixel * 4 + 3] = 0;
   }
   return sharp(data, { raw: info }).png().toBuffer();
@@ -196,12 +200,21 @@ async function normalizedActorCellSets(sources) {
     const cells = await extractActorCells(source);
     extractedSets[sourceId] = cells;
     for (const [index, buffer] of cells.entries())
-      records.push({ sourceId, index, buffer, bounds: await alphaBounds(buffer) });
+      records.push({
+        sourceId,
+        index,
+        buffer,
+        bounds: await alphaBounds(buffer),
+      });
   }
   const safe = ACTOR_SPEC.atlas.safeInkBounds;
   const maximumWidth = Math.max(...records.map(({ bounds }) => bounds.width));
   const maximumHeight = Math.max(...records.map(({ bounds }) => bounds.height));
-  const scale = Math.min(safe.width / maximumWidth, safe.height / maximumHeight, 1);
+  const scale = Math.min(
+    safe.width / maximumWidth,
+    safe.height / maximumHeight,
+    1,
+  );
   const normalized = {};
   for (const sourceId of Object.keys(extractedSets)) normalized[sourceId] = [];
   for (const { sourceId, index, buffer, bounds } of records) {
@@ -213,7 +226,12 @@ async function normalizedActorCellSets(sources) {
       .png()
       .toBuffer();
     const cell = await sharp({
-      create: { width: CELL, height: CELL, channels: 4, background: transparent },
+      create: {
+        width: CELL,
+        height: CELL,
+        channels: 4,
+        background: transparent,
+      },
     })
       .composite([
         {
@@ -243,7 +261,8 @@ async function blendedFrame(first, second, mix) {
     for (let channel = 0; channel < 3; channel += 1)
       output[offset + channel] = alpha
         ? Math.round(
-            (a.data[offset + channel] * alphaA + b.data[offset + channel] * alphaB) /
+            (a.data[offset + channel] * alphaA +
+              b.data[offset + channel] * alphaB) /
               alpha,
           )
         : 0;
@@ -460,6 +479,10 @@ const terrainPath = await buildTerrainAtlas(
   inputPath("environment", "terrain-source.png"),
   outputPath("environment-terrain.png"),
 );
+const groundPath = await buildGrid(
+  inputPath("environment", "ground-source.png"),
+  outputPath("environment-ground.png"),
+);
 const structuresPath = await buildGrid(
   inputPath("environment", "structures-source.png"),
   outputPath("environment-structures.png"),
@@ -482,6 +505,7 @@ const effectsPath = await buildGrid(
 );
 outputs.push(
   terrainPath,
+  groundPath,
   structuresPath,
   propsPath,
   uiPath,
