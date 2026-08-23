@@ -1,4 +1,14 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function expectRawCanvasSnapshot(
+  page: Page,
+  name: string,
+): Promise<void> {
+  const dataUrl = await page.evaluate(() =>
+    window.__GAME_TEST__!.captureFrame(),
+  );
+  expect(Buffer.from(dataUrl.split(",")[1]!, "base64")).toMatchSnapshot(name);
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/?testMode=1&scenario=animation-idle");
@@ -153,9 +163,7 @@ test("walk is monotonic at constant velocity with stable tracked camera", async 
         call.bounds.y + call.bounds.height <= 540,
     ),
   ).toBe(true);
-  await expect(page.locator("canvas").first()).toHaveScreenshot(
-    "animation-walk-tick-60.png",
-  );
+  await expectRawCanvasSnapshot(page, "animation-walk-tick-60.png");
 });
 
 test("combat impact and injected mid-action states render stable screenshots", async ({
@@ -165,16 +173,12 @@ test("combat impact and injected mid-action states render stable screenshots", a
     window.__GAME_TEST__!.loadScenario("combat-loot");
     window.__GAME_TEST__!.render();
   });
-  await expect(page.locator("canvas").first()).toHaveScreenshot(
-    "combat-loot-initial.png",
-  );
+  await expectRawCanvasSnapshot(page, "combat-loot-initial.png");
   await page.evaluate(() => {
     window.__GAME_TEST__!.setInput({ attack: true });
     window.__GAME_TEST__!.step(9, { render: true });
   });
-  await expect(page.locator("canvas").first()).toHaveScreenshot(
-    "combat-loot-impact.png",
-  );
+  await expectRawCanvasSnapshot(page, "combat-loot-impact.png");
   const transition = await page.evaluate(() => {
     window.__GAME_TEST__!.reset();
     window.__GAME_TEST__!.setInput({ attack: true });
@@ -196,7 +200,5 @@ test("combat impact and injected mid-action states render stable screenshots", a
     window.__GAME_TEST__!.loadScenario("mid-action");
     window.__GAME_TEST__!.render();
   });
-  await expect(page.locator("canvas").first()).toHaveScreenshot(
-    "mid-action-injected.png",
-  );
+  await expectRawCanvasSnapshot(page, "mid-action-injected.png");
 });
