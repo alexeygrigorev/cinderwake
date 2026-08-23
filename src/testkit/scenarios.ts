@@ -980,6 +980,14 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     contactEventTick: 23,
     captureTicks: [0, 3, 6, 7, 16, 24, 26, 27],
   },
+  "temporal-ranger-primary-north": {
+    scenarioId: "temporal-ranger-primary-north",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "attack",
+    contactEventTick: 23,
+    captureTicks: [0, 3, 6, 7, 16, 24, 26, 27],
+  },
   "temporal-ranger-ability": {
     scenarioId: "temporal-ranger-ability",
     subjectId: "player",
@@ -998,6 +1006,14 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
   },
   "temporal-arcanist-ability": {
     scenarioId: "temporal-arcanist-ability",
+    subjectId: "player",
+    targetId: TEMPORAL_ENTITY_IDS.heroTarget,
+    inputAction: "ability",
+    contactEventTick: 12,
+    captureTicks: [0, 6, 12, 13, 24, 36, 37],
+  },
+  "temporal-arcanist-ability-south": {
+    scenarioId: "temporal-arcanist-ability-south",
     subjectId: "player",
     targetId: TEMPORAL_ENTITY_IDS.heroTarget,
     inputAction: "ability",
@@ -1083,21 +1099,35 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
 function temporalHeroAction(
   classId: CharacterClass,
   action: "primary" | "ability",
+  direction: {
+    suffix?: "north" | "south";
+    facing?: VecTuple;
+    targetTile?: VecTuple;
+  } = {},
 ): ScenarioV1 {
-  const scenarioId = `temporal-${classId}-${action}`;
+  const scenarioId = `temporal-${classId}-${action}${
+    direction.suffix ? `-${direction.suffix}` : ""
+  }`;
   const isMelee =
     classId === "vanguard" || (classId === "arcanist" && action === "ability");
   // Keep melee subjects inside the 1.6-tile hit range while leaving enough
   // screen-space separation for both authored silhouettes and the contact VFX
   // to remain inspectable in temporal evidence.
-  const targetTile: VecTuple = isMelee ? [10.55, 7] : [13, 7];
+  const targetTile: VecTuple =
+    direction.targetTile ?? (isMelee ? [10.55, 7] : [13, 7]);
   return {
     schemaVersion: 1,
     id: scenarioId,
-    seed: `quality-${classId}-${action}-01`,
+    seed: `quality-${classId}-${action}${
+      direction.suffix ? `-${direction.suffix}` : ""
+    }-01`,
     classId,
     map: { mode: "explicit", rows: arenaRows(30, 15) },
-    player: { tile: [9, 7], facing: [1024, 0], power: 0 },
+    player: {
+      tile: [9, 7],
+      facing: direction.facing ?? [1024, 0],
+      power: 0,
+    },
     monsters: [
       {
         id: TEMPORAL_ENTITY_IDS.heroTarget,
@@ -1253,9 +1283,19 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "temporal-vanguard-primary": temporalHeroAction("vanguard", "primary"),
   "temporal-vanguard-ability": temporalHeroAction("vanguard", "ability"),
   "temporal-ranger-primary": temporalHeroAction("ranger", "primary"),
+  "temporal-ranger-primary-north": temporalHeroAction("ranger", "primary", {
+    suffix: "north",
+    facing: [0, -1024],
+    targetTile: [9, 3],
+  }),
   "temporal-ranger-ability": temporalHeroAction("ranger", "ability"),
   "temporal-arcanist-primary": temporalHeroAction("arcanist", "primary"),
   "temporal-arcanist-ability": temporalHeroAction("arcanist", "ability"),
+  "temporal-arcanist-ability-south": temporalHeroAction("arcanist", "ability", {
+    suffix: "south",
+    facing: [0, 1024],
+    targetTile: [9, 8.55],
+  }),
   "temporal-ashfang-attack": temporalEnemyAttack("ashfang"),
   "temporal-hexer-attack": temporalEnemyAttack("hexer"),
   "temporal-stonekin-attack": temporalEnemyAttack("stonekin"),

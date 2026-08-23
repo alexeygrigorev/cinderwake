@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CLIP_DURATIONS } from "../../src/game/constants";
-import type { AnimationClip } from "../../src/game/types";
+import { stepGame } from "../../src/game/simulation";
+import { EMPTY_INPUT, type AnimationClip } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
   BUILTIN_SCENARIOS,
+  TEMPORAL_ENTITY_IDS,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 import {
@@ -199,6 +201,135 @@ describe("sprite atlas quality contract", () => {
           );
         }
       }
+    }
+  });
+
+  it("resolves every actor clip through authored north and south banks without flipping", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const actorScenarios = {
+      "hero:vanguard": ["temporal-vanguard-primary", "player"],
+      "hero:ranger": ["temporal-ranger-primary", "player"],
+      "hero:arcanist": ["temporal-arcanist-primary", "player"],
+      "monster:ashfang": [
+        "temporal-ashfang-attack",
+        TEMPORAL_ENTITY_IDS.ashfangAttacker,
+      ],
+      "monster:hexer": [
+        "temporal-hexer-attack",
+        TEMPORAL_ENTITY_IDS.hexerAttacker,
+      ],
+      "monster:stonekin": [
+        "temporal-stonekin-attack",
+        TEMPORAL_ENTITY_IDS.stonekinAttacker,
+      ],
+    } as const;
+    const facings = {
+      north: { vector: { x: 0, y: -1024 }, suffix: ":north", flipX: false },
+      east: { vector: { x: 1024, y: 0 }, suffix: "", flipX: false },
+      south: { vector: { x: 0, y: 1024 }, suffix: ":south", flipX: false },
+      west: { vector: { x: -1024, y: 0 }, suffix: "", flipX: true },
+    } as const;
+
+    for (const [geometryId, [scenarioId, entityId]] of Object.entries(
+      actorScenarios,
+    )) {
+      const state = worldFromScenario(BUILTIN_SCENARIOS[scenarioId]!);
+      const actor =
+        entityId === "player"
+          ? state.player
+          : state.monsters.find(({ id }) => id === entityId)!;
+
+      for (const clip of Object.keys(CLIP_DURATIONS) as AnimationClip[]) {
+        actor.animation = {
+          clip,
+          startedAtTick: 0,
+          lockedUntilTick: CLIP_DURATIONS[clip],
+        };
+        for (const [bucket, expected] of Object.entries(facings)) {
+          actor.facing = { ...expected.vector };
+          const manifest = buildRenderManifest(state, CAMERA);
+          const call = manifest.drawCalls.find(
+            ({ entityId: candidate }) => candidate === entityId,
+          );
+          expect(call, `${geometryId} ${clip} ${bucket}`).toMatchObject({
+            geometryId,
+            clip,
+            facingBucket: bucket,
+            spriteId: `${geometryId}${expected.suffix}`,
+            flipX: expected.flipX,
+          });
+          validateManifestSpriteContract(manifest, catalog);
+        }
+      }
+    }
+  });
+
+  it("keeps directional hero scenarios on their authored banks through action recovery", () => {
+    const cases = [
+      {
+        scenarioId: "temporal-ranger-primary-north",
+        action: "attack",
+        direction: { x: 0, y: -1024 },
+        spriteId: "hero:ranger:north",
+        recoveryTick: CLIP_DURATIONS.attack,
+      },
+      {
+        scenarioId: "temporal-arcanist-ability-south",
+        action: "ability",
+        direction: { x: 0, y: 1024 },
+        spriteId: "hero:arcanist:south",
+        recoveryTick: CLIP_DURATIONS.ability,
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const state = worldFromScenario(BUILTIN_SCENARIOS[testCase.scenarioId]!);
+      const target = state.monsters.find(
+        ({ id }) => id === TEMPORAL_ENTITY_IDS.heroTarget,
+      )!;
+      const initialTargetHealth = target.health;
+      expect(state.player.facing).toEqual(testCase.direction);
+      expect(
+        buildRenderManifest(state, CAMERA).drawCalls.find(
+          ({ entityId }) => entityId === "player",
+        ),
+      ).toMatchObject({
+        clip: "idle",
+        spriteId: testCase.spriteId,
+        flipX: false,
+      });
+
+      stepGame(state, {
+        ...EMPTY_INPUT,
+        attack: testCase.action === "attack",
+        ability: testCase.action === "ability",
+      });
+      while (state.tick <= testCase.recoveryTick) {
+        expect(
+          buildRenderManifest(state, CAMERA).drawCalls.find(
+            ({ entityId }) => entityId === "player",
+          ),
+          `${testCase.scenarioId} tick ${state.tick}`,
+        ).toMatchObject({
+          clip: testCase.action,
+          spriteId: testCase.spriteId,
+          flipX: false,
+        });
+        stepGame(state, EMPTY_INPUT);
+      }
+
+      expect(state.tick).toBe(testCase.recoveryTick + 1);
+      expect(target.health).toBeLessThan(initialTargetHealth);
+      expect(state.player.facing).toEqual(testCase.direction);
+      expect(
+        buildRenderManifest(state, CAMERA).drawCalls.find(
+          ({ entityId }) => entityId === "player",
+        ),
+      ).toMatchObject({
+        clip: "idle",
+        spriteId: testCase.spriteId,
+        flipX: false,
+      });
     }
   });
 

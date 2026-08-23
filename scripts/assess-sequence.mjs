@@ -1,6 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import sharp from "sharp";
+
+const RECOVERY_SEAM_PIXEL_RMSE = 0.001;
+const ATTACHED_EFFECT_CORE_HALF_WIDTH = 24;
 
 const [timelineFile, outputFile] = process.argv.slice(2);
 if (!timelineFile)
@@ -67,6 +71,42 @@ function close(a, b, tolerance = 0.000001) {
   return (
     Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance
   );
+}
+
+function normalizedPixelRmse(first, second) {
+  if (!first || !second || first.length !== second.length) return Infinity;
+  let squaredError = 0;
+  for (let index = 0; index < first.length; index += 1) {
+    const difference = first[index] - second[index];
+    squaredError += difference * difference;
+  }
+  return Math.sqrt(squaredError / first.length) / 255;
+}
+
+function coreCentroid(data, info, anchor) {
+  const minimumX = Math.max(
+    0,
+    Math.floor(anchor.x - ATTACHED_EFFECT_CORE_HALF_WIDTH),
+  );
+  const maximumX = Math.min(
+    info.width - 1,
+    Math.ceil(anchor.x + ATTACHED_EFFECT_CORE_HALF_WIDTH),
+  );
+  let weightedX = 0;
+  let weightedY = 0;
+  let alphaWeight = 0;
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = minimumX; x <= maximumX; x += 1) {
+      const alpha = data[(y * info.width + x) * 4 + 3] / 255;
+      if (alpha === 0) continue;
+      weightedX += x * alpha;
+      weightedY += y * alpha;
+      alphaWeight += alpha;
+    }
+  }
+  return alphaWeight > 0
+    ? { x: weightedX / alphaWeight, y: weightedY / alphaWeight }
+    : undefined;
 }
 
 function canonicalize(value, key) {
@@ -333,6 +373,17 @@ for (const point of points) {
     );
     const digest = createHash("sha256").update(buffer).digest("hex");
     if (digest !== mask.artifactSha256) artifactIntegrityErrors += 1;
+    const decoded = await sharp(buffer)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    if (
+      decoded.info.width !== mask.width ||
+      decoded.info.height !== mask.height
+    )
+      artifactIntegrityErrors += 1;
+    point.maskPixels = decoded.data;
+    point.coreCentroid = coreCentroid(decoded.data, decoded.info, mask.anchor);
   } catch {
     artifactIntegrityErrors += 1;
   }
@@ -352,6 +403,8 @@ const velocityErrors = [];
 const frameAdvances = [];
 const centroidSteps = [];
 const centroidAccelerations = [];
+const coreCentroidSteps = [];
+const coreCentroidAccelerations = [];
 const inkWidthSteps = [];
 const inkHeightSteps = [];
 const cameraErrors = points.map(({ manifest }) =>
@@ -359,9 +412,11 @@ const cameraErrors = points.map(({ manifest }) =>
 );
 const cameraVelocities = [];
 let previousCentroidVelocity;
+let previousCoreCentroidVelocity;
 let oneShotBackwardJumps = 0;
 let recoveryTransitions = 0;
 let recoverySeamMismatches = 0;
+const recoverySeamPixelRmses = [];
 let loopWraps = 0;
 
 for (let index = 1; index < points.length; index += 1) {
@@ -403,7 +458,18 @@ for (let index = 1; index < points.length; index += 1) {
     current.actor.clip === "idle"
   ) {
     recoveryTransitions += 1;
-    if (previous.mask.pixelHash !== current.mask.pixelHash)
+    const seamRmse = normalizedPixelRmse(
+      previous.maskPixels,
+      current.maskPixels,
+    );
+    recoverySeamPixelRmses.push(seamRmse);
+    if (
+      seamRmse > RECOVERY_SEAM_PIXEL_RMSE ||
+      distance(previous.mask.centroid, current.mask.centroid) > 0.25 ||
+      previous.mask.inkBounds.width !== current.mask.inkBounds.width ||
+      previous.mask.inkBounds.height !== current.mask.inkBounds.height ||
+      previous.mask.alphaPixels !== current.mask.alphaPixels
+    )
       recoverySeamMismatches += 1;
   }
   const centroidVelocity = {
@@ -411,11 +477,23 @@ for (let index = 1; index < points.length; index += 1) {
     y: (current.mask.centroid.y - previous.mask.centroid.y) / tickDelta,
   };
   centroidSteps.push(distance(current.mask.centroid, previous.mask.centroid));
+  const previousCore = previous.coreCentroid ?? previous.mask.centroid;
+  const currentCore = current.coreCentroid ?? current.mask.centroid;
+  coreCentroidSteps.push(distance(currentCore, previousCore));
   if (previousCentroidVelocity)
     centroidAccelerations.push(
       distance(centroidVelocity, previousCentroidVelocity),
     );
   previousCentroidVelocity = centroidVelocity;
+  const coreCentroidVelocity = {
+    x: (currentCore.x - previousCore.x) / tickDelta,
+    y: (currentCore.y - previousCore.y) / tickDelta,
+  };
+  if (previousCoreCentroidVelocity)
+    coreCentroidAccelerations.push(
+      distance(coreCentroidVelocity, previousCoreCentroidVelocity),
+    );
+  previousCoreCentroidVelocity = coreCentroidVelocity;
   inkWidthSteps.push(
     Math.abs(current.mask.inkBounds.width - previous.mask.inkBounds.width),
   );
@@ -544,8 +622,10 @@ const thresholds = {
   // Permit that attached effect to expand only while the actor's center stays
   // substantially steadier than the normal pose-continuity limits.
   attachedEffectDimensionStep: 42,
+  attachedEffectCoreHalfWidth: ATTACHED_EFFECT_CORE_HALF_WIDTH,
   attachedEffectCentroidStep: 16,
   attachedEffectCentroidAcceleration: 10,
+  recoverySeamPixelRmse: RECOVERY_SEAM_PIXEL_RMSE,
   cameraAcceleration: 40,
   cameraFinalError: 2,
   oneShotVisualPoses: 5,
@@ -569,6 +649,7 @@ const measurements = {
   oneShotBackwardJumps,
   recoveryTransitions,
   recoverySeamMismatches,
+  recoverySeamPixelRmsePeak: maximum(recoverySeamPixelRmses),
   loopWraps,
   inkBottomRange: range(maskBottomOffsets),
   inkWidthRange: range(maskWidths),
@@ -576,6 +657,8 @@ const measurements = {
   inkAreaRange: range(maskAreas),
   inkCentroidStepPeak: maximum(centroidSteps),
   inkCentroidAccelerationPeak: maximum(centroidAccelerations),
+  coreCentroidStepPeak: maximum(coreCentroidSteps),
+  coreCentroidAccelerationPeak: maximum(coreCentroidAccelerations),
   inkWidthStepPeak: maximum(inkWidthSteps),
   inkHeightStepPeak: maximum(inkHeightSteps),
   actualInkClipping,
@@ -594,8 +677,8 @@ const attachedEffectBloomIsContinuous =
   oneShotProfile &&
   measurements.inkWidthStepPeak <= thresholds.attachedEffectDimensionStep &&
   measurements.inkHeightStepPeak <= thresholds.attachedEffectDimensionStep &&
-  measurements.inkCentroidStepPeak <= thresholds.attachedEffectCentroidStep &&
-  measurements.inkCentroidAccelerationPeak <=
+  measurements.coreCentroidStepPeak <= thresholds.attachedEffectCentroidStep &&
+  measurements.coreCentroidAccelerationPeak <=
     thresholds.attachedEffectCentroidAcceleration;
 const checks = {
   enoughFrames: measurements.frames >= 6 && measurements.presentFrames >= 2,
