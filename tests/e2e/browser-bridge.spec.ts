@@ -110,3 +110,110 @@ test("keyboard and pointer adapter feed deterministic input sampling", async ({
     ),
   ).toBe(true);
 });
+
+test("exposes deterministic sub-tick presentation frames for high-refresh displays", async ({
+  page,
+}) => {
+  const samples = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("animation-walk");
+    const startX = window.__GAME_TEST__!.snapshot().player.position.x;
+    window.__GAME_TEST__!.setInput({ moveX: 1 });
+    window.__GAME_TEST__!.step(1);
+    return {
+      startX,
+      frames: [0, 0.25, 0.5, 0.75, 1].map((interpolationAlpha) => {
+        const manifest = window.__GAME_TEST__!.render({ interpolationAlpha });
+        const player = manifest.drawCalls.find(
+          (call) => call.entityId === "player",
+        )!;
+        return {
+          interpolationAlpha: manifest.interpolationAlpha,
+          presentationTick: manifest.presentationTick,
+          worldX: player.worldAnchor.x,
+          screenX: player.screenAnchor.x,
+        };
+      }),
+    };
+  });
+  expect(samples.frames.map((frame) => frame.worldX)).toEqual(
+    [0, 18, 36, 54, 72].map((offset) => samples.startX + offset),
+  );
+  expect(samples.frames.map((frame) => frame.presentationTick)).toEqual([
+    0, 0.25, 0.5, 0.75, 1,
+  ]);
+  expect(new Set(samples.frames.map((frame) => frame.screenX)).size).toBe(1);
+});
+
+test("advances smooth camera once per simulation tick regardless of render count", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("camera-track");
+    const initial = window.__GAME_TEST__!.camera();
+    for (let index = 0; index < 25; index += 1)
+      window.__GAME_TEST__!.render({ interpolationAlpha: index / 24 });
+    const afterRenders = window.__GAME_TEST__!.camera();
+    const first = window.__GAME_TEST__!.step(1, { render: true });
+    const afterTick = window.__GAME_TEST__!.camera();
+    const firstManifest = window.__GAME_TEST__!.renderManifest();
+    window.__GAME_TEST__!.reset();
+    window.__GAME_TEST__!.step(1, { render: true });
+    const repeated = window.__GAME_TEST__!.camera();
+    return {
+      initial,
+      afterRenders,
+      afterTick,
+      repeated,
+      stateTick: first.tick,
+      cameraMode: firstManifest.cameraMode,
+      target: firstManifest.cameraTarget,
+    };
+  });
+  expect(result.afterRenders).toEqual(result.initial);
+  expect(result.afterTick).toEqual(result.repeated);
+  expect(result.afterTick.x).toBeGreaterThan(result.initial.x);
+  expect(result.afterTick.x).toBeLessThan(result.target.x);
+  expect(result.stateTick).toBe(1);
+  expect(result.cameraMode).toBe("smooth");
+});
+
+test("honors cameraFollow false even when smooth mode is selected", async ({
+  page,
+}) => {
+  const result = await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario({
+      schemaVersion: 1,
+      id: "camera-fixed-by-setting",
+      seed: "camera-fixed",
+      classId: "ranger",
+      map: {
+        mode: "explicit",
+        rows: [
+          "######################",
+          "#....................#",
+          "#..................E.#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "#..........P.........#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "#....................#",
+          "######################",
+        ],
+      },
+      monsters: [],
+      camera: { mode: "smooth", centerTile: [3, 7] },
+      settings: { ai: false, autoPickup: false, cameraFollow: false },
+    });
+    const before = window.__GAME_TEST__!.camera();
+    window.__GAME_TEST__!.setInput({ moveX: 1 });
+    window.__GAME_TEST__!.step(20, { render: true });
+    return { before, after: window.__GAME_TEST__!.camera() };
+  });
+  expect(result.after).toEqual(result.before);
+});

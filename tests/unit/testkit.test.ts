@@ -188,4 +188,33 @@ describe("deterministic fixtures", () => {
     expect(later.footAnchor).toEqual(first.footAnchor);
     expect(later.frameIndex).not.toBe(first.frameIndex);
   });
+
+  it("renders deterministic sub-tick positions between authoritative states", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
+    const camera = {
+      x: (state.player.position.x / 1024) * 48,
+      y: (state.player.position.y / 1024) * 48,
+      zoom: 1,
+    };
+    const startX = state.player.position.x;
+    stepGame(state, { ...EMPTY_INPUT, moveX: 1 });
+    const samples = [0, 0.25, 0.5, 0.75, 1].map((alpha) => {
+      const manifest = buildRenderManifest(state, camera, {
+        interpolationAlpha: alpha,
+      });
+      return {
+        presentationTick: manifest.presentationTick,
+        alpha: manifest.interpolationAlpha,
+        x: manifest.drawCalls.find((call) => call.entityId === "player")!
+          .worldAnchor.x,
+      };
+    });
+    expect(samples).toEqual([
+      { presentationTick: 0, alpha: 0, x: startX },
+      { presentationTick: 0.25, alpha: 0.25, x: startX + 18 },
+      { presentationTick: 0.5, alpha: 0.5, x: startX + 36 },
+      { presentationTick: 0.75, alpha: 0.75, x: startX + 54 },
+      { presentationTick: 1, alpha: 1, x: startX + 72 },
+    ]);
+  });
 });

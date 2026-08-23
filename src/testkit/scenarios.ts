@@ -25,6 +25,7 @@ import type {
   RngStreams,
   Vec2,
 } from "../game/types";
+import type { CameraMode } from "../render/manifest";
 
 type VecTuple = [number, number];
 
@@ -107,6 +108,7 @@ export interface ScenarioV1 {
   tick?: number;
   phase?: GamePhase;
   nextEntityId?: number;
+  camera?: { mode?: CameraMode; centerTile?: VecTuple };
   map:
     | { mode: "generated"; width?: number; height?: number }
     | { mode: "explicit"; rows: string[] };
@@ -282,6 +284,13 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
     throw new Error("Scenario tick must be a non-negative integer");
   if (scenario.phase && !["playing", "won", "lost"].includes(scenario.phase))
     throw new Error("Scenario phase is invalid");
+  if (
+    scenario.camera?.mode &&
+    !["snap", "smooth", "fixed"].includes(scenario.camera.mode)
+  )
+    throw new Error("Scenario camera mode is invalid");
+  if (scenario.camera?.centerTile)
+    assertTuple(scenario.camera.centerTile, "Camera center tile");
   assertSafeNumbers(scenario);
 
   const ids = new Set<string>();
@@ -548,8 +557,9 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     seed: "vis-camera-01",
     classId: "arcanist",
     map: { mode: "explicit", rows: arenaRows(38, 12) },
-    player: { tile: [7, 6] },
+    player: { tile: [26, 6] },
     monsters: [],
+    camera: { mode: "smooth", centerTile: [4, 6] },
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "mid-action": {

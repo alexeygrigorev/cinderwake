@@ -12,7 +12,11 @@ import type { ScenarioV1 } from "../testkit/scenarios";
 import { worldFromScenario } from "../testkit/scenarios";
 import { stateFromSnapshot } from "../testkit/stateSnapshots";
 import { CanvasRenderer } from "../render/CanvasRenderer";
-import type { RenderManifestV1 } from "../render/manifest";
+import type {
+  CameraMode,
+  CameraV1,
+  RenderManifestV1,
+} from "../render/manifest";
 
 export class GameHost {
   state: GameState;
@@ -24,6 +28,7 @@ export class GameHost {
   private accumulator = 0;
   private running = false;
   private paused = false;
+  private cameraMode: CameraMode;
   readonly testMode: boolean;
   onRender?: (state: GameState, manifest: RenderManifestV1) => void;
   constructor(
@@ -32,6 +37,7 @@ export class GameHost {
   ) {
     this.renderer = new CanvasRenderer(canvas);
     this.testMode = testMode;
+    this.cameraMode = testMode ? "snap" : "smooth";
     this.state = worldFromScenario({
       schemaVersion: 1,
       id: "boot",
@@ -42,21 +48,26 @@ export class GameHost {
   }
   startScenario(scenario: ScenarioV1): GameState {
     this.state = worldFromScenario(scenario);
-    this.renderer.camera = {
-      x: (this.state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS,
-      y: (this.state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS,
-      zoom: 1,
-    };
+    this.cameraMode =
+      scenario.camera?.mode ?? (this.testMode ? "snap" : "smooth");
+    const center = scenario.camera?.centerTile;
+    this.renderer.resetCamera(
+      this.state,
+      center
+        ? {
+            x: (center[0] + 0.5) * TILE_PIXELS,
+            y: (center[1] + 0.5) * TILE_PIXELS,
+            zoom: 1,
+          }
+        : undefined,
+    );
     this.render();
     return this.state;
   }
   startState(snapshot: GameState): GameState {
     this.state = stateFromSnapshot(snapshot);
-    this.renderer.camera = {
-      x: (this.state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS,
-      y: (this.state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS,
-      zoom: 1,
-    };
+    this.cameraMode = this.testMode ? "snap" : "smooth";
+    this.renderer.resetCamera(this.state);
     this.render();
     return this.state;
   }
@@ -72,6 +83,17 @@ export class GameHost {
   setInput(input: InputState): void {
     this.input = input;
   }
+  setCamera(camera: CameraV1, mode: CameraMode = "fixed"): void {
+    this.cameraMode = mode;
+    this.renderer.setCamera(camera);
+    this.render();
+  }
+  setCameraMode(mode: CameraMode): void {
+    this.cameraMode = mode;
+  }
+  getCamera(): CameraV1 {
+    return { ...this.renderer.camera };
+  }
   setPaused(value: boolean): void {
     this.paused = value;
   }
@@ -80,8 +102,10 @@ export class GameHost {
     return this.paused;
   }
   step(ticks = 1, input?: InputState): GameState {
-    for (let i = 0; i < ticks; i++)
+    for (let i = 0; i < ticks; i++) {
       stepGame(this.state, input ?? this.inputProvider?.() ?? this.input);
+      this.renderer.advanceCamera(this.state, this.cameraMode);
+    }
     this.render();
     return this.state;
   }
@@ -103,8 +127,12 @@ export class GameHost {
   getManifest(): RenderManifestV1 {
     return this.manifest ?? this.render();
   }
-  render(): RenderManifestV1 {
-    const m = this.renderer.render(this.state, this.testMode);
+  render(interpolationAlpha = 1): RenderManifestV1 {
+    const m = this.renderer.render(
+      this.state,
+      interpolationAlpha,
+      this.cameraMode,
+    );
     this.manifest = m;
     this.onRender?.(this.state, m);
     return m;
@@ -112,11 +140,13 @@ export class GameHost {
   worldAt(screenX: number, screenY: number): Vec2 {
     return {
       x: Math.round(
-        ((screenX - VIEW_WIDTH / 2 + this.renderer.camera.x) / TILE_PIXELS) *
+        ((screenX - VIEW_WIDTH / 2 + this.renderer.displayCamera.x) /
+          TILE_PIXELS) *
           UNITS_PER_TILE,
       ),
       y: Math.round(
-        ((screenY - VIEW_HEIGHT / 2 + this.renderer.camera.y) / TILE_PIXELS) *
+        ((screenY - VIEW_HEIGHT / 2 + this.renderer.displayCamera.y) /
+          TILE_PIXELS) *
           UNITS_PER_TILE,
       ),
     };
@@ -129,10 +159,11 @@ export class GameHost {
       this.accumulator += elapsed;
       while (this.accumulator >= TICK_MS) {
         stepGame(this.state, this.inputProvider?.() ?? this.input);
+        this.renderer.advanceCamera(this.state, this.cameraMode);
         this.accumulator -= TICK_MS;
       }
     }
-    this.render();
+    this.render(this.testMode ? 1 : this.accumulator / TICK_MS);
     requestAnimationFrame(this.loop);
   };
 }

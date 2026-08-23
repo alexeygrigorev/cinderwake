@@ -14,6 +14,8 @@ export interface CameraV1 {
   zoom: number;
 }
 
+export type CameraMode = "snap" | "smooth" | "fixed";
+
 export interface DrawCallV1 {
   entityId: string;
   type: "player" | "monster" | "loot" | "projectile";
@@ -36,8 +38,12 @@ export interface RenderManifestV1 {
   schemaVersion: 1;
   tick: number;
   simTick: number;
+  presentationTick: number;
+  interpolationAlpha: number;
   viewport: { width: number; height: number; dpr: 1 };
   camera: CameraV1;
+  cameraTarget: CameraV1;
+  cameraMode: CameraMode;
   drawCalls: DrawCallV1[];
 }
 
@@ -80,7 +86,21 @@ function intersectsViewport(bounds: DrawCallV1["bounds"]): boolean {
 export function buildRenderManifest(
   state: GameState,
   camera: CameraV1,
+  options: {
+    interpolationAlpha?: number;
+    cameraTarget?: CameraV1;
+    cameraMode?: CameraMode;
+  } = {},
 ): RenderManifestV1 {
+  const interpolationAlpha = Math.max(
+    0,
+    Math.min(1, options.interpolationAlpha ?? 1),
+  );
+  const presentationTick = Math.max(0, state.tick - (1 - interpolationAlpha));
+  const presented = (previous: Vec2, current: Vec2): Vec2 => ({
+    x: Math.round(previous.x + (current.x - previous.x) * interpolationAlpha),
+    y: Math.round(previous.y + (current.y - previous.y) * interpolationAlpha),
+  });
   const calls: DrawCallV1[] = [];
   const add = (
     call: Omit<
@@ -122,11 +142,14 @@ export function buildRenderManifest(
       clip: state.player.animation.clip,
       frameIndex: actorFrame(
         state.player.animation.clip,
-        state.tick,
+        presentationTick,
         state.player.animation.startedAtTick,
       ),
       facing: state.player.facing,
-      worldAnchor: state.player.position,
+      worldAnchor: presented(
+        state.player.previousPosition,
+        state.player.position,
+      ),
       scale: 1,
       tint: playerTint,
       layer: "actors",
@@ -151,11 +174,11 @@ export function buildRenderManifest(
         clip: monster.animation.clip,
         frameIndex: actorFrame(
           monster.animation.clip,
-          state.tick,
+          presentationTick,
           monster.animation.startedAtTick,
         ),
         facing: monster.facing,
-        worldAnchor: monster.position,
+        worldAnchor: presented(monster.previousPosition, monster.position),
         scale,
         tint: monsterTints[monster.kind],
         layer: "actors",
@@ -178,7 +201,7 @@ export function buildRenderManifest(
         type: "loot",
         geometryId: `loot:${loot.kind}:${loot.rarity}`,
         clip: "loot",
-        frameIndex: Math.floor((state.tick + loot.bobOffset) / 12) % 4,
+        frameIndex: Math.floor((presentationTick + loot.bobOffset) / 12) % 4,
         facing: { x: 0, y: 0 },
         worldAnchor: loot.position,
         scale:
@@ -200,9 +223,12 @@ export function buildRenderManifest(
           ? "projectile:hostile"
           : "projectile:friendly",
         clip: "projectile",
-        frameIndex: state.tick % 4,
+        frameIndex: Math.floor(presentationTick) % 4,
         facing: projectile.velocity,
-        worldAnchor: projectile.position,
+        worldAnchor: presented(
+          projectile.previousPosition,
+          projectile.position,
+        ),
         scale: 1,
         tint: projectile.color,
         layer: "projectiles",
@@ -226,8 +252,12 @@ export function buildRenderManifest(
     schemaVersion: 1,
     tick: state.tick,
     simTick: state.tick,
+    presentationTick,
+    interpolationAlpha,
     viewport: { width: VIEW_WIDTH, height: VIEW_HEIGHT, dpr: 1 },
     camera: { ...camera },
+    cameraTarget: { ...(options.cameraTarget ?? camera) },
+    cameraMode: options.cameraMode ?? "snap",
     drawCalls: calls,
   };
 }

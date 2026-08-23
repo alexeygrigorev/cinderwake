@@ -8,6 +8,7 @@ import type { GameState, Vec2 } from "../game/types";
 import {
   buildRenderManifest,
   screenFor,
+  type CameraMode,
   type CameraV1,
   type DrawCallV1,
   type RenderManifestV1,
@@ -39,6 +40,8 @@ export class CanvasRenderer {
   readonly canvas: HTMLCanvasElement;
   readonly context: CanvasRenderingContext2D;
   camera: CameraV1 = { x: 0, y: 0, zoom: 1 };
+  previousCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
+  displayCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -49,7 +52,7 @@ export class CanvasRenderer {
     this.context = context;
   }
 
-  updateCamera(state: GameState, snap: boolean): void {
+  cameraTarget(state: GameState): CameraV1 {
     const targetX = (state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS;
     const targetY = (state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS;
     const mapWidth = state.map.width * TILE_PIXELS;
@@ -69,57 +72,100 @@ export class CanvasRenderer {
             Math.min(mapHeight - VIEW_HEIGHT / 2, targetY),
           );
 
-    if (snap) {
-      this.camera.x = clampedX;
-      this.camera.y = clampedY;
-      return;
-    }
-    this.camera.x += (clampedX - this.camera.x) * 0.13;
-    this.camera.y += (clampedY - this.camera.y) * 0.13;
+    return { x: clampedX, y: clampedY, zoom: 1 };
   }
 
-  render(state: GameState, snap = false): RenderManifestV1 {
-    this.updateCamera(state, snap);
+  resetCamera(state: GameState, camera?: CameraV1): void {
+    this.camera = camera ? { ...camera } : this.cameraTarget(state);
+    this.previousCamera = { ...this.camera };
+    this.displayCamera = { ...this.camera };
+  }
+
+  setCamera(camera: CameraV1): void {
+    this.camera = { ...camera };
+    this.previousCamera = { ...camera };
+    this.displayCamera = { ...camera };
+  }
+
+  advanceCamera(state: GameState, mode: CameraMode): void {
+    this.previousCamera = { ...this.camera };
+    if (mode === "fixed" || !state.settings.cameraFollow) return;
+    const target = this.cameraTarget(state);
+    if (mode === "snap") {
+      this.camera = target;
+      return;
+    }
+    // Easing is applied once per simulation tick, not once per display frame.
+    // It therefore behaves identically on 60, 120, and 144 Hz displays.
+    this.camera.x += (target.x - this.camera.x) * 0.13;
+    this.camera.y += (target.y - this.camera.y) * 0.13;
+  }
+
+  render(
+    state: GameState,
+    interpolationAlpha = 1,
+    cameraMode: CameraMode = "smooth",
+  ): RenderManifestV1 {
+    const alpha = Math.max(0, Math.min(1, interpolationAlpha));
+    const camera = {
+      x:
+        this.previousCamera.x + (this.camera.x - this.previousCamera.x) * alpha,
+      y:
+        this.previousCamera.y + (this.camera.y - this.previousCamera.y) * alpha,
+      zoom:
+        this.previousCamera.zoom +
+        (this.camera.zoom - this.previousCamera.zoom) * alpha,
+    };
+    this.displayCamera = camera;
     const context = this.context;
     context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
     context.fillStyle = "#111619";
     context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-    this.drawMap(context, state);
+    this.drawMap(context, state, camera);
 
     const exit = screenFor(
       {
         x: (state.map.exit.x + 0.5) * UNITS_PER_TILE,
         y: (state.map.exit.y + 0.5) * UNITS_PER_TILE,
       },
-      this.camera,
+      camera,
     );
     this.drawExit(context, exit, state.exitUnlocked, state.tick);
 
-    const manifest = buildRenderManifest(state, this.camera);
+    const manifest = buildRenderManifest(state, camera, {
+      interpolationAlpha: alpha,
+      cameraTarget: this.cameraTarget(state),
+      cameraMode,
+    });
     for (const call of manifest.drawCalls) {
-      if (call.visible) this.drawEntity(context, call, state);
+      if (call.visible)
+        this.drawEntity(context, call, state, manifest.presentationTick);
     }
     for (const effect of state.effects) {
       this.drawEffect(
         context,
-        screenFor(effect.position, this.camera),
+        screenFor(effect.position, camera),
         effect,
-        state.tick,
+        manifest.presentationTick,
       );
     }
     this.drawVignette(context);
     return manifest;
   }
 
-  private drawMap(context: CanvasRenderingContext2D, state: GameState): void {
+  private drawMap(
+    context: CanvasRenderingContext2D,
+    state: GameState,
+    camera: CameraV1,
+  ): void {
     const { map } = state;
     const startX = Math.max(
       0,
-      Math.floor((this.camera.x - VIEW_WIDTH / 2) / TILE_PIXELS) - 1,
+      Math.floor((camera.x - VIEW_WIDTH / 2) / TILE_PIXELS) - 1,
     );
     const startY = Math.max(
       0,
-      Math.floor((this.camera.y - VIEW_HEIGHT / 2) / TILE_PIXELS) - 1,
+      Math.floor((camera.y - VIEW_HEIGHT / 2) / TILE_PIXELS) - 1,
     );
     const endX = Math.min(
       map.width,
@@ -131,7 +177,13 @@ export class CanvasRenderer {
     );
     for (let y = startY; y < endY; y += 1) {
       for (let x = startX; x < endX; x += 1) {
-        this.drawTile(context, x, y, map.tiles[y * map.width + x] === 1);
+        this.drawTile(
+          context,
+          x,
+          y,
+          map.tiles[y * map.width + x] === 1,
+          camera,
+        );
       }
     }
   }
@@ -141,13 +193,10 @@ export class CanvasRenderer {
     x: number,
     y: number,
     wall: boolean,
+    camera: CameraV1,
   ): void {
-    const screenX = Math.round(
-      VIEW_WIDTH / 2 + x * TILE_PIXELS - this.camera.x,
-    );
-    const screenY = Math.round(
-      VIEW_HEIGHT / 2 + y * TILE_PIXELS - this.camera.y,
-    );
+    const screenX = Math.round(VIEW_WIDTH / 2 + x * TILE_PIXELS - camera.x);
+    const screenY = Math.round(VIEW_HEIGHT / 2 + y * TILE_PIXELS - camera.y);
     if (!wall) {
       context.fillStyle = FLOOR_COLORS[(x * 7 + y * 11) % FLOOR_COLORS.length]!;
       context.fillRect(screenX, screenY, TILE_PIXELS, TILE_PIXELS);
@@ -228,13 +277,14 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     call: DrawCallV1,
     state: GameState,
+    presentationTick: number,
   ): void {
     if (call.type === "projectile") {
       this.drawProjectile(context, call);
       return;
     }
     if (call.type === "loot") {
-      this.drawLoot(context, call, state);
+      this.drawLoot(context, call, state, presentationTick);
       return;
     }
 
@@ -626,10 +676,11 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     call: DrawCallV1,
     state: GameState,
+    presentationTick: number,
   ): void {
     const loot = state.loot.find((entry) => entry.id === call.entityId);
     if (!loot) return;
-    const bob = Math.sin((state.tick + loot.bobOffset) / 12) * 3;
+    const bob = Math.sin((presentationTick + loot.bobOffset) / 12) * 3;
     context.save();
     context.translate(call.screenAnchor.x, call.screenAnchor.y - 8 + bob);
     context.scale(call.scale, call.scale);

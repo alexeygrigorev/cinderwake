@@ -4,7 +4,11 @@ import {
   type GameState,
   type InputState,
 } from "../game/types";
-import type { RenderManifestV1 } from "../render/manifest";
+import type {
+  CameraMode,
+  CameraV1,
+  RenderManifestV1,
+} from "../render/manifest";
 import { canonicalState, stateHash } from "./canonical";
 import {
   BUILTIN_SCENARIOS,
@@ -21,9 +25,12 @@ export interface TestHost {
   setInput(input: InputState): void;
   step(ticks?: number, input?: InputState): void;
   sampleInput?(): InputState;
-  render(): void;
+  render(interpolationAlpha?: number): void;
   getManifest(): RenderManifestV1;
   getCanvas(): HTMLCanvasElement | null;
+  setCamera(camera: CameraV1, mode?: CameraMode): void;
+  setCameraMode(mode: CameraMode): void;
+  getCamera(): CameraV1;
 }
 
 export interface GameTestBridge {
@@ -42,7 +49,10 @@ export interface GameTestBridge {
     ticks?: number,
     options?: { render?: boolean; useBrowserInput?: boolean },
   ): ReturnType<typeof canonicalState>;
-  render(): RenderManifestV1;
+  render(options?: { interpolationAlpha?: number }): RenderManifestV1;
+  setCamera(camera: CameraV1, mode?: CameraMode): RenderManifestV1;
+  setCameraMode(mode: CameraMode): void;
+  camera(): CameraV1;
   snapshot(): ReturnType<typeof canonicalState>;
   stateHash(): string;
   renderManifest(): RenderManifestV1;
@@ -171,10 +181,18 @@ export function installGameTestBridge(
       if (options.render) host.render();
       return canonicalState(host.getState());
     },
-    render() {
-      host.render();
+    render(options = {}) {
+      host.render(options.interpolationAlpha ?? 1);
       return host.getManifest();
     },
+    setCamera(camera, mode = "fixed") {
+      host.setCamera(camera, mode);
+      return host.getManifest();
+    },
+    setCameraMode(mode) {
+      host.setCameraMode(mode);
+    },
+    camera: () => host.getCamera(),
     snapshot: () => canonicalState(host.getState()),
     stateHash: () => stateHash(host.getState()),
     renderManifest: () => host.getManifest(),
