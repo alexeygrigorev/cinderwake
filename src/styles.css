@@ -575,3 +575,400 @@ button {
     bottom: auto;
   }
 }
+
+/* Sprite-backed presentation. CSS positions and crops committed raster art;
+   it does not invent visible game decoration. */
+.loading {
+  min-height: 100svh;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  background: #090d0f;
+}
+.loading h1 {
+  margin: 0;
+  font:
+    700 clamp(52px, 12vw, 96px) Georgia,
+    serif;
+}
+.selection {
+  background-color: #0b0c0c;
+  background-image: var(--terrain-atlas);
+  background-size: min(1024px, 118vw);
+  background-position: center;
+  box-shadow: inset 0 0 0 100vmax #050708b8;
+}
+.hero-lineup {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  height: 230px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+.hero-lineup span,
+.class-portrait {
+  display: block;
+  flex: 0 0 170px;
+  width: 170px;
+  height: 170px;
+  background-repeat: no-repeat;
+  background-size: 800% 800%;
+  background-position: 0 0;
+  filter: drop-shadow(0 16px 18px #000c);
+}
+.hero-lineup span + span {
+  margin-left: -58px;
+}
+.hero-lineup span:nth-child(2) {
+  z-index: 2;
+  width: 190px;
+  height: 190px;
+  flex-basis: 190px;
+}
+.cards {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.class-card {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  column-gap: 12px;
+  min-height: 146px;
+  padding: 18px 28px 18px 20px;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 66.667% 66.667%;
+  background-repeat: no-repeat;
+}
+.class-card:hover,
+.class-card.selected {
+  border: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 100% 66.667%;
+}
+.class-portrait {
+  grid-column: 1;
+  grid-row: 1 / 5;
+  align-self: center;
+  width: 112px;
+  height: 112px;
+  margin: 0;
+}
+.class-card strong,
+.class-card > .sprite-text {
+  grid-column: 2;
+  min-width: 0;
+}
+.begin,
+.lab-toggle,
+.lab button,
+.outcome button {
+  border: 0;
+  background-color: #171412;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  color: #f2ddbf;
+  text-shadow: 0 2px 3px #000;
+}
+.hud.bottom {
+  background: transparent;
+}
+.counter {
+  display: grid;
+  place-content: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 100% 0;
+  background-repeat: no-repeat;
+  text-align: center;
+  text-shadow: 0 2px 4px #000;
+}
+.health b {
+  width: 192px;
+  height: 34px;
+  margin-top: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
+  padding: 9px 12px;
+  overflow: hidden;
+}
+.health b i {
+  height: 15px;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 33.333% 0;
+  background-repeat: no-repeat;
+}
+.skills button,
+.mobile-actions button {
+  width: 78px;
+  min-width: 78px;
+  height: 78px;
+  padding: 14px 8px;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 33.333%;
+  background-repeat: no-repeat;
+  text-shadow: 0 2px 4px #000;
+}
+.skills button:nth-child(2),
+.mobile-actions button:nth-child(2) {
+  background-position: 33.333% 33.333%;
+}
+.skills button:nth-child(3),
+.mobile-actions button:nth-child(3) {
+  background-position: 66.667% 33.333%;
+}
+.loot-log {
+  min-height: 98px;
+  border: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 66.667% 66.667%;
+  background-repeat: no-repeat;
+  padding: 20px 18px;
+}
+.outcome {
+  background-color: #080b0ddd;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 100% 66.667%;
+  background-repeat: no-repeat;
+}
+.mobile-controls {
+  background-color: #0a0e0f;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 66.667% 66.667%;
+  background-repeat: no-repeat;
+  border: 0;
+}
+.move-pad {
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 100% 33.333%;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+.move-ring {
+  inset: 15px;
+  border: 0;
+  border-radius: 0;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 0 66.667%;
+  background-repeat: no-repeat;
+}
+.move-knob {
+  border-radius: 0;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-size: 400% 400%;
+  background-position: 33.333% 66.667%;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+.sprite-text,
+#hp,
+#monsters,
+#tonics,
+#mobile-tonics,
+#cd,
+#mobile-cd,
+.brand small {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  line-height: 1;
+}
+.sprite-text > .sprite-word,
+#hp > .sprite-word,
+#monsters > .sprite-word,
+#tonics > .sprite-word,
+#mobile-tonics > .sprite-word,
+#cd > .sprite-word,
+#mobile-cd > .sprite-word,
+.brand small > .sprite-word {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  margin: 0;
+}
+.sprite-text > .sprite-space,
+#hp > .sprite-space,
+#monsters > .sprite-space,
+#tonics > .sprite-space,
+#mobile-tonics > .sprite-space,
+#cd > .sprite-space,
+#mobile-cd > .sprite-space,
+.brand small > .sprite-space {
+  display: block;
+  flex: 0 0 calc(var(--spaces, 1) * 0.52em);
+  width: calc(var(--spaces, 1) * 0.52em);
+  height: 1.28em;
+  margin: 0;
+}
+.sprite-word > .sprite-glyph {
+  display: inline-block;
+  flex: 0 0 1.28em;
+  width: 1.28em;
+  height: 1.28em;
+  margin: 0;
+  background-color: transparent;
+  background-image: var(--glyph-atlas);
+  background-size: 1600% 800%;
+  background-repeat: no-repeat;
+}
+.sprite-word > .sprite-glyph + .sprite-glyph {
+  margin-left: -0.56em;
+}
+.sprite-copy {
+  font-size: 14px;
+  line-height: 1.45;
+}
+.sprite-role {
+  min-height: 14px;
+  font-size: 14px;
+}
+.sprite-description {
+  min-height: 36px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.sprite-stats,
+.sprite-hint,
+.sprite-log {
+  font-size: 11px;
+  line-height: 1.35;
+}
+#hp,
+#monsters,
+#tonics,
+#mobile-tonics,
+#cd,
+#mobile-cd,
+.brand small {
+  font-size: 12px;
+}
+.class-card > .sprite-text {
+  display: flex;
+  margin-top: 8px;
+}
+.skills #cd,
+.skills #tonics {
+  display: flex;
+}
+
+@media (min-width: 761px) {
+  .selection {
+    padding: clamp(28px, 5vw, 80px);
+  }
+}
+
+@media (max-width: 760px) {
+  .selection {
+    gap: 20px;
+  }
+  .hero-lineup {
+    display: flex;
+    height: 142px;
+  }
+  .hero-lineup span,
+  .hero-lineup span:nth-child(2) {
+    width: 122px;
+    height: 122px;
+    flex-basis: 122px;
+  }
+  .class-card {
+    grid-template-columns: 104px minmax(0, 1fr);
+    column-gap: 8px;
+    min-height: 158px;
+    padding: 18px 24px 18px 18px;
+  }
+  .class-portrait {
+    float: none;
+    width: 104px;
+    height: 104px;
+    margin: 0;
+  }
+  .class-card > .sprite-text {
+    display: flex;
+    margin-top: 5px;
+  }
+  .sprite-role {
+    font-size: 13px;
+  }
+  .sprite-description {
+    min-height: 34px;
+    font-size: 12px;
+  }
+  .sprite-stats {
+    font-size: 11px;
+  }
+  .health b {
+    width: min(45vw, 180px);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .game {
+    width: 100vw;
+    height: 100svh;
+    background-color: #0a0d0d;
+    background-image: var(--terrain-atlas);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .stage {
+    width: min(100vw, 177.778svh);
+    height: auto;
+    max-width: 100vw;
+    aspect-ratio: 16 / 9;
+  }
+  .mobile-controls {
+    background-color: transparent;
+    background-image: var(--ui-atlas);
+  }
+  .hud.bottom {
+    z-index: 8;
+    right: auto;
+    bottom: 10px;
+    left: 50%;
+    width: auto;
+    padding: 0;
+    transform: translateX(-50%);
+  }
+  .health b {
+    width: 192px;
+  }
+  .loot-log {
+    display: none;
+  }
+}

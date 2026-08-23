@@ -9,10 +9,60 @@ test("character selection is stable with decoded local key art", async ({
   page,
 }) => {
   await page.goto("/");
-  await page.waitForFunction(() => {
-    const image = document.querySelector<HTMLImageElement>(".hero img");
-    return Boolean(image?.complete && image.naturalWidth > 0);
+  await page.locator(".hero-lineup").waitFor();
+  const spriteUrls = await page
+    .locator(
+      ".selection, .hero-lineup span, .class-portrait, .class-card, .sprite-glyph",
+    )
+    .evaluateAll((elements) => [
+      ...new Set(
+        elements
+          .map((element) => {
+            const match = getComputedStyle(element).backgroundImage.match(
+              /url\(["']?(.*?)["']?\)/,
+            );
+            return match?.[1] ?? "";
+          })
+          .filter(Boolean),
+      ),
+    ]);
+  expect(spriteUrls.length).toBeGreaterThanOrEqual(6);
+  await page.evaluate(async (urls) => {
+    await Promise.all(
+      urls.map(async (url) => {
+        const image = new Image();
+        image.src = url;
+        await image.decode();
+        if (image.naturalWidth === 0) throw new Error(`Empty sprite: ${url}`);
+      }),
+    );
+  }, spriteUrls);
+  const layout = await page.evaluate(() => {
+    const selection = document.querySelector<HTMLElement>(".selection")!;
+    const cards = [...document.querySelectorAll<HTMLElement>(".class-card")];
+    return {
+      selectionHeight: selection.getBoundingClientRect().height,
+      viewportHeight: innerHeight,
+      cardsContained: cards.every((card) => {
+        const cardBox = card.getBoundingClientRect();
+        const statsBox = card
+          .querySelector<HTMLElement>(".sprite-stats")!
+          .getBoundingClientRect();
+        return statsBox.bottom <= cardBox.bottom;
+      }),
+      wordsStayWhole: [...document.querySelectorAll(".sprite-word")].every(
+        (word) =>
+          new Set(
+            [...word.querySelectorAll(".sprite-glyph")].map(
+              (glyph) => glyph.getBoundingClientRect().top,
+            ),
+          ).size <= 1,
+      ),
+    };
   });
+  expect(layout.selectionHeight).toBeLessThanOrEqual(layout.viewportHeight);
+  expect(layout.cardsContained).toBe(true);
+  expect(layout.wordsStayWhole).toBe(true);
   await expect(page.locator(".selection")).toHaveScreenshot(
     "character-selection.png",
   );
