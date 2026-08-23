@@ -813,7 +813,136 @@ function updateMonsters(
   if (state.settings.ai) separateLivingMonsters(state, scenery);
 }
 
-function updateProjectiles(state: GameState): void {
+interface ProjectileObstacleHit {
+  time: number;
+  position: Vec2;
+}
+
+function segmentBoxHitTime(
+  from: Vec2,
+  to: Vec2,
+  minimum: Vec2,
+  maximum: Vec2,
+): number | null {
+  let enter = 0;
+  let exit = 1;
+  for (const axis of ["x", "y"] as const) {
+    const delta = to[axis] - from[axis];
+    if (Math.abs(delta) < Number.EPSILON) {
+      if (from[axis] < minimum[axis] || from[axis] > maximum[axis]) return null;
+      continue;
+    }
+    const first = (minimum[axis] - from[axis]) / delta;
+    const second = (maximum[axis] - from[axis]) / delta;
+    const near = Math.min(first, second);
+    const far = Math.max(first, second);
+    enter = Math.max(enter, near);
+    exit = Math.min(exit, far);
+    if (enter > exit) return null;
+  }
+  return enter >= 0 && enter <= 1 ? enter : null;
+}
+
+function segmentEllipseHitTime(
+  from: Vec2,
+  to: Vec2,
+  collision: SceneryCollisionFootprint,
+  radius: number,
+): number | null {
+  const horizontalRadius = collision.halfWidth + radius;
+  const verticalRadius = collision.halfHeight + radius;
+  const startX = (from.x - collision.center.x) / horizontalRadius;
+  const startY = (from.y - collision.center.y) / verticalRadius;
+  const deltaX = (to.x - from.x) / horizontalRadius;
+  const deltaY = (to.y - from.y) / verticalRadius;
+  const c = startX * startX + startY * startY - 1;
+  if (c <= 0) return 0;
+  const a = deltaX * deltaX + deltaY * deltaY;
+  if (a < Number.EPSILON) return null;
+  const b = 2 * (startX * deltaX + startY * deltaY);
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0) return null;
+  const enter = (-b - Math.sqrt(discriminant)) / (2 * a);
+  return enter >= 0 && enter <= 1 ? enter : null;
+}
+
+function projectileObstacleHit(
+  state: GameState,
+  projectile: ProjectileState,
+  from: Vec2,
+  to: Vec2,
+  scenery: SceneryCollisionFootprint[],
+): ProjectileObstacleHit | null {
+  let earliest = Number.POSITIVE_INFINITY;
+  const minimumTileX = Math.max(
+    -1,
+    Math.floor((Math.min(from.x, to.x) - projectile.radius) / UNITS_PER_TILE),
+  );
+  const maximumTileX = Math.min(
+    state.map.width,
+    Math.floor((Math.max(from.x, to.x) + projectile.radius) / UNITS_PER_TILE),
+  );
+  const minimumTileY = Math.max(
+    -1,
+    Math.floor((Math.min(from.y, to.y) - projectile.radius) / UNITS_PER_TILE),
+  );
+  const maximumTileY = Math.min(
+    state.map.height,
+    Math.floor((Math.max(from.y, to.y) + projectile.radius) / UNITS_PER_TILE),
+  );
+  for (let tileY = minimumTileY; tileY <= maximumTileY; tileY += 1) {
+    for (let tileX = minimumTileX; tileX <= maximumTileX; tileX += 1) {
+      if (isFloor(state.map, tileX, tileY)) continue;
+      const hit = segmentBoxHitTime(
+        from,
+        to,
+        {
+          x: tileX * UNITS_PER_TILE - projectile.radius,
+          y: tileY * UNITS_PER_TILE - projectile.radius,
+        },
+        {
+          x: (tileX + 1) * UNITS_PER_TILE + projectile.radius,
+          y: (tileY + 1) * UNITS_PER_TILE + projectile.radius,
+        },
+      );
+      if (hit !== null && hit < earliest) earliest = hit;
+    }
+  }
+  for (const collision of scenery) {
+    const hit = segmentEllipseHitTime(from, to, collision, projectile.radius);
+    if (hit !== null && hit < earliest) earliest = hit;
+  }
+  if (!Number.isFinite(earliest)) return null;
+  return {
+    time: earliest,
+    position: {
+      x: Math.round(from.x + (to.x - from.x) * earliest),
+      y: Math.round(from.y + (to.y - from.y) * earliest),
+    },
+  };
+}
+
+function recordProjectileObstacleImpact(
+  state: GameState,
+  projectile: ProjectileState,
+  position: Vec2,
+): void {
+  state.effects.push({
+    id: `effect:${state.nextEntityId}`,
+    kind: "impact",
+    position: { ...position },
+    color: projectile.color,
+    startedAtTick: state.tick,
+    expiresAtTick: state.tick + 8,
+    radius: Math.max(480, projectile.radius * 3),
+  });
+  state.nextEntityId += 1;
+}
+
+function updateProjectiles(
+  state: GameState,
+  scenery: SceneryCollisionFootprint[],
+): void {
   const survivors: ProjectileState[] = [];
   for (const projectile of [...state.projectiles].sort((a, b) =>
     a.id.localeCompare(b.id),
@@ -823,15 +952,24 @@ function updateProjectiles(state: GameState): void {
       continue;
     }
     projectile.previousPosition = { ...projectile.position };
-    projectile.position.x += projectile.velocity.x;
-    projectile.position.y += projectile.velocity.y;
-    const tileX = Math.floor(projectile.position.x / UNITS_PER_TILE);
-    const tileY = Math.floor(projectile.position.y / UNITS_PER_TILE);
-    if (
-      state.tick >= projectile.expiresAtTick ||
-      !isFloor(state.map, tileX, tileY)
-    )
+    const nextPosition = {
+      x: projectile.position.x + projectile.velocity.x,
+      y: projectile.position.y + projectile.velocity.y,
+    };
+    if (state.tick >= projectile.expiresAtTick) continue;
+    const obstacle = projectileObstacleHit(
+      state,
+      projectile,
+      projectile.previousPosition,
+      nextPosition,
+      scenery,
+    );
+    if (obstacle) {
+      projectile.position = obstacle.position;
+      recordProjectileObstacleImpact(state, projectile, obstacle.position);
       continue;
+    }
+    projectile.position = nextPosition;
     let consumed = false;
     if (projectile.hostile) {
       const radius = projectile.radius + state.player.radius;
@@ -912,7 +1050,7 @@ export function stepGame(state: GameState, input: InputState): GameState {
   updatePlayer(state, input, scenery);
   updateMonsters(state, scenery);
   resolvePendingAttacks(state);
-  updateProjectiles(state);
+  updateProjectiles(state, scenery);
   resolveDeaths(state);
   collectLoot(state);
   checkExit(state);
