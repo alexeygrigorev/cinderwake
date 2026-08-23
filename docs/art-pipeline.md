@@ -4,9 +4,9 @@ Cinderwake’s presentation is original dark fantasy: charcoal stone and teal as
 
 ## Asset provenance
 
-All checked-in assets must be original and local. A generated or assisted asset is accompanied by a small provenance record in the asset manifest: source file/hash, generator/tool and version, prompt or art brief, seed/settings when available, creation date, human edits, and confirmation that no third-party game art, logos, or copyrighted references were used as image inputs. The record describes origin; it is not runtime data.
+All checked-in assets must be original and local. A generated or assisted asset is accompanied by a small provenance record in the asset manifest: source file/hash, generator/tool and version, generated artifact ID, exact prompt when it was retained before generation or an explicitly labeled reconstructed brief when it was not, reference file/hash, seed/settings when available, creation date, human edits, and confirmation that no third-party game art, logos, or copyrighted references were used as image inputs. A reconstructed brief must never be presented as the verbatim historical prompt. The record describes origin; it is not runtime data.
 
-Generation is an input to art direction, never a live rendering dependency. The build and test suite load only committed PNG/WebP assets and committed manifest data. A reviewer can therefore inspect exactly what was captured in CI, and regenerated candidates cannot silently change a baseline.
+Generation is an input to art direction, never a live rendering dependency. The build and test suite load only committed PNG/WebP assets and committed manifest data. A reviewer can therefore inspect exactly what was captured in CI, and regenerated candidates cannot silently change a baseline. Prompt reproducibility means the input decision is auditable; it does not imply that a nondeterministic model will emit the same pixels. Reproducible production begins at the immutable accepted source hash and deterministic packer.
 
 ## Atlas conventions
 
@@ -22,20 +22,28 @@ Frames in a clip share a declared canvas and anchor. Deliberate overhangs (weapo
 
 ### Actor source contract
 
-Every character is one actor ID with six 1024 × 1024, 4 × 4 source sheets. Each authoring cell is exactly 256 × 256 pixels, uses the bottom-center foot anchor, and keeps the same identity, equipment, camera, lighting, proportions, and scale. This six-sheet template is the character-generation brief: a candidate that changes costume, viewpoint, light direction, body proportions, or cell placement is rejected before packing.
+Every character is one actor ID with six square, 4 × 4 source sheets. The generated raster may be larger than the 1024 × 1024 contract canvas; the current generator returns 1254 × 1254 despite a 1024 × 1024 request. Ingress accepts only square images at least 1024 pixels wide, then deterministically resizes to 1024 × 1024 before treating each authoring cell as exactly 256 × 256 pixels. Each cell uses the bottom-center foot anchor and keeps the same identity, equipment, camera, lighting, proportions, and scale. This six-sheet template is the character-generation brief: a candidate that changes costume, viewpoint, light direction, body proportions, or cell placement is rejected before packing.
 
-| Source file                              | Cell contract                                                         |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `{actor}-source.png`                     | Rows: east idle, east walk, legacy attack poses, legacy ability poses |
-| `{actor}-directions-source.png`          | Rows: north idle, north walk, south idle, south walk                  |
-| `{actor}-actions-source.png`             | Cells 0–5 east attack, 6–7 reserve, 8–15 east ability                 |
-| `{actor}-reactions-source.png`           | Row 0 east hurt, cells 4–11 east death, row 3 grounded reserve        |
-| `{actor}-direction-actions-source.png`   | Rows: north attack, north ability, south attack, south ability        |
-| `{actor}-direction-reactions-source.png` | Rows: north hurt/death, south hurt/death                              |
+| Source file                              | Cell contract                                                                           |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- |
+| `{actor}-source.png`                     | Rows: east idle, east walk, legacy attack poses, legacy ability poses                   |
+| `{actor}-directions-source.png`          | Rows: north idle, north walk, south idle, south walk                                    |
+| `{actor}-actions-source.png`             | Cells 0–4 east attack motion, 5 review reserve, 6–7 recovery reserve, 8–15 east ability |
+| `{actor}-reactions-source.png`           | Row 0 east hurt, cells 4–11 east death, row 3 grounded reserve                          |
+| `{actor}-direction-actions-source.png`   | Rows: north attack, north ability, south attack, south ability                          |
+| `{actor}-direction-reactions-source.png` | Rows: north hurt/death, south hurt/death                                                |
 
 West is the only reflected facing and is derived by horizontally flipping east at render time. North and south are authored views. Cross-dissolves and translucent duplicate bodies are not production frames: movement and combat must use discrete, articulated poses. Large detached projectiles remain separate entities, while small contact flashes may stay attached to an action frame.
 
 `art/actor-atlas-v1.json` is the single machine-readable packing authority (its schema ID is `ActorAtlasV2`; the stable filename preserves existing tooling). `npm run art:build` chroma-keys the source, removes boundary-connected cross-cell fragments, computes one safe normalization envelope across all six sheets, reanchors every frame, downsamples authoring cells to 128 × 128 runtime cells, and emits a fixed 1024 × 2560 atlas. The 20 rows cover east, north, and south versions of every clip plus two reserves; west reflects east. This reduces decoded memory per actor from roughly 24 MiB to 10 MiB while retaining the 256-pixel originals for future repacking. `npm run art:check` verifies source presence, declared cadence, dimensions, non-empty cells, padding, anchors, and content hashes. Adding a character therefore means supplying the six sheets and one actor ID, not writing character-specific animation code.
+
+### Generation ingress proof
+
+`art/generation/trials.json` preserves three fresh exact-prompt trials across an armored humanoid, a fine-limbed ranged humanoid, and a heavy non-human actor. `art/generation/accepted-production.json` separately proves immutable lineage for all six accepted source families of those same three actors. Keeping those records separate prevents a promising candidate from being confused with production art.
+
+Run `npm run art:generation:check` to verify prompt/reference/candidate existence and hashes, normalize and inspect all sixteen candidate cells, pass each candidate through the real actor packer in a temporary complete source set, build the three accepted production actors twice, and compare both builds byte-for-byte with each other and the committed atlases. The command writes a readable report to `quality-results/generation-pipeline/`; it never overwrites production sources or atlases.
+
+Mechanical acceptance is deliberately narrower than art approval. Hashes, square input, keyed background, nonblank cells, atlas geometry, anchors, safe bounds, and deterministic packing can be gated. Identity, pose semantics, coherent anatomy, natural weight, effect restraint, and same-style judgment still require visual review. A trial can therefore pass as pipeline evidence while remaining rejected as a production replacement.
 
 ## Deterministic integration
 
@@ -63,6 +71,7 @@ The reproducible command sequence is:
 npm ci
 npm run art:build
 npm run art:check
+npm run art:generation:check
 npm test
 npm run capture:matrix
 ```

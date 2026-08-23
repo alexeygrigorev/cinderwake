@@ -1,6 +1,6 @@
 # Cinderwake
 
-[Play the public build](https://alexeygrigorev.com/cinderwake/) · [Open the public quality report](https://alexeygrigorev.com/cinderwake/quality/)
+[Play the public build](https://alexeygrigorev.com/cinderwake/) · [Open the public quality report](https://alexeygrigorev.com/cinderwake/quality/) · [Inspect character-generation evidence](https://alexeygrigorev.com/cinderwake/quality/generation-pipeline/)
 
 Cinderwake is an original browser action RPG and, more importantly, a reference framework for testing games from arbitrary state. A test can load a complete JSON world, apply semantic input at exact 60 Hz ticks, then retain three synchronized forms of evidence:
 
@@ -67,6 +67,8 @@ Run every source-level gate:
 npm run check
 ```
 
+That command includes the fixed actor validator and the generation-ingress verifier. The latter preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
+
 Run the real Chromium input and visual suite:
 
 ```bash
@@ -91,6 +93,12 @@ npm run test:visual
 
 Each reproducibility bundle also includes `initial-state.json`, `commands.json`, transparent `mask-*.png` images, page captures, and metadata for the commit, Node, Chromium, Playwright, Vite, canvas/viewport/DPR, and exact command. Masks are rendered in isolation and measured from real alpha pixels, providing concrete evidence for ink bounds, centroid, foot relation, proportions, and clipping.
 
+## Add characters without custom animation code
+
+Every actor uses the same six 4 × 4 semantic source families: primary identity/east movement, north/south movement, east actions, east reactions, north/south actions, and north/south reactions. Generated rasters are normalized onto a fixed 1024 × 1024 contract grid, then every frame is keyed, jointly scaled, grounded, and packed into the same 128-pixel-cell runtime atlas. New characters therefore inherit clip order, cadence, anchors, cardinal-facing behavior, and tests from metadata instead of adding bespoke crop logic.
+
+The [character generation guide](art/generation/README.md) gives exact cell positions, prompt/reference provenance rules, three same-style example prompts, the safe non-destructive trial workflow, and production-promotion gates. Prompt preservation makes the request auditable; immutable accepted source hashes and the deterministic packer make builds reproducible.
+
 ## Display, touch, and public evidence
 
 Simulation advances only in whole 60 Hz ticks. Live display may interpolate previous/current state and camera, but test captures use `interpolationAlpha: 1` and deterministic snap camera by default; manifests name the simulation/presentation tick, alpha, camera target, and mode. The touch layout maps a pointer-captured movement pad, canvas aim, and large primary/ability/tonic buttons into the same semantic input consumed by keyboard/pointer tests, with responsive targets kept in the viewport.
@@ -112,6 +120,8 @@ The public quality report catalogs 23 explicit sequences: locomotion in four dir
 - [Testing architecture](docs/testing-architecture.md)
 - [Animation quality model and thresholds](docs/quality-model.md)
 - [Scenario authoring guide](docs/scenario-authoring.md)
+- [Character generation and validation guide](art/generation/README.md)
+- [Sprite art pipeline](docs/art-pipeline.md)
 - [Chronological development decisions](docs/development-log.md)
 - [Architecture decision records](docs/decisions/)
 

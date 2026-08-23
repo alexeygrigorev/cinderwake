@@ -29,6 +29,9 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run build
+      - run: npm run art:check
+      - name: Verify generation ingress and deterministic actor builds
+        run: npm run art:generation:check
       - run: npm test
       - run: npm run test:e2e
       - name: Capture temporal quality matrix
@@ -53,6 +56,13 @@ jobs:
         with:
           name: quality-sequences
           path: quality-results/sequences/
+          if-no-files-found: error
+      - name: Upload generation-pipeline evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: generation-pipeline
+          path: quality-results/generation-pipeline/
           if-no-files-found: error
 
   deploy:
@@ -86,6 +96,11 @@ jobs:
         with:
           name: quality-sequences
           path: site/quality/sequences
+      - name: Download generation-pipeline evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: generation-pipeline
+          path: site/quality/generation-pipeline
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
