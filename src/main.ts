@@ -29,7 +29,7 @@ function screen(): void {
     )
     .join(
       "",
-    )}</div><label class="seed-label">Run seed <input id="seed" value="${seed}" maxlength="48" /></label><button id="begin" class="begin">Enter the wake <span>→</span></button><p class="hint">WASD / arrows to move · aim with mouse · click to strike</p></section><button class="lab-toggle">Test lab</button></main>`;
+    )}</div><label class="seed-label">Run seed <input id="seed" value="${seed}" maxlength="48" /></label><button id="begin" class="begin">Enter the wake <span>→</span></button><p class="hint">Keyboard, pointer, or touch controls · every input is replayable</p></section><button class="lab-toggle">Test lab</button></main>`;
   app.querySelectorAll<HTMLButtonElement>("[data-class]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -45,11 +45,13 @@ function screen(): void {
 }
 function boot(scenario: ScenarioV1): void {
   activeScenario = scenario;
-  app.innerHTML = `<main class="game"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand">CINDERWAKE <small>${scenario.seed}</small></div><div class="counter" id="monsters">— foes</div></div><div class="hud bottom"><div class="health"><span>VITALITY</span><b><i id="hpbar"></i></b><em id="hp">— / —</em></div><div class="skills"><button data-action="attack"><kbd>Click</kbd> Strike</button><button data-action="ability"><kbd>Right click</kbd> Ability <i id="cd">READY</i></button><button data-action="tonic"><kbd>Q</kbd> Tonic <i id="tonics">0</i></button></div></div><aside class="loot-log"><strong>Run log</strong><div id="log">The cinders stir.</div></aside><div id="outcome" class="outcome hidden"></div></div><button class="lab-toggle">Test lab</button></main>`;
+  app.innerHTML = `<main class="game"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand">CINDERWAKE <small>${scenario.seed}</small></div><div class="counter" id="monsters">— foes</div></div><div class="hud bottom"><div class="health"><span>VITALITY</span><b><i id="hpbar"></i></b><em id="hp">— / —</em></div><div class="skills"><button data-action="attack"><kbd>Click</kbd> Strike</button><button data-action="ability"><kbd>Right click</kbd> Ability <i id="cd">READY</i></button><button data-action="tonic"><kbd>Q</kbd> Tonic <i id="tonics">0</i></button></div></div><aside class="loot-log"><strong>Run log</strong><div id="log">The cinders stir.</div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>Move</small></div><div class="mobile-actions"><button data-action="attack" aria-label="Strike"><strong>Strike</strong><span>Primary</span></button><button data-action="ability" aria-label="Use ability"><strong>Ability</strong><span id="mobile-cd">Ready</span></button><button data-action="tonic" aria-label="Drink tonic"><strong>Tonic</strong><span id="mobile-tonics">0</span></button></div></nav><button class="lab-toggle">Test lab</button></main>`;
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
+  input?.destroy();
   host = new GameHost(canvas, testMode);
   input = new InputController(canvas, (x, y) => host!.worldAt(x, y));
+  input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
   host.onRender = updateHud;
   host.startScenario(scenario);
@@ -69,17 +71,25 @@ function updateHud(state: GameState): void {
     bar = document.querySelector<HTMLElement>("#hpbar"),
     monsters = document.querySelector<HTMLElement>("#monsters"),
     tonics = document.querySelector<HTMLElement>("#tonics"),
+    mobileTonics = document.querySelector<HTMLElement>("#mobile-tonics"),
     cd = document.querySelector<HTMLElement>("#cd"),
+    mobileCd = document.querySelector<HTMLElement>("#mobile-cd"),
+    runSeed = document.querySelector<HTMLElement>(".brand small"),
     log = document.querySelector<HTMLElement>("#log");
   if (!hp) return;
   hp.textContent = `${p.health} / ${p.maxHealth}`;
+  runSeed!.textContent = state.seed;
   bar!.style.width = `${(100 * p.health) / p.maxHealth}%`;
-  monsters!.textContent = `${state.monsters.length} ${state.monsters.length === 1 ? "foe" : "foes"}`;
+  const livingMonsters = state.monsters.filter((monster) => monster.health > 0);
+  monsters!.textContent = `${livingMonsters.length} ${livingMonsters.length === 1 ? "foe" : "foes"}`;
   tonics!.textContent = `${p.tonics}`;
-  cd!.textContent =
+  mobileTonics!.textContent = `${p.tonics}`;
+  const cooldown =
     state.tick >= p.abilityReadyTick
       ? "READY"
       : `${((p.abilityReadyTick - state.tick) / 60).toFixed(1)}s`;
+  cd!.textContent = cooldown;
+  mobileCd!.textContent = cooldown;
   const events = (state.events.length ? state.events : state.eventLog).slice(
     -2,
   );
@@ -92,11 +102,14 @@ function updateHud(state: GameState): void {
         )
         .join("<br>")
     : "The cinders stir.";
+  const out = document.querySelector<HTMLElement>("#outcome")!;
   if (state.phase !== "playing") {
-    const out = document.querySelector<HTMLElement>("#outcome")!;
     out.classList.remove("hidden");
     out.innerHTML = `<p>${state.phase === "won" ? "Rift sealed" : "The wake consumes you"}</p><h2>${state.phase === "won" ? "Cinders quieted." : "Run ended."}</h2><button>Try again</button>`;
     out.querySelector("button")!.onclick = () => boot(activeScenario!);
+  } else {
+    out.classList.add("hidden");
+    out.replaceChildren();
   }
 }
 function lab(): void {

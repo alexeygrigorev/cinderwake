@@ -43,6 +43,14 @@ test("accepts JSON fixture snapshots and drains per-tick events", async ({
   expect(result.player.health).toBe(73);
 });
 
+test("projects bridge-loaded scenario identity into the visible HUD", async ({
+  page,
+}) => {
+  await page.evaluate(() => window.__GAME_TEST__!.loadScenario("combat-loot"));
+  await expect(page.locator(".brand small")).toHaveText("scn-loot-0301");
+  await expect(page.locator("#monsters")).toHaveText("1 foe");
+});
+
 test("restores an exact canonical GameState snapshot and resets to it", async ({
   page,
 }) => {
