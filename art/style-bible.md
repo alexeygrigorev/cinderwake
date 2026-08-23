@@ -12,11 +12,15 @@ Every asset prompt and review uses the same visual contract. “Dark fantasy” 
 
 ## Actor source brief
 
-Supply one 1024 × 1024 source PNG using [actor-source-template.svg](actor-source-template.svg). It contains a strict 4 × 4 grid of 256 × 256 cells:
+Every actor supplies three 1024 × 1024 PNGs on the same strict 4 × 4 grid of 256 × 256 cells. The primary sheet uses [actor-source-template.svg](actor-source-template.svg):
 
 1. idle breathing poses;
 2. locomotion loop key poses;
 3. primary attack from anticipation through contact and recovery;
 4. ability from anticipation through contact and recovery.
 
-The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells. The build maps those key poses into the fixed 2048 × 2048 `ActorAtlasV1`, derives hurt and grounded-collapse rows, and leaves two rows reserved. Runtime animation needs only the semantic sprite ID and clip name.
+The `{actor}-directions-source.png` sheet contains north idle, north locomotion, south idle, and south locomotion rows. North must be an unmistakable authored rear view; south must be an authored front view. A horizontal flip is permitted only for west from the east bank.
+
+The `{actor}-reactions-source.png` sheet contains four articulated hurt/recoil poses, eight anatomy-specific collapse poses across rows two and three, and grounded terminal reserves in row four. Equipment and anatomy remain attached throughout; projectiles and large detached effects belong to their own runtime sprites.
+
+The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. The build reads `ActorAtlasV2` metadata, removes chroma and cross-cell fragments, normalizes all three sheets together, bakes declared in-between frames, and packs a fixed 2048 × 3072 atlas. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.

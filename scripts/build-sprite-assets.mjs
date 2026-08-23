@@ -5,9 +5,13 @@ import process from "node:process";
 import sharp from "sharp";
 
 const ROOT = process.cwd();
-const CELL = 256;
-const SOURCE_SIZE = 1024;
-const ACTOR_ATLAS_SIZE = 2048;
+const ACTOR_SPEC_PATH = path.join(ROOT, "art", "actor-atlas-v1.json");
+const ACTOR_SPEC = JSON.parse(await fs.readFile(ACTOR_SPEC_PATH, "utf8"));
+const CELL = ACTOR_SPEC.atlas.cellWidth;
+const SOURCE_SIZE = ACTOR_SPEC.source.pixelWidth;
+const ACTOR_ATLAS_WIDTH = ACTOR_SPEC.atlas.pixelWidth;
+const ACTOR_ATLAS_HEIGHT = ACTOR_SPEC.atlas.pixelHeight;
+const LOOT_ATLAS_SIZE = 2048;
 const ACTOR_IDS = [
   "vanguard",
   "ranger",
@@ -16,14 +20,6 @@ const ACTOR_IDS = [
   "hexer",
   "stonekin",
 ];
-const CLIPS = {
-  idle: { row: 0, sourceCells: [0, 1, 2, 3, 2, 1] },
-  walk: { row: 1, sourceCells: [4, 5, 6, 7, 4, 5, 6, 7] },
-  attack: { row: 2, sourceCells: [8, 8, 9, 10, 10, 11] },
-  ability: { row: 3, sourceCells: [12, 12, 13, 13, 14, 14, 15, 15] },
-  hurt: { row: 4, sourceCells: [0, 1, 2, 3] },
-  death: { row: 5, sourceCells: [0, 0, 0, 0, 0, 0, 0, 0] },
-};
 const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
 
 function inputPath(...segments) {
@@ -36,6 +32,17 @@ function outputPath(fileName) {
 
 function keyedAlpha(red, green, blue, mode) {
   if (mode === "magenta") {
+    const magentaDominance = Math.min(red, blue) - green;
+    const magentaBalance = Math.abs(red - blue);
+    // Generated chroma backgrounds contain dark anti-aliased magenta around
+    // silhouettes, not only literal #ff00ff. Key the hue as well as the exact
+    // color so those connected fields cannot survive as rectangular halos.
+    if (magentaDominance >= 28 && magentaBalance <= 110) return 0;
+    if (magentaDominance > 12 && magentaBalance < 130)
+      return Math.max(
+        0,
+        Math.round(((28 - magentaDominance) / 16) * 255),
+      );
     const distance = Math.hypot(255 - red, green, 255 - blue);
     if (distance <= 24) return 0;
     if (distance < 115) return Math.round(((distance - 24) / 91) * 255);
@@ -97,11 +104,50 @@ async function alphaBounds(buffer) {
   };
 }
 
-async function normalizedActorCells(source) {
-  const extracted = [];
-  const bounds = [];
+async function removeBoundaryArtifacts(buffer) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixelCount = info.width * info.height;
+  const visited = new Uint8Array(pixelCount);
+  const components = [];
+  for (let start = 0; start < pixelCount; start += 1) {
+    if (visited[start] || data[start * 4 + 3] < 8) continue;
+    const queue = [start];
+    const pixels = [];
+    let touchesBoundary = false;
+    visited[start] = 1;
+    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+      const pixel = queue[cursor];
+      pixels.push(pixel);
+      const x = pixel % info.width;
+      const y = Math.floor(pixel / info.width);
+      if (x === 0 || y === 0 || x === info.width - 1 || y === info.height - 1)
+        touchesBoundary = true;
+      const neighbors = [pixel - 1, pixel + 1, pixel - info.width, pixel + info.width];
+      for (const neighbor of neighbors) {
+        if (neighbor < 0 || neighbor >= pixelCount || visited[neighbor]) continue;
+        const neighborX = neighbor % info.width;
+        if (Math.abs(neighborX - x) > 1 || data[neighbor * 4 + 3] < 8) continue;
+        visited[neighbor] = 1;
+        queue.push(neighbor);
+      }
+    }
+    components.push({ pixels, touchesBoundary });
+  }
+  const largest = Math.max(...components.map(({ pixels }) => pixels.length));
+  for (const component of components) {
+    if (!component.touchesBoundary || component.pixels.length === largest) continue;
+    for (const pixel of component.pixels) data[pixel * 4 + 3] = 0;
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
+async function extractActorCells(source) {
+  const cells = [];
   for (let index = 0; index < 16; index += 1) {
-    const buffer = await sharp(source)
+    const extracted = await sharp(source)
       .extract({
         left: (index % 4) * CELL,
         top: Math.floor(index / 4) * CELL,
@@ -110,105 +156,140 @@ async function normalizedActorCells(source) {
       })
       .png()
       .toBuffer();
-    extracted.push(buffer);
-    bounds.push(await alphaBounds(buffer));
+    cells.push(await removeBoundaryArtifacts(extracted));
   }
-  const maximumWidth = Math.max(...bounds.map((item) => item.width));
-  const maximumHeight = Math.max(...bounds.map((item) => item.height));
-  const scale = Math.min(226 / maximumWidth, 222 / maximumHeight, 1);
-  return Promise.all(
-    extracted.map(async (buffer, index) => {
-      const box = bounds[index];
-      const width = Math.max(1, Math.round(box.width * scale));
-      const height = Math.max(1, Math.round(box.height * scale));
-      const sprite = await sharp(buffer)
-        .extract(box)
-        .resize(width, height, { fit: "fill", kernel: "lanczos3" })
-        .png()
-        .toBuffer();
-      return sharp({
-        create: {
-          width: CELL,
-          height: CELL,
-          channels: 4,
-          background: transparent,
-        },
-      })
-        .composite([
-          {
-            input: sprite,
-            left: Math.round(128 - width / 2),
-            top: 232 - height,
-          },
-        ])
-        .png()
-        .toBuffer();
-    }),
-  );
+  return cells;
 }
 
-async function hurtFrame(cell, frameIndex) {
-  const strength = [0.58, 0.42, 0.26, 0.12][frameIndex];
-  const { data, info } = await sharp(cell)
+async function cleanLowAlpha(buffer, threshold = 24) {
+  const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  for (let offset = 0; offset < data.length; offset += 4) {
-    if (data[offset + 3] === 0) continue;
-    data[offset] = Math.round(data[offset] + (255 - data[offset]) * strength);
-    data[offset + 1] = Math.round(data[offset + 1] * (1 - strength * 0.55));
-    data[offset + 2] = Math.round(data[offset + 2] * (1 - strength * 0.65));
-  }
+  for (let offset = 0; offset < data.length; offset += 4)
+    if (data[offset + 3] < threshold) data[offset + 3] = 0;
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
-async function deathFrame(cell, frameIndex) {
-  const angles = [0, 6, 14, 25, 38, 51, 64, 72];
-  const scale = [1, 0.99, 0.97, 0.94, 0.9, 0.86, 0.82, 0.79][frameIndex];
-  const size = Math.round(CELL * scale);
-  const collapsed = await sharp(cell)
-    .rotate(angles[frameIndex], { background: transparent })
-    .resize(size, size, { fit: "contain", background: transparent })
-    .png()
-    .toBuffer();
+async function reanchorCell(buffer) {
+  const cleaned = await cleanLowAlpha(buffer);
+  const bounds = await alphaBounds(cleaned);
+  const sprite = await sharp(cleaned).extract(bounds).png().toBuffer();
   return sharp({
     create: { width: CELL, height: CELL, channels: 4, background: transparent },
   })
     .composite([
       {
-        input: collapsed,
-        left: Math.round((CELL - size) / 2),
-        top: CELL - size,
+        input: sprite,
+        left: Math.round(ACTOR_SPEC.atlas.footAnchor.x - bounds.width / 2),
+        top: ACTOR_SPEC.atlas.footAnchor.y - bounds.height,
       },
     ])
     .png()
     .toBuffer();
 }
 
-async function buildActor(actorId) {
-  const source = await normalizeSource(
-    inputPath("actors", `${actorId}-source.png`),
-    "magenta",
+async function normalizedActorCellSets(sources) {
+  const extractedSets = {};
+  const records = [];
+  for (const [sourceId, source] of Object.entries(sources)) {
+    const cells = await extractActorCells(source);
+    extractedSets[sourceId] = cells;
+    for (const [index, buffer] of cells.entries())
+      records.push({ sourceId, index, buffer, bounds: await alphaBounds(buffer) });
+  }
+  const safe = ACTOR_SPEC.atlas.safeInkBounds;
+  const maximumWidth = Math.max(...records.map(({ bounds }) => bounds.width));
+  const maximumHeight = Math.max(...records.map(({ bounds }) => bounds.height));
+  const scale = Math.min(safe.width / maximumWidth, safe.height / maximumHeight, 1);
+  const normalized = {};
+  for (const sourceId of Object.keys(extractedSets)) normalized[sourceId] = [];
+  for (const { sourceId, index, buffer, bounds } of records) {
+    const width = Math.max(1, Math.round(bounds.width * scale));
+    const height = Math.max(1, Math.round(bounds.height * scale));
+    const sprite = await sharp(buffer)
+      .extract(bounds)
+      .resize(width, height, { fit: "fill", kernel: "lanczos3" })
+      .png()
+      .toBuffer();
+    const cell = await sharp({
+      create: { width: CELL, height: CELL, channels: 4, background: transparent },
+    })
+      .composite([
+        {
+          input: sprite,
+          left: Math.round(ACTOR_SPEC.atlas.footAnchor.x - width / 2),
+          top: ACTOR_SPEC.atlas.footAnchor.y - height,
+        },
+      ])
+      .png()
+      .toBuffer();
+    normalized[sourceId][index] = await reanchorCell(cell);
+  }
+  return normalized;
+}
+
+async function blendedFrame(first, second, mix) {
+  const [a, b] = await Promise.all(
+    [first, second].map((buffer) =>
+      sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
   );
-  const cells = await normalizedActorCells(source);
+  const output = Buffer.alloc(a.data.length);
+  for (let offset = 0; offset < output.length; offset += 4) {
+    const alphaA = (a.data[offset + 3] / 255) * (1 - mix);
+    const alphaB = (b.data[offset + 3] / 255) * mix;
+    const alpha = alphaA + alphaB;
+    for (let channel = 0; channel < 3; channel += 1)
+      output[offset + channel] = alpha
+        ? Math.round(
+            (a.data[offset + channel] * alphaA + b.data[offset + channel] * alphaB) /
+              alpha,
+          )
+        : 0;
+    output[offset + 3] = Math.round(alpha * 255);
+  }
+  return reanchorCell(await sharp(output, { raw: a.info }).png().toBuffer());
+}
+
+async function frameFromRecipe(cells, recipe) {
+  if (Number.isInteger(recipe)) return cells[recipe];
+  return blendedFrame(cells[recipe.from], cells[recipe.to], recipe.mix);
+}
+
+async function buildActor(actorId) {
+  const sourceFiles = ACTOR_SPEC.source.files;
+  const sources = Object.fromEntries(
+    await Promise.all(
+      Object.entries(sourceFiles).map(async ([sourceId, pattern]) => [
+        sourceId,
+        await normalizeSource(
+          inputPath("actors", pattern.replace("{actor}", actorId)),
+          "magenta",
+        ),
+      ]),
+    ),
+  );
+  const cellsBySource = await normalizedActorCellSets(sources);
   const composites = [];
-  for (const [clipName, clip] of Object.entries(CLIPS)) {
-    for (const [frameIndex, sourceIndex] of clip.sourceCells.entries()) {
-      let input = cells[sourceIndex];
-      if (clipName === "hurt") input = await hurtFrame(input, frameIndex);
-      if (clipName === "death") input = await deathFrame(input, frameIndex);
+  const banks = [
+    ...Object.entries(ACTOR_SPEC.clips),
+    ...Object.entries(ACTOR_SPEC.directionalClips),
+  ];
+  for (const [, clip] of banks) {
+    const cells = cellsBySource[clip.source];
+    for (const [frameIndex, recipe] of clip.sourceFrames.entries())
       composites.push({
-        input,
+        input: await frameFromRecipe(cells, recipe),
         left: frameIndex * CELL,
-        top: clip.row * CELL,
+        top: clip.atlasRow * CELL,
       });
-    }
   }
   const destination = outputPath(`actor-${actorId}.png`);
   await sharp({
     create: {
-      width: ACTOR_ATLAS_SIZE,
-      height: ACTOR_ATLAS_SIZE,
+      width: ACTOR_ATLAS_WIDTH,
+      height: ACTOR_ATLAS_HEIGHT,
       channels: 4,
       background: transparent,
     },
@@ -314,8 +395,8 @@ async function buildLootAtlas(propsPath, effectsPath) {
   const destination = outputPath("loot.png");
   await sharp({
     create: {
-      width: ACTOR_ATLAS_SIZE,
-      height: ACTOR_ATLAS_SIZE,
+      width: LOOT_ATLAS_SIZE,
+      height: LOOT_ATLAS_SIZE,
       channels: 4,
       background: transparent,
     },
@@ -329,6 +410,47 @@ async function buildLootAtlas(propsPath, effectsPath) {
 async function sha256(filePath) {
   const data = await fs.readFile(filePath);
   return crypto.createHash("sha256").update(data).digest("hex");
+}
+
+function xmlEscape(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+async function buildGlyphAtlas() {
+  const columns = 16;
+  const rows = 8;
+  const glyphCell = 64;
+  const composites = [];
+  for (let codePoint = 32; codePoint <= 126; codePoint += 1) {
+    const index = codePoint - 32;
+    const glyph = String.fromCodePoint(codePoint);
+    const svg = Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${glyphCell}" height="${glyphCell}" viewBox="0 0 ${glyphCell} ${glyphCell}"><text x="32" y="45" text-anchor="middle" font-family="DejaVu Sans Mono, monospace" font-size="38" font-weight="600" stroke="#0a0b0b" stroke-width="3" paint-order="stroke" fill="#f0e4d1">${xmlEscape(glyph)}</text></svg>`,
+    );
+    composites.push({
+      input: svg,
+      left: (index % columns) * glyphCell,
+      top: Math.floor(index / columns) * glyphCell,
+    });
+  }
+  const destination = outputPath("glyphs.png");
+  await sharp({
+    create: {
+      width: columns * glyphCell,
+      height: rows * glyphCell,
+      channels: 4,
+      background: transparent,
+    },
+  })
+    .composite(composites)
+    .png({ compressionLevel: 9, palette: true, quality: 100 })
+    .toFile(destination);
+  return destination;
 }
 
 await fs.mkdir(outputPath("."), { recursive: true });
@@ -365,11 +487,16 @@ outputs.push(
   uiPath,
   effectsPath,
   await buildLootAtlas(propsPath, effectsPath),
+  await buildGlyphAtlas(),
 );
 
 const manifest = {
   schemaVersion: 1,
-  pipeline: "ActorAtlasV1",
+  pipeline: ACTOR_SPEC.id,
+  actorSpec: {
+    source: path.relative(ROOT, ACTOR_SPEC_PATH),
+    sha256: await sha256(ACTOR_SPEC_PATH),
+  },
   builtAt: "deterministic-from-committed-source",
   outputs: Object.fromEntries(
     await Promise.all(

@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "id": "ActorAtlasV1",
-  "description": "The fixed Cinderwake actor rig. All heroes and monsters use these exact cells, rows, anchors, and clip cadences.",
+  "schemaVersion": 2,
+  "id": "ActorAtlasV2",
+  "description": "The fixed Cinderwake actor rig. Every hero and monster supplies the same primary, direction, and reaction source sheets; the offline builder deterministically normalizes them into fixed, untrimmed atlas cells.",
   "source": {
     "pixelWidth": 1024,
     "pixelHeight": 1024,
@@ -10,23 +10,30 @@
     "cellWidth": 256,
     "cellHeight": 256,
     "background": "#ff00ff",
-    "rowsByPurpose": {
-      "idle": 0,
-      "walk": 1,
-      "attack": 2,
-      "ability": 3
-    }
+    "files": {
+      "primary": "{actor}-source.png",
+      "directions": "{actor}-directions-source.png",
+      "reactions": "{actor}-reactions-source.png"
+    },
+    "primaryRows": { "idle": 0, "walk": 1, "attack": 2, "ability": 3 },
+    "directionRows": {
+      "northIdle": 0,
+      "northWalk": 1,
+      "southIdle": 2,
+      "southWalk": 3
+    },
+    "reactionRows": { "hurt": 0, "deathStart": 1, "deathEnd": 2, "groundedReserve": 3 }
   },
   "atlas": {
     "pixelWidth": 2048,
-    "pixelHeight": 2048,
+    "pixelHeight": 3072,
     "columns": 8,
-    "rows": 8,
+    "rows": 12,
     "cellWidth": 256,
     "cellHeight": 256,
     "footAnchor": { "x": 128, "y": 232 },
-    "safeInkBounds": { "x": 10, "y": 8, "width": 236, "height": 226 },
-    "reservedRows": [6, 7]
+    "safeInkBounds": { "x": 10, "y": 8, "width": 236, "height": 224 },
+    "reservedRows": [10, 11]
   },
   "clips": {
     "idle": {
@@ -34,50 +41,83 @@
       "frameCount": 6,
       "durationTicks": 60,
       "looping": true,
-      "sourceCells": [0, 1, 2, 3, 2, 1]
+      "source": "primary",
+      "sourceFrames": [0, 1, 2, 3, 2, 1]
     },
     "walk": {
       "atlasRow": 1,
       "frameCount": 8,
       "durationTicks": 40,
       "looping": true,
-      "sourceCells": [4, 5, 6, 7, 4, 5, 6, 7]
+      "source": "primary",
+      "sourceFrames": [4, { "from": 4, "to": 5, "mix": 0.5 }, 5, { "from": 5, "to": 6, "mix": 0.5 }, 6, { "from": 6, "to": 7, "mix": 0.5 }, 7, { "from": 7, "to": 4, "mix": 0.5 }]
     },
     "attack": {
       "atlasRow": 2,
       "frameCount": 6,
       "durationTicks": 26,
       "looping": false,
-      "sourceCells": [8, 8, 9, 10, 10, 11]
+      "source": "primary",
+      "sourceFrames": [8, 9, 10, { "from": 10, "to": 11, "mix": 0.45 }, { "from": 11, "to": 0, "mix": 0.55 }, 0]
     },
     "ability": {
       "atlasRow": 3,
       "frameCount": 8,
       "durationTicks": 36,
       "looping": false,
-      "sourceCells": [12, 12, 13, 13, 14, 14, 15, 15]
+      "source": "primary",
+      "sourceFrames": [12, { "from": 12, "to": 13, "mix": 0.5 }, 13, { "from": 13, "to": 14, "mix": 0.5 }, 14, { "from": 14, "to": 15, "mix": 0.5 }, { "from": 15, "to": 0, "mix": 0.55 }, 0]
     },
     "hurt": {
       "atlasRow": 4,
       "frameCount": 4,
       "durationTicks": 12,
       "looping": false,
-      "sourceCells": [0, 1, 2, 3],
-      "derived": "hurt-flash"
+      "source": "reactions",
+      "sourceFrames": [0, 1, 2, 3],
+      "authored": "articulated-recoil"
     },
     "death": {
       "atlasRow": 5,
       "frameCount": 8,
       "durationTicks": 48,
       "looping": false,
-      "sourceCells": [0, 0, 0, 0, 0, 0, 0, 0],
-      "derived": "grounded-collapse"
+      "source": "reactions",
+      "sourceFrames": [4, 5, 6, 7, 8, 9, 10, 11],
+      "authored": "anatomy-specific-grounded-collapse"
+    }
+  },
+  "directionalClips": {
+    "northIdle": {
+      "atlasRow": 6,
+      "runtimeClip": "idle",
+      "source": "directions",
+      "sourceFrames": [0, 1, 2, 3, 2, 1]
+    },
+    "northWalk": {
+      "atlasRow": 7,
+      "runtimeClip": "walk",
+      "source": "directions",
+      "sourceFrames": [4, { "from": 4, "to": 5, "mix": 0.5 }, 5, { "from": 5, "to": 6, "mix": 0.5 }, 6, { "from": 6, "to": 7, "mix": 0.5 }, 7, { "from": 7, "to": 4, "mix": 0.5 }]
+    },
+    "southIdle": {
+      "atlasRow": 8,
+      "runtimeClip": "idle",
+      "source": "directions",
+      "sourceFrames": [8, 9, 10, 11, 10, 9]
+    },
+    "southWalk": {
+      "atlasRow": 9,
+      "runtimeClip": "walk",
+      "source": "directions",
+      "sourceFrames": [12, { "from": 12, "to": 13, "mix": 0.5 }, 13, { "from": 13, "to": 14, "mix": 0.5 }, 14, { "from": 14, "to": 15, "mix": 0.5 }, 15, { "from": 15, "to": 12, "mix": 0.5 }]
     }
   },
   "facing": {
-    "authored": "east",
-    "west": "horizontal-flip",
-    "northSouth": "east-bank-v1",
-    "futureDirectionalBanks": ["north", "south"]
+    "east": "primary-bank",
+    "west": "primary-bank-horizontal-flip",
+    "north": "authored-north-bank",
+    "south": "authored-south-bank",
+    "actionFallback": "primary-bank-until-directional-action-sources-are-authored"
   }
 }

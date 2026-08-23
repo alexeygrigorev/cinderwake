@@ -4,7 +4,7 @@
   "tool": "OpenAI image generation tool",
   "styleBrief": "art/style-bible.md",
   "thirdPartyImageInputs": [],
-  "notes": "Original Cinderwake source sheets generated from text-only briefs. No third-party game art, screenshots, logos, or copyrighted character references were supplied as image inputs.",
+  "notes": "Original Cinderwake primary source sheets were generated from text-only briefs. Direction and reaction sheets were edited from those committed original Cinderwake sheets to preserve character identity. No third-party game art, screenshots, logos, or copyrighted character references were supplied as image inputs.",
   "sources": [
     {
       "file": "art/source/actors/vanguard-source.png",
@@ -35,6 +35,78 @@
       "file": "art/source/actors/stonekin-source.png",
       "kind": "actor-source",
       "grid": "4x4"
+    },
+    {
+      "file": "art/source/actors/vanguard-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/vanguard-source.png"
+    },
+    {
+      "file": "art/source/actors/ranger-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ranger-source.png"
+    },
+    {
+      "file": "art/source/actors/arcanist-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/arcanist-source.png"
+    },
+    {
+      "file": "art/source/actors/ashfang-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ashfang-source.png"
+    },
+    {
+      "file": "art/source/actors/hexer-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/hexer-source.png"
+    },
+    {
+      "file": "art/source/actors/stonekin-directions-source.png",
+      "kind": "actor-direction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/stonekin-source.png"
+    },
+    {
+      "file": "art/source/actors/vanguard-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/vanguard-source.png"
+    },
+    {
+      "file": "art/source/actors/ranger-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ranger-source.png"
+    },
+    {
+      "file": "art/source/actors/arcanist-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/arcanist-source.png"
+    },
+    {
+      "file": "art/source/actors/ashfang-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/ashfang-source.png"
+    },
+    {
+      "file": "art/source/actors/hexer-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/hexer-source.png"
+    },
+    {
+      "file": "art/source/actors/stonekin-reactions-source.png",
+      "kind": "actor-reaction-source",
+      "grid": "4x4",
+      "reference": "art/source/actors/stonekin-source.png"
     },
     {
       "file": "art/source/environment/terrain-source.png",
