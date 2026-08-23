@@ -168,10 +168,15 @@ try {
   if (!ready)
     throw new Error(`Cinderwake capture server did not start at ${baseURL}`);
 
-  const outputRoot = path.resolve("test-results/sequences");
+  // Playwright clears test-results at the beginning of a browser run. Keep
+  // durable temporal evidence in a sibling root so verification order cannot
+  // erase an already captured matrix.
+  const outputRoot = path.resolve("quality-results/sequences");
   const output = path.resolve(outputRoot, captureId);
   if (path.dirname(output) !== outputRoot)
-    throw new Error("Capture output must remain inside test-results/sequences");
+    throw new Error(
+      "Capture output must remain inside quality-results/sequences",
+    );
   await fs.rm(output, { recursive: true, force: true });
   await fs.mkdir(output, { recursive: true });
   browser = await chromium.launch();
@@ -422,7 +427,11 @@ try {
     .update(sourceDiff)
     .digest("hex");
   const packageJson = JSON.parse(await fs.readFile("package.json", "utf8"));
-  const artifactDirectory = path.join("test-results", "sequences", captureId);
+  const artifactDirectory = path.join(
+    "quality-results",
+    "sequences",
+    captureId,
+  );
   const reproductionCommand = [
     "npm run capture:sequence --",
     `--id ${shellQuote(`${captureId}-reproduced`)}`,

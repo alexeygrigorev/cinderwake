@@ -47,8 +47,12 @@ test("projects bridge-loaded scenario identity into the visible HUD", async ({
   page,
 }) => {
   await page.evaluate(() => window.__GAME_TEST__!.loadScenario("combat-loot"));
-  await expect(page.locator(".brand small")).toHaveText("scn-loot-0301");
-  await expect(page.locator("#monsters")).toHaveText("1 foe");
+  const seed = page.locator(".brand small");
+  const monsters = page.locator("#monsters");
+  await expect(seed).toHaveAttribute("aria-label", "scn-loot-0301");
+  await expect(seed.locator(".sprite-glyph")).toHaveCount(13);
+  await expect(monsters).toHaveAttribute("aria-label", "1 foe");
+  await expect(monsters.locator(".sprite-glyph")).toHaveCount(4);
 });
 
 test("lets the complete death animation play before showing the loss modal", async ({

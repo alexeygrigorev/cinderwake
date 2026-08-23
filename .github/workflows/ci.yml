@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: quality-sequences
-          path: test-results/sequences/
+          path: quality-results/sequences/
           if-no-files-found: error
 
   deploy:

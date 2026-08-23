@@ -212,7 +212,7 @@ function runCapture(entry) {
   return new Promise((resolve) => child.on("exit", resolve));
 }
 
-const outputRoot = path.resolve("test-results/sequences");
+const outputRoot = path.resolve("quality-results/sequences");
 await fs.mkdir(outputRoot, { recursive: true });
 const results = [];
 for (const entry of entries) {

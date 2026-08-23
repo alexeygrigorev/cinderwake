@@ -82,7 +82,7 @@ npm run capture:sequence -- --scenario combat-loot --action attack --frames 16 -
 npm run capture:matrix
 ```
 
-Each run writes exact frames, close-ups, state history, render-manifest history, metadata, a contact sheet, an HTML report, and `animation-analysis.json` under `test-results/sequences/<scenario>/`. The assessor rejects anchor jitter, position/velocity disagreement, uneven speed, frame skips, one-shot backward frame jumps, changing proportions, and clipping. Screenshot baselines are updated only after reviewing the changed frame sequence:
+Each run writes exact frames, close-ups, state history, render-manifest history, metadata, a contact sheet, an HTML report, and `animation-analysis.json` under `quality-results/sequences/<scenario>/`. This root is intentionally separate from Playwright's disposable `test-results/`, so running browser tests after a capture cannot erase temporal evidence. The assessor rejects anchor jitter, position/velocity disagreement, uneven speed, frame skips, one-shot backward frame jumps, changing proportions, and clipping. Screenshot baselines are updated only after reviewing the changed frame sequence:
 
 ```bash
 npm run test:visual:update

@@ -29,7 +29,7 @@ Interactive rendering interpolates `previousPosition → position` and `previous
 The sequence capture command writes:
 
 ```text
-test-results/sequences/<scenario-id>/
+quality-results/sequences/<scenario-id>/
   frame-0000.png
   closeup-0000.png
   mask-0000.png
@@ -45,7 +45,7 @@ test-results/sequences/<scenario-id>/
 playwright-report/
 ```
 
-The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. `capture:matrix` runs 21 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
+The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 21 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
 ## Three complementary verdicts
 
