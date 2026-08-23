@@ -74,7 +74,7 @@ jobs:
       - run: npm ci
       - name: Build readable production game
         env:
-          VITE_BASE_PATH: /game-tester/
+          VITE_BASE_PATH: /cinderwake/
         run: npm run build
       - run: mkdir -p site
       - run: cp -R dist/. site/
