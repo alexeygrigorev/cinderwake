@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cinderwake quality report</title>
+    <style>
+      :root {
+        color: #f4ead6;
+        background: #090d0f;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+
+      body {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 64px 24px;
+      }
+
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: clamp(2.5rem, 8vw, 5rem);
+      }
+
+      p {
+        color: #aebbb7;
+        line-height: 1.7;
+      }
+
+      .eyebrow {
+        color: #d9ad63;
+        font:
+          700 0.75rem ui-monospace,
+          monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px;
+        margin: 36px 0;
+      }
+
+      a.card {
+        min-height: 150px;
+        padding: 22px;
+        color: inherit;
+        background: #12191b;
+        border: 1px solid #33413e;
+        border-radius: 4px;
+        text-decoration: none;
+      }
+
+      a.card:hover {
+        border-color: #d9ad63;
+        transform: translateY(-2px);
+      }
+
+      .card strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #f5d69e;
+        font-family: Georgia, serif;
+        font-size: 1.45rem;
+      }
+
+      .card span {
+        color: #9dafaa;
+        line-height: 1.5;
+      }
+
+      code {
+        color: #f0bd72;
+      }
+
+      footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #283331;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="eyebrow">Latest successful main-branch run</p>
+    <h1>Quality evidence</h1>
+    <p>
+      Cinderwake tests behavior and appearance from the same injected state and
+      exact simulation ticks. The reports below are rebuilt in CI: semantic
+      state proves what happened, render manifests explain geometry, and PNG
+      strips show whether movement and animation look continuous.
+    </p>
+    <main class="grid">
+      <a class="card" href="./playwright/">
+        <strong>Browser test report</strong>
+        <span>
+          Arbitrary-state loading, deterministic reset, real input adapters,
+          semantic animation checks, and screenshot comparisons.
+        </span>
+      </a>
+      <a class="card" href="./sequences/animation-walk/report.html">
+        <strong>Walking sequence</strong>
+        <span>
+          Sixteen exact-tick close-ups with the declared foot anchor marked for
+          checking speed, camera tracking, cadence, and foot sliding.
+        </span>
+      </a>
+      <a class="card" href="./sequences/combat-loot/report.html">
+        <strong>Attack sequence</strong>
+        <span>
+          Wind-up, contact, follow-through, recovery, enemy death, and loot in a
+          deterministic frame strip.
+        </span>
+      </a>
+      <a class="card" href="../">
+        <strong>Play Cinderwake</strong>
+        <span>
+          Use the same production build that the browser suite drives and the
+          quality reports describe.
+        </span>
+      </a>
+    </main>
+    <h2>Hard acceptance gates</h2>
+    <p>
+      The sequence assessor requires foot-anchor jitter ≤ <code>0.25 px</code>,
+      velocity error <code>0</code>, speed delta ≤ <code>0.01</code>, at most
+      one animation-frame advance per capture, no one-shot backward frame jump,
+      stable actor bounds, and no viewport clipping.
+    </p>
+    <footer>
+      <p>
+        The reports are evidence, not a substitute for judgment. An agent or
+        human still reviews every changed strip for natural weight, readable
+        silhouettes, coherent camera movement, and accidental pose pops.
+      </p>
+    </footer>
+  </body>
+</html>

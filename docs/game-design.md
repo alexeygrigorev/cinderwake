@@ -6,7 +6,7 @@ The shipped vertical slice is intentionally shorter than a commercial ARPG run. 
 
 ## Player loop
 
-1. Choose one of three heroes and enter or randomize a run seed.
+1. Choose one of three heroes and enter a run seed.
 2. Enter a newly generated connected ruin.
 3. Explore rooms with keyboard, pointer, or touch controls.
 4. Fight three enemy types with a class-specific primary attack and ability.

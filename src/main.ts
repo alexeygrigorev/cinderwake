@@ -11,6 +11,7 @@ import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
+const assetBase = import.meta.env.BASE_URL;
 let selected: CharacterClass = "vanguard",
   seed = "cinder-041",
   host: GameHost | undefined,
@@ -19,7 +20,7 @@ let selected: CharacterClass = "vanguard",
 const query = new URLSearchParams(location.search),
   testMode = query.get("testMode") === "1";
 function screen(): void {
-  app.innerHTML = `<main class="selection"><section class="hero"><p class="eyebrow">A deterministic action RPG</p><h1>Cinderwake</h1><p>Descend into the ember-dark. Every run begins with a seed—and every strike can be replayed.</p><img src="/assets/cinderwake-heroes.png" alt="Three Cinderwake heroes" /></section><section class="choose"><p class="eyebrow">Choose your ember</p><div class="cards">${Object.values(
+  app.innerHTML = `<main class="selection"><section class="hero"><p class="eyebrow">A deterministic action RPG</p><h1>Cinderwake</h1><p>Descend into the ember-dark. Every run begins with a seed—and every strike can be replayed.</p><img src="${assetBase}assets/cinderwake-heroes.png" alt="Three Cinderwake heroes" /></section><section class="choose"><p class="eyebrow">Choose your ember</p><div class="cards">${Object.values(
     ARCHETYPES,
   )
     .map(

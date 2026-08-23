@@ -10,22 +10,51 @@ interface ScenarioV1 {
   id: string;
   seed: string;
   classId: "vanguard" | "ranger" | "arcanist";
+  tick?: number;
+  phase?: "playing" | "won" | "lost";
+  nextEntityId?: number;
   map:
     | { mode: "generated"; width?: number; height?: number }
     | { mode: "explicit"; rows: string[] }; // # wall, . floor, P player, E exit
   player?: {
     tile?: [number, number];
+    previousTile?: [number, number];
+    velocity?: [number, number];
     health?: number;
+    maxHealth?: number;
     facing?: [number, number];
+    radius?: number;
+    armor?: number;
+    moveSpeed?: number;
+    attackDamage?: number;
+    abilityDamage?: number;
+    attackReadyTick?: number;
+    abilityReadyTick?: number;
+    invulnerableUntilTick?: number;
+    level?: number;
+    xp?: number;
+    gold?: number;
+    tonics?: number;
     power?: number;
+    animation?: AnimationSpec;
   };
   monsters?: Array<{
     id?: string;
     kind: "ashfang" | "hexer" | "stonekin";
     tile: [number, number];
+    previousTile?: [number, number];
+    velocity?: [number, number];
+    facing?: [number, number];
     health?: number;
+    maxHealth?: number;
+    armor?: number;
+    moveSpeed?: number;
+    attackDamage?: number;
+    attackRange?: number;
+    attackReadyTick?: number;
     elite?: boolean;
     guaranteedLoot?: boolean;
+    animation?: AnimationSpec;
   }>;
   loot?: Array<{
     id?: string;
@@ -33,12 +62,30 @@ interface ScenarioV1 {
     rarity?: "common" | "tempered" | "relic";
     tile: [number, number];
     amount?: number;
+    sourceId?: string;
+    bobOffset?: number;
   }>;
+  pendingAttacks?: PendingAttackSpec[];
+  projectiles?: ProjectileSpec[];
+  effects?: EffectSpec[];
+  exitUnlocked?: boolean;
+  rng?: Partial<Record<"map" | "combat" | "loot" | "cosmetic", RngSpec>>;
+  events?: GameEvent[];
+  eventLog?: GameEvent[];
+  metrics?: Partial<GameMetrics>;
   settings?: { ai?: boolean; autoPickup?: boolean; cameraFollow?: boolean };
+}
+
+interface AnimationSpec {
+  clip: "idle" | "walk" | "attack" | "ability" | "hurt" | "death";
+  startedAtTick?: number;
+  lockedUntilTick?: number;
 }
 ```
 
-Decimal tile coordinates are allowed for exact range boundaries. Generated maps may omit monsters to receive the standard seeded population. An explicit empty `monsters: []` means no monsters.
+The auxiliary `PendingAttackSpec`, `ProjectileSpec`, `EffectSpec`, event, metrics, and RNG fields mirror their serializable engine types; the authoritative TypeScript definition is [`src/testkit/scenarios.ts`](../src/testkit/scenarios.ts). A complete injected example is [`public/scenarios/arbitrary-state.json`](../public/scenarios/arbitrary-state.json).
+
+Decimal tile coordinates are allowed for exact range boundaries. Tile values are converted to integer world coordinates during construction; raw velocity, facing, radius, damage range, and other vectors use integer world units. Generated maps may omit monsters to receive the standard seeded population. An explicit empty `monsters: []` means no monsters.
 
 ## Example: exact combat and loot state
 
@@ -94,6 +141,19 @@ A version-1 replay contains sorted changes to semantic input:
 ```
 
 Replay tests use exact engine ticks. Browser tests may queue the same entries through `window.__GAME_TEST__`. A separate adapter test should send real keys and pointer events to confirm that physical controls produce the same semantic inputs.
+
+## Browser bridge reference
+
+| Method                                            | Purpose                                                                  |
+| ------------------------------------------------- | ------------------------------------------------------------------------ |
+| `loadScenario(nameOrJson)`                        | validate, construct, and render a fresh complete world                   |
+| `reset()`                                         | reconstruct the last loaded scenario and clear queued/live input         |
+| `setInput(partial)` / `clearInput()`              | set semantic input without browser-event timing                          |
+| `queueInputs(entries)`                            | schedule input changes at exact state ticks                              |
+| `step(ticks, { render, useBrowserInput })`        | advance exact ticks, optionally sampling the real browser adapter        |
+| `snapshot()` / `stateHash()` / `drainEvents()`    | capture behavior evidence                                                |
+| `render()` / `renderManifest()`                   | capture deterministic drawing intent                                     |
+| `captureFrame()` / `captureSequence(targetTicks)` | capture PNG data at the same states represented by snapshot and manifest |
 
 ## Authoring workflow
 
