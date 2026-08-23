@@ -1555,7 +1555,7 @@ button {
 @media (orientation: portrait) and (max-width: 760px) and (pointer: coarse) {
   .game .objective {
     position: fixed;
-    top: 34svh;
+    top: max(70px, calc(env(safe-area-inset-top) + 60px));
   }
 }
 

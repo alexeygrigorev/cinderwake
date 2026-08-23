@@ -438,6 +438,12 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
     const controls = document.querySelector<HTMLElement>(".mobile-controls")!;
     const stageRect = stage.getBoundingClientRect();
     const controlsRect = controls.getBoundingClientRect();
+    const counterRect = document
+      .querySelector<HTMLElement>("#monsters")!
+      .getBoundingClientRect();
+    const objectiveRect = document
+      .querySelector<HTMLElement>("#objective")!
+      .getBoundingClientRect();
     const context = canvas.getContext("2d")!;
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     let opaque = 0;
@@ -468,6 +474,18 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
         right: controlsRect.right,
         bottom: controlsRect.bottom,
       },
+      hudClusterDistance: Math.hypot(
+        Math.max(
+          0,
+          Math.max(counterRect.left, objectiveRect.left) -
+            Math.min(counterRect.right, objectiveRect.right),
+        ),
+        Math.max(
+          0,
+          Math.max(counterRect.top, objectiveRect.top) -
+            Math.min(counterRect.bottom, objectiveRect.bottom),
+        ),
+      ),
       sampledOpaque: opaque,
       sampledLuminance: luminanceTotal,
     };
@@ -504,9 +522,32 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
     expect(geometry.controls.bottom).toBeLessThanOrEqual(
       geometry.viewport.height,
     );
+    expect(geometry.hudClusterDistance).toBeLessThanOrEqual(24);
   } else {
     expect(geometry.controls.visible).toBe(false);
   }
+}
+
+async function mobileHudClusterDistance(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const counter = document
+      .querySelector<HTMLElement>("#monsters")!
+      .getBoundingClientRect();
+    const objective = document
+      .querySelector<HTMLElement>("#objective")!
+      .getBoundingClientRect();
+    const horizontalGap = Math.max(
+      0,
+      Math.max(counter.left, objective.left) -
+        Math.min(counter.right, objective.right),
+    );
+    const verticalGap = Math.max(
+      0,
+      Math.max(counter.top, objective.top) -
+        Math.min(counter.bottom, objective.bottom),
+    );
+    return Math.hypot(horizontalGap, verticalGap);
+  });
 }
 
 async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
@@ -646,6 +687,26 @@ test("game HUD assessor rejects an objective ribbon across the encounter", async
       });
     });
     expect(await hudWorldOverlapViolations(page)).not.toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
+test("mobile HUD assessor rejects a detached objective compass", async ({
+  browser,
+}) => {
+  const profile = contract.profiles.find(({ id }) => id === "phone-portrait")!;
+  const { context, page, errors } = await contractPage(browser, profile);
+  try {
+    await page.goto(contract.screens.game.route);
+    await page.locator("#begin").click();
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+    expect(await mobileHudClusterDistance(page)).toBeLessThanOrEqual(24);
+    await page.locator("#objective").evaluate((element) => {
+      (element as HTMLElement).style.top = "45svh";
+    });
+    expect(await mobileHudClusterDistance(page)).toBeGreaterThan(24);
     expect(errors).toEqual([]);
   } finally {
     await context.close();
