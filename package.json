@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run art:generation:check && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -19,7 +19,8 @@
     "capture:sequence": "node scripts/capture-sequence.mjs",
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
-    "art:check": "node scripts/validate-sprite-assets.mjs"
+    "art:check": "node scripts/validate-sprite-assets.mjs",
+    "art:generation:check": "node scripts/test-generation-pipeline.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

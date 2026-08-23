@@ -24,12 +24,67 @@ const ACTOR_IDS = [
 ];
 const transparent = { r: 0, g: 0, b: 0, alpha: 0 };
 
+function printUsage() {
+  console.log(`Usage: node scripts/build-sprite-assets.mjs [options]
+
+Options:
+  --actors <ids>       Comma-separated actor IDs (default: every actor)
+  --source-dir <path>  Actor source directory (default: art/source/actors)
+  --output-dir <path>  Output directory (default: public/assets/sprites)
+  --actors-only        Build actor atlases and their manifest only
+  --help               Show this help`);
+}
+
+function parseArguments(args) {
+  let actors = [...ACTOR_IDS];
+  let actorSourceDirectory = path.join(ROOT, "art", "source", "actors");
+  let outputDirectory = path.join(ROOT, "public", "assets", "sprites");
+  let actorsOnly = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === "--help") {
+      printUsage();
+      process.exit(0);
+    }
+    if (argument === "--actors-only") {
+      actorsOnly = true;
+      continue;
+    }
+    const [name, inlineValue] = argument.split("=", 2);
+    if (
+      name !== "--actors" &&
+      name !== "--source-dir" &&
+      name !== "--output-dir"
+    )
+      throw new Error(`Unknown option: ${argument}`);
+    const value = inlineValue ?? args[++index];
+    if (!value || value.startsWith("--"))
+      throw new Error(`${name} requires a value`);
+    if (name === "--actors") {
+      actors = [...new Set(value.split(",").map((id) => id.trim()))].filter(
+        Boolean,
+      );
+      if (actors.length === 0) throw new Error("--actors cannot be empty");
+      const unknown = actors.filter((id) => !ACTOR_IDS.includes(id));
+      if (unknown.length > 0)
+        throw new Error(`Unknown actor ID(s): ${unknown.join(", ")}`);
+    } else if (name === "--source-dir") {
+      actorSourceDirectory = path.resolve(ROOT, value);
+    } else {
+      outputDirectory = path.resolve(ROOT, value);
+    }
+  }
+  return { actors, actorsOnly, actorSourceDirectory, outputDirectory };
+}
+
+const OPTIONS = parseArguments(process.argv.slice(2));
+
 function inputPath(...segments) {
   return path.join(ROOT, "art", "source", ...segments);
 }
 
 function outputPath(fileName) {
-  return path.join(ROOT, "public", "assets", "sprites", fileName);
+  return path.join(OPTIONS.outputDirectory, fileName);
 }
 
 function keyedAlpha(red, green, blue, mode) {
@@ -292,7 +347,10 @@ async function buildActor(actorId) {
       Object.entries(sourceFiles).map(async ([sourceId, pattern]) => [
         sourceId,
         await normalizeSource(
-          inputPath("actors", pattern.replace("{actor}", actorId)),
+          path.join(
+            OPTIONS.actorSourceDirectory,
+            pattern.replace("{actor}", actorId),
+          ),
           "magenta",
         ),
       ]),
@@ -485,45 +543,47 @@ async function buildGlyphAtlas() {
 
 await fs.mkdir(outputPath("."), { recursive: true });
 const outputs = [];
-for (const actorId of ACTOR_IDS) outputs.push(await buildActor(actorId));
-const terrainPath = await buildTerrainAtlas(
-  inputPath("environment", "terrain-source.png"),
-  outputPath("environment-terrain.png"),
-);
-const groundPath = await buildGrid(
-  inputPath("environment", "ground-source.png"),
-  outputPath("environment-ground.png"),
-);
-const structuresPath = await buildGrid(
-  inputPath("environment", "structures-source.png"),
-  outputPath("environment-structures.png"),
-  "light",
-);
-const propsPath = await buildGrid(
-  inputPath("environment", "props-source.png"),
-  outputPath("environment-props.png"),
-  "magenta",
-);
-const uiPath = await buildGrid(
-  inputPath("ui", "ui-source.png"),
-  outputPath("ui.png"),
-  "magenta",
-);
-const effectsPath = await buildGrid(
-  inputPath("ui", "effects-source.png"),
-  outputPath("effects.png"),
-  "magenta",
-);
-outputs.push(
-  terrainPath,
-  groundPath,
-  structuresPath,
-  propsPath,
-  uiPath,
-  effectsPath,
-  await buildLootAtlas(propsPath, effectsPath),
-  await buildGlyphAtlas(),
-);
+for (const actorId of OPTIONS.actors) outputs.push(await buildActor(actorId));
+if (!OPTIONS.actorsOnly) {
+  const terrainPath = await buildTerrainAtlas(
+    inputPath("environment", "terrain-source.png"),
+    outputPath("environment-terrain.png"),
+  );
+  const groundPath = await buildGrid(
+    inputPath("environment", "ground-source.png"),
+    outputPath("environment-ground.png"),
+  );
+  const structuresPath = await buildGrid(
+    inputPath("environment", "structures-source.png"),
+    outputPath("environment-structures.png"),
+    "light",
+  );
+  const propsPath = await buildGrid(
+    inputPath("environment", "props-source.png"),
+    outputPath("environment-props.png"),
+    "magenta",
+  );
+  const uiPath = await buildGrid(
+    inputPath("ui", "ui-source.png"),
+    outputPath("ui.png"),
+    "magenta",
+  );
+  const effectsPath = await buildGrid(
+    inputPath("ui", "effects-source.png"),
+    outputPath("effects.png"),
+    "magenta",
+  );
+  outputs.push(
+    terrainPath,
+    groundPath,
+    structuresPath,
+    propsPath,
+    uiPath,
+    effectsPath,
+    await buildLootAtlas(propsPath, effectsPath),
+    await buildGlyphAtlas(),
+  );
+}
 
 const manifest = {
   schemaVersion: 1,
