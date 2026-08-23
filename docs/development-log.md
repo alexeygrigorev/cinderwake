@@ -27,3 +27,14 @@ This is the chronological record of material build decisions. Focused ADRs conta
 21. Added public GitHub Pages assembly. CI rebuilds the readable game, executes source/unit/browser/visual gates, captures walking and attack reports, and publishes the game, browser report, and temporal evidence from the same commit.
 
 Future entries should record any baseline update, tolerance change, schema migration, or intentional animation change. Those decisions directly alter what the quality system accepts and therefore must never be silent.
+
+## 2026-08-23 (continued)
+
+22. Added exact full-`GameState` loading and reset documentation alongside ScenarioV1. Persisting a post-setup world plus its semantic tape eliminates the temptation to reproduce an intermittent defect by manually replaying setup; reset reconstructs the retained source instead of leaking live input or timers.
+23. Defined presentation interpolation and camera modes as observable render data. The live display can be smooth without weakening exact-tick captures because manifests state simulation tick, presentation tick, alpha, target, and camera mode.
+24. Promoted isolated transparent entity masks from a diagnostic implementation detail to quality evidence. Alpha-pixel bounds, centroid, bottom offset, and hash provide a real raster witness for pivot, silhouette, proportion, and clipping claims.
+25. Documented capture profiles, reproducibility bundles, environment metadata, mobile controls/layout, and the public capture matrix. An autonomous report is useful only when a reviewer can rerun its exact state/control/frame sequence and understand what coverage it represents.
+26. Ran the first 20-sequence temporal matrix. It exposed an 86-degree enemy death rotation with roughly 23 px of ground drift and a 1.3 px Hexer recovery pop. The death pose now collapses onto the foot plane, and the Hexer attack float curve returns exactly to idle; both defects became permanent profile checks.
+27. Distinguished north/south hero raster silhouettes with front/back detail while keeping all four directional masks unique and grounded. This makes control direction visually legible and gives the mask-hash test a concrete contract.
+28. Reworked the portrait stage to fill the viewport above the touch controls by center-cropping the fixed logical canvas. The same canvas bounding box still maps touch aim into logical coordinates, while an automated layout assertion prevents the prior large blank gap from returning.
+29. Replaced two hand-picked public captures with a cataloged 20-report CI matrix. Each entry publishes its verdict, category, profile, source scenario, report, mask/state/tape bundle, and exact reproduction command; terminal profiles show their composed win/loss page directly in the contact sheet.

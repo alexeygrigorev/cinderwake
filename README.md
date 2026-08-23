@@ -37,9 +37,12 @@ const stateAtImpact = window.__GAME_TEST__.step(20, { render: true });
 const stateHash = window.__GAME_TEST__.stateHash();
 const geometry = window.__GAME_TEST__.renderManifest();
 const png = window.__GAME_TEST__.captureFrame();
+
+window.__GAME_TEST__.loadState(savedGameState); // exact complete GameState
+window.__GAME_TEST__.reset(); // rebuild last source and clear live/queued input
 ```
 
-The scenario schema can inject the tick and phase; player and enemy transforms, velocities, health, cooldowns, and animation locks; active attacks, projectiles, loot, and effects; RNG stream states; metrics; exit state; and event history. Loading validates and constructs a fresh world instead of patching a running one, so old timers, inputs, and entities cannot leak into the next test. See [scenario authoring](docs/scenario-authoring.md) and the [complete fixture](public/scenarios/arbitrary-state.json).
+The scenario schema can inject the tick and phase; player and enemy transforms, velocities, health, cooldowns, and animation locks; active attacks, projectiles, loot, and effects; RNG stream states; metrics; exit state; and event history. Loading validates and constructs a fresh world instead of patching a running one, so old timers, inputs, and entities cannot leak into the next test. `loadState(GameState | JSON)` likewise reconstructs a complete persisted world, and `reset()` reloads the last scenario or state. See [scenario authoring](docs/scenario-authoring.md) and the [complete fixture](public/scenarios/arbitrary-state.json).
 
 ## Quality workflow
 
@@ -76,6 +79,7 @@ Generate a self-contained sequence report and machine-readable assessment:
 ```bash
 npm run capture:sequence -- --scenario animation-walk --frames 16 --step 2
 npm run capture:sequence -- --scenario combat-loot --action attack --frames 16 --step 2
+npm run capture:matrix
 ```
 
 Each run writes exact frames, close-ups, state history, render-manifest history, metadata, a contact sheet, an HTML report, and `animation-analysis.json` under `test-results/sequences/<scenario>/`. The assessor rejects anchor jitter, position/velocity disagreement, uneven speed, frame skips, one-shot backward frame jumps, changing proportions, and clipping. Screenshot baselines are updated only after reviewing the changed frame sequence:
@@ -84,6 +88,14 @@ Each run writes exact frames, close-ups, state history, render-manifest history,
 npm run test:visual:update
 npm run test:visual
 ```
+
+Each reproducibility bundle also includes `initial-state.json`, `commands.json`, transparent `mask-*.png` images, page captures, and metadata for the commit, Node, Chromium, Playwright, Vite, canvas/viewport/DPR, and exact command. Masks are rendered in isolation and measured from real alpha pixels, providing concrete evidence for ink bounds, centroid, foot relation, proportions, and clipping.
+
+## Display, touch, and public evidence
+
+Simulation advances only in whole 60 Hz ticks. Live display may interpolate previous/current state and camera, but test captures use `interpolationAlpha: 1` and deterministic snap camera by default; manifests name the simulation/presentation tick, alpha, camera target, and mode. The touch layout maps a pointer-captured movement pad, canvas aim, and large primary/ability/tonic buttons into the same semantic input consumed by keyboard/pointer tests, with responsive targets kept in the viewport.
+
+The public quality report catalogs 20 explicit sequences: locomotion in four directions; quarter-tick mobile interpolation; primary and ability actions for all three heroes; attacks for all three enemy families; enemy death/despawn; projectile travel; a complete loot-bob loop; smooth camera convergence; and win/loss presentation. Each card links to its state, command tape, raw canvas, isolated mask, composed page, contact sheet, metadata, measurements, and exact reproduction command. This is broad coverage of the shipped vertical slice, not a claim about unimplemented future systems; the matrix must grow with every shipped system.
 
 ## Source quality standards
 

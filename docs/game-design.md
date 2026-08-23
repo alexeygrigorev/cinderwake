@@ -29,11 +29,11 @@ Integer authoritative positions prevent accumulating drift in long replays. Rend
 
 ## Heroes
 
-| Hero     | Identity                | HP / armor |         Speed | Primary                                                      | Ability                                                               |
-| -------- | ----------------------- | ---------: | ------------: | ------------------------------------------------------------ | --------------------------------------------------------------------- |
-| Vanguard | resilient melee fighter |   160 / 30 | 64 units/tick | 18-damage 90-degree cleave; impact tick +8; 30-tick cooldown | 32-damage wider ember sweep; impact tick +12; 240-tick cooldown       |
-| Ranger   | fast ranged marksman    |   105 / 10 | 72 units/tick | 13-damage arrow; spawn tick +6; 24-tick cooldown             | three piercing arrows; spawn tick +10; 270-tick cooldown              |
-| Arcanist | fragile area controller |     90 / 5 | 66 units/tick | 15-damage crystal bolt; spawn tick +8; 36-tick cooldown      | 28-damage pulse around the caster; impact tick +12; 300-tick cooldown |
+| Hero     | Identity                | HP / armor |                        Speed | Primary                                                      | Ability                                                               |
+| -------- | ----------------------- | ---------: | ---------------------------: | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Vanguard | resilient melee fighter |   160 / 30 | 3.75 tiles/s (64 units/tick) | 18-damage 90-degree cleave; impact tick +8; 30-tick cooldown | 32-damage wider ember sweep; impact tick +12; 240-tick cooldown       |
+| Ranger   | fast ranged marksman    |   105 / 10 | 4.22 tiles/s (72 units/tick) | 13-damage arrow; spawn tick +6; 24-tick cooldown             | three piercing arrows; spawn tick +10; 270-tick cooldown              |
+| Arcanist | fragile area controller |     90 / 5 | 3.87 tiles/s (66 units/tick) | 15-damage crystal bolt; spawn tick +8; 36-tick cooldown      | 28-damage pulse around the caster; impact tick +12; 300-tick cooldown |
 
 Weapon drops add deterministic power to primary and ability damage. Tonics heal 45 HP and are not consumed at full health.
 
@@ -72,7 +72,7 @@ When the final monster dies, the exit unlocks once and emits `exit_unlocked`. Re
 
 ## Visual language and animation
 
-The original visual identity combines deep charcoal and teal ruins, warm amber heroes and exits, crimson/magenta hostile effects, and pale cyan loot. Generated hero key art is used on character selection; runtime actors are code-rendered from explicit geometry so anchors, hitboxes, proportions, and animation frames are measurable from the first version.
+The original astral-ruin palette combines deep charcoal and teal ruins, warm amber heroes and exits, crimson/magenta hostile effects, and pale cyan loot. Generated hero key art is used on character selection; runtime actors are code-rendered from explicit geometry so anchors, hitboxes, proportions, and animation frames are measurable from the first version.
 
 Animation clips are tick-addressable: idle is 6 frames/60 ticks, walk 8/40, primary 6/26, ability 8/36, hurt 4/12, and death 8/48. Every actor is grounded at a bottom-center world anchor. Actors render in stable `(foot Y, entity ID)` order.
 

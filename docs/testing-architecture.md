@@ -6,13 +6,13 @@ Cinderwake treats deterministic simulation and observable rendering as first-cla
 
 Simulation is a deterministic fixed-step transition kernel at **60 Hz**. `stepGame(world, input)` mutates only the fresh world object it owns; it does not read the DOM, wall-clock time, browser layout, or ambient randomness. Tests construct or clone that owned world before stepping it. Time is integral ticks; positions, velocities, timers, random choices, AI decisions, collision order, and animation phases derive only from declared state and seeded rules. Rendering reads state but never changes it. Floating-point work, if used, is rounded/canonicalized at observable boundaries; iteration order is stable.
 
-`ScenarioV1` is the JSON injection format. It declares schema version, seed, tick, map bounds/exit, player archetype and state, entities, drops, camera, optional rules overrides, and capture instructions. Validation rejects unknown schema versions and malformed or impossible state before it reaches the simulation. This permits tests such as “brute already winding up beside a one-health player” without replaying ten minutes of combat.
+`ScenarioV1` is the declarative JSON injection format. Validation rejects unknown schema versions and malformed or impossible state before construction. For an exact captured world, the bridge also accepts a complete serialized `GameState` through `loadState`; it reconstructs the state rather than applying a partial patch. `reset()` retains the last successfully loaded ScenarioV1 or GameState and reconstructs it afresh, clearing both live and queued inputs. This makes an arbitrary state, its reset, and its failure reproduction the same contract.
 
-Every meaningful boundary exposes a canonical state snapshot: tick, outcome, entity IDs and transforms, velocities, health, cooldowns, AI/animation state and phase, inventory, camera, active effects, and deterministic RNG state. Snapshots use stable ordering and serialized numeric precision so deep comparison, replay, and debugging agree.
+Every meaningful boundary exposes a canonical state snapshot: tick, outcome, entity IDs and transforms, velocities, health, cooldowns, AI/animation state and phase, inventory, active effects, and deterministic RNG state. Camera is presentation state and is therefore recorded in the synchronized render manifest instead of `GameState`. Snapshots use stable ordering and serialized numeric precision so deep comparison, replay, and debugging agree.
 
 ## Commands and replay
 
-A command tape is an ordered list of per-tick input samples—movement axes, aim, attack, dash, interact, and optional control-edge metadata. It is replayable from a `ScenarioV1` with no live keyboard dependence. A failing test stores the scenario, tape, expected snapshot/checkpoint, seed, and implementation version; rerunning them must reproduce the same frame sequence locally and in CI.
+A command tape is an ordered list of per-tick input samples—movement axes, aim, attack, ability, and tonic edges. It is replayable from a ScenarioV1 or persisted initial GameState with no live keyboard dependence. A failing test stores `initial-state.json`, `commands.json`, checkpoints/state hashes, seed, capture profile, and environment metadata; rerunning the recorded command must reproduce the same state and frame sequence locally and in CI.
 
 ## Browser and render contracts
 
@@ -20,7 +20,9 @@ The browser bridge is a deliberately narrow test API that can load a scenario, a
 
 The renderer emits a **render manifest** alongside each capture. It records logical viewport, device scale, camera transform, ordered draw calls/layers, geometry identity, world/screen/foot anchors, destination bounds, facing, scale, opacity, tint, animation clip and frame, visibility, and stable Z order. A future sprite-sheet renderer can extend the same contract with source rectangles. The manifest explains a pixel regression in ways an image diff cannot; it contains no nondeterministic timestamps or object iteration order.
 
-Captures include single screenshots and multi-frame strips (adjacent frames at named ticks, with tick labels/metadata). Strips make sub-frame-looking jumps, camera lag, foot sliding, and attack timing inspectable. Screenshots and manifests are output from the same tick/state.
+Captures include single screenshots and multi-frame strips (adjacent frames at named ticks, with tick labels/metadata). The capturer also draws each tracked entity alone to a transparent canvas and records actual alpha-pixel ink bounds, centroid, bottom offset, count, and hash. This is pixel evidence for proportions, anchor adherence, and clipping; it is deliberately stronger than inferring those facts from a semantic rectangle. Screenshots, masks, and manifests are output from the same tick/state.
+
+Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
 
 ## Artifact layout
 
@@ -30,16 +32,20 @@ The sequence capture command writes:
 test-results/sequences/<scenario-id>/
   frame-0000.png
   closeup-0000.png
+  mask-0000.png
+  page-0000.png
+  initial-state.json
+  commands.json
   states.json
   render-manifest-timeline.json
   animation-analysis.json
   contact-sheet.png
   report.html
-  metadata.json
+  metadata.json # commit, reproduction command, viewport/DPR and tool environment
 playwright-report/
 ```
 
-The metadata includes the exact reproduction command. GitHub Actions retains failure evidence and publishes successful Playwright plus walking/attack sequence reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, and drawing decisions behind any image.
+The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. `capture:matrix` runs 20 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
 ## Three complementary verdicts
 

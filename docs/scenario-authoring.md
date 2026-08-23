@@ -2,6 +2,8 @@
 
 `ScenarioV1` is the supported way to begin Cinderwake from a precise state. A loader validates the whole object and constructs a fresh world; tests never patch a running world. This guarantees that a reset clears old entities, input, timers, effects, event buffers, camera state, and random streams.
 
+When debugging a failure that has already progressed beyond a convenient declarative setup, persist the canonical full `GameState` and use `loadState(stateOrJson)`. It reconstructs the snapshot and becomes the reset source; this is not a merge onto the running state. Pair it with a `ReplayTapeV1` in `commands.json` so a report carries its exact before-state and input history.
+
 ## Schema
 
 ```ts
@@ -147,6 +149,7 @@ Replay tests use exact engine ticks. Browser tests may queue the same entries th
 | Method                                            | Purpose                                                                  |
 | ------------------------------------------------- | ------------------------------------------------------------------------ |
 | `loadScenario(nameOrJson)`                        | validate, construct, and render a fresh complete world                   |
+| `loadState(gameStateOrJson)`                      | reconstruct an exact full GameState; retain it as reset source           |
 | `reset()`                                         | reconstruct the last loaded scenario and clear queued/live input         |
 | `setInput(partial)` / `clearInput()`              | set semantic input without browser-event timing                          |
 | `queueInputs(entries)`                            | schedule input changes at exact state ticks                              |
@@ -163,6 +166,6 @@ Replay tests use exact engine ticks. Browser tests may queue the same entries th
 4. Express input changes at exact ticks; avoid sleeps.
 5. Capture state, state hash, render manifest, and PNG at named ticks.
 6. Inspect the generated frame report, especially the foot crosshair and continuity analysis.
-7. Preserve the scenario as a regression fixture when it catches a real defect.
+7. Preserve the scenario or full initial state, `commands.json`, metadata, masks, and images as one reproducibility bundle when it catches a real defect.
 
 Useful boundary scenarios include one-health death, attack exactly at range, projectile beside a wall, loot beneath an actor, two actors at equal foot Y, a player at each map edge, camera following sustained diagonal motion, cooldown with one tick remaining, and a terminal win/loss reset.
