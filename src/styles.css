@@ -613,7 +613,9 @@ button {
   width: 170px;
   height: 170px;
   background-repeat: no-repeat;
-  background-size: 800% 800%;
+  /* ActorAtlasV2 is eight columns by twelve rows. Matching both axes crops
+     exactly one 256px cell instead of leaking the next animation row. */
+  background-size: 800% 1200%;
   background-position: 0 0;
   filter: drop-shadow(0 16px 18px #000c);
 }
