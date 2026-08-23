@@ -203,6 +203,52 @@ button {
   padding: 8px 10px;
   height: max-content;
 }
+.objective {
+  position: absolute;
+  top: 10px;
+  right: 78px;
+  display: grid;
+  width: 224px;
+  height: 58px;
+  padding: 9px 18px 9px 12px;
+  grid-template-columns: 38px 1fr;
+  align-items: center;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-position: 66.667% 0;
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  filter: drop-shadow(0 5px 8px #000);
+}
+.objective > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.objective strong,
+.objective small {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  line-height: 1;
+}
+.objective strong {
+  font-size: 9px;
+}
+.objective small {
+  font-size: 8px;
+}
+.objective-direction {
+  display: block;
+  width: 34px;
+  height: 34px;
+  background-color: transparent;
+  background-image: var(--ui-atlas);
+  background-position: 66.667% 100%;
+  background-repeat: no-repeat;
+  background-size: 400% 400%;
+  transform-origin: center;
+}
 .hud.bottom {
   bottom: 0;
   align-items: end;
@@ -1104,6 +1150,8 @@ button {
 #mobile-tonics,
 #cd,
 #mobile-cd,
+.objective strong,
+.objective small,
 .brand small {
   display: flex;
   flex-wrap: wrap;
@@ -1117,6 +1165,8 @@ button {
 #mobile-tonics > .sprite-word,
 #cd > .sprite-word,
 #mobile-cd > .sprite-word,
+.objective strong > .sprite-word,
+.objective small > .sprite-word,
 .brand small > .sprite-word {
   display: inline-flex;
   flex: 0 0 auto;
@@ -1131,6 +1181,8 @@ button {
 #mobile-tonics > .sprite-space,
 #cd > .sprite-space,
 #mobile-cd > .sprite-space,
+.objective strong > .sprite-space,
+.objective small > .sprite-space,
 .brand small > .sprite-space {
   display: block;
   flex: 0 0 calc(var(--spaces, 1) * 0.52em);
@@ -1246,6 +1298,33 @@ button {
   .game .counter {
     width: 54px;
     height: 54px;
+  }
+
+  .game .objective {
+    top: max(61px, calc(env(safe-area-inset-top) + 51px));
+    right: max(10px, env(safe-area-inset-right));
+    width: 54px;
+    height: 54px;
+    padding: 10px;
+    grid-template-columns: 1fr;
+    background-position: 100% 0;
+  }
+
+  .game .objective > span {
+    display: none;
+  }
+
+  .game .objective-direction {
+    width: 30px;
+    height: 30px;
+  }
+
+  .game .objective strong {
+    font-size: 8px;
+  }
+
+  .game .objective small {
+    font-size: 7px;
   }
 
   .game .hud.bottom {
@@ -1470,6 +1549,13 @@ button {
   .selection-v2 .begin .sprite-text,
   .selection-v2 .seed-display {
     font-size: 9px;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 760px) and (pointer: coarse) {
+  .game .objective {
+    position: fixed;
+    top: 34svh;
   }
 }
 
@@ -1893,6 +1979,12 @@ button {
   }
   .loot-log {
     display: none;
+  }
+  .game .objective {
+    top: 8px;
+    right: max(70px, calc(env(safe-area-inset-right) + 60px));
+    width: 54px;
+    height: 54px;
   }
 }
 

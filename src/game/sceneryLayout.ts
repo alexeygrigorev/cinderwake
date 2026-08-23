@@ -1,7 +1,7 @@
 import { UNITS_PER_TILE } from "./constants";
 import type { DungeonMap, Vec2 } from "./types";
 
-export type SceneryPlacementKind = "structure" | "prop";
+export type SceneryPlacementKind = "structure" | "prop" | "decal";
 
 export interface SceneryCollisionFootprint {
   shape: "ellipse";
@@ -48,8 +48,28 @@ const PROP_NAMES = [
   "barricade",
 ] as const;
 
+export const GROUND_DECAL_NAMES = [
+  "scorch-ring",
+  "blood-smear",
+  "bone-pile",
+  "occult-circle",
+  "chain-coil",
+  "broken-boards",
+  "grave-rubble",
+  "burnt-roots",
+  "melted-candles",
+  "dead-bramble",
+  "discarded-armor",
+  "cracked-embers",
+  "banner-scrap",
+  "saint-fragments",
+  "claw-tracks",
+  "grave-flowers",
+] as const;
+
 type StructureName = (typeof STRUCTURE_NAMES)[number];
 type PropName = (typeof PROP_NAMES)[number];
+type GroundDecalName = (typeof GROUND_DECAL_NAMES)[number];
 
 interface CollisionProfile {
   halfWidth: number;
@@ -168,6 +188,59 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
         tile: { x, y },
         worldAnchor,
         collision: footprint(worldAnchor, PROP_COLLISIONS[name]),
+      });
+    }
+
+    // Explicit test arenas deliberately keep their authored floor unchanged so
+    // temporal baselines continue to isolate actor motion. Generated runs get
+    // the richer room dressing below.
+    if (map.rooms.length === 0) return;
+
+    const decalSlots = [
+      { x: Math.floor(room.width / 2), y: 1 },
+      { x: 2, y: Math.max(2, room.height - 3) },
+      { x: Math.max(2, room.width - 3), y: Math.max(2, room.height - 3) },
+      { x: 1, y: Math.floor(room.height / 2) },
+      { x: Math.max(1, room.width - 2), y: Math.floor(room.height / 2) },
+      { x: Math.floor(room.width / 2), y: Math.max(1, room.height - 2) },
+    ] as const;
+    const decalCount = roomIndex === 0 ? decalSlots.length : 3;
+    for (let decalIndex = 0; decalIndex < decalCount; decalIndex += 1) {
+      const slot = decalSlots[decalIndex]!;
+      const x = room.x + slot.x;
+      const y = room.y + slot.y;
+      const name: GroundDecalName =
+        roomIndex === 0
+          ? GROUND_DECAL_NAMES[decalIndex]!
+          : GROUND_DECAL_NAMES[
+              sceneVariant(
+                map,
+                x + decalIndex * 11,
+                y + roomIndex * 7,
+                GROUND_DECAL_NAMES.length,
+              )
+            ]!;
+      const driftX = sceneVariant(map, x + decalIndex, y, 7) - 3;
+      const driftY = sceneVariant(map, x, y + decalIndex, 5) - 2;
+      const worldAnchor = {
+        x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2 + driftX * 72,
+        y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2 + driftY * 58,
+      };
+      // The first mark sits under the forge and acts as its irregular ember
+      // pool. It shares the visible structure anchor exactly so future layout
+      // changes cannot detach the grounding mark from the building.
+      if (roomIndex === 0 && decalIndex === 0) {
+        worldAnchor.x = x * UNITS_PER_TILE + UNITS_PER_TILE / 2;
+        worldAnchor.y = y * UNITS_PER_TILE - UNITS_PER_TILE / 4;
+      }
+      placements.push({
+        id: `decal:${roomIndex}:${decalIndex}:${name}`,
+        kind: "decal",
+        name,
+        collisionMode: "passable",
+        tile: { x, y },
+        worldAnchor,
+        collision: null,
       });
     }
   });

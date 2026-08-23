@@ -509,6 +509,65 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
   }
 }
 
+async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
+  return page.evaluate(() => {
+    const manifest = window.__GAME_OBSERVE__!.renderManifest();
+    const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
+    const objective = document.querySelector<HTMLElement>("#objective")!;
+    const canvasRect = canvas.getBoundingClientRect();
+    const objectiveRect = objective.getBoundingClientRect();
+    const objectiveArea = objectiveRect.width * objectiveRect.height;
+    const candidates = [
+      ...manifest.sceneSprites
+        .filter(({ layer, visible }) => layer === "structures" && visible)
+        .map(({ objectId, destinationRect }) => ({
+          id: objectId,
+          destinationRect,
+        })),
+      ...manifest.drawCalls
+        .filter(
+          ({ type, visible }) =>
+            visible && (type === "player" || type === "monster"),
+        )
+        .map(({ entityId, destinationRect }) => ({
+          id: entityId,
+          destinationRect,
+        })),
+    ];
+    return candidates.flatMap(({ id, destinationRect }) => {
+      const worldRect = {
+        left:
+          canvasRect.left +
+          (destinationRect.x / canvas.width) * canvasRect.width,
+        top:
+          canvasRect.top +
+          (destinationRect.y / canvas.height) * canvasRect.height,
+        right:
+          canvasRect.left +
+          ((destinationRect.x + destinationRect.width) / canvas.width) *
+            canvasRect.width,
+        bottom:
+          canvasRect.top +
+          ((destinationRect.y + destinationRect.height) / canvas.height) *
+            canvasRect.height,
+      };
+      const width = Math.max(
+        0,
+        Math.min(objectiveRect.right, worldRect.right) -
+          Math.max(objectiveRect.left, worldRect.left),
+      );
+      const height = Math.max(
+        0,
+        Math.min(objectiveRect.bottom, worldRect.bottom) -
+          Math.max(objectiveRect.top, worldRect.top),
+      );
+      return objectiveArea > 0 && (width * height) / objectiveArea > 0.05
+        ? [`objective:occludes-${id}`]
+        : [];
+    });
+  });
+}
+
 for (const profile of contract.profiles) {
   test(`${profile.id} public selection obeys the screen contract`, async ({
     browser,
@@ -560,6 +619,7 @@ for (const profile of contract.profiles) {
       for (const selector of contract.screens.game.publicForbidden)
         await expect(page.locator(selector)).toHaveCount(0);
       await gameGeometry(page, profile);
+      expect(await hudWorldOverlapViolations(page)).toEqual([]);
       await expect(page).toHaveScreenshot(`${profile.id}-game.png`);
       expect(errors).toEqual([]);
     } finally {
@@ -567,6 +627,30 @@ for (const profile of contract.profiles) {
     }
   });
 }
+
+test("game HUD assessor rejects an objective ribbon across the encounter", async ({
+  browser,
+}) => {
+  const profile = contract.profiles.find(({ id }) => id === "desktop")!;
+  const { context, page, errors } = await contractPage(browser, profile);
+  try {
+    await page.goto(contract.screens.game.route);
+    await page.locator("#begin").click();
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+    expect(await hudWorldOverlapViolations(page)).toEqual([]);
+    await page.locator("#objective").evaluate((element) => {
+      Object.assign((element as HTMLElement).style, {
+        left: "50%",
+        right: "auto",
+        transform: "translateX(-50%)",
+      });
+    });
+    expect(await hudWorldOverlapViolations(page)).not.toEqual([]);
+    expect(errors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
 
 test("screen assessors reject known target and hero-crop regressions", async ({
   browser,

@@ -14,6 +14,7 @@ import {
   type EntityMaskV1,
   type RenderManifestV1,
   type SceneSpriteV2,
+  type WorldUiCallV1,
 } from "./manifest";
 import { SPRITE_CATALOG, spriteImage, type SourceRectV1 } from "./sprites";
 
@@ -29,6 +30,10 @@ export class CanvasRenderer {
   previousCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
   displayCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
   private manifest?: RenderManifestV1;
+  private readonly sourceInkBounds = new Map<
+    string,
+    { top: number; bottom: number }
+  >();
   private readonly drawFullContract: boolean;
 
   constructor(canvas: HTMLCanvasElement, drawFullContract = false) {
@@ -109,6 +114,7 @@ export class CanvasRenderer {
       cameraTarget: this.cameraTarget(state),
       cameraMode,
     });
+    manifest.worldUi = this.buildWorldUi(manifest, state);
     this.manifest = manifest;
     const context = this.context;
     context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
@@ -158,7 +164,14 @@ export class CanvasRenderer {
         if (this.drawFullContract || item.sprite.visible)
           this.drawSceneSprite(context, item.sprite);
       } else if (this.drawFullContract || item.call.visible) {
-        this.drawEntitySprite(context, item.call, state);
+        this.drawEntitySprite(
+          context,
+          item.call,
+          state,
+          manifest.worldUi.find(
+            ({ ownerId }) => ownerId === item.call.entityId,
+          ),
+        );
       }
     }
     return manifest;
@@ -276,6 +289,7 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     call: DrawCallV1,
     state: GameState,
+    worldUi: WorldUiCallV1 | undefined,
   ): void {
     if (call.type === "player" || call.type === "monster") {
       this.drawWorldSprite(
@@ -303,8 +317,96 @@ export class CanvasRenderer {
     const actor = state.monsters.find(
       (monster) => monster.id === call.entityId,
     );
-    if (call.type === "monster" && actor && actor.health > 0)
-      this.drawHealthBar(context, call, actor.health / actor.maxHealth);
+    if (call.type === "monster" && actor && actor.health > 0 && worldUi)
+      this.drawHealthBar(context, worldUi);
+  }
+
+  private alphaBounds(reference: ImageBackedReference): {
+    top: number;
+    bottom: number;
+  } {
+    const { sourceRect } = reference;
+    const key = `${reference.assetId}:${sourceRect.x}:${sourceRect.y}:${sourceRect.width}:${sourceRect.height}`;
+    const cached = this.sourceInkBounds.get(key);
+    if (cached) return cached;
+    const canvas = document.createElement("canvas");
+    canvas.width = sourceRect.width;
+    canvas.height = sourceRect.height;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("Sprite alpha inspection is unavailable");
+    context.drawImage(
+      spriteImage(reference.assetId),
+      sourceRect.x,
+      sourceRect.y,
+      sourceRect.width,
+      sourceRect.height,
+      0,
+      0,
+      sourceRect.width,
+      sourceRect.height,
+    );
+    const pixels = context.getImageData(
+      0,
+      0,
+      sourceRect.width,
+      sourceRect.height,
+    ).data;
+    let top = sourceRect.height;
+    let bottom = -1;
+    for (let y = 0; y < sourceRect.height; y += 1) {
+      for (let x = 0; x < sourceRect.width; x += 1) {
+        if (pixels[(y * sourceRect.width + x) * 4 + 3]! <= 8) continue;
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    }
+    const bounds =
+      bottom >= 0 ? { top, bottom } : { top: 0, bottom: sourceRect.height - 1 };
+    this.sourceInkBounds.set(key, bounds);
+    return bounds;
+  }
+
+  private buildWorldUi(
+    manifest: RenderManifestV1,
+    state: GameState,
+  ): WorldUiCallV1[] {
+    return state.monsters.flatMap((monster) => {
+      if (monster.health <= 0) return [];
+      const call = manifest.drawCalls.find(
+        ({ entityId }) => entityId === monster.id,
+      );
+      if (!call) return [];
+      const ink = this.alphaBounds(call);
+      const actorInkTop =
+        call.destinationRect.y +
+        (ink.top / call.sourceRect.height) * call.destinationRect.height;
+      const width = Math.round(
+        Math.max(42, Math.min(54, call.destinationRect.width * 0.42)),
+      );
+      const height = 12;
+      const destinationRect = {
+        x: Math.round(call.screenAnchor.x - width / 2),
+        y: Math.round(actorInkTop - height - 3),
+        width,
+        height,
+      };
+      return [
+        {
+          id: `health:${monster.id}`,
+          type: "monster-health" as const,
+          ownerId: monster.id,
+          destinationRect,
+          actorInkTop,
+          healthRatio: monster.health / monster.maxHealth,
+          visible:
+            call.visible &&
+            destinationRect.x + destinationRect.width >= 0 &&
+            destinationRect.y + destinationRect.height >= 0 &&
+            destinationRect.x <= manifest.viewport.width &&
+            destinationRect.y <= manifest.viewport.height,
+        },
+      ];
+    });
   }
 
   private rotationFor(call: DrawCallV1): number {
@@ -333,17 +435,9 @@ export class CanvasRenderer {
 
   private drawHealthBar(
     context: CanvasRenderingContext2D,
-    call: DrawCallV1,
-    health: number,
+    worldUi: WorldUiCallV1,
   ): void {
-    const width = 38;
-    const height = 11;
-    const destination = {
-      x: Math.round(call.screenAnchor.x - width / 2),
-      y: Math.round(call.destinationRect.y - 9),
-      width,
-      height,
-    };
+    const destination = worldUi.destinationRect;
     this.drawWorldSprite(
       context,
       "world-ui:health-frame",
@@ -353,9 +447,12 @@ export class CanvasRenderer {
     const fillSprite = SPRITE_CATALOG.sprites["world-ui:health-fill"]!;
     const frameIdentity = fillSprite.clips.static!.frameIdentities[0]!;
     const source = fillSprite.frames[frameIdentity]!;
-    const ratio = Math.max(0, Math.min(1, health));
+    const ratio = Math.max(0, Math.min(1, worldUi.healthRatio));
     const inset = 4;
-    const fillWidth = Math.max(1, Math.round((width - inset * 2) * ratio));
+    const fillWidth = Math.max(
+      1,
+      Math.round((destination.width - inset * 2) * ratio),
+    );
     this.drawImageReference(
       context,
       {

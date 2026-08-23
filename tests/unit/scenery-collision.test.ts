@@ -132,12 +132,25 @@ describe("deterministic scenery collision", () => {
     };
     state.player.previousPosition = { ...state.player.position };
     state.settings.ai = true;
+    const start = { ...monster.position };
+    const startDistance = Math.hypot(
+      monster.position.x - state.player.position.x,
+      monster.position.y - state.player.position.y,
+    );
 
     for (let tick = 0; tick < 100; tick += 1) stepGame(state, EMPTY_INPUT);
     expect(overlapsScenery(monster.position, monster.radius, collision)).toBe(
       false,
     );
-    expect(monster.position.y).toBeGreaterThan(collision.center.y);
+    expect(
+      Math.hypot(monster.position.x - start.x, monster.position.y - start.y),
+    ).toBeGreaterThan(1_000);
+    expect(
+      Math.hypot(
+        monster.position.x - state.player.position.x,
+        monster.position.y - state.player.position.y,
+      ),
+    ).toBeLessThan(startDistance);
 
     const rubbleMap = structuredClone(state.map);
     rubbleMap.rooms = [
@@ -158,7 +171,7 @@ describe("deterministic scenery collision", () => {
     expect(rubble?.collision).toBeNull();
     expect(
       buildSceneryLayout(state.map)
-        .filter(({ name }) => name !== "rubble")
+        .filter(({ kind, name }) => kind !== "decal" && name !== "rubble")
         .every(
           ({ collisionMode, collision }) =>
             collisionMode === "solid" && collision !== null,

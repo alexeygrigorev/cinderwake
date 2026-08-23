@@ -1,5 +1,6 @@
 import "./styles.css";
 import { ARCHETYPES } from "./game/content";
+import { findStateNavigationRoute } from "./game/navigation";
 import type { CharacterClass, GameState } from "./game/types";
 import {
   BUILTIN_SCENARIOS,
@@ -9,6 +10,7 @@ import {
 import { GameHost } from "./app/GameHost";
 import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
+import { installPlayerObserver } from "./testkit/playerObserver";
 import { preloadSpriteAssets, SPRITE_CATALOG } from "./render/sprites";
 
 const app = document.querySelector<HTMLDivElement>("#app")!;
@@ -134,7 +136,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
       () => screen();
     return;
   }
-  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
+  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
@@ -143,10 +145,18 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     canvas,
     (x, y) => host!.worldAt(x, y),
     () => host!.getState().player.position,
+    (from, target) => {
+      const state = host!.getState();
+      return findStateNavigationRoute(state, from, target, state.player.radius);
+    },
   );
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
-  host.onRender = updateHud;
+  const playerObserver = installPlayerObserver(host);
+  host.onRender = (state, manifest) => {
+    updateHud(state);
+    playerObserver.record(manifest);
+  };
   host.startScenario(scenario);
   host.start();
   if (testMode) installGameTestBridge(host);
@@ -170,7 +180,13 @@ function updateHud(state: GameState): void {
     cd = document.querySelector<HTMLElement>("#cd"),
     mobileCd = document.querySelector<HTMLElement>("#mobile-cd"),
     runSeed = document.querySelector<HTMLElement>(".brand small"),
-    log = document.querySelector<HTMLElement>("#log");
+    log = document.querySelector<HTMLElement>("#log"),
+    objective = document.querySelector<HTMLElement>("#objective"),
+    objectiveTitle = document.querySelector<HTMLElement>("#objective-title"),
+    objectiveDetail = document.querySelector<HTMLElement>("#objective-detail"),
+    objectiveDirection = document.querySelector<HTMLElement>(
+      ".objective-direction",
+    );
   if (!hp) return;
   setSpriteGlyphs(hp, `${p.health} / ${p.maxHealth}`);
   setSpriteGlyphs(runSeed!, state.seed);
@@ -188,6 +204,50 @@ function updateHud(state: GameState): void {
       : `${((p.abilityReadyTick - state.tick) / 60).toFixed(1)}s`;
   setSpriteGlyphs(cd!, cooldown);
   setSpriteGlyphs(mobileCd!, cooldown);
+  const target = livingMonsters.length
+    ? [...livingMonsters].sort((first, second) => {
+        const firstDistance = Math.hypot(
+          first.position.x - p.position.x,
+          first.position.y - p.position.y,
+        );
+        const secondDistance = Math.hypot(
+          second.position.x - p.position.x,
+          second.position.y - p.position.y,
+        );
+        return (
+          firstDistance - secondDistance || first.id.localeCompare(second.id)
+        );
+      })[0]!
+    : {
+        id: "exit:rift-gate",
+        position: {
+          x: (state.map.exit.x + 0.5) * 1024,
+          y: (state.map.exit.y + 0.5) * 1024,
+        },
+      };
+  const objectiveHeading = livingMonsters.length
+    ? "Hunt the cinders"
+    : "The rift is open";
+  const objectiveCopy = livingMonsters.length
+    ? `${livingMonsters.length} remain`
+    : "Enter the gate";
+  setSpriteGlyphs(objectiveTitle!, objectiveHeading);
+  setSpriteGlyphs(objectiveDetail!, objectiveCopy);
+  const targetAngle =
+    (Math.atan2(
+      target.position.y - p.position.y,
+      target.position.x - p.position.x,
+    ) *
+      180) /
+      Math.PI -
+    90;
+  objectiveDirection!.style.transform = `rotate(${targetAngle.toFixed(2)}deg)`;
+  objective!.dataset.targetId = target.id;
+  objective!.dataset.state = livingMonsters.length ? "hunt" : "exit";
+  objective!.setAttribute(
+    "aria-label",
+    `${objectiveHeading}. ${objectiveCopy}. Direction marker points toward ${target.id}.`,
+  );
   const events = (state.events.length ? state.events : state.eventLog).slice(
     -2,
   );

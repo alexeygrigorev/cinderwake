@@ -6,6 +6,7 @@ import {
   tileCenter,
 } from "../game/dungeon";
 import { createRngStreams, randomInt } from "../game/rng";
+import { overlapsScenery, sceneryCollisions } from "../game/sceneryLayout";
 import type {
   AnimationClip,
   AnimationState,
@@ -214,24 +215,82 @@ function createMonster(
 }
 
 function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
-  const candidates: Vec2[] = [];
+  const nearCandidates: Vec2[] = [];
+  const distantCandidates: Vec2[] = [];
+  const solidScenery = sceneryCollisions(state.map);
   for (let y = 1; y < state.map.height - 1; y += 1) {
     for (let x = 1; x < state.map.width - 1; x += 1) {
       const distance =
         Math.abs(x - state.map.spawn.x) + Math.abs(y - state.map.spawn.y);
-      if (isFloor(state.map, x, y) && distance > 8 && (x + y) % 3 === 0)
-        candidates.push({ x, y });
+      const position = tileCenter({ x, y });
+      if (
+        !isFloor(state.map, x, y) ||
+        solidScenery.some((collision) =>
+          overlapsScenery(position, 420, collision),
+        )
+      )
+        continue;
+      // Keep the authored opening group inside the narrow center slice that a
+      // portrait phone retains after cover-fitting the 16:9 canvas. Manhattan
+      // distance alone made enemies technically render-visible while their
+      // bodies were cropped beyond the device viewport.
+      if (
+        distance >= 2 &&
+        distance <= 3 &&
+        Math.abs(x - state.map.spawn.x) <= 1
+      )
+        nearCandidates.push({ x, y });
+      else if (distance > 8 && (x + y) % 3 === 0)
+        distantCandidates.push({ x, y });
     }
   }
   const specs: ScenarioMonsterV1[] = [];
-  const kinds: MonsterKind[] = ["ashfang", "ashfang", "hexer", "stonekin"];
-  while (candidates.length > 0 && specs.length < 14) {
+  const openingKinds: MonsterKind[] = ["stonekin", "ashfang", "hexer"];
+  const distantKinds: MonsterKind[] = [
+    "ashfang",
+    "hexer",
+    "stonekin",
+    "ashfang",
+  ];
+  const drawCandidate = (candidates: Vec2[]) => {
     const selected = randomInt(state.rng.map, 0, candidates.length);
-    const [tile] = candidates.splice(selected, 1);
+    return candidates.splice(selected, 1)[0];
+  };
+  const mirror = randomInt(state.rng.map, 0, 2) === 0 ? -1 : 1;
+  const openingSlots = [
+    { x: state.map.spawn.x - mirror, y: state.map.spawn.y + 1 },
+    { x: state.map.spawn.x + mirror, y: state.map.spawn.y + 2 },
+    { x: state.map.spawn.x + mirror, y: state.map.spawn.y - 2 },
+  ];
+  for (const slot of openingSlots) {
+    if (nearCandidates.length === 0) break;
+    const selectedIndex = nearCandidates.reduce((best, candidate, index) => {
+      const score = (candidate.x - slot.x) ** 2 + (candidate.y - slot.y) ** 2;
+      const incumbent = nearCandidates[best]!;
+      const incumbentScore =
+        (incumbent.x - slot.x) ** 2 + (incumbent.y - slot.y) ** 2;
+      return score < incumbentScore ||
+        (score === incumbentScore &&
+          (candidate.y < incumbent.y ||
+            (candidate.y === incumbent.y && candidate.x < incumbent.x)))
+        ? index
+        : best;
+    }, 0);
+    const tile = nearCandidates.splice(selectedIndex, 1)[0];
     if (!tile) break;
     specs.push({
       id: `monster:${specs.length.toString().padStart(2, "0")}`,
-      kind: kinds[specs.length % kinds.length]!,
+      kind: openingKinds[specs.length]!,
+      tile: [tile.x, tile.y],
+      guaranteedLoot: specs.length === 0,
+    });
+  }
+  while (distantCandidates.length > 0 && specs.length < 14) {
+    const tile = drawCandidate(distantCandidates);
+    if (!tile) break;
+    specs.push({
+      id: `monster:${specs.length.toString().padStart(2, "0")}`,
+      kind: distantKinds[specs.length % distantKinds.length]!,
       tile: [tile.x, tile.y],
       elite: specs.length === 11,
       guaranteedLoot: specs.length === 0 || specs.length === 11,

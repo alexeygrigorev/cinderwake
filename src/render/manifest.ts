@@ -86,6 +86,16 @@ export interface SceneSpriteV2 extends SpriteReferenceV2 {
   } | null;
 }
 
+export interface WorldUiCallV1 {
+  id: string;
+  type: "monster-health";
+  ownerId: string;
+  destinationRect: DestinationRectV1;
+  actorInkTop: number;
+  healthRatio: number;
+  visible: boolean;
+}
+
 export interface RenderManifestV1 {
   schemaVersion: 2;
   spriteCatalogRevision: string;
@@ -99,6 +109,7 @@ export interface RenderManifestV1 {
   cameraMode: CameraMode;
   sceneSprites: SceneSpriteV2[];
   drawCalls: DrawCallV1[];
+  worldUi: WorldUiCallV1[];
 }
 
 export interface EntityMaskV1 {
@@ -426,8 +437,28 @@ function buildSceneSprites(
             : placement.name === "obelisk" || placement.name === "rubble"
               ? 144
               : 196;
-    const size = placement.kind === "structure" ? structureSize : 82;
-    const destinationRect = destinationAt(screenAnchor, size, size);
+    const decalSize =
+      placement.name === "blood-smear" ||
+      placement.name === "occult-circle" ||
+      placement.name === "claw-tracks"
+        ? 108
+        : placement.name === "scorch-ring" ||
+            placement.name === "broken-boards" ||
+            placement.name === "dead-bramble"
+          ? 96
+          : 78;
+    const size =
+      placement.kind === "structure"
+        ? structureSize
+        : placement.kind === "decal"
+          ? decalSize
+          : 82;
+    const destinationRect = destinationAt(
+      screenAnchor,
+      size,
+      size,
+      placement.kind === "decal" ? { x: 128, y: 128 } : undefined,
+    );
     scene.push({
       ...sceneReference(spriteId),
       objectId: placement.id,
@@ -436,7 +467,12 @@ function buildSceneSprites(
       worldAnchor: { ...placement.worldAnchor },
       screenAnchor,
       destinationRect,
-      layer: placement.kind === "structure" ? "structures" : "props",
+      layer:
+        placement.kind === "structure"
+          ? "structures"
+          : placement.kind === "decal"
+            ? "terrain"
+            : "props",
       zOrder: scene.length,
       visible: intersectsViewport(destinationRect),
       opacity: 1,
@@ -586,7 +622,7 @@ export function buildRenderManifest(
       monster.animation.startedAtTick,
     );
     const dimensions = {
-      ashfang: { width: 118, height: 86 },
+      ashfang: { width: 128, height: 108 },
       hexer: { width: 102, height: 112 },
       stonekin: { width: 128, height: 128 },
     }[monster.kind];
@@ -728,5 +764,6 @@ export function buildRenderManifest(
     cameraMode: options.cameraMode ?? "snap",
     sceneSprites: buildSceneSprites(state, camera),
     drawCalls: calls,
+    worldUi: [],
   };
 }
