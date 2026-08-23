@@ -72,7 +72,7 @@ When the final monster dies, the exit unlocks once and emits `exit_unlocked`. Re
 
 ## Visual language and animation
 
-The original astral-ruin palette combines deep charcoal and teal ruins, warm amber heroes and exits, crimson/magenta hostile effects, and pale cyan loot. Generated hero key art is used on character selection; runtime actors are code-rendered from explicit geometry so anchors, hitboxes, proportions, and animation frames are measurable from the first version.
+The original astral-ruin palette combines deep charcoal and teal ruins, warm amber heroes and exits, crimson/magenta hostile effects, and pale cyan loot. Presentation is sprite-driven: all non-title scene and interface marks come from original local atlases with declared anchors and frames. This gives the test framework real source rectangles and alpha pixels to assess for clipping, proportions, and animation quality; see [the art pipeline](art-pipeline.md).
 
 Animation clips are tick-addressable: idle is 6 frames/60 ticks, walk 8/40, primary 6/26, ability 8/36, hurt 4/12, and death 8/48. Every actor is grounded at a bottom-center world anchor. Actors render in stable `(foot Y, entity ID)` order.
 
