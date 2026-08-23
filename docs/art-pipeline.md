@@ -37,6 +37,10 @@ West is the only reflected facing and is derived by horizontally flipping east a
 
 `art/actor-atlas-v1.json` is the single machine-readable packing authority (its schema ID is `ActorAtlasV2`; the stable filename preserves existing tooling). `npm run art:build` chroma-keys the source, removes boundary-connected cross-cell fragments, computes one safe normalization envelope across all six sheets, reanchors every frame, downsamples authoring cells to 128 × 128 runtime cells, and emits a fixed 1024 × 2560 atlas. The 20 rows cover east, north, and south versions of every clip plus two reserves; west reflects east. This reduces decoded memory per actor from roughly 24 MiB to 10 MiB while retaining the 256-pixel originals for future repacking. `npm run art:check` verifies source presence, declared cadence, dimensions, non-empty cells, padding, anchors, and content hashes. Adding a character therefore means supplying the six sheets and one actor ID, not writing character-specific animation code.
 
+Clip recipes may reuse an exact source cell for recovery, hold an authored pose for intentional timing, or declare a deterministic foot-anchored scale transform. These exceptions live under an actor ID in the same contract and are applied by the normal packer; they are never opaque edits to a built atlas. Current Ashfang metadata uses this mechanism to hold its charged side ability before impact and to normalize its unusually low side-run silhouette against the authored north/south scale. Hurt clips for every actor finish on the exact facing-specific idle source cell, so recovery equality survives all rebuilds.
+
+Run `npm run art:animation:check` after packing. It audits all 144 runtime-facing clip banks, records 720 authored-facing comparisons, injects four known-bad negative controls, and writes inspectable strips, actor overviews, JSON, and HTML to `quality-results/actor-atlas-audit/`. This is stricter than the source/geometry validator and broader than the curated browser sequence matrix; all three gates remain necessary.
+
 ### Generation ingress proof
 
 `art/generation/trials.json` preserves three fresh exact-prompt trials across an armored humanoid, a fine-limbed ranged humanoid, and a heavy non-human actor. `art/generation/accepted-production.json` separately proves immutable lineage for all six accepted source families of those same three actors. Keeping those records separate prevents a promising candidate from being confused with production art.
@@ -71,6 +75,7 @@ The reproducible command sequence is:
 npm ci
 npm run art:build
 npm run art:check
+npm run art:animation:check
 npm run art:generation:check
 npm test
 npm run capture:matrix

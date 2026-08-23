@@ -67,7 +67,7 @@ Run every source-level gate:
 npm run check
 ```
 
-That command includes the fixed actor validator, deterministic mobile-selection rebuild, and generation-ingress verifier. The latter preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
+That command includes the fixed actor validator, exhaustive actor-animation audit, deterministic mobile-selection rebuild, and generation-ingress verifier. The animation audit checks all 144 actor/clip/facing banks, 720 authored-facing comparisons, and four injected negative controls; its inspectable strips and report are written to `quality-results/actor-atlas-audit/index.html`. The generation verifier preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
 
 Run the real Chromium input and visual suite:
 

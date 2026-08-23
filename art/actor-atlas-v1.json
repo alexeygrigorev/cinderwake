@@ -110,7 +110,7 @@
       "durationTicks": 12,
       "looping": false,
       "source": "reactions",
-      "sourceFrames": [0, 1, 2, 3],
+      "sourceFrames": [0, 1, 2, { "source": "primary", "cell": 0 }],
       "authored": "articulated-recoil"
     },
     "death": {
@@ -173,7 +173,7 @@
       "atlasRow": 12,
       "runtimeClip": "hurt",
       "source": "directionReactions",
-      "sourceFrames": [0, 1, 2, 3]
+      "sourceFrames": [0, 1, 2, { "source": "directions", "cell": 0 }]
     },
     "northDeath": {
       "atlasRow": 13,
@@ -206,13 +206,40 @@
       "atlasRow": 16,
       "runtimeClip": "hurt",
       "source": "directionReactions",
-      "sourceFrames": [8, 9, 10, 11]
+      "sourceFrames": [8, 9, 10, { "source": "directions", "cell": 8 }]
     },
     "southDeath": {
       "atlasRow": 17,
       "runtimeClip": "death",
       "source": "directionReactions",
       "sourceFrames": [12, 12, 13, 13, 14, 14, 15, 15]
+    }
+  },
+  "actorOverrides": {
+    "ashfang": {
+      "clips": {
+        "walk": {
+          "frameTransform": {
+            "scaleX": 0.9,
+            "scaleY": 1.42,
+            "anchor": "foot"
+          },
+          "reason": "Bring the low side-on run into the authored north/south body-height envelope without changing cadence or source identity."
+        },
+        "ability": {
+          "sourceFrames": [
+            8,
+            9,
+            9,
+            11,
+            12,
+            13,
+            14,
+            { "source": "primary", "cell": 0 }
+          ],
+          "reason": "Hold the charged crouch for one frame and omit the disconnected airborne pose before the ground strike."
+        }
+      }
     }
   },
   "facing": {

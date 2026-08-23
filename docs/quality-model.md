@@ -42,11 +42,31 @@ Numeric tolerances belong in scenario/test metadata, never hidden in an evaluato
 
 Camera acceleration is measured and retained for diagnosis, but is not globally gated because deliberate camera snaps and tracked-camera scenarios need distinct thresholds. Scenario-specific tests assert camera clamping and stable screen anchors. The current smooth camera uses a deterministic fixed per-tick follow rule; captured test frames use alpha 1 and can use snap/fixed camera mode so display interpolation never makes a state assertion ambiguous.
 
+## Exhaustive actor-atlas gate
+
+Browser sequences prove real timing, compositing, camera behavior, and state transitions, but a curated scenario matrix cannot exercise every authored atlas row. `npm run art:animation:check` therefore audits the complete static animation contract before the focused browser captures: six actors × six clips × four runtime facings, or 144 banks. It also records 720 same-phase comparisons across the three authored views; idle and walk comparisons are gated because those banks can change immediately during a turn. West is audited from the exact horizontal reflection used by the renderer.
+
+| Atlas measurement          | Gate                                                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------- |
+| Ink and crop               | at least 120 alpha pixels; safe bounds; no silhouette-edge run longer than 24 px       |
+| Foot anchor                | every grounded frame ends exactly at atlas Y 115                                       |
+| Loop continuity            | centroid step ≤ 10 px; width/height step ≤ 20 px; alpha-mask IoU ≥ 0.45                |
+| Hurt continuity            | centroid step ≤ 18 px and exact terminal-frame equality with the facing-specific idle  |
+| Attack/ability continuity  | centroid step ≤ 32 px; centered body-core step ≤ 22 px; dimension step ≤ 60 px         |
+| Death continuity           | centroid step ≤ 32 px; dimension step ≤ 64 px                                          |
+| Authored idle/walk turns   | centroid distance ≤ 20 px; height delta ≤ 24 px; ink-area ratio ≤ 1.35                 |
+| Pose diversity             | four distinct idle/walk/hurt poses, five action poses, full declared death progression |
+| Detector negative controls | injected bad recovery, displacement, clipping, and turn scale must all fail            |
+
+The command writes machine-readable JSON, a self-contained HTML report, 144 full frame strips, and six labeled actor overviews under `quality-results/actor-atlas-audit/`. A gold outline identifies the loop-wrap or exact idle comparison frame. `npm run art:animation:audit` regenerates the same evidence without returning a failing exit code, which is useful while diagnosing rejected art; the verdict inside the report remains authoritative.
+
+This gate exposed a real false green in the older suite. The prior atlas validator checked dimensions, nonblank cells, grounding, padding, and hashes, while the public temporal matrix contained no hurt sequence, monster ability sequence, or same-tick facing-turn sequence. As a result, every actor could snap from hurt to idle, Ashfang could change apparent scale on a turn, and its registered side ability could jump between poses while those narrower suites passed. The strict atlas gate is now part of `npm run check`; it complements rather than replaces real-browser capture and visual review.
+
 ## Capture profiles and public matrix
 
 The sequence assessor names its expectations through capture profiles: `pose`, `static-pose`, `loop`, `one-shot`, `one-shot-floating`, `death`, `anchored-motion`, `projectile`, and `camera-smooth`. A profile selects relevant checks rather than pretending that an idle sprite and a projectile have identical motion obligations. Every profile still keeps semantic frame timing, transparent entity-mask evidence, and a replayable state/tape bundle.
 
-The shipped public matrix contains 23 deterministic reports: four directional locomotion runs; one mobile run sampled at quarter-tick interpolation; all six east-facing hero primary/ability actions; explicit north-facing Ranger and south-facing Arcanist action/recovery regressions; all three enemy attacks; enemy death through terminal pose and despawn; long projectile travel; a separate projectile hit/effect/despawn lifecycle; a full 48-tick loot loop; smooth camera convergence; and win/loss overlays. The sprite contract additionally resolves every clip for all six actors across all four cardinal facings. Keyboard/pointer, touch controls, viewport layout, selection, generated maps, and broader state behavior remain in the Playwright/unit reports. Expand both layers with each newly shipped system, especially the roadmap Cinder Nodes, dodge, equipment, and boss content.
+The shipped public matrix contains 23 deterministic reports: four directional locomotion runs; one mobile run sampled at quarter-tick interpolation; all six east-facing hero primary/ability actions; explicit north-facing Ranger and south-facing Arcanist action/recovery regressions; all three enemy attacks; enemy death through terminal pose and despawn; long projectile travel; a separate projectile hit/effect/despawn lifecycle; a full 48-tick loot loop; smooth camera convergence; and win/loss overlays. The exhaustive atlas report additionally measures every clip for all six actors across all four cardinal facings, including registered monster ability banks that current AI does not select. Keyboard/pointer, touch controls, viewport layout, selection, generated maps, and broader state behavior remain in the Playwright/unit reports. Expand both layers with each newly shipped system, especially the roadmap Cinder Nodes, dodge, equipment, and boss content.
 
 ## Review protocol for changed visuals
 

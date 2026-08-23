@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run art:selection:check && npm run art:generation:check && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -22,6 +22,8 @@
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",
     "art:selection:check": "node scripts/build-selection-assets.mjs --check",
+    "art:animation:audit": "node scripts/audit-actor-atlases.mjs --report-only",
+    "art:animation:check": "node scripts/audit-actor-atlases.mjs",
     "art:generation:check": "node scripts/test-generation-pipeline.mjs"
   },
   "devDependencies": {

@@ -30,6 +30,8 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run art:check
+      - name: Audit every runtime actor animation bank
+        run: npm run art:animation:check
       - name: Rebuild mobile selection sprites byte-for-byte
         run: npm run art:selection:check
       - name: Verify generation ingress and deterministic actor builds
@@ -65,6 +67,13 @@ jobs:
         with:
           name: generation-pipeline
           path: quality-results/generation-pipeline/
+          if-no-files-found: error
+      - name: Upload actor-animation evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: actor-atlas-audit
+          path: quality-results/actor-atlas-audit/
           if-no-files-found: error
 
   deploy:
@@ -103,6 +112,11 @@ jobs:
         with:
           name: generation-pipeline
           path: site/quality/generation-pipeline
+      - name: Download actor-animation evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: actor-atlas-audit
+          path: site/quality/actor-atlas-audit
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site

@@ -333,11 +333,59 @@ async function blendedFrame(first, second, mix) {
   return reanchorCell(await sharp(output, { raw: a.info }).png().toBuffer());
 }
 
+async function transformedFrame(buffer, transform) {
+  if (!transform) return buffer;
+  if (transform.anchor !== "foot")
+    throw new Error(`Unsupported frame transform anchor: ${transform.anchor}`);
+  const scaleX = transform.scaleX ?? 1;
+  const scaleY = transform.scaleY ?? 1;
+  if (
+    !Number.isFinite(scaleX) ||
+    !Number.isFinite(scaleY) ||
+    scaleX <= 0 ||
+    scaleY <= 0
+  )
+    throw new Error("Frame transform scales must be positive finite numbers");
+  const cleaned = await cleanLowAlpha(buffer);
+  const bounds = await alphaBounds(cleaned);
+  const width = Math.max(1, Math.round(bounds.width * scaleX));
+  const height = Math.max(1, Math.round(bounds.height * scaleY));
+  const sprite = await sharp(cleaned)
+    .extract(bounds)
+    .resize(width, height, { fit: "fill", kernel: "lanczos3" })
+    .png()
+    .toBuffer();
+  return reanchorCell(
+    await sharp({
+      create: {
+        width: ACTOR_CELL,
+        height: ACTOR_CELL,
+        channels: 4,
+        background: transparent,
+      },
+    })
+      .composite([
+        {
+          input: sprite,
+          left: Math.round(ACTOR_SPEC.atlas.footAnchor.x - width / 2),
+          top: ACTOR_SPEC.atlas.footAnchor.y - height,
+        },
+      ])
+      .png()
+      .toBuffer(),
+  );
+}
+
 async function frameFromRecipe(cellsBySource, sourceId, recipe) {
   if (Number.isInteger(recipe)) return cellsBySource[sourceId][recipe];
   if (recipe.source) return cellsBySource[recipe.source][recipe.cell];
   const cells = cellsBySource[sourceId];
   return blendedFrame(cells[recipe.from], cells[recipe.to], recipe.mix);
+}
+
+function clipForActor(actorId, family, clipId, clip) {
+  const override = ACTOR_SPEC.actorOverrides?.[actorId]?.[family]?.[clipId];
+  return override ? { ...clip, ...override } : clip;
 }
 
 async function buildActor(actorId) {
@@ -359,13 +407,22 @@ async function buildActor(actorId) {
   const cellsBySource = await normalizedActorCellSets(sources);
   const composites = [];
   const banks = [
-    ...Object.entries(ACTOR_SPEC.clips),
-    ...Object.entries(ACTOR_SPEC.directionalClips),
+    ...Object.entries(ACTOR_SPEC.clips).map(([clipId, clip]) => [
+      clipId,
+      clipForActor(actorId, "clips", clipId, clip),
+    ]),
+    ...Object.entries(ACTOR_SPEC.directionalClips).map(([clipId, clip]) => [
+      clipId,
+      clipForActor(actorId, "directionalClips", clipId, clip),
+    ]),
   ];
   for (const [, clip] of banks) {
     for (const [frameIndex, recipe] of clip.sourceFrames.entries())
       composites.push({
-        input: await frameFromRecipe(cellsBySource, clip.source, recipe),
+        input: await transformedFrame(
+          await frameFromRecipe(cellsBySource, clip.source, recipe),
+          clip.frameTransform,
+        ),
         left: frameIndex * ACTOR_CELL,
         top: clip.atlasRow * ACTOR_CELL,
       });
@@ -553,6 +610,10 @@ if (!OPTIONS.actorsOnly) {
     inputPath("environment", "ground-source.png"),
     outputPath("environment-ground.png"),
   );
+  const floorPath = await buildGrid(
+    inputPath("environment", "floor-source.png"),
+    outputPath("environment-floor.png"),
+  );
   const structuresPath = await buildGrid(
     inputPath("environment", "structures-source.png"),
     outputPath("environment-structures.png"),
@@ -576,6 +637,7 @@ if (!OPTIONS.actorsOnly) {
   outputs.push(
     terrainPath,
     groundPath,
+    floorPath,
     structuresPath,
     propsPath,
     uiPath,

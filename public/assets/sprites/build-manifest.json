@@ -3,32 +3,32 @@
   "pipeline": "ActorAtlasV2",
   "actorSpec": {
     "source": "art/actor-atlas-v1.json",
-    "sha256": "c093cb03cbdf871fea68eb513e0a90211edb93edffd9e580ab74966a293dd735"
+    "sha256": "480b4b05787017440aee8aaf4a20e875022c6534bcd548c84a39275619a63a54"
   },
   "builtAt": "deterministic-from-committed-source",
   "outputs": {
     "actor-vanguard.png": {
-      "sha256": "87962956a5e0cf6531c86eef187cbec4891e05bb22fdfeabae1ed444bdda986d",
+      "sha256": "5004facbf1b0400554b30c80fe1f83dd097786c7c61f8b235734c551f8d620a4",
       "source": "public/assets/sprites/actor-vanguard.png"
     },
     "actor-ranger.png": {
-      "sha256": "ba6c8cd9708713f1262e3e47ee2375bf65372e3868bc4b40616b09ba3044226a",
+      "sha256": "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862",
       "source": "public/assets/sprites/actor-ranger.png"
     },
     "actor-arcanist.png": {
-      "sha256": "fbed99924640e2bc9534970290363ae0589998929150494ccab01824d9118b49",
+      "sha256": "eb4b45358723fa5ce00fcfa01c9d6e80fa2353cb0fda44abb0a27ca3e5c38dca",
       "source": "public/assets/sprites/actor-arcanist.png"
     },
     "actor-ashfang.png": {
-      "sha256": "f8123c107dd520970b0af6f3157a1761cb414c2190a0e663983b4b38d612d7f0",
+      "sha256": "3b5662c31bedfc997da0c1ed7a9fe59397c28a9ec71b93c4ee769e5783af41ed",
       "source": "public/assets/sprites/actor-ashfang.png"
     },
     "actor-hexer.png": {
-      "sha256": "bc401075592ae74556de0a27d3ecf4a6b8e08f99b80e7c329c703a1cc0ab2dfb",
+      "sha256": "1eb1db8023e9c2448d26f50af4aaef6152f293fc3b960635fc6674caf88ec7d7",
       "source": "public/assets/sprites/actor-hexer.png"
     },
     "actor-stonekin.png": {
-      "sha256": "025bfe46d0a6088f99bf1736b41126abf64303acc82f1370c8649aca32af9b73",
+      "sha256": "eb970bb947701a82db2607e4da9c30537f53f4d303fd397b70e3edf68018019a",
       "source": "public/assets/sprites/actor-stonekin.png"
     },
     "environment-terrain.png": {
@@ -38,6 +38,10 @@
     "environment-ground.png": {
       "sha256": "ab2af44a82c9f5acb46b9903b27342a1dd059944ba515908f8eabf6b9fa93626",
       "source": "public/assets/sprites/environment-ground.png"
+    },
+    "environment-floor.png": {
+      "sha256": "4d4815d89276c743ec9240b6bcb3eaa886ed5412e60b82070f667a2629fd74d0",
+      "source": "public/assets/sprites/environment-floor.png"
     },
     "environment-structures.png": {
       "sha256": "b7d94fac72c4814d74e68041432cfe1262eac67aaebdb4860792085703a9f7a8",
