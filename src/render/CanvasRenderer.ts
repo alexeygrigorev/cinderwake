@@ -562,15 +562,25 @@ export class CanvasRenderer {
     attack: number,
     ability: number,
   ): void {
-    const attackDraw = [0.8, 0, 0.15, 0, 0, 0];
+    const attackDraw = [0.85, 0, 0.12, 0.07, 0.03, 0];
+    const attackRecoil = [0, 7, 4, 2, 1, 0];
     const abilityDraw = [0.85, 0.2, 0.8, 0.15, 0.75, 0.1, 0, 0];
+    const attackFrame =
+      attack >= 0 ? Math.round(attack * (attackDraw.length - 1)) : -1;
     const draw =
       attack >= 0
-        ? attackDraw[Math.round(attack * (attackDraw.length - 1))]!
+        ? attackDraw[attackFrame]!
         : ability >= 0
           ? abilityDraw[Math.round(ability * (abilityDraw.length - 1))]!
           : 0;
-    line(context, { x: -8, y: -29 }, { x: 8 - draw * 5, y: -25 }, 5, "#d3a17f");
+    const recoil = attackFrame >= 0 ? attackRecoil[attackFrame]! : 0;
+    line(
+      context,
+      { x: -8, y: -29 },
+      { x: 8 - draw * 5 + recoil, y: -25 },
+      5,
+      "#d3a17f",
+    );
     context.strokeStyle = "#a87a49";
     context.lineWidth = 3;
     context.beginPath();
@@ -584,12 +594,18 @@ export class CanvasRenderer {
     context.lineTo(12 - draw * 9, -26);
     context.lineTo(12, -9);
     context.stroke();
-    line(context, { x: 1 - draw * 4, y: -26 }, { x: 24, y: -26 }, 2, "#d6cfb3");
+    line(
+      context,
+      { x: 1 - draw * 4 + recoil, y: -26 },
+      { x: 24 + recoil, y: -26 },
+      2,
+      "#d6cfb3",
+    );
     context.fillStyle = "#9fc96d";
     context.beginPath();
-    context.moveTo(25, -26);
-    context.lineTo(20, -30);
-    context.lineTo(20, -22);
+    context.moveTo(25 + recoil, -26);
+    context.lineTo(20 + recoil, -30);
+    context.lineTo(20 + recoil, -22);
     context.closePath();
     context.fill();
   }
@@ -600,8 +616,14 @@ export class CanvasRenderer {
     ability: number,
   ): void {
     line(context, { x: 9, y: -31 }, { x: 15, y: -5 }, 3, "#6e513b");
-    const activeProgress = Math.max(0, attack, ability);
-    const glow = 1 + Math.sin(activeProgress * Math.PI) * 0.4;
+    const attackStrength = [0.55, 1, 0.6, 0.35, 0.15, 0];
+    const strength =
+      attack >= 0
+        ? attackStrength[Math.round(attack * (attackStrength.length - 1))]!
+        : ability >= 0
+          ? Math.sin(ability * Math.PI)
+          : 0;
+    const glow = 1 + strength * 0.45;
     context.save();
     context.translate(9, -35);
     context.scale(glow, glow);
@@ -616,6 +638,15 @@ export class CanvasRenderer {
     context.closePath();
     context.fill();
     context.restore();
+    if (attack >= 0 && attack < 1) {
+      context.strokeStyle = "#8bf4ea";
+      context.globalAlpha = strength * 0.72;
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(9, -35, 8 + attack * 12, 0, Math.PI * 2);
+      context.stroke();
+      context.globalAlpha = 1;
+    }
     if (ability >= 0) {
       context.strokeStyle = "#8bf4ea";
       context.globalAlpha = 1 - ability;
