@@ -33,6 +33,7 @@ Numeric tolerances belong in scenario/test metadata, never hidden in an evaluato
 | Raster centroid/dimension step                      | profile bounds (`18`/`32` px; death allows `32`/`48`)  | detects implausible silhouette pops while allowing an authored collapse |
 | Grounded raster bottom range                        | `≤ 1` px; death profile `≤ 18` px                      | catches visible float or foot drift                                     |
 | One-shot lifecycle and recovery seam                | start + terminal + idle; terminal/idle mask hash exact | prevents wrapping and one-frame recovery pops                           |
+| One-shot visual poses                               | at least `5` distinct isolated raster masks            | rejects semantically advancing attacks whose silhouette barely changes  |
 | Loop lifecycle                                      | every semantic frame plus at least one wrap            | proves that a loop is complete rather than a short sample               |
 | Death lifecycle                                     | start + terminal + contiguous despawn                  | proves the final death frame is retained and cleanup occurs once        |
 | Camera convergence / acceleration                   | final error `≤ 2` px; acceleration `≤ 40` px/tick²     | catches reversal, lurch, and incomplete follow                          |
@@ -44,7 +45,7 @@ Camera acceleration is measured and retained for diagnosis, but is not globally 
 
 The sequence assessor names its expectations through capture profiles: `pose`, `static-pose`, `loop`, `one-shot`, `one-shot-floating`, `death`, `anchored-motion`, `projectile`, and `camera-smooth`. A profile selects relevant checks rather than pretending that an idle sprite and a projectile have identical motion obligations. Every profile still keeps semantic frame timing, transparent entity-mask evidence, and a replayable state/tape bundle.
 
-The shipped public matrix contains 20 deterministic reports: four directional locomotion runs; one mobile run sampled at quarter-tick interpolation; all six hero primary/ability actions; all three enemy attacks; enemy death through terminal pose and despawn; projectile travel; a full 48-tick loot loop; smooth camera convergence; and win/loss overlays. Keyboard/pointer, touch controls, viewport layout, selection, generated maps, and broader state behavior remain in the Playwright/unit reports. Expand both layers with each newly shipped system, especially the roadmap Cinder Nodes, dodge, equipment, and boss content.
+The shipped public matrix contains 21 deterministic reports: four directional locomotion runs; one mobile run sampled at quarter-tick interpolation; all six hero primary/ability actions; all three enemy attacks; enemy death through terminal pose and despawn; long projectile travel; a separate projectile hit/effect/despawn lifecycle; a full 48-tick loot loop; smooth camera convergence; and win/loss overlays. Keyboard/pointer, touch controls, viewport layout, selection, generated maps, and broader state behavior remain in the Playwright/unit reports. Expand both layers with each newly shipped system, especially the roadmap Cinder Nodes, dodge, equipment, and boss content.
 
 ## Review protocol for changed visuals
 
