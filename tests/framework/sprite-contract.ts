@@ -73,17 +73,26 @@ export interface RenderManifestV2Shape {
 }
 
 const ACTOR_CLIPS = ["idle", "walk", "attack", "ability", "hurt", "death"];
+const ACTOR_SPRITES = [
+  "hero:vanguard",
+  "hero:ranger",
+  "hero:arcanist",
+  "monster:ashfang",
+  "monster:hexer",
+  "monster:stonekin",
+];
 const LOOT_SPRITES = ["gold", "tonic", "weapon"].flatMap((kind) =>
   ["common", "tempered", "relic"].map((rarity) => `loot:${kind}:${rarity}`),
 );
 
 export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
-  "hero:vanguard": ACTOR_CLIPS,
-  "hero:ranger": ACTOR_CLIPS,
-  "hero:arcanist": ACTOR_CLIPS,
-  "monster:ashfang": ACTOR_CLIPS,
-  "monster:hexer": ACTOR_CLIPS,
-  "monster:stonekin": ACTOR_CLIPS,
+  ...Object.fromEntries(
+    ACTOR_SPRITES.flatMap((id) => [
+      [id, ACTOR_CLIPS],
+      [`${id}:north`, ACTOR_CLIPS],
+      [`${id}:south`, ACTOR_CLIPS],
+    ]),
+  ),
   ...Object.fromEntries(LOOT_SPRITES.map((id) => [id, ["loot"]])),
   "projectile:friendly": ["projectile"],
   "projectile:hostile": ["projectile"],

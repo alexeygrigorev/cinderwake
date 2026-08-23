@@ -1,0 +1,507 @@
+import { CLIP_DURATIONS, CLIP_FRAMES } from "../game/constants";
+import type { AnimationClip } from "../game/types";
+import actorAtlasSpecJson from "../../art/actor-atlas-v1.json" with { type: "json" };
+
+export interface SourceRectV1 {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export interface SpriteAssetV1 {
+  id: string;
+  url: string;
+  mimeType: "image/png";
+  pixelWidth: number;
+  pixelHeight: number;
+  revision: string;
+}
+
+export interface SpriteClipV1 {
+  frameIdentities: string[];
+  durationTicks: number;
+  looping: boolean;
+}
+
+export interface SpriteDefinitionV1 {
+  id: string;
+  assetId: string;
+  frames: Record<string, SourceRectV1>;
+  clips: Record<string, SpriteClipV1>;
+}
+
+export interface SpriteCatalogV1 {
+  schemaVersion: 1;
+  revision: string;
+  assets: Record<string, SpriteAssetV1>;
+  sprites: Record<string, SpriteDefinitionV1>;
+}
+
+interface ActorAtlasSpec {
+  id: string;
+  atlas: {
+    pixelWidth: number;
+    pixelHeight: number;
+    cellWidth: number;
+    cellHeight: number;
+  };
+  clips: Record<AnimationClip, { atlasRow: number }>;
+  directionalClips: Record<
+    "northIdle" | "northWalk" | "southIdle" | "southWalk",
+    { atlasRow: number }
+  >;
+}
+
+const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
+export const SPRITE_CATALOG_REVISION = "actor-atlas-v2-2026-08-23";
+const CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
+
+function asset(
+  id: string,
+  fileName: string,
+  pixelWidth: number,
+  pixelHeight: number,
+): SpriteAssetV1 {
+  return {
+    id,
+    url: `/assets/sprites/${fileName}`,
+    mimeType: "image/png",
+    pixelWidth,
+    pixelHeight,
+    revision: SPRITE_CATALOG_REVISION,
+  };
+}
+
+const assets: Record<string, SpriteAssetV1> = {
+  "atlas:actor:vanguard": asset(
+    "atlas:actor:vanguard",
+    "actor-vanguard.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:actor:ranger": asset(
+    "atlas:actor:ranger",
+    "actor-ranger.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:actor:arcanist": asset(
+    "atlas:actor:arcanist",
+    "actor-arcanist.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:actor:ashfang": asset(
+    "atlas:actor:ashfang",
+    "actor-ashfang.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:actor:hexer": asset(
+    "atlas:actor:hexer",
+    "actor-hexer.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:actor:stonekin": asset(
+    "atlas:actor:stonekin",
+    "actor-stonekin.png",
+    ACTOR_ATLAS_SPEC.atlas.pixelWidth,
+    ACTOR_ATLAS_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:terrain": asset(
+    "atlas:terrain",
+    "environment-terrain.png",
+    1024,
+    1024,
+  ),
+  "atlas:ground": asset("atlas:ground", "environment-ground.png", 1024, 1024),
+  "atlas:structures": asset(
+    "atlas:structures",
+    "environment-structures.png",
+    1024,
+    1024,
+  ),
+  "atlas:props": asset("atlas:props", "environment-props.png", 1024, 1024),
+  "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
+  "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
+  "atlas:ui": asset("atlas:ui", "ui.png", 1024, 1024),
+  "atlas:glyphs": asset("atlas:glyphs", "glyphs.png", 1024, 512),
+};
+
+const ACTOR_CLIPS = [
+  "idle",
+  "walk",
+  "attack",
+  "ability",
+  "hurt",
+  "death",
+] as const satisfies readonly AnimationClip[];
+
+function actorSprite(
+  id: string,
+  assetId: string,
+  facing?: "north" | "south",
+): SpriteDefinitionV1 {
+  const frames: Record<string, SourceRectV1> = {};
+  const clips: Record<string, SpriteClipV1> = {};
+  ACTOR_CLIPS.forEach((clip) => {
+    const directionalKey =
+      facing && (clip === "idle" || clip === "walk")
+        ? (`${facing}${clip[0]!.toUpperCase()}${clip.slice(1)}` as keyof ActorAtlasSpec["directionalClips"])
+        : undefined;
+    const row = directionalKey
+      ? ACTOR_ATLAS_SPEC.directionalClips[directionalKey].atlasRow
+      : ACTOR_ATLAS_SPEC.clips[clip].atlasRow;
+    const frameIdentities = Array.from(
+      { length: CLIP_FRAMES[clip] },
+      (_, frameIndex) => `${id}:${clip}:${frameIndex}`,
+    );
+    frameIdentities.forEach((frameIdentity, frameIndex) => {
+      frames[frameIdentity] = {
+        x: frameIndex * CELL,
+        y: row * CELL,
+        width: CELL,
+        height: CELL,
+      };
+    });
+    clips[clip] = {
+      frameIdentities,
+      durationTicks: CLIP_DURATIONS[clip],
+      looping: clip === "idle" || clip === "walk",
+    };
+  });
+  return { id, assetId, frames, clips };
+}
+
+function staticSprite(
+  id: string,
+  assetId: string,
+  frameCells: Array<{ identity: string; column: number; row: number }>,
+): SpriteDefinitionV1 {
+  const frames = Object.fromEntries(
+    frameCells.map(({ identity, column, row }) => [
+      identity,
+      { x: column * CELL, y: row * CELL, width: CELL, height: CELL },
+    ]),
+  );
+  return {
+    id,
+    assetId,
+    frames,
+    clips: {
+      static: {
+        frameIdentities: [frameCells[0]!.identity],
+        durationTicks: 1,
+        looping: true,
+      },
+    },
+  };
+}
+
+function singleFrameSprite(
+  id: string,
+  assetId: string,
+  column: number,
+  row: number,
+  clipName: "projectile" | "static" = "static",
+): SpriteDefinitionV1 {
+  const frameIdentity = `${id}:${clipName}:0`;
+  return {
+    id,
+    assetId,
+    frames: {
+      [frameIdentity]: {
+        x: column * CELL,
+        y: row * CELL,
+        width: CELL,
+        height: CELL,
+      },
+    },
+    clips: {
+      [clipName]: {
+        frameIdentities: [frameIdentity],
+        durationTicks: 1,
+        looping: true,
+      },
+    },
+  };
+}
+
+function fullFrameSprite(
+  id: string,
+  assetId: string,
+  width: number,
+  height: number,
+): SpriteDefinitionV1 {
+  const frameIdentity = `${id}:static:0`;
+  return {
+    id,
+    assetId,
+    frames: {
+      [frameIdentity]: { x: 0, y: 0, width, height },
+    },
+    clips: {
+      static: {
+        frameIdentities: [frameIdentity],
+        durationTicks: 1,
+        looping: true,
+      },
+    },
+  };
+}
+
+const sprites: Record<string, SpriteDefinitionV1> = {};
+function register(definition: SpriteDefinitionV1): void {
+  sprites[definition.id] = definition;
+}
+
+register(actorSprite("hero:vanguard", "atlas:actor:vanguard"));
+register(actorSprite("hero:ranger", "atlas:actor:ranger"));
+register(actorSprite("hero:arcanist", "atlas:actor:arcanist"));
+register(actorSprite("monster:ashfang", "atlas:actor:ashfang"));
+register(actorSprite("monster:hexer", "atlas:actor:hexer"));
+register(actorSprite("monster:stonekin", "atlas:actor:stonekin"));
+for (const [id, assetId] of [
+  ["hero:vanguard", "atlas:actor:vanguard"],
+  ["hero:ranger", "atlas:actor:ranger"],
+  ["hero:arcanist", "atlas:actor:arcanist"],
+  ["monster:ashfang", "atlas:actor:ashfang"],
+  ["monster:hexer", "atlas:actor:hexer"],
+  ["monster:stonekin", "atlas:actor:stonekin"],
+] as const)
+  for (const facing of ["north", "south"] as const)
+    register(actorSprite(`${id}:${facing}`, assetId, facing));
+
+const lootIds = [
+  "loot:gold:common",
+  "loot:gold:tempered",
+  "loot:gold:relic",
+  "loot:tonic:common",
+  "loot:tonic:tempered",
+  "loot:tonic:relic",
+  "loot:weapon:common",
+  "loot:weapon:tempered",
+  "loot:weapon:relic",
+];
+lootIds.forEach((id, itemIndex) => {
+  const frameIdentities = Array.from(
+    { length: 4 },
+    (_, frameIndex) => `${id}:loot:${frameIndex}`,
+  );
+  const frames = Object.fromEntries(
+    frameIdentities.map((frameIdentity, frameIndex) => {
+      const cell = itemIndex * 4 + frameIndex;
+      return [
+        frameIdentity,
+        {
+          x: (cell % 8) * CELL,
+          y: Math.floor(cell / 8) * CELL,
+          width: CELL,
+          height: CELL,
+        },
+      ];
+    }),
+  );
+  register({
+    id,
+    assetId: "atlas:loot",
+    frames,
+    clips: {
+      loot: {
+        frameIdentities,
+        durationTicks: 48,
+        looping: true,
+      },
+    },
+  });
+});
+
+register(
+  singleFrameSprite("projectile:friendly", "atlas:effects", 0, 0, "projectile"),
+);
+register(
+  singleFrameSprite("projectile:hostile", "atlas:effects", 2, 0, "projectile"),
+);
+register(
+  staticSprite(
+    "scenery:tile:floor",
+    "atlas:terrain",
+    Array.from({ length: 8 }, (_, index) => ({
+      identity: `scenery:tile:floor:variant:${index}`,
+      column: index % 4,
+      row: Math.floor(index / 4),
+    })),
+  ),
+);
+register(
+  staticSprite(
+    "scenery:tile:wall",
+    "atlas:terrain",
+    Array.from({ length: 4 }, (_, index) => ({
+      identity: `scenery:tile:wall:variant:${index}`,
+      column: index,
+      row: 2,
+    })),
+  ),
+);
+register(singleFrameSprite("scenery:exit:locked", "atlas:structures", 3, 1));
+register(singleFrameSprite("scenery:exit:open", "atlas:structures", 3, 3));
+register(singleFrameSprite("scenery:backdrop", "atlas:terrain", 0, 3));
+register(fullFrameSprite("scenery:ground", "atlas:ground", 1024, 1024));
+
+const structureNames = [
+  "gatehouse",
+  "chapel",
+  "watchtower",
+  "forge",
+  "ruined-house",
+  "mausoleum",
+  "bridge",
+  "ritual-door",
+  "dead-tree",
+  "well",
+  "wagon",
+  "gallows",
+  "obelisk",
+  "rubble",
+  "witchlight-monument",
+  "rift-portal",
+];
+structureNames.forEach((name, index) =>
+  register(
+    singleFrameSprite(
+      `scenery:structure:${name}`,
+      "atlas:structures",
+      index % 4,
+      Math.floor(index / 4),
+    ),
+  ),
+);
+
+const propNames = [
+  "ember-brazier",
+  "witchlight-lantern",
+  "sarcophagus",
+  "grave-markers",
+  "merchant-crates",
+  "weapon-rack",
+  "barrels",
+  "saint-statue",
+  "thorn-pillar",
+  "chain-cage",
+  "ritual-totem",
+  "barricade",
+  "relic-chest",
+  "open-chest",
+  "gold-cache",
+  "tonic-bottle",
+];
+propNames.forEach((name, index) =>
+  register(
+    singleFrameSprite(
+      `scenery:prop:${name}`,
+      "atlas:props",
+      index % 4,
+      Math.floor(index / 4),
+    ),
+  ),
+);
+
+register(singleFrameSprite("effect:slash", "atlas:effects", 3, 0));
+register(singleFrameSprite("effect:nova", "atlas:effects", 1, 2));
+register(singleFrameSprite("effect:impact", "atlas:effects", 3, 1));
+register(singleFrameSprite("effect:death", "atlas:effects", 2, 2));
+register(singleFrameSprite("world-ui:shadow", "atlas:ui", 3, 1));
+register(singleFrameSprite("world-ui:health-frame", "atlas:ui", 2, 0));
+register(singleFrameSprite("world-ui:health-fill", "atlas:ui", 1, 0));
+
+export const SPRITE_CATALOG: SpriteCatalogV1 = {
+  schemaVersion: 1,
+  revision: SPRITE_CATALOG_REVISION,
+  assets,
+  sprites,
+};
+
+const loadedImages = new Map<string, HTMLImageElement>();
+let loadPromise: Promise<void> | undefined;
+
+export function resolveSpriteAssetUrl(url: string): string {
+  const environment = (
+    import.meta as ImportMeta & {
+      env?: { BASE_URL?: string };
+    }
+  ).env;
+  const base = environment?.BASE_URL ?? "/";
+  if (base === "/") return url;
+  return `${base.replace(/\/$/, "")}${url}`;
+}
+
+export function preloadSpriteAssets(): Promise<void> {
+  if (loadPromise) return loadPromise;
+  if (typeof Image === "undefined")
+    return Promise.reject(
+      new Error("Sprite assets require a browser Image API"),
+    );
+  loadPromise = Promise.all(
+    Object.values(SPRITE_CATALOG.assets).map(
+      (definition) =>
+        new Promise<void>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            if (
+              image.naturalWidth !== definition.pixelWidth ||
+              image.naturalHeight !== definition.pixelHeight
+            ) {
+              reject(
+                new Error(
+                  `Sprite atlas ${definition.id} decoded at ${image.naturalWidth}x${image.naturalHeight}`,
+                ),
+              );
+              return;
+            }
+            loadedImages.set(definition.id, image);
+            resolve();
+          };
+          image.onerror = () =>
+            reject(new Error(`Unable to load sprite atlas ${definition.id}`));
+          image.src = resolveSpriteAssetUrl(definition.url);
+        }),
+    ),
+  ).then(() => undefined);
+  return loadPromise;
+}
+
+export function spriteImage(assetId: string): HTMLImageElement {
+  const image = loadedImages.get(assetId);
+  if (!image) throw new Error(`Sprite atlas ${assetId} has not been decoded`);
+  return image;
+}
+
+export function spriteFrame(
+  spriteId: string,
+  clip: string,
+  frameIndex: number,
+): {
+  definition: SpriteDefinitionV1;
+  assetId: string;
+  frameIdentity: string;
+  sourceRect: SourceRectV1;
+} {
+  const definition = SPRITE_CATALOG.sprites[spriteId];
+  if (!definition) throw new Error(`Unknown sprite ${spriteId}`);
+  const animation = definition.clips[clip];
+  if (!animation) throw new Error(`Sprite ${spriteId} has no clip ${clip}`);
+  const frameIdentity = animation.frameIdentities[frameIndex];
+  if (!frameIdentity)
+    throw new Error(
+      `Sprite ${spriteId} clip ${clip} has no frame ${frameIndex}`,
+    );
+  return {
+    definition,
+    assetId: definition.assetId,
+    frameIdentity,
+    sourceRect: definition.frames[frameIdentity]!,
+  };
+}

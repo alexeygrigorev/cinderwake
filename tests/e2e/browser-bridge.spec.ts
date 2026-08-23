@@ -271,7 +271,7 @@ test("measures actual transparent entity ink instead of declared bounds", async 
       window.__GAME_TEST__!.step(targetTick - current, { render: true });
       return window.__GAME_TEST__!.captureEntityMask("player");
     });
-    const directionMasks = [
+    const directions = [
       { moveX: 1 as const },
       { moveX: -1 as const },
       { moveY: -1 as const },
@@ -280,7 +280,12 @@ test("measures actual transparent entity ink instead of declared bounds", async 
       window.__GAME_TEST__!.loadScenario("animation-walk");
       window.__GAME_TEST__!.setInput(input);
       window.__GAME_TEST__!.step(6, { render: true });
-      return window.__GAME_TEST__!.captureEntityMask("player");
+      return {
+        call: window
+          .__GAME_TEST__!.renderManifest()
+          .drawCalls.find((call) => call.entityId === "player"),
+        mask: window.__GAME_TEST__!.captureEntityMask("player"),
+      };
     });
     window.__GAME_TEST__!.loadScenario("combat-loot");
     window.__GAME_TEST__!.setInput({ attack: true });
@@ -290,7 +295,7 @@ test("measures actual transparent entity ink instead of declared bounds", async 
     const terminal = window.__GAME_TEST__!.captureEntityMask("player");
     window.__GAME_TEST__!.step(1, { render: true });
     const idle = window.__GAME_TEST__!.captureEntityMask("player");
-    return { walk, directionMasks, terminal, idle };
+    return { walk, directions, terminal, idle };
   });
   expect(
     new Set(result.walk.map((mask) => mask.pixelHash)).size,
@@ -298,8 +303,28 @@ test("measures actual transparent entity ink instead of declared bounds", async 
   expect(new Set(result.walk.map((mask) => mask.bottomOffset)).size).toBe(1);
   expect(result.walk.every((mask) => mask.alphaPixels > 100)).toBe(true);
   expect(
-    new Set(result.directionMasks.map((mask) => mask.pixelHash)).size,
+    new Set(result.directions.map(({ mask }) => mask.pixelHash)).size,
   ).toBe(4);
+  expect(
+    result.directions.map(({ call }) => ({
+      spriteId: call?.spriteId,
+      facingBucket: call?.facingBucket,
+      flipX: call?.flipX,
+    })),
+  ).toEqual([
+    { spriteId: "hero:ranger", facingBucket: "east", flipX: false },
+    { spriteId: "hero:ranger", facingBucket: "west", flipX: true },
+    {
+      spriteId: "hero:ranger:north",
+      facingBucket: "north",
+      flipX: false,
+    },
+    {
+      spriteId: "hero:ranger:south",
+      facingBucket: "south",
+      flipX: false,
+    },
+  ]);
   expect(result.terminal.pixelHash).toBe(result.idle.pixelHash);
   expect(result.terminal.inkBounds).toEqual(result.idle.inkBounds);
 });

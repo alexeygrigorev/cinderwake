@@ -36,7 +36,7 @@ export class GameHost {
     canvas: HTMLCanvasElement,
     testMode = new URLSearchParams(location.search).get("testMode") === "1",
   ) {
-    this.renderer = new CanvasRenderer(canvas);
+    this.renderer = new CanvasRenderer(canvas, testMode);
     this.testMode = testMode;
     this.cameraMode = testMode ? "snap" : "smooth";
     this.state = worldFromScenario({
