@@ -1,6 +1,6 @@
 # Cinderwake
 
-[Play the public build](https://alexeygrigorev.github.io/game-tester/) · [Open the public quality report](https://alexeygrigorev.github.io/game-tester/quality/)
+[Play the public build](https://alexeygrigorev.com/game-tester/) · [Open the public quality report](https://alexeygrigorev.com/game-tester/quality/)
 
 Cinderwake is an original browser action RPG and, more importantly, a reference framework for testing games from arbitrary state. A test can load a complete JSON world, apply semantic input at exact 60 Hz ticks, then retain three synchronized forms of evidence:
 
