@@ -315,6 +315,83 @@ describe("public temporal scenario catalog", () => {
     ]);
   });
 
+  it("tracks a friendly projectile through approach, contact, hurt, and despawn", () => {
+    const contract =
+      TEMPORAL_SCENARIO_CONTRACTS["temporal-friendly-projectile-impact"];
+    expect(contract).toMatchObject({
+      subjectId: TEMPORAL_ENTITY_IDS.friendlyImpactProjectile,
+      targetId: TEMPORAL_ENTITY_IDS.friendlyImpactTarget,
+      contactEventTick: 18,
+      despawnStateTick: 19,
+    });
+    const state = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-friendly-projectile-impact"]!,
+    );
+    const projectileId = TEMPORAL_ENTITY_IDS.friendlyImpactProjectile;
+    const targetId = TEMPORAL_ENTITY_IDS.friendlyImpactTarget;
+    const target = state.monsters.find(({ id }) => id === targetId)!;
+    const initialHealth = target.health;
+
+    advanceUntilStateTick(state, 18);
+    const approaching = state.projectiles.find(
+      ({ id }) => id === projectileId,
+    )!;
+    expect(approaching).toBeDefined();
+    expect(target).toMatchObject({
+      health: initialHealth,
+      animation: { clip: "idle" },
+    });
+    expect(target.position.x - approaching.position.x).toBe(640);
+    expect(
+      state.eventLog.some(
+        (event) => event.type === "damage" && event.targetId === targetId,
+      ),
+    ).toBe(false);
+
+    stepGame(state, EMPTY_INPUT);
+    expect(state.tick).toBe(19);
+    expect(state.projectiles.some(({ id }) => id === projectileId)).toBe(false);
+    expect(target).toMatchObject({
+      health: initialHealth - 15,
+      animation: { clip: "hurt", startedAtTick: 18, lockedUntilTick: 30 },
+    });
+    expect(state.effects).toEqual([
+      expect.objectContaining({
+        kind: "impact",
+        position: target.position,
+        startedAtTick: 18,
+        expiresAtTick: 26,
+      }),
+    ]);
+    expect(
+      state.eventLog.filter(
+        (event) => event.type === "damage" && event.targetId === targetId,
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        tick: 18,
+        sourceId: "player",
+        amount: 15,
+      }),
+    ]);
+    expect(
+      buildRenderManifest(state, {
+        x: (state.player.position.x / 1024) * 48,
+        y: (state.player.position.y / 1024) * 48,
+        zoom: 1,
+      }).drawCalls.find(({ entityId }) => entityId === targetId),
+    ).toMatchObject({ clip: "hurt" });
+
+    advanceThroughEventTick(state, 30);
+    expect(state.projectiles.some(({ id }) => id === projectileId)).toBe(false);
+    expect(target.animation.clip).toBe("idle");
+    expect(
+      state.eventLog.filter(
+        (event) => event.type === "damage" && event.targetId === targetId,
+      ),
+    ).toHaveLength(1);
+  });
+
   it("advances loot animation frames without moving or collecting the loot", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["temporal-loot-bob"]!);
     const camera = {

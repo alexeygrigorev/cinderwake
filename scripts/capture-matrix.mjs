@@ -119,6 +119,18 @@ const entries = [
     step: 2,
   },
   {
+    id: "friendly-projectile-impact",
+    label: "Friendly projectile · hit effect and despawn",
+    category: "world dynamics",
+    scenario: "temporal-friendly-projectile-impact",
+    action: "idle",
+    track: "projectile:temporal-friendly-impact",
+    profile: "projectile",
+    presence: "present-until",
+    frames: 22,
+    step: 1,
+  },
+  {
     id: "loot-bob-cycle",
     label: "Loot · complete 48-tick bob cycle",
     category: "world dynamics",

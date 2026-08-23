@@ -927,6 +927,8 @@ export const TEMPORAL_ENTITY_IDS = {
   deathSubject: "monster:temporal-death",
   deathContact: "attack:temporal-death-contact",
   friendlyProjectile: "projectile:temporal-friendly",
+  friendlyImpactProjectile: "projectile:temporal-friendly-impact",
+  friendlyImpactTarget: "monster:temporal-projectile-target",
   goldLoot: "loot:temporal-gold",
   tonicLoot: "loot:temporal-tonic",
   weaponLoot: "loot:temporal-weapon",
@@ -943,6 +945,8 @@ export interface TemporalScenarioContract {
   inputAction: TemporalInputAction;
   /** Simulation event tick, before stepGame increments the state tick. */
   contactEventTick?: number;
+  /** First captured state tick where an intentionally consumed subject is absent. */
+  despawnStateTick?: number;
   /** Exact state ticks recommended for synchronized state/manifest/PNG capture. */
   captureTicks: readonly number[];
 }
@@ -1037,6 +1041,15 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     subjectId: TEMPORAL_ENTITY_IDS.friendlyProjectile,
     inputAction: null,
     captureTicks: [0, 1, 12, 24, 36, 48, 60],
+  },
+  "temporal-friendly-projectile-impact": {
+    scenarioId: "temporal-friendly-projectile-impact",
+    subjectId: TEMPORAL_ENTITY_IDS.friendlyImpactProjectile,
+    targetId: TEMPORAL_ENTITY_IDS.friendlyImpactTarget,
+    inputAction: null,
+    contactEventTick: 18,
+    despawnStateTick: 19,
+    captureTicks: [0, 3, 6, 9, 12, 15, 17, 18, 19, 21, 24, 27, 30, 31],
   },
   "temporal-loot-bob": {
     scenarioId: "temporal-loot-bob",
@@ -1305,6 +1318,44 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
       },
     ],
     settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-friendly-projectile-impact": {
+    schemaVersion: 1,
+    id: "temporal-friendly-projectile-impact",
+    seed: "quality-friendly-projectile-impact-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [8, 7], facing: [1024, 0] },
+    monsters: [
+      {
+        id: TEMPORAL_ENTITY_IDS.friendlyImpactTarget,
+        kind: "ashfang",
+        tile: [10, 7],
+        health: 60,
+        maxHealth: 60,
+        armor: 0,
+        moveSpeed: 0,
+        attackReadyTick: 10_000,
+      },
+    ],
+    projectiles: [
+      {
+        id: TEMPORAL_ENTITY_IDS.friendlyImpactProjectile,
+        owner: "player",
+        hostile: false,
+        tile: [6, 7],
+        previousTile: [5.8125, 7],
+        velocity: [192, 0],
+        radius: 155,
+        damage: 15,
+        expiresAtTick: 60,
+        color: ARCHETYPES.arcanist.accent,
+        pierce: 0,
+        spawnedAtTick: -1,
+        hitTargets: [],
+      },
+    ],
+    settings: { ai: true, autoPickup: false, cameraFollow: true },
   },
   "temporal-loot-bob": {
     schemaVersion: 1,
