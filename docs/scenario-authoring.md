@@ -9,10 +9,10 @@ interface ScenarioV1 {
   schemaVersion: 1;
   id: string;
   seed: string;
-  classId: 'vanguard' | 'ranger' | 'arcanist';
+  classId: "vanguard" | "ranger" | "arcanist";
   map:
-    | { mode: 'generated'; width?: number; height?: number }
-    | { mode: 'explicit'; rows: string[] }; // # wall, . floor, P player, E exit
+    | { mode: "generated"; width?: number; height?: number }
+    | { mode: "explicit"; rows: string[] }; // # wall, . floor, P player, E exit
   player?: {
     tile?: [number, number];
     health?: number;
@@ -21,7 +21,7 @@ interface ScenarioV1 {
   };
   monsters?: Array<{
     id?: string;
-    kind: 'ashfang' | 'hexer' | 'stonekin';
+    kind: "ashfang" | "hexer" | "stonekin";
     tile: [number, number];
     health?: number;
     elite?: boolean;
@@ -29,8 +29,8 @@ interface ScenarioV1 {
   }>;
   loot?: Array<{
     id?: string;
-    kind: 'gold' | 'tonic' | 'weapon';
-    rarity?: 'common' | 'tempered' | 'relic';
+    kind: "gold" | "tonic" | "weapon";
+    rarity?: "common" | "tempered" | "relic";
     tile: [number, number];
     amount?: number;
   }>;

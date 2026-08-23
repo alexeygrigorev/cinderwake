@@ -29,11 +29,11 @@ Integer authoritative positions prevent accumulating drift in long replays. Rend
 
 ## Heroes
 
-| Hero | Identity | HP / armor | Speed | Primary | Ability |
-| --- | --- | ---: | ---: | --- | --- |
-| Vanguard | resilient melee fighter | 160 / 30 | 64 units/tick | 18-damage 90-degree cleave; impact tick +8; 30-tick cooldown | 32-damage wider ember sweep; impact tick +12; 240-tick cooldown |
-| Ranger | fast ranged marksman | 105 / 10 | 72 units/tick | 13-damage arrow; spawn tick +6; 24-tick cooldown | three piercing arrows; spawn tick +10; 270-tick cooldown |
-| Arcanist | fragile area controller | 90 / 5 | 66 units/tick | 15-damage crystal bolt; spawn tick +8; 36-tick cooldown | 28-damage pulse around the caster; impact tick +12; 300-tick cooldown |
+| Hero     | Identity                | HP / armor |         Speed | Primary                                                      | Ability                                                               |
+| -------- | ----------------------- | ---------: | ------------: | ------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Vanguard | resilient melee fighter |   160 / 30 | 64 units/tick | 18-damage 90-degree cleave; impact tick +8; 30-tick cooldown | 32-damage wider ember sweep; impact tick +12; 240-tick cooldown       |
+| Ranger   | fast ranged marksman    |   105 / 10 | 72 units/tick | 13-damage arrow; spawn tick +6; 24-tick cooldown             | three piercing arrows; spawn tick +10; 270-tick cooldown              |
+| Arcanist | fragile area controller |     90 / 5 | 66 units/tick | 15-damage crystal bolt; spawn tick +8; 36-tick cooldown      | 28-damage pulse around the caster; impact tick +12; 300-tick cooldown |
 
 Weapon drops add deterministic power to primary and ability damage. Tonics heal 45 HP and are not consumed at full health.
 
@@ -56,11 +56,11 @@ The generation result includes a stable digest. Tests verify that a seed repeats
 
 ## Enemies
 
-| Enemy | Behavior | HP / armor | Attack |
-| --- | --- | ---: | --- |
-| Ashfang | closes to melee range | 36 / 0 | 8 raw damage, 75-tick cooldown |
-| Rift Hexer | keeps distance and retreats if crowded | 28 / 0 | hostile crystal projectile, 7 raw damage, 105-tick cooldown |
-| Stonekin | slow, durable pursuer | 80 / 20 | 10 raw damage, 110-tick cooldown |
+| Enemy      | Behavior                               | HP / armor | Attack                                                      |
+| ---------- | -------------------------------------- | ---------: | ----------------------------------------------------------- |
+| Ashfang    | closes to melee range                  |     36 / 0 | 8 raw damage, 75-tick cooldown                              |
+| Rift Hexer | keeps distance and retreats if crowded |     28 / 0 | hostile crystal projectile, 7 raw damage, 105-tick cooldown |
+| Stonekin   | slow, durable pursuer                  |    80 / 20 | 10 raw damage, 110-tick cooldown                            |
 
 AI iterates in sorted entity-ID order and uses only simulation state. The generated run includes one elite Stonekin with doubled health, an amber ring, and a guaranteed drop. Test scenarios can disable AI completely to isolate animation or collision.
 

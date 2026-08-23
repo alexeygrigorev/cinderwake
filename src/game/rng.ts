@@ -1,4 +1,4 @@
-import type { RngStream, RngStreams } from './types';
+import type { RngStream, RngStreams } from "./types";
 
 export function hashString(value: string): number {
   let hash = 0x811c9dc5;
@@ -38,12 +38,18 @@ export function randomFloat(stream: RngStream): number {
   return nextUint(stream) / 0x1_0000_0000;
 }
 
-export function randomInt(stream: RngStream, minimum: number, maximumExclusive: number): number {
-  return minimum + Math.floor(randomFloat(stream) * (maximumExclusive - minimum));
+export function randomInt(
+  stream: RngStream,
+  minimum: number,
+  maximumExclusive: number,
+): number {
+  return (
+    minimum + Math.floor(randomFloat(stream) * (maximumExclusive - minimum))
+  );
 }
 
 export function pick<T>(stream: RngStream, values: readonly T[]): T {
   const value = values[randomInt(stream, 0, values.length)];
-  if (value === undefined) throw new Error('Cannot pick from an empty list');
+  if (value === undefined) throw new Error("Cannot pick from an empty list");
   return value;
 }

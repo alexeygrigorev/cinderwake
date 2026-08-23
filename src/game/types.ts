@@ -1,9 +1,10 @@
-export type CharacterClass = 'vanguard' | 'ranger' | 'arcanist';
-export type MonsterKind = 'ashfang' | 'hexer' | 'stonekin';
-export type LootKind = 'gold' | 'tonic' | 'weapon';
-export type Rarity = 'common' | 'tempered' | 'relic';
-export type GamePhase = 'playing' | 'won' | 'lost';
-export type AnimationClip = 'idle' | 'walk' | 'attack' | 'ability' | 'hurt' | 'death';
+export type CharacterClass = "vanguard" | "ranger" | "arcanist";
+export type MonsterKind = "ashfang" | "hexer" | "stonekin";
+export type LootKind = "gold" | "tonic" | "weapon";
+export type Rarity = "common" | "tempered" | "relic";
+export type GamePhase = "playing" | "won" | "lost";
+export type AnimationClip =
+  "idle" | "walk" | "attack" | "ability" | "hurt" | "death";
 
 export interface Vec2 {
   x: number;
@@ -40,7 +41,7 @@ export interface DungeonMap {
 }
 
 export interface PlayerState {
-  id: 'player';
+  id: "player";
   classId: CharacterClass;
   position: Vec2;
   previousPosition: Vec2;
@@ -87,7 +88,7 @@ export interface MonsterState {
 export interface PendingAttack {
   id: string;
   ownerId: string;
-  kind: 'primary' | 'ability';
+  kind: "primary" | "ability";
   impactTick: number;
   origin: Vec2;
   direction: Vec2;
@@ -97,7 +98,7 @@ export interface PendingAttack {
 
 export interface ProjectileState {
   id: string;
-  owner: 'player' | string;
+  owner: "player" | string;
   hostile: boolean;
   position: Vec2;
   previousPosition: Vec2;
@@ -121,7 +122,7 @@ export interface LootState {
 
 export interface EffectState {
   id: string;
-  kind: 'slash' | 'nova' | 'impact';
+  kind: "slash" | "nova" | "impact";
   position: Vec2;
   color: string;
   startedAtTick: number;
@@ -130,16 +131,16 @@ export interface EffectState {
 }
 
 export type GameEventType =
-  | 'attack_started'
-  | 'ability_started'
-  | 'damage'
-  | 'monster_died'
-  | 'loot_dropped'
-  | 'loot_picked'
-  | 'player_damaged'
-  | 'player_died'
-  | 'exit_unlocked'
-  | 'run_won';
+  | "attack_started"
+  | "ability_started"
+  | "damage"
+  | "monster_died"
+  | "loot_dropped"
+  | "loot_picked"
+  | "player_damaged"
+  | "player_died"
+  | "exit_unlocked"
+  | "run_won";
 
 export interface GameEvent {
   tick: number;
