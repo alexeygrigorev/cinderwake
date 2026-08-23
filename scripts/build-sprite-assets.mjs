@@ -271,8 +271,10 @@ async function blendedFrame(first, second, mix) {
   return reanchorCell(await sharp(output, { raw: a.info }).png().toBuffer());
 }
 
-async function frameFromRecipe(cells, recipe) {
-  if (Number.isInteger(recipe)) return cells[recipe];
+async function frameFromRecipe(cellsBySource, sourceId, recipe) {
+  if (Number.isInteger(recipe)) return cellsBySource[sourceId][recipe];
+  if (recipe.source) return cellsBySource[recipe.source][recipe.cell];
+  const cells = cellsBySource[sourceId];
   return blendedFrame(cells[recipe.from], cells[recipe.to], recipe.mix);
 }
 
@@ -296,10 +298,9 @@ async function buildActor(actorId) {
     ...Object.entries(ACTOR_SPEC.directionalClips),
   ];
   for (const [, clip] of banks) {
-    const cells = cellsBySource[clip.source];
     for (const [frameIndex, recipe] of clip.sourceFrames.entries())
       composites.push({
-        input: await frameFromRecipe(cells, recipe),
+        input: await frameFromRecipe(cellsBySource, clip.source, recipe),
         left: frameIndex * CELL,
         top: clip.atlasRow * CELL,
       });

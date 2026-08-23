@@ -12,7 +12,7 @@ Every asset prompt and review uses the same visual contract. “Dark fantasy” 
 
 ## Actor source brief
 
-Every actor supplies three 1024 × 1024 PNGs on the same strict 4 × 4 grid of 256 × 256 cells. The primary sheet uses [actor-source-template.svg](actor-source-template.svg):
+Every actor supplies four 1024 × 1024 PNGs on the same strict 4 × 4 grid of 256 × 256 cells. The primary sheet uses [actor-source-template.svg](actor-source-template.svg):
 
 1. idle breathing poses;
 2. locomotion loop key poses;
@@ -21,6 +21,8 @@ Every actor supplies three 1024 × 1024 PNGs on the same strict 4 × 4 grid of 2
 
 The `{actor}-directions-source.png` sheet contains north idle, north locomotion, south idle, and south locomotion rows. North must be an unmistakable authored rear view; south must be an authored front view. A horizontal flip is permitted only for west from the east bank.
 
+The `{actor}-actions-source.png` sheet contains six distinct attack frames in cells 0–5, two recovery reserves, and eight distinct ability frames in cells 8–15. The terminal attack and ability cells return to the natural idle silhouette. These are authored raster poses: cross-dissolves, baked projectiles, translucent ghosts, and duplicate bodies are rejected.
+
 The `{actor}-reactions-source.png` sheet contains four articulated hurt/recoil poses, eight anatomy-specific collapse poses across rows two and three, and grounded terminal reserves in row four. Equipment and anatomy remain attached throughout; projectiles and large detached effects belong to their own runtime sprites.
 
-The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. The build reads `ActorAtlasV2` metadata, removes chroma and cross-cell fragments, normalizes all three sheets together, bakes declared in-between frames, and packs a fixed 2048 × 3072 atlas. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.
+The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. The build reads `ActorAtlasV2` metadata, removes chroma and cross-cell fragments, normalizes all four sheets together, and packs a fixed 2048 × 3072 atlas. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.

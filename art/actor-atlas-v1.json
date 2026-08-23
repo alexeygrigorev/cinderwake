@@ -13,6 +13,7 @@
     "files": {
       "primary": "{actor}-source.png",
       "directions": "{actor}-directions-source.png",
+      "actions": "{actor}-actions-source.png",
       "reactions": "{actor}-reactions-source.png"
     },
     "primaryRows": { "idle": 0, "walk": 1, "attack": 2, "ability": 3 },
@@ -22,7 +23,17 @@
       "southIdle": 2,
       "southWalk": 3
     },
-    "reactionRows": { "hurt": 0, "deathStart": 1, "deathEnd": 2, "groundedReserve": 3 }
+    "reactionRows": {
+      "hurt": 0,
+      "deathStart": 1,
+      "deathEnd": 2,
+      "groundedReserve": 3
+    },
+    "actionLayout": {
+      "attackCells": [0, 1, 2, 3, 4, 5],
+      "recoveryReserveCells": [6, 7],
+      "abilityCells": [8, 9, 10, 11, 12, 13, 14, 15]
+    }
   },
   "atlas": {
     "pixelWidth": 2048,
@@ -50,23 +61,32 @@
       "durationTicks": 40,
       "looping": true,
       "source": "primary",
-      "sourceFrames": [4, { "from": 4, "to": 5, "mix": 0.5 }, 5, { "from": 5, "to": 6, "mix": 0.5 }, 6, { "from": 6, "to": 7, "mix": 0.5 }, 7, { "from": 7, "to": 4, "mix": 0.5 }]
+      "sourceFrames": [4, 5, 6, 7, 4, 5, 6, 7]
     },
     "attack": {
       "atlasRow": 2,
       "frameCount": 6,
       "durationTicks": 26,
       "looping": false,
-      "source": "primary",
-      "sourceFrames": [8, 9, 10, { "from": 10, "to": 11, "mix": 0.45 }, { "from": 11, "to": 0, "mix": 0.55 }, 0]
+      "source": "actions",
+      "sourceFrames": [0, 1, 2, 3, 4, { "source": "primary", "cell": 0 }]
     },
     "ability": {
       "atlasRow": 3,
       "frameCount": 8,
       "durationTicks": 36,
       "looping": false,
-      "source": "primary",
-      "sourceFrames": [12, { "from": 12, "to": 13, "mix": 0.5 }, 13, { "from": 13, "to": 14, "mix": 0.5 }, 14, { "from": 14, "to": 15, "mix": 0.5 }, { "from": 15, "to": 0, "mix": 0.55 }, 0]
+      "source": "actions",
+      "sourceFrames": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        { "source": "primary", "cell": 0 }
+      ]
     },
     "hurt": {
       "atlasRow": 4,
@@ -98,7 +118,7 @@
       "atlasRow": 7,
       "runtimeClip": "walk",
       "source": "directions",
-      "sourceFrames": [4, { "from": 4, "to": 5, "mix": 0.5 }, 5, { "from": 5, "to": 6, "mix": 0.5 }, 6, { "from": 6, "to": 7, "mix": 0.5 }, 7, { "from": 7, "to": 4, "mix": 0.5 }]
+      "sourceFrames": [4, 5, 6, 7, 4, 5, 6, 7]
     },
     "southIdle": {
       "atlasRow": 8,
@@ -110,7 +130,7 @@
       "atlasRow": 9,
       "runtimeClip": "walk",
       "source": "directions",
-      "sourceFrames": [12, { "from": 12, "to": 13, "mix": 0.5 }, 13, { "from": 13, "to": 14, "mix": 0.5 }, 14, { "from": 14, "to": 15, "mix": 0.5 }, 15, { "from": 15, "to": 12, "mix": 0.5 }]
+      "sourceFrames": [12, 13, 14, 15, 12, 13, 14, 15]
     }
   },
   "facing": {
@@ -118,6 +138,6 @@
     "west": "primary-bank-horizontal-flip",
     "north": "authored-north-bank",
     "south": "authored-south-bank",
-    "actionFallback": "primary-bank-until-directional-action-sources-are-authored"
+    "actionFallback": "authored-east-action-bank"
   }
 }
