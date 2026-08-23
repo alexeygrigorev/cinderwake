@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeGenerationTrialV1",
+  "created": "2026-08-23",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "purpose": "Fresh, exact-prompt generation ingress evidence for three mechanically different character families. These candidates exercise validation and are not production replacements.",
+  "trials": [
+    {
+      "id": "vanguard-directions-2026-08-23",
+      "actorId": "vanguard",
+      "sourceFamily": "directions",
+      "promptFile": "art/generation/prompts/vanguard-directions-trial.txt",
+      "candidateFile": "art/generation/candidates/vanguard-directions-trial.png",
+      "candidateSha256": "808bb2c9e9bf12a30775a17d3f83ff5e1b80ed3d13744dc06fc6fcdcab3eff82",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-071cfacd-50e1-44b9-b21d-82f658c97af5.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The background contains thousands of magenta shades and almost no literal #ff00ff."
+          },
+          {
+            "kind": "structural",
+            "code": "cell-edge-contact",
+            "detail": "Normalized foreground reaches source-cell edges in multiple cells and row baselines drift."
+          },
+          {
+            "kind": "visual",
+            "code": "incomplete-gait",
+            "detail": "South locomotion repeats the same lifted leg instead of alternating planted feet."
+          },
+          {
+            "kind": "visual",
+            "code": "prompt-reference-contradiction",
+            "detail": "The prompt requires a helmet while the immutable reference is bareheaded."
+          }
+        ],
+        "notes": "Independent audit rejected the raw source contract: pure #ff00ff is effectively absent, multiple normalized silhouettes touch cell edges, row baselines drift, the south walk repeats one lifted leg, and the prompt incorrectly requires a helmet that the immutable reference does not have. The packer may ingest this only as a rejection/tolerance diagnostic; it is neither pipeline-approved source art nor a production replacement."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/vanguard-directions-trial.png --output art/generation/prepared/vanguard-directions-trial.png",
+        "file": "art/generation/prepared/vanguard-directions-trial.png",
+        "sha256": "bf4b4909237b02400b396aa8da08b2d6558b8b4ddb635b16d8980887e7950cca",
+        "status": "rejected",
+        "notes": "Deterministic keying and anchoring repair the mechanical grid, but they cannot create the missing alternating gait or resolve the prompt/reference identity contradiction."
+      }
+    },
+    {
+      "id": "ranger-actions-2026-08-23",
+      "actorId": "ranger",
+      "sourceFamily": "actions",
+      "promptFile": "art/generation/prompts/ranger-actions-trial.txt",
+      "candidateFile": "art/generation/candidates/ranger-actions-trial.png",
+      "candidateSha256": "5383c75b59496bcd7e8ebd5229046518bf619822f9c7934705033a41aeb9cb37",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/ranger-source.png",
+          "sha256": "46606ad8d09e1ebd60799560487d5fedd28e0f5181c4c7819319c03295ddf0d2"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-9777fa67-a46b-4251-9e24-aa1f634790cf.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The background contains thousands of magenta shades and almost no literal #ff00ff."
+          },
+          {
+            "kind": "structural",
+            "code": "cell-edge-contact",
+            "detail": "Normalized foreground and ability effects reach source-cell edges in multiple cells."
+          },
+          {
+            "kind": "visual",
+            "code": "effect-envelope",
+            "detail": "Cyan arcs and arrowheads exceed the prompt's bow-attached effect limit."
+          },
+          {
+            "kind": "visual",
+            "code": "clip-semantic-mismatch",
+            "detail": "The authored cell 5 follow-through is not consumed by ActorAtlasV2, producing a release-to-idle seam."
+          },
+          {
+            "kind": "visual",
+            "code": "prompt-reference-contradiction",
+            "detail": "The prompt requires a hood while the immutable reference is bareheaded."
+          }
+        ],
+        "notes": "Independent audit rejected the raw source contract: pure #ff00ff is effectively absent, several bodies and ability effects touch cell edges, cyan arcs and arrowheads exceed the bow-attached effect limit, runtime attack semantics would discard prompted cell 5 and pop from release to idle, and the prompt incorrectly requires a hood absent from the immutable reference. It is retained as failure evidence, not production art."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ranger-actions-trial.png --output art/generation/prepared/ranger-actions-trial.png",
+        "file": "art/generation/prepared/ranger-actions-trial.png",
+        "sha256": "ee390c58b7f18bb344d74dfbd5031884fc40f97af6f6675a799a17ef79276a76",
+        "status": "rejected",
+        "notes": "Deterministic keying and anchoring repair the mechanical grid, but they cannot remove the oversized authored effect or repair the action-cell semantic mismatch without changing art."
+      }
+    },
+    {
+      "id": "stonekin-reactions-2026-08-23",
+      "actorId": "stonekin",
+      "sourceFamily": "reactions",
+      "promptFile": "art/generation/prompts/stonekin-reactions-trial.txt",
+      "candidateFile": "art/generation/candidates/stonekin-reactions-trial.png",
+      "candidateSha256": "956b13815d0c528799920d780a10f17b2e828c7bcff4cea356a53d2d1efefa9c",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/stonekin-source.png",
+          "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-132717b1-534b-45d1-b6bc-78b12336cee5.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The background contains thousands of magenta shades and almost no literal #ff00ff."
+          },
+          {
+            "kind": "structural",
+            "code": "cell-edge-contact",
+            "detail": "Normalized foreground reaches source-cell edges in multiple cells."
+          },
+          {
+            "kind": "structural",
+            "code": "baseline-drift",
+            "detail": "Raw terminal reserves end roughly 40 pixels above the declared normalized ground baseline."
+          }
+        ],
+        "notes": "Independent audit found coherent non-human collapse art but rejected the raw source contract: pure #ff00ff is effectively absent, several silhouettes touch cell edges, and terminal reserves sit around y=191–196 instead of the declared ground baseline near y=236. The image is useful failure evidence and a preparation candidate, not production art."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/stonekin-reactions-trial.png --output art/generation/prepared/stonekin-reactions-trial.png",
+        "file": "art/generation/prepared/stonekin-reactions-trial.png",
+        "sha256": "fffe23e81456b1877ba80c99338c534b133921fdd2fce2eaaada9dcc8306cd3b",
+        "status": "accepted-for-pipeline-proof",
+        "notes": "Deterministic preparation creates literal chroma, removes cross-cell boundary fragments, applies one shared scale, and grounds all sixteen cells. Independent review found the underlying Stonekin recoil/collapse art visually coherent; this remains non-production trial evidence."
+      }
+    }
+  ]
+}

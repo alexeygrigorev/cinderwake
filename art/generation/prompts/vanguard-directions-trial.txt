@@ -1,0 +1,13 @@
+Use the attached original Cinderwake Vanguard sheet only as the immutable identity and style reference. Create one new actor direction sprite sheet for that exact same Vanguard: the same realistic human anatomy, soot-dark plate armor, ember-orange cloth accents, round shield, short sword, helmet, materials, proportions, and stable world scale in every cell.
+
+Output exactly one square 1024 × 1024 raster image arranged as a strict edge-to-edge 4 × 4 grid. Every cell is exactly 256 × 256 pixels. Do not draw grid lines, gutters, labels, captions, numbers, diagrams, UI, borders, or a title. Fill all unused background in every cell with flat pure chroma-key magenta #ff00ff, with no gradient, texture, scenery, horizon, floor plane, or vignette.
+
+Use the Cinderwake actor camera and rendering contract: painterly high-detail pre-rendered 2D dark-fantasy game sprites, elevated three-quarter camera near 55 degrees, upper-left warm key light, restrained cool bounce, crisp readable silhouette at small gameplay scale, bottom-center ground anchor, and a consistent foot baseline near y=236 inside each 256-pixel cell. The complete body, weapon, shield, effects, and compact contact shadow must remain comfortably inside each cell with safe empty margin. Never let ink cross a cell boundary.
+
+Cell layout in reading order:
+- Row 1: four subtle NORTH-facing idle breathing key poses, an unmistakable authored rear view throughout.
+- Row 2: four NORTH-facing locomotion loop key poses, authored rear view, alternating planted feet with coherent weight transfer.
+- Row 3: four subtle SOUTH-facing idle breathing key poses, an unmistakable authored front view throughout.
+- Row 4: four SOUTH-facing locomotion loop key poses, authored front view, alternating planted feet with coherent weight transfer.
+
+Keep the head, torso mass, armor construction, shield size, sword length, camera, scale, light direction, foot anchor, and contact shadow stable across all sixteen cells. Motion must come from articulated pose changes, not camera movement, cropping, morphing, or changing proportions. No translucent ghost bodies, motion-blur duplicates, cross-dissolves, detached equipment, extra limbs, baked projectiles, typography, logos, or third-party game references.

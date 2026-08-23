@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeAcceptedActorSourcesV1",
+  "purpose": "Immutable source-byte lineage for three representative complete actor sets. Historical prompts were not retained, so the brief files are explicitly reconstructed rather than presented as exact prompts.",
+  "actors": [
+    {
+      "actorId": "vanguard",
+      "representation": "armored humanoid melee hero",
+      "sources": [
+        {
+          "sourceFamily": "primary",
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424",
+          "briefFile": "art/generation/legacy-briefs/primary.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-892479d5-d655-4ced-bfab-b0635887ff4d.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directions",
+          "file": "art/source/actors/vanguard-directions-source.png",
+          "sha256": "16a99686ec59d9d11f28baac434f7805333612b025c7f825f372a113f8b35390",
+          "briefFile": "art/generation/legacy-briefs/directions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-bc20f11f-2a45-4487-8fa1-34d45f2ae45b.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "actions",
+          "file": "art/source/actors/vanguard-actions-source.png",
+          "sha256": "f4e9386eb853b3e457ab7c6729b23bbce7ce974d6828ac88218a2bc862ac40f0",
+          "briefFile": "art/generation/legacy-briefs/actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-0ed4e883-2fc5-4647-987d-8918720b0cc0.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "reactions",
+          "file": "art/source/actors/vanguard-reactions-source.png",
+          "sha256": "ca673f2d9ee7255d778f2af40e53cd27ed9fabf9dc419cd50bcca864d32b4a58",
+          "briefFile": "art/generation/legacy-briefs/reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-315b6f35-6f8f-4b68-a53c-cee575da7524.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionActions",
+          "file": "art/source/actors/vanguard-direction-actions-source.png",
+          "sha256": "94df9dc329a89cfc5c5a78c84cf2adb2ebccab3e6d78e7f57ab7d8f0c96c4958",
+          "briefFile": "art/generation/legacy-briefs/direction-actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-26a928c3-6d3b-4173-9b0c-fa9195191153.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionReactions",
+          "file": "art/source/actors/vanguard-direction-reactions-source.png",
+          "sha256": "75d4e333067c10ba7c3abf517a27cc732a95a73fc799e5ddbcc72e2e956963dc",
+          "briefFile": "art/generation/legacy-briefs/direction-reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-2cf20bcc-458c-4b35-aa5f-c33af4ce582b.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        }
+      ]
+    },
+    {
+      "actorId": "ranger",
+      "representation": "fine-limbed ranged humanoid hero",
+      "sources": [
+        {
+          "sourceFamily": "primary",
+          "file": "art/source/actors/ranger-source.png",
+          "sha256": "46606ad8d09e1ebd60799560487d5fedd28e0f5181c4c7819319c03295ddf0d2",
+          "briefFile": "art/generation/legacy-briefs/primary.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-cf737ae6-bc71-4ab7-aef5-b42a9660bf84.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directions",
+          "file": "art/source/actors/ranger-directions-source.png",
+          "sha256": "a5fed2f39fbe90ae78c529cb29e5c12b29648748fb1b99623cee90cfd0cdd81a",
+          "briefFile": "art/generation/legacy-briefs/directions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-b14a3765-d899-4e20-8340-a70a82694207.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "actions",
+          "file": "art/source/actors/ranger-actions-source.png",
+          "sha256": "2f69b3f464567b4c495a1c13cbdd65e8f9f2e07f5eaae8c531afa911088aeaf7",
+          "briefFile": "art/generation/legacy-briefs/actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-5a586c1a-0483-4eee-93dc-67724bdce0d2.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "reactions",
+          "file": "art/source/actors/ranger-reactions-source.png",
+          "sha256": "55f3fb90ce953f012f36a56fbc58368f64b64133c376d5c08816050c86d83b80",
+          "briefFile": "art/generation/legacy-briefs/reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-8ec4fda5-9daf-45c3-a98f-c7a9e0f8402b.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionActions",
+          "file": "art/source/actors/ranger-direction-actions-source.png",
+          "sha256": "4e5786247b78c975c1a5b2ba62965c47ffdd999e990b07ba5d9d4ddd5c6c6a4b",
+          "briefFile": "art/generation/legacy-briefs/direction-actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-4d7de649-99ab-4807-8d03-003a43f709c0.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionReactions",
+          "file": "art/source/actors/ranger-direction-reactions-source.png",
+          "sha256": "25e0ee1725f6670a537b20dd7ef8eb3cca5b419ea384fa006fdcceef5a618322",
+          "briefFile": "art/generation/legacy-briefs/direction-reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-8f34089e-0d18-490e-bee1-d99efa78f2c5.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        }
+      ]
+    },
+    {
+      "actorId": "stonekin",
+      "representation": "heavy non-human monster anatomy",
+      "sources": [
+        {
+          "sourceFamily": "primary",
+          "file": "art/source/actors/stonekin-source.png",
+          "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c",
+          "briefFile": "art/generation/legacy-briefs/primary.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-1c156cf7-7311-4ab9-9b52-e87f947932e0.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directions",
+          "file": "art/source/actors/stonekin-directions-source.png",
+          "sha256": "63aa874dd71816e05a9e492aa39307893572d0a7398799d9ff6c2cfed1ef6fa1",
+          "briefFile": "art/generation/legacy-briefs/directions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-89cfef85-ffdb-43dd-8081-b8a8efc39b1f.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "actions",
+          "file": "art/source/actors/stonekin-actions-source.png",
+          "sha256": "85e4a17693497a389d41b05e8bf1194343b8277672fc9f6e0121fdc8671627bc",
+          "briefFile": "art/generation/legacy-briefs/actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-e3acabef-68cf-4c35-860e-340e7e81ef95.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "reactions",
+          "file": "art/source/actors/stonekin-reactions-source.png",
+          "sha256": "9c29ad1cc16b2a34e249771efb93d62483ac1767b92b9a2ee7e3eade14cc16c4",
+          "briefFile": "art/generation/legacy-briefs/reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-a4e4496f-9898-42f4-8bad-af94a08015a3.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionActions",
+          "file": "art/source/actors/stonekin-direction-actions-source.png",
+          "sha256": "f4c6a69700065cbd73cd4381045524b30a1cf34589c0b2d936d2ffadaa442598",
+          "briefFile": "art/generation/legacy-briefs/direction-actions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-923e4135-21fe-4d39-a7b6-9b45e8b81ef3.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        },
+        {
+          "sourceFamily": "directionReactions",
+          "file": "art/source/actors/stonekin-direction-reactions-source.png",
+          "sha256": "6b096210b6907cd85cce70a4e9bdfdf9b8cdedf71749d3091e25e9005f564660",
+          "briefFile": "art/generation/legacy-briefs/direction-reactions.md",
+          "generation": {
+            "tool": "OpenAI image generation tool",
+            "artifactId": "exec-606362f5-36dc-494d-a462-9d5735783b58.png",
+            "promptRecordStatus": "reconstructed-after-generation"
+          }
+        }
+      ]
+    }
+  ]
+}

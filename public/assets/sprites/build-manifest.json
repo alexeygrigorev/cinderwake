@@ -3,7 +3,7 @@
   "pipeline": "ActorAtlasV2",
   "actorSpec": {
     "source": "art/actor-atlas-v1.json",
-    "sha256": "b14c91d15d6ad258949bfc499b62787d0487ea61e397c1b5a3fe371bfb31ee9d"
+    "sha256": "c093cb03cbdf871fea68eb513e0a90211edb93edffd9e580ab74966a293dd735"
   },
   "builtAt": "deterministic-from-committed-source",
   "outputs": {

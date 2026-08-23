@@ -1,0 +1,12 @@
+Use the attached original Cinderwake Stonekin sheet only as the immutable identity and style reference. Create one new reaction sprite sheet for that exact same Stonekin monster: the same hulking non-human basalt anatomy, ember-lit cracks, broad shoulders, heavy forearms, short legs, stone plates, proportions, and stable world scale in every cell.
+
+Output exactly one square 1024 × 1024 raster image arranged as a strict edge-to-edge 4 × 4 grid. Every cell is exactly 256 × 256 pixels. Do not draw grid lines, gutters, labels, captions, numbers, diagrams, UI, borders, or a title. Fill all unused background in every cell with flat pure chroma-key magenta #ff00ff, with no gradient, texture, scenery, horizon, floor plane, or vignette.
+
+Use the Cinderwake actor camera and rendering contract: painterly high-detail pre-rendered 2D dark-fantasy game sprites, elevated three-quarter camera near 55 degrees, upper-left warm key light, restrained cool bounce, crisp readable silhouette at small gameplay scale, bottom-center ground anchor, and a consistent support baseline near y=236 inside each 256-pixel cell. The complete body, attached stone plates, small crumble effects, and compact contact shadow must remain comfortably inside each cell with safe empty margin. Never let ink cross a cell boundary.
+
+Cell layout in reading order:
+- Row 1: four distinct articulated east-facing hurt/recoil poses, progressing from impact to regained balance without changing identity.
+- Rows 2 and 3: eight distinct anatomy-specific collapse poses progressing continuously from buckling knees through a heavy grounded fall. The body mass and all major stone anatomy remain attached.
+- Row 4: four grounded terminal reserve poses with the same final fallen silhouette and only subtle settling differences.
+
+Keep the head, torso mass, limb thickness, basalt plate pattern, ember cracks, camera, scale, light direction, support anchor, and contact shadow stable across all sixteen cells. Motion must come from articulated pose changes, not camera movement, cropping, morphing, or changing proportions. No generic humanoid substitution, translucent ghost bodies, motion-blur duplicates, cross-dissolves, floating duplicate rocks, severed limbs, baked projectiles, large detached effects, typography, logos, or third-party game references.

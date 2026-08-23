@@ -1,10 +1,14 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "created": "2026-08-23",
   "tool": "OpenAI image generation tool",
   "styleBrief": "art/style-bible.md",
   "thirdPartyImageInputs": [],
-  "notes": "Original Cinderwake primary source sheets were generated from text-only briefs. Direction, action, and reaction sheets were edited from those committed original Cinderwake sheets to preserve character identity. No third-party game art, screenshots, logos, or copyrighted character references were supplied as image inputs.",
+  "generationRecords": {
+    "representativeAcceptedSources": "art/generation/accepted-production.json",
+    "exactPromptTrials": "art/generation/trials.json"
+  },
+  "notes": "Original Cinderwake primary source sheets were generated from text-only briefs. Direction, action, and reaction sheets were edited from those committed original Cinderwake sheets to preserve character identity. Historical exact prompts were not retained and are never reconstructed as if verbatim; the generation records preserve immutable generated artifact IDs, source hashes, and explicitly reconstructed briefs. Fresh trials preserve exact prompts before generation. No third-party game art, screenshots, logos, or copyrighted character references were supplied as image inputs.",
   "sources": [
     {
       "file": "art/source/actors/vanguard-source.png",

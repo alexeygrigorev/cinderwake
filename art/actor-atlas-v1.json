@@ -32,9 +32,11 @@
       "groundedReserve": 3
     },
     "actionLayout": {
-      "attackCells": [0, 1, 2, 3, 4, 5],
+      "attackMotionCells": [0, 1, 2, 3, 4],
+      "attackReviewReserveCell": 5,
       "recoveryReserveCells": [6, 7],
-      "abilityCells": [8, 9, 10, 11, 12, 13, 14, 15]
+      "abilityCells": [8, 9, 10, 11, 12, 13, 14, 15],
+      "runtimeAttackTerminal": { "source": "primary", "cell": 0 }
     },
     "directionActionRows": {
       "northAttack": 0,

@@ -1,0 +1,12 @@
+Use the attached original Cinderwake Ranger sheet only as the immutable identity and style reference. Create one new action sprite sheet for that exact same Ranger: the same realistic human anatomy, soot-brown leather and cloth, muted ember-orange accents, hood, recurved bow, quiver, materials, proportions, and stable world scale in every cell.
+
+Output exactly one square 1024 × 1024 raster image arranged as a strict edge-to-edge 4 × 4 grid. Every cell is exactly 256 × 256 pixels. Do not draw grid lines, gutters, labels, captions, numbers, diagrams, UI, borders, or a title. Fill all unused background in every cell with flat pure chroma-key magenta #ff00ff, with no gradient, texture, scenery, horizon, floor plane, or vignette.
+
+Use the Cinderwake actor camera and rendering contract: painterly high-detail pre-rendered 2D dark-fantasy game sprites, elevated three-quarter camera near 55 degrees, upper-left warm key light, restrained cool bounce, crisp readable silhouette at small gameplay scale, bottom-center ground anchor, and a consistent foot baseline near y=236 inside each 256-pixel cell. The complete body, bow, quiver, effects, and compact contact shadow must remain comfortably inside each cell with safe empty margin. Never let ink cross a cell boundary.
+
+Cell layout in reading order:
+- Cells 0–5: six distinct east-facing primary bow-shot frames: settled anticipation, reach and nock, draw, full draw, release/contact, and controlled follow-through.
+- Cells 6–7: two natural recovered idle reserves matching the reference silhouette.
+- Cells 8–15: eight distinct east-facing fan-volley ability frames: grounded anticipation, low coil, bow raise, wide draw, readable ember-cyan charge constrained to the bow, release/contact, follow-through, and natural recovered idle.
+
+The arrow may be nocked or at the bow at release, but never paint a detached traveling projectile or a large free-standing effect into a cell. Keep the head, torso mass, costume construction, bow size, quiver position, camera, scale, light direction, foot anchor, and contact shadow stable across all sixteen cells. Motion must come from articulated pose changes, not camera movement, cropping, morphing, or changing proportions. No translucent ghost bodies, motion-blur duplicates, cross-dissolves, detached equipment, extra limbs, typography, logos, or third-party game references.
