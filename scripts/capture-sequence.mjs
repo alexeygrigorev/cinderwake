@@ -596,9 +596,10 @@ try {
   );
   if (assessmentCode !== 0 && !allowAssessmentFailure)
     throw new Error(`Sequence assessment failed with code ${assessmentCode}`);
-  const analysis = JSON.parse(
-    await fs.readFile(path.join(output, "animation-analysis.json"), "utf8"),
-  );
+  const analysis = await fs
+    .readFile(path.join(output, "animation-analysis.json"), "utf8")
+    .then(JSON.parse)
+    .catch(() => ({ pass: false, checks: { "sequence-assessment-unavailable": false } }));
 
   const figures = reportFrames
     .map((entry) => {
