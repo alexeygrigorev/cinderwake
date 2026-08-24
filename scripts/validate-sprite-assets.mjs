@@ -181,6 +181,9 @@ const uiComponentContracts = {
   "ui-service-button.png": {
     sourceRect: { x: 583, y: 95, width: 197, height: 82 },
   },
+  "ui-service-field.png": {
+    sourceRect: { x: 500, y: 580, width: 120, height: 100 },
+  },
 };
 for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
   const componentPath = path.join(atlasDirectory, fileName);
@@ -207,6 +210,26 @@ for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
   ]);
   if (!componentPixels.equals(sourcePixels))
     throw new Error(`${fileName} pixels differ from its declared ui.png crop`);
+  if (fileName === "ui-service-field.png") {
+    let luminanceTotal = 0;
+    let maximumLuminance = 0;
+    let minimumAlpha = 255;
+    for (let offset = 0; offset < componentPixels.length; offset += 4) {
+      const luminance =
+        (componentPixels[offset] * 0.2126 +
+          componentPixels[offset + 1] * 0.7152 +
+          componentPixels[offset + 2] * 0.0722) /
+        255;
+      luminanceTotal += luminance;
+      maximumLuminance = Math.max(maximumLuminance, luminance);
+      minimumAlpha = Math.min(minimumAlpha, componentPixels[offset + 3]);
+    }
+    const meanLuminance = luminanceTotal / (componentPixels.length / 4);
+    if (minimumAlpha !== 255 || meanLuminance > 0.1 || maximumLuminance > 0.25)
+      throw new Error(
+        "ui-service-field.png must remain an opaque quiet field without bright ornament",
+      );
+  }
 }
 
 const decalPath = path.join(atlasDirectory, "environment-decals.png");

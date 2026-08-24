@@ -33,6 +33,7 @@ let selected: CharacterClass = "vanguard",
   input: InputController | undefined,
   activeScenario: ScenarioV1 | undefined;
 let cityServiceFeedback = "";
+let cityServiceFeedbackVisible = "";
 let cityServiceNpcId: string | null = null;
 
 const CITY_ACTION_LABELS: Record<CityServiceActionId, string> = {
@@ -55,25 +56,33 @@ function signedDelta(value: number, label: string): string | null {
   return `${value > 0 ? "+" : ""}${value}${label}`;
 }
 
+const CITY_REJECTION_COPY: Record<string, string> = {
+  insufficient_gold: "NO GOLD",
+  insufficient_stock: "NO STOCK",
+  missing_item: "NO PELT",
+  merchant_cannot_pay: "MERCHANT POOR",
+  already_sated: "ALREADY FED",
+  already_rested: "ALREADY RESTED",
+  full_health: "FULL HEALTH",
+  city_unsafe: "CITY UNSAFE",
+};
+
 function describeCityDeltas(deltas: CityServiceDeltasV1): string {
   const inventory = deltas.inventory.map(({ itemId, quantity }) =>
-    signedDelta(quantity, ` ${itemId === "ashfang-pelt" ? "pelt" : itemId}`),
+    signedDelta(quantity, itemId === "ashfang-pelt" ? "P" : itemId),
   );
   return [
     signedDelta(deltas.gold, "G"),
-    signedDelta(deltas.health, " HP"),
-    signedDelta(
-      deltas.tonics,
-      ` tonic${Math.abs(deltas.tonics) === 1 ? "" : "s"}`,
-    ),
-    signedDelta(deltas.hunger, " hunger"),
-    signedDelta(deltas.fatigue, " fatigue"),
+    signedDelta(deltas.health, "HP"),
+    signedDelta(deltas.tonics, "T"),
+    signedDelta(deltas.hunger, "H"),
+    signedDelta(deltas.fatigue, "F"),
     ...inventory,
-    signedDelta(deltas.merchantTonicStock, " stock"),
-    deltas.worldMinute ? `+${deltas.worldMinute} min to dawn` : null,
+    signedDelta(deltas.merchantTonicStock, "S"),
+    deltas.worldMinute ? `D+${deltas.worldMinute}M` : null,
   ]
     .filter((part): part is string => Boolean(part))
-    .join(" / ");
+    .join(" ");
 }
 
 function cityActionPresentation(
@@ -107,7 +116,7 @@ function cityActionPresentation(
     label: CITY_ACTION_LABELS[actionId],
     detail: preview.ok
       ? describeCityDeltas(preview.receipt.deltas)
-      : `Unavailable: ${preview.message}`,
+      : (CITY_REJECTION_COPY[preview.code] ?? preview.code),
     previewStatus: preview.ok ? "ok" : "rejected",
     previewDeltas: preview.ok ? preview.receipt.deltas : null,
     rejectionCode: preview.ok ? null : preview.code,
@@ -228,7 +237,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
       () => screen();
     return;
   }
-  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--ui-service-panel:url('${assetBase}assets/sprites/ui-service-panel.png');--ui-service-button:url('${assetBase}assets/sprites/ui-service-button.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><aside id="city-services" class="city-service-sheet hidden" aria-live="polite" aria-label="Nearby city services"></aside><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
+  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--ui-service-panel:url('${assetBase}assets/sprites/ui-service-panel.png');--ui-service-button:url('${assetBase}assets/sprites/ui-service-button.png');--ui-service-field:url('${assetBase}assets/sprites/ui-service-field.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><aside id="city-services" class="city-service-sheet hidden" aria-live="polite" aria-label="Nearby city services"></aside><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
@@ -269,6 +278,9 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     cityServiceFeedback = result.ok
       ? `${CITY_ACTION_LABELS[actionId]} complete`
       : result.message;
+    cityServiceFeedbackVisible = result.ok
+      ? cityServiceFeedback
+      : (CITY_REJECTION_COPY[result.code] ?? result.code);
     updateHud(host!.getState());
   };
   const gameLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
@@ -446,29 +458,34 @@ function updateCityServices(state: GameState): void {
     sheet.replaceChildren();
     delete sheet.dataset.contentKey;
     cityServiceFeedback = "";
+    cityServiceFeedbackVisible = "";
     cityServiceNpcId = null;
     return;
   }
   sheet.classList.remove("hidden");
   sheet.closest(".game")?.classList.add("city-service-open");
-  if (cityServiceNpcId !== npc.id) cityServiceFeedback = "";
+  if (cityServiceNpcId !== npc.id) {
+    cityServiceFeedback = "";
+    cityServiceFeedbackVisible = "";
+  }
   cityServiceNpcId = npc.id;
   const feedback = cityServiceFeedback || "Choose a service";
+  const feedbackVisible = cityServiceFeedbackVisible || feedback;
   const presentations = npc.actions.map((actionId) => ({
     actionId,
     ...cityActionPresentation(state, actionId),
   }));
   const traveler = state.city.traveler;
-  const status = `${traveler.gold}G / HP ${traveler.health}/${traveler.maxHealth} / ${traveler.tonics} tonic${traveler.tonics === 1 ? "" : "s"}`;
+  const status = `${traveler.gold}G / HP ${traveler.health}/${traveler.maxHealth} / Tonics ${traveler.tonics}`;
   const needs = `Hunger ${traveler.hunger} / Fatigue ${traveler.fatigue}`;
   const stock =
     npc.role === "merchant"
-      ? `${state.city.merchant.tonicStock} tonics in stock / ${inventoryQuantity(state, "ashfang-pelt")} pelts held`
-      : `${inventoryQuantity(state, "ashfang-pelt")} pelts held`;
+      ? `Stock ${state.city.merchant.tonicStock} / Pelts ${inventoryQuantity(state, "ashfang-pelt")}`
+      : `Pelts ${inventoryQuantity(state, "ashfang-pelt")}`;
   const contentKey = `${npc.id}:${feedback}:${status}:${needs}:${stock}:${presentations.map(({ detail }) => detail).join(":")}`;
   if (sheet.dataset.contentKey === contentKey) return;
   sheet.dataset.contentKey = contentKey;
-  sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}${spriteText(status, "sprite-city-status")}${spriteText(needs, "sprite-city-needs")}${spriteText(stock, "sprite-city-stock")}</div><div class="city-service-actions">${presentations.map(({ actionId, label, detail, previewStatus, previewDeltas, rejectionCode }) => `<button data-city-action="${actionId}" data-preview-status="${previewStatus}"${previewDeltas ? ` data-preview-deltas="${escapeAttribute(JSON.stringify(previewDeltas))}"` : ""}${rejectionCode ? ` data-preview-rejection="${escapeAttribute(rejectionCode)}"` : ""} aria-label="${escapeAttribute(`${label}. ${detail}`)}">${spriteText(label, "sprite-city-action")}${spriteText(detail, "sprite-city-detail")}</button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedback, "sprite-city-feedback")}</output>`;
+  sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}${spriteText(status, "sprite-city-status")}${spriteText(needs, "sprite-city-needs")}${spriteText(stock, "sprite-city-stock")}</div><div class="city-service-actions">${presentations.map(({ actionId, label, detail, previewStatus, previewDeltas, rejectionCode }) => `<button data-city-action="${actionId}" data-preview-status="${previewStatus}"${previewDeltas ? ` data-preview-deltas="${escapeAttribute(JSON.stringify(previewDeltas))}"` : ""}${rejectionCode ? ` data-preview-rejection="${escapeAttribute(rejectionCode)}"` : ""} aria-label="${escapeAttribute(`${label}. ${detail}`)}"><span class="city-service-button-copy">${spriteText(label, "sprite-city-action")}${spriteText(detail, "sprite-city-detail")}</span></button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedbackVisible, "sprite-city-feedback")}</output>`;
 }
 function lab(): void {
   const existing = document.querySelector(".lab");

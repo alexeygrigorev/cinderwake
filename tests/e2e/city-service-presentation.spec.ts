@@ -163,6 +163,53 @@ async function captureServiceCase(
     const panelBounds = panel.getBoundingClientRect();
     const text = [...panel.querySelectorAll<HTMLElement>(".sprite-text")];
     const targets = [...panel.querySelectorAll<HTMLElement>("button")];
+    const lineEvidence = [
+      ...panel.querySelectorAll<HTMLElement>(
+        ".sprite-city-detail, .sprite-city-stock, .sprite-city-feedback",
+      ),
+    ].map((element) => {
+      const words = [...element.querySelectorAll<HTMLElement>(".sprite-word")];
+      const lines: Array<{ top: number; words: number }> = [];
+      for (const word of words) {
+        const top = word.getBoundingClientRect().top;
+        const line = lines.find(
+          (candidate) => Math.abs(candidate.top - top) < 2,
+        );
+        if (line) line.words += 1;
+        else lines.push({ top, words: 1 });
+      }
+      return {
+        className: element.className,
+        lineCount: lines.length,
+        lastLineWords: lines.at(-1)?.words ?? 0,
+        totalWords: words.length,
+      };
+    });
+    const quietFields = targets.map((target) => {
+      const field = target.querySelector<HTMLElement>(
+        ".city-service-button-copy",
+      )!;
+      const targetBounds = target.getBoundingClientRect();
+      const fieldBounds = field.getBoundingClientRect();
+      const textBounds = [
+        ...field.querySelectorAll<HTMLElement>(".sprite-text"),
+      ].map((text) => text.getBoundingClientRect());
+      return {
+        backgroundImage: getComputedStyle(field).backgroundImage,
+        coversOrnamentCenter:
+          fieldBounds.left <= targetBounds.left + targetBounds.width / 2 &&
+          fieldBounds.right >= targetBounds.left + targetBounds.width / 2 &&
+          fieldBounds.top <= targetBounds.top + targetBounds.height / 2 &&
+          fieldBounds.bottom >= targetBounds.top + targetBounds.height / 2,
+        containsText: textBounds.every(
+          (text) =>
+            text.left >= fieldBounds.left - 1 &&
+            text.right <= fieldBounds.right + 1 &&
+            text.top >= fieldBounds.top - 1 &&
+            text.bottom <= fieldBounds.bottom + 1,
+        ),
+      };
+    });
     return {
       viewport: { width: innerWidth, height: innerHeight },
       panel: {
@@ -180,6 +227,8 @@ async function captureServiceCase(
         const bounds = target.getBoundingClientRect();
         return { width: bounds.width, height: bounds.height };
       }),
+      lineEvidence,
+      quietFields,
     };
   });
   expect(geometry.panel.left).toBeGreaterThanOrEqual(0);
@@ -190,6 +239,19 @@ async function captureServiceCase(
   expect(
     geometry.targets.every(({ width, height }) => width >= 48 && height >= 48),
   ).toBe(true);
+  expect(
+    geometry.quietFields.every(
+      ({ backgroundImage, coversOrnamentCenter, containsText }) =>
+        backgroundImage.includes("ui-service-field.png") &&
+        coversOrnamentCenter &&
+        containsText,
+    ),
+  ).toBe(true);
+  for (const lines of geometry.lineEvidence) {
+    expect(lines.lineCount, lines.className).toBeLessThanOrEqual(2);
+    if (lines.totalWords > 1)
+      expect(lines.lastLineWords, lines.className).toBeGreaterThanOrEqual(2);
+  }
 
   const previewDeltas = JSON.parse(
     (await button.getAttribute("data-preview-deltas"))!,

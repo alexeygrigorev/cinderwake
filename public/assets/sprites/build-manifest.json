@@ -99,6 +99,21 @@
       "generationRecord": "art/generation/ui-service-components-v1.json",
       "reviewRecord": "art/generation/ui-service-components-v1.json"
     },
+    "ui-service-field.png": {
+      "sha256": "797f591cb94ed2107d00851c47be85dc48fca8e9a5955055d1fb33e8e727a22c",
+      "source": "public/assets/sprites/ui.png",
+      "sourceSha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+      "sourceRect": {
+        "x": 500,
+        "y": 580,
+        "width": 120,
+        "height": 100
+      },
+      "rawSource": "art/source/ui/ui-source.png",
+      "rawSourceSha256": "1a1048e75f359280efa9480a8f9c61c16f3350628113f85a054ccdb02fa1c282",
+      "generationRecord": "art/generation/ui-service-components-v1.json",
+      "reviewRecord": "art/generation/ui-service-components-v1.json"
+    },
     "effects.png": {
       "sha256": "a841fc3f96c40398f3fbbfd41eb9b1a231a7f7716ad682c5d07c58107dc80061",
       "source": "public/assets/sprites/effects.png"

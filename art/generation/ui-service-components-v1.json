@@ -33,6 +33,12 @@
       "sha256": "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
       "sourceRect": { "x": 583, "y": 95, "width": 197, "height": 82 },
       "rendering": "css-border-image-nine-slice"
+    },
+    {
+      "file": "public/assets/sprites/ui-service-field.png",
+      "sha256": "797f591cb94ed2107d00851c47be85dc48fca8e9a5955055d1fb33e8e727a22c",
+      "sourceRect": { "x": 500, "y": 580, "width": 120, "height": 100 },
+      "rendering": "opaque-tiled-reading-field"
     }
   ],
   "decision": "Authorize only the exact declared atlas crops for the city-service panel and button. Pixel provenance, phone readability, pressed feedback, overlap, and service-state truthfulness remain executable promotion gates."

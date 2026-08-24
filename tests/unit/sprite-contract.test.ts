@@ -302,6 +302,12 @@ describe("sprite atlas quality contract", () => {
       pixelWidth: 197,
       pixelHeight: 82,
     });
+    expect(catalog.assets["atlas:ui:service-field"]).toMatchObject({
+      url: "/assets/sprites/ui-service-field.png",
+      mimeType: "image/png",
+      pixelWidth: 120,
+      pixelHeight: 100,
+    });
   });
 
   it("binds service UI crops to the runtime atlas and truthful raw-source record", async () => {
@@ -314,6 +320,7 @@ describe("sprite atlas quality contract", () => {
     const expected = {
       "ui-service-panel.png": { x: 431, y: 534, width: 294, height: 198 },
       "ui-service-button.png": { x: 583, y: 95, width: 197, height: 82 },
+      "ui-service-field.png": { x: 500, y: 580, width: 120, height: 100 },
     };
     for (const [fileName, sourceRect] of Object.entries(expected)) {
       expect(manifest.outputs[fileName]).toMatchObject({

@@ -667,7 +667,7 @@ button {
 .city-service-actions button {
   box-sizing: border-box;
   min-height: 58px;
-  padding: 3px 6px;
+  padding: 8px 7px;
   color: #eee8db;
   background: none;
   border: 8px solid transparent;
@@ -677,6 +677,18 @@ button {
   border-image-repeat: stretch;
   touch-action: manipulation;
   filter: drop-shadow(0 2px 2px #000a);
+}
+
+.city-service-button-copy {
+  display: grid;
+  min-height: 42px;
+  padding: 6px 3px;
+  align-content: center;
+  overflow: hidden;
+  background-color: transparent;
+  background-image: var(--ui-service-field);
+  background-repeat: repeat;
+  background-size: 120px 100px;
 }
 
 .city-service-actions button:only-child {
@@ -697,6 +709,15 @@ button {
 .city-service-heading .sprite-city-stock {
   color: #e5bd78;
   font-size: 13px;
+}
+
+.city-service-sheet .sprite-word > .sprite-glyph + .sprite-glyph {
+  margin-left: -0.7em;
+}
+
+.city-service-sheet .sprite-text > .sprite-space {
+  flex-basis: calc(var(--spaces, 1) * 0.4em);
+  width: calc(var(--spaces, 1) * 0.4em);
 }
 
 .city-service-actions .sprite-city-action {

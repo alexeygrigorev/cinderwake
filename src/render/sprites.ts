@@ -208,6 +208,12 @@ const assets: Record<string, SpriteAssetV1> = {
     197,
     82,
   ),
+  "atlas:ui:service-field": asset(
+    "atlas:ui:service-field",
+    "ui-service-field.png",
+    120,
+    100,
+  ),
   "atlas:glyphs": asset("atlas:glyphs", "glyphs.png", 1024, 512),
 };
 

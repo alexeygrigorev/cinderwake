@@ -1,7 +1,9 @@
 # City service presentation evidence
 
-Embercross service panels use two deterministic tight crops from the committed
-UI atlas. The full derivation chain is recorded in
+Embercross service panels use three deterministic tight crops from the committed
+UI atlas: the outer panel, the ornamental action frame, and an opaque quiet
+leather reading field that masks the frame's bright central skull beneath action
+copy. The full derivation chain is recorded in
 `art/generation/ui-service-components-v1.json` and repeated in
 `public/assets/sprites/build-manifest.json`: raw legacy source hash, runtime
 atlas hash, exact source rectangle, output hash, generation-record status, and
@@ -32,7 +34,12 @@ stock, tonic and pelt inventory, and unaffordable/already-sated/already-rested/
 full-health rejection states. The browser oracle also requires every glyph run
 to be at least 13 CSS pixels, every action target to be at least 48×48 CSS
 pixels, the panel to remain inside the viewport, and the portrait vitality HUD
-to be explicitly hidden while a service sheet is open.
+to be explicitly hidden while a service sheet is open. It additionally proves
+that every action glyph is contained by the quiet field, the field covers the
+ornament center, longest action/stock/feedback copy uses at most two lines, and
+no wrapped final line contains a single orphan word. The asset validator freezes
+the field at full opacity, mean luminance `<= 0.10`, and maximum luminance
+`<= 0.25`, so a bright ornamental crop cannot silently replace it.
 
 Reproduce and update the immutable candidates with:
 

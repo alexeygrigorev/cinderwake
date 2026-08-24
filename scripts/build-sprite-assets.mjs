@@ -801,6 +801,10 @@ const UI_COMPONENTS = [
     file: "ui-service-button.png",
     sourceRect: { x: 583, y: 95, width: 197, height: 82 },
   },
+  {
+    file: "ui-service-field.png",
+    sourceRect: { x: 500, y: 580, width: 120, height: 100 },
+  },
 ];
 
 async function buildUiComponents(uiPath) {

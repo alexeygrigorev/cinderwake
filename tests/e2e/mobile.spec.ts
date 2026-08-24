@@ -73,19 +73,13 @@ test("mobile city service actions synchronize loaded player state and report rej
 
   const buy = page.locator("[data-city-action='merchant:buy-tonic']");
   await expect(buy).toBeVisible();
-  await expect(buy).toHaveAttribute(
-    "aria-label",
-    "Buy tonic. -18G / +1 tonic / -1 stock",
-  );
+  await expect(buy).toHaveAttribute("aria-label", "Buy tonic. -18G +1T -1S");
   await expect(
     page.locator("[data-city-action='merchant:sell-ashfang-pelt']"),
-  ).toHaveAttribute(
-    "aria-label",
-    "Sell pelt. Unavailable: The traveler does not have enough Ashfang pelts.",
-  );
+  ).toHaveAttribute("aria-label", "Sell pelt. NO PELT");
   await expect(page.locator(".sprite-city-status")).toHaveAttribute(
     "aria-label",
-    "40G / HP 52/160 / 1 tonic",
+    "40G / HP 52/160 / Tonics 1",
   );
   await expect(page.locator(".sprite-city-needs")).toHaveAttribute(
     "aria-label",
@@ -93,13 +87,16 @@ test("mobile city service actions synchronize loaded player state and report rej
   );
   await expect(page.locator(".sprite-city-stock")).toHaveAttribute(
     "aria-label",
-    "8 tonics in stock / 0 pelts held",
+    "Stock 8 / Pelts 0",
   );
   const presentation = await page.evaluate(() => {
     const panel = document.querySelector<HTMLElement>("#city-services")!;
     const action = panel.querySelector<HTMLElement>("button")!;
     const label = action.querySelector<HTMLElement>(".sprite-city-action")!;
     const detail = action.querySelector<HTMLElement>(".sprite-city-detail")!;
+    const copy = action.querySelector<HTMLElement>(
+      ".city-service-button-copy",
+    )!;
     const panelStyle = getComputedStyle(panel);
     const actionStyle = getComputedStyle(action);
     const bounds = action.getBoundingClientRect();
@@ -108,6 +105,7 @@ test("mobile city service actions synchronize loaded player state and report rej
       panelBorderImage: panelStyle.borderImageSource,
       actionBackground: actionStyle.backgroundImage,
       actionBorderImage: actionStyle.borderImageSource,
+      copyBackground: getComputedStyle(copy).backgroundImage,
       target: { width: bounds.width, height: bounds.height },
       labelFontSize: Number.parseFloat(getComputedStyle(label).fontSize),
       detailFontSize: Number.parseFloat(getComputedStyle(detail).fontSize),
@@ -121,6 +119,7 @@ test("mobile city service actions synchronize loaded player state and report rej
   });
   expect(presentation.panelBorderImage).toContain("ui-service-panel.png");
   expect(presentation.actionBorderImage).toContain("ui-service-button.png");
+  expect(presentation.copyBackground).toContain("ui-service-field.png");
   expect(presentation.target.width).toBeGreaterThanOrEqual(48);
   expect(presentation.target.height).toBeGreaterThanOrEqual(48);
   await buy.tap();
