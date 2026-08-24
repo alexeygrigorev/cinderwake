@@ -27,6 +27,8 @@ export interface LivePresentationSampleV1 {
       height: number;
     };
     actorInkTop: number;
+    frame: RenderManifestV1["worldUi"][number]["frame"];
+    fill: RenderManifestV1["worldUi"][number]["fill"];
   }>;
 }
 
@@ -97,10 +99,12 @@ export function installPlayerObserver(
         .sort((first, second) => first.entityId.localeCompare(second.entityId)),
       monsterHealth: manifest.worldUi
         .filter(({ type }) => type === "monster-health")
-        .map(({ ownerId, destinationRect, actorInkTop }) => ({
+        .map(({ ownerId, destinationRect, actorInkTop, frame, fill }) => ({
           ownerId,
           destinationRect: { ...destinationRect },
           actorInkTop,
+          frame: structuredClone(frame),
+          fill: structuredClone(fill),
         }))
         .sort((first, second) => first.ownerId.localeCompare(second.ownerId)),
     });

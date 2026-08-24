@@ -123,6 +123,7 @@ describe("sprite atlas quality contract", () => {
       spriteCatalogRevision: catalog.revision,
       drawCalls: [call],
       sceneSprites: [],
+      worldUi: [],
     };
     expect(() =>
       validateManifestSpriteContract(
@@ -158,6 +159,96 @@ describe("sprite atlas quality contract", () => {
     ).toThrow("frameCount does not match");
   });
 
+  it("requires resolved atlas references for health frame and cropped fill", () => {
+    const catalog = completeCatalog();
+    const frameSprite = catalog.sprites["world-ui:health-frame"]!;
+    const fillSprite = catalog.sprites["world-ui:health-fill"]!;
+    const frameIdentity = frameSprite.clips.static!.frameIdentities[0]!;
+    const fillIdentity = fillSprite.clips.static!.frameIdentities[0]!;
+    const destinationRect = { x: 100, y: 80, width: 60, height: 19 };
+    const health = {
+      id: "health:monster:00",
+      type: "monster-health",
+      ownerId: "monster:00",
+      destinationRect,
+      actorInkTop: 102,
+      healthRatio: 0.5,
+      visible: true,
+      frame: {
+        renderMode: "sprite",
+        spriteId: frameSprite.id,
+        assetId: frameSprite.assetId,
+        frameIdentity,
+        sourceRect: frameSprite.frames[frameIdentity],
+        destinationRect,
+      },
+      fill: {
+        renderMode: "sprite",
+        spriteId: fillSprite.id,
+        assetId: fillSprite.assetId,
+        frameIdentity: fillIdentity,
+        sourceRect: {
+          ...fillSprite.frames[fillIdentity]!,
+          width: 4,
+        },
+        destinationRect: { x: 106, y: 85, width: 24, height: 9 },
+      },
+    };
+    const manifest = {
+      schemaVersion: 2,
+      spriteCatalogRevision: catalog.revision,
+      drawCalls: [],
+      sceneSprites: [],
+      worldUi: [health],
+    };
+    expect(() =>
+      validateManifestSpriteContract(manifest, catalog),
+    ).not.toThrow();
+    expect(() =>
+      validateManifestSpriteContract({ ...manifest, worldUi: [] }, catalog),
+    ).not.toThrow();
+    expect(() =>
+      validateManifestSpriteContract(
+        {
+          ...manifest,
+          worldUi: [{ ...health, frame: undefined }],
+        },
+        catalog,
+      ),
+    ).toThrow("manifest.worldUi[0].frame must be an object");
+    expect(() =>
+      validateManifestSpriteContract(
+        {
+          ...manifest,
+          worldUi: [
+            {
+              ...health,
+              fill: { ...health.fill, spriteId: "world-ui:health-frame" },
+            },
+          ],
+        },
+        catalog,
+      ),
+    ).toThrow();
+    expect(() =>
+      validateManifestSpriteContract(
+        {
+          ...manifest,
+          worldUi: [
+            {
+              ...health,
+              fill: {
+                ...health.fill,
+                sourceRect: { ...health.fill.sourceRect, width: 9 },
+              },
+            },
+          ],
+        },
+        catalog,
+      ),
+    ).toThrow("sourceRect exceeds registered frame");
+  });
+
   it("detects a registered atlas file that is missing from public assets", async () => {
     const catalog = completeCatalog(
       "/assets/sprites/definitely-missing-sprite-contract.png",
@@ -173,6 +264,21 @@ describe("sprite atlas quality contract", () => {
       expect.arrayContaining(Object.keys(REQUIRED_SPRITE_CLIPS)),
     );
     await expect(assertRegisteredAssetFiles(catalog)).resolves.toBeUndefined();
+  });
+
+  it("registers tight health art instead of padded UI atlas cells", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const expected = {
+      "world-ui:health-frame": { x: 512, y: 0, width: 256, height: 82 },
+      "world-ui:health-fill": { x: 256, y: 0, width: 256, height: 48 },
+    } as const;
+    for (const [spriteId, sourceRect] of Object.entries(expected)) {
+      const sprite = catalog.sprites[spriteId]!;
+      const frameIdentity = sprite.clips.static!.frameIdentities[0]!;
+      expect(sprite.assetId).toBe("atlas:ui");
+      expect(sprite.frames[frameIdentity]).toEqual(sourceRect);
+      expect(sourceRect.height).toBeLessThan(256);
+    }
   });
 
   it("registers the reviewed environment kit with tight aspect-preserving frames", async () => {

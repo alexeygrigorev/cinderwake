@@ -74,7 +74,7 @@ interface EnvironmentKitAtlasSpec {
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
 const ENVIRONMENT_KIT_SPEC = environmentKitSpecJson as EnvironmentKitAtlasSpec;
 export const SPRITE_CATALOG_REVISION =
-  "cinder-node-v2-environment-kit-2026-08-24";
+  "cinder-node-v2-world-ui-crops-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
 
@@ -532,8 +532,44 @@ register(singleFrameSprite("effect:nova", "atlas:effects", 1, 2));
 register(singleFrameSprite("effect:impact", "atlas:effects", 3, 1));
 register(singleFrameSprite("effect:death", "atlas:effects", 2, 2));
 register(singleFrameSprite("world-ui:shadow", "atlas:ui", 3, 1));
-register(singleFrameSprite("world-ui:health-frame", "atlas:ui", 2, 0));
-register(singleFrameSprite("world-ui:health-fill", "atlas:ui", 1, 0));
+register({
+  id: "world-ui:health-frame",
+  assetId: "atlas:ui",
+  frames: {
+    "world-ui:health-frame:static:0": {
+      x: 512,
+      y: 0,
+      width: 256,
+      height: 82,
+    },
+  },
+  clips: {
+    static: {
+      frameIdentities: ["world-ui:health-frame:static:0"],
+      durationTicks: 1,
+      looping: true,
+    },
+  },
+});
+register({
+  id: "world-ui:health-fill",
+  assetId: "atlas:ui",
+  frames: {
+    "world-ui:health-fill:static:0": {
+      x: 256,
+      y: 0,
+      width: 256,
+      height: 48,
+    },
+  },
+  clips: {
+    static: {
+      frameIdentities: ["world-ui:health-fill:static:0"],
+      durationTicks: 1,
+      looping: true,
+    },
+  },
+});
 
 export const SPRITE_CATALOG: SpriteCatalogV1 = {
   schemaVersion: 1,

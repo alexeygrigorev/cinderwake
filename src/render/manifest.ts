@@ -33,7 +33,7 @@ export interface DestinationRectV1 {
   height: number;
 }
 
-interface SpriteReferenceV2 {
+export interface SpriteReferenceV2 {
   renderMode: "sprite";
   spriteId: string;
   assetId: string;
@@ -96,6 +96,8 @@ export interface WorldUiCallV1 {
   destinationRect: DestinationRectV1;
   actorInkTop: number;
   healthRatio: number;
+  frame: SpriteReferenceV2 & { destinationRect: DestinationRectV1 };
+  fill: SpriteReferenceV2 & { destinationRect: DestinationRectV1 };
   visible: boolean;
 }
 

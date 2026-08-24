@@ -80,11 +80,28 @@ export interface ManifestSceneSpriteV2 extends ManifestSpriteReferenceV2 {
   } | null;
 }
 
+export interface ManifestWorldUiCallV1 {
+  id: string;
+  type: "monster-health";
+  ownerId: string;
+  destinationRect: { x: number; y: number; width: number; height: number };
+  actorInkTop: number;
+  healthRatio: number;
+  frame: ManifestSpriteReferenceV2 & {
+    destinationRect: { x: number; y: number; width: number; height: number };
+  };
+  fill: ManifestSpriteReferenceV2 & {
+    destinationRect: { x: number; y: number; width: number; height: number };
+  };
+  visible: boolean;
+}
+
 export interface RenderManifestV2Shape {
   schemaVersion: 2;
   spriteCatalogRevision: string;
   drawCalls: ManifestDrawCallV2[];
   sceneSprites: ManifestSceneSpriteV2[];
+  worldUi: ManifestWorldUiCallV1[];
 }
 
 const ACTOR_CLIPS = ["idle", "walk", "attack", "ability", "hurt", "death"];
@@ -126,6 +143,8 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   "scenery:boundary:wall-front": ["static"],
   "scenery:exit:locked": ["static"],
   "scenery:exit:open": ["static"],
+  "world-ui:health-frame": ["static"],
+  "world-ui:health-fill": ["static"],
   ...Object.fromEntries(
     Object.keys(ENVIRONMENT_KIT_SPRITE_GEOMETRY).map((id) => [id, ["static"]]),
   ),
@@ -427,6 +446,94 @@ function assertSpriteReference(
     fail(`${pathName}.sourceRect does not match frame ${frameIdentity}`);
 }
 
+function assertCroppedSpriteReference(
+  value: unknown,
+  catalog: SpriteCatalogV1,
+  pathName: string,
+): asserts value is ManifestSpriteReferenceV2 {
+  const reference = object(value, pathName);
+  if (reference.renderMode !== "sprite")
+    fail(
+      `${pathName} must use renderMode sprite; procedural fallback detected`,
+    );
+  const spriteId = nonEmptyString(reference.spriteId, `${pathName}.spriteId`);
+  const sprite = catalog.sprites[spriteId];
+  if (!sprite) fail(`${pathName} references unregistered sprite ${spriteId}`);
+  const assetId = nonEmptyString(reference.assetId, `${pathName}.assetId`);
+  if (assetId !== sprite.assetId)
+    fail(`${pathName}.assetId ${assetId} does not match sprite ${spriteId}`);
+  const frameIdentity = nonEmptyString(
+    reference.frameIdentity,
+    `${pathName}.frameIdentity`,
+  );
+  const registeredRect = sprite.frames[frameIdentity];
+  if (!registeredRect)
+    fail(`${pathName} frame ${frameIdentity} is not registered on ${spriteId}`);
+  const actualRect = sourceRect(reference.sourceRect, `${pathName}.sourceRect`);
+  if (
+    actualRect.x < registeredRect.x ||
+    actualRect.y < registeredRect.y ||
+    actualRect.x + actualRect.width > registeredRect.x + registeredRect.width ||
+    actualRect.y + actualRect.height > registeredRect.y + registeredRect.height
+  )
+    fail(`${pathName}.sourceRect exceeds registered frame ${frameIdentity}`);
+}
+
+function destinationRect(
+  value: unknown,
+  pathName: string,
+): { x: number; y: number; width: number; height: number } {
+  const rect = object(value, pathName);
+  return {
+    x: finiteNumber(rect.x, `${pathName}.x`, Number.NEGATIVE_INFINITY),
+    y: finiteNumber(rect.y, `${pathName}.y`, Number.NEGATIVE_INFINITY),
+    width: finiteNumber(rect.width, `${pathName}.width`, Number.MIN_VALUE),
+    height: finiteNumber(rect.height, `${pathName}.height`, Number.MIN_VALUE),
+  };
+}
+
+function assertWorldUiCall(
+  value: unknown,
+  catalog: SpriteCatalogV1,
+  pathName: string,
+): void {
+  const call = object(value, pathName);
+  if (call.type !== "monster-health")
+    fail(`${pathName}.type must be monster-health`);
+  nonEmptyString(call.ownerId, `${pathName}.ownerId`);
+  const outer = destinationRect(
+    call.destinationRect,
+    `${pathName}.destinationRect`,
+  );
+  const ratio = finiteNumber(call.healthRatio, `${pathName}.healthRatio`);
+  if (ratio > 1) fail(`${pathName}.healthRatio must be <= 1`);
+  const frame = object(call.frame, `${pathName}.frame`);
+  assertSpriteReference(frame, catalog, `${pathName}.frame`);
+  if (frame.spriteId !== "world-ui:health-frame")
+    fail(`${pathName}.frame must reference world-ui:health-frame`);
+  const frameDestination = destinationRect(
+    frame.destinationRect,
+    `${pathName}.frame.destinationRect`,
+  );
+  if (JSON.stringify(frameDestination) !== JSON.stringify(outer))
+    fail(`${pathName}.frame destination must match health destination`);
+  const fill = object(call.fill, `${pathName}.fill`);
+  assertCroppedSpriteReference(fill, catalog, `${pathName}.fill`);
+  if (fill.spriteId !== "world-ui:health-fill")
+    fail(`${pathName}.fill must reference world-ui:health-fill`);
+  const fillDestination = destinationRect(
+    fill.destinationRect,
+    `${pathName}.fill.destinationRect`,
+  );
+  if (
+    fillDestination.x < outer.x ||
+    fillDestination.y < outer.y ||
+    fillDestination.x + fillDestination.width > outer.x + outer.width ||
+    fillDestination.y + fillDestination.height > outer.y + outer.height
+  )
+    fail(`${pathName}.fill destination must stay inside health frame`);
+}
+
 export function validateManifestSpriteContract(
   input: unknown,
   catalog: SpriteCatalogV1,
@@ -444,8 +551,11 @@ export function validateManifestSpriteContract(
     fail("manifest.drawCalls must be an array");
   if (!Array.isArray(manifest.sceneSprites))
     fail("manifest.sceneSprites must be an array");
+  if (!Array.isArray(manifest.worldUi))
+    fail("manifest.worldUi must be an array");
   const drawCalls = manifest.drawCalls as unknown[];
   const sceneSprites = manifest.sceneSprites as unknown[];
+  const worldUi = manifest.worldUi as unknown[];
   for (const [index, callValue] of drawCalls.entries()) {
     const pathName = `manifest.drawCalls[${index}]`;
     assertSpriteReference(callValue, catalog, pathName);
@@ -478,6 +588,8 @@ export function validateManifestSpriteContract(
       catalog,
       `manifest.sceneSprites[${index}]`,
     );
+  for (const [index, worldUiValue] of worldUi.entries())
+    assertWorldUiCall(worldUiValue, catalog, `manifest.worldUi[${index}]`);
   return manifest as unknown as RenderManifestV2Shape;
 }
 

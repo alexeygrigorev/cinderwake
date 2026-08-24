@@ -15,6 +15,7 @@ import {
   type EntityMaskV1,
   type RenderManifestV1,
   type SceneSpriteV2,
+  type SpriteReferenceV2,
   type WorldUiCallV1,
 } from "./manifest";
 import { SPRITE_CATALOG, spriteImage, type SourceRectV1 } from "./sprites";
@@ -414,15 +415,27 @@ export class CanvasRenderer {
         call.destinationRect.y +
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
       const width = Math.round(
-        Math.max(42, Math.min(54, call.destinationRect.width * 0.42)),
+        Math.max(72, Math.min(88, call.destinationRect.width * 0.62)),
       );
-      const height = 12;
+      const height = Math.round((width * 82) / 256);
       const destinationRect = {
         x: Math.round(call.screenAnchor.x - width / 2),
         y: Math.round(actorInkTop - height - 3),
         width,
         height,
       };
+      const frame = this.worldUiSpriteReference("world-ui:health-frame");
+      const fillBase = this.worldUiSpriteReference("world-ui:health-fill");
+      const healthRatio = Math.max(
+        0,
+        Math.min(1, monster.health / monster.maxHealth),
+      );
+      const horizontalInset = Math.round(width * 0.09);
+      const fillHeight = Math.max(1, Math.round(height * 0.48));
+      const fillWidth = Math.max(
+        1,
+        Math.round((width - horizontalInset * 2) * healthRatio),
+      );
       return [
         {
           id: `health:${monster.id}`,
@@ -430,7 +443,24 @@ export class CanvasRenderer {
           ownerId: monster.id,
           destinationRect,
           actorInkTop,
-          healthRatio: monster.health / monster.maxHealth,
+          healthRatio,
+          frame: { ...frame, destinationRect: { ...destinationRect } },
+          fill: {
+            ...fillBase,
+            sourceRect: {
+              ...fillBase.sourceRect,
+              width: Math.max(
+                1,
+                Math.round(fillBase.sourceRect.width * healthRatio),
+              ),
+            },
+            destinationRect: {
+              x: destinationRect.x + horizontalInset,
+              y: destinationRect.y + Math.round((height - fillHeight) / 2),
+              width: fillWidth,
+              height: fillHeight,
+            },
+          },
           visible:
             call.visible &&
             destinationRect.x + destinationRect.width >= 0 &&
@@ -440,6 +470,18 @@ export class CanvasRenderer {
         },
       ];
     });
+  }
+
+  private worldUiSpriteReference(spriteId: string): SpriteReferenceV2 {
+    const sprite = SPRITE_CATALOG.sprites[spriteId]!;
+    const frameIdentity = sprite.clips.static!.frameIdentities[0]!;
+    return {
+      renderMode: "sprite",
+      spriteId,
+      assetId: sprite.assetId,
+      sourceRect: { ...sprite.frames[frameIdentity]! },
+      frameIdentity,
+    };
   }
 
   private rotationFor(call: DrawCallV1): number {
@@ -470,37 +512,24 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     worldUi: WorldUiCallV1,
   ): void {
-    const destination = worldUi.destinationRect;
-    this.drawWorldSprite(
+    this.drawImageReference(
       context,
-      "world-ui:health-frame",
-      "static",
-      destination,
-    );
-    const fillSprite = SPRITE_CATALOG.sprites["world-ui:health-fill"]!;
-    const frameIdentity = fillSprite.clips.static!.frameIdentities[0]!;
-    const source = fillSprite.frames[frameIdentity]!;
-    const ratio = Math.max(0, Math.min(1, worldUi.healthRatio));
-    const inset = 4;
-    const fillWidth = Math.max(
+      {
+        assetId: worldUi.frame.assetId,
+        sourceRect: worldUi.frame.sourceRect,
+      },
+      worldUi.frame.destinationRect,
+      false,
       1,
-      Math.round((destination.width - inset * 2) * ratio),
+      0,
     );
     this.drawImageReference(
       context,
       {
-        assetId: fillSprite.assetId,
-        sourceRect: {
-          ...source,
-          width: Math.max(1, Math.round(source.width * ratio)),
-        },
+        assetId: worldUi.fill.assetId,
+        sourceRect: worldUi.fill.sourceRect,
       },
-      {
-        x: destination.x + inset,
-        y: destination.y + 4,
-        width: fillWidth,
-        height: 4,
-      },
+      worldUi.fill.destinationRect,
       false,
       0.95,
       0,
