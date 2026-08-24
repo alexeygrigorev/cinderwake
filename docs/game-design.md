@@ -76,7 +76,13 @@ Projectiles share the movement world's collision truth. A shot stops at the firs
 
 Each monster has an entity-keyed loot stream derived from `run seed + monster ID`. Killing an unrelated monster first therefore cannot change another monster's drop. A drop is gold, a tonic, or a weapon in common, tempered, or relic rarity. The pickup radius is deterministic and pickup emits a typed event.
 
-When the final monster dies, the exit unlocks once and emits `exit_unlocked`. Reaching its center emits `run_won`. Lethal damage emits `player_died` once and freezes active play into `lost`. The HUD and terminal overlay are visual projections of those states.
+When the final monster dies, the route to Embercross unlocks once and emits
+`exit_unlocked`. Reaching the landmark discovers the city; reaching the open
+gate then replaces the wilderness with the city domain. Lethal damage emits
+`player_died` once and freezes active play into `lost`. The current vertical
+slice has no reachable victory transition. Its pre-won scenario exists only to
+prove arbitrary-state restoration, the dormant victory overlay, and terminal
+state freezing; it is not evidence of a production path to victory.
 
 ## Visual language and animation
 

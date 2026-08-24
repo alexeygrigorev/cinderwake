@@ -455,7 +455,7 @@ describe("public temporal scenario catalog", () => {
     );
   });
 
-  it("enters the city at its unlocked gate and loses at an injected lethal contact", () => {
+  it("enters the city and freezes deterministic won and lost outcomes", () => {
     const entered = worldFromScenario(
       BUILTIN_SCENARIOS["temporal-city-entry"]!,
     );
@@ -485,5 +485,14 @@ describe("public temporal scenario catalog", () => {
     expect(
       lost.eventLog.filter(({ type }) => type === "player_died"),
     ).toHaveLength(1);
+
+    const won = worldFromScenario(BUILTIN_SCENARIOS["temporal-run-win"]!);
+    const frozenPlayerPosition = { ...won.player.position };
+    expect(won.phase).toBe("won");
+    expect(won.monsters).toHaveLength(0);
+    for (let tick = 0; tick < 12; tick += 1) stepGame(won, EMPTY_INPUT);
+    expect(won.tick).toBe(12);
+    expect(won.phase).toBe("won");
+    expect(won.player.position).toEqual(frozenPlayerPosition);
   });
 });

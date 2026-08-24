@@ -1451,6 +1451,13 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     contactEventTick: 0,
     captureTicks: [0, 1, 8, 16, 24, 32, 40, 48, 49],
   },
+  "temporal-run-win": {
+    scenarioId: "temporal-run-win",
+    subjectId: "player",
+    targetId: "player",
+    inputAction: null,
+    captureTicks: [0, 2, 4, 6, 8, 10],
+  },
 } as const satisfies Record<string, TemporalScenarioContract>;
 
 function discoveredCityState(tick = 0): CityStateV1 {
@@ -1909,6 +1916,17 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
       },
     ],
     settings: { ai: true, autoPickup: false, cameraFollow: true },
+  },
+  "temporal-run-win": {
+    schemaVersion: 1,
+    id: "temporal-run-win",
+    seed: "quality-run-win-01",
+    classId: "vanguard",
+    phase: "won",
+    map: { mode: "explicit", rows: arenaRows(22, 15) },
+    player: { tile: [9, 7] },
+    monsters: [],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "generated-run": {
     schemaVersion: 1,

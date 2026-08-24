@@ -39,6 +39,39 @@ function shellQuote(value) {
   return `'${String(value).replaceAll("'", `'"'"'`)}'`;
 }
 
+function logicalCropNegativeControl() {
+  const logical = { width: 960, height: 540 };
+  const backing = { width: 1440, height: 810 };
+  const crop = { x: 350, y: 196, width: 260, height: 200 };
+  const scaleX = backing.width / logical.width;
+  const scaleY = backing.height / logical.height;
+  const expected = {
+    x: crop.x * scaleX,
+    y: crop.y * scaleY,
+    width: crop.width * scaleX,
+    height: crop.height * scaleY,
+  };
+  const matches = (source) =>
+    source.x === expected.x &&
+    source.y === expected.y &&
+    source.width === expected.width &&
+    source.height === expected.height;
+  return {
+    id: "logical-closeup-to-physical-backing",
+    expectedCheck: "closeupUsesLogicalCropContract",
+    mutation: "use logical crop coordinates directly against a 1.5x backing",
+    baseline: { pass: matches(expected), sourceRect: expected },
+    mutated: { pass: matches(crop), sourceRect: crop },
+    detected: matches(expected) && !matches(crop),
+  };
+}
+
+if (process.argv.includes("--self-test-logical-crop")) {
+  const control = logicalCropNegativeControl();
+  console.log(JSON.stringify(control));
+  process.exit(control.detected ? 0 : 1);
+}
+
 const scenario = option("scenario", "animation-idle");
 const defaultAction = scenario.includes("walk")
   ? "move-east"
@@ -271,24 +304,26 @@ try {
           (call) => call.entityId === entityId,
         );
         if (!canvas) throw new Error("Game canvas is unavailable");
+        const logicalWidth = manifest.viewport.width;
+        const logicalHeight = manifest.viewport.height;
         const anchor = tracked?.footAnchor ??
           lastAnchor ?? {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
+            x: logicalWidth / 2,
+            y: logicalHeight / 2,
           };
         const cropWidth = 260;
         const cropHeight = 200;
         const cropX = Math.max(
           0,
           Math.min(
-            canvas.width - cropWidth,
+            logicalWidth - cropWidth,
             Math.round(anchor.x - cropWidth / 2),
           ),
         );
         const cropY = Math.max(
           0,
           Math.min(
-            canvas.height - cropHeight,
+            logicalHeight - cropHeight,
             Math.round(anchor.y - cropHeight * 0.74),
           ),
         );
@@ -297,12 +332,20 @@ try {
         cropCanvas.height = cropHeight;
         const cropContext = cropCanvas.getContext("2d");
         if (!cropContext) throw new Error("Close-up Canvas 2D is unavailable");
+        const scaleX = canvas.width / logicalWidth;
+        const scaleY = canvas.height / logicalHeight;
+        const sourceRect = {
+          x: cropX * scaleX,
+          y: cropY * scaleY,
+          width: cropWidth * scaleX,
+          height: cropHeight * scaleY,
+        };
         cropContext.drawImage(
           canvas,
-          cropX,
-          cropY,
-          cropWidth,
-          cropHeight,
+          sourceRect.x,
+          sourceRect.y,
+          sourceRect.width,
+          sourceRect.height,
           0,
           0,
           cropWidth,
@@ -319,7 +362,19 @@ try {
             ? window.__GAME_TEST__.captureEntityMask(entityId)
             : null,
           anchor: tracked?.footAnchor ?? null,
-          crop: { x: cropX, y: cropY, width: cropWidth, height: cropHeight },
+          crop: {
+            x: cropX,
+            y: cropY,
+            width: cropWidth,
+            height: cropHeight,
+            backing: {
+              width: canvas.width,
+              height: canvas.height,
+              scaleX,
+              scaleY,
+            },
+            sourceRect,
+          },
         };
       },
       { entityId: trackedEntityId, interpolationAlpha, lastAnchor },

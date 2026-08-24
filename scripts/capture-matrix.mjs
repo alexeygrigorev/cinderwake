@@ -197,6 +197,17 @@ const entries = [
     step: 2,
   },
   {
+    id: "city-entry",
+    label: "World transition · wilderness gate into Embercross",
+    category: "world transitions",
+    scenario: "temporal-city-entry",
+    action: "idle",
+    track: "player",
+    profile: "static-pose",
+    frames: 6,
+    step: 2,
+  },
+  {
     id: "outcome-win",
     label: "Outcome · win overlay and frozen state",
     category: "outcomes",

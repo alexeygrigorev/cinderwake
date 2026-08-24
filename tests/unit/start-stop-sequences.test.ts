@@ -15,6 +15,9 @@ const run = promisify(execFile);
 const assessor = fileURLToPath(
   new URL("../../scripts/assess-sequence.mjs", import.meta.url),
 );
+const capture = fileURLToPath(
+  new URL("../../scripts/capture-sequence.mjs", import.meta.url),
+);
 
 interface CommandFixture {
   entries: Array<{ tick: number; input: Partial<InputState> }>;
@@ -147,6 +150,47 @@ describe("current-runtime start/stop sequence fixtures", () => {
     expect(control.baseline.pass).toBe(true);
     expect(control.mutated.pass).toBe(false);
     expect(control.mutated.difference).toBe(9);
+    expect(control.detected).toBe(true);
+  });
+
+  it("rejects an evaluator that omits camera zoom from manifest projection", async () => {
+    const { stdout } = await run(process.execPath, [
+      assessor,
+      "--self-test-zoom-projection",
+    ]);
+    const control = JSON.parse(stdout);
+
+    expect(control.baseline.pass).toBe(true);
+    expect(control.mutated.pass).toBe(false);
+    expect(control.mutated.values.dimensions.width).toBe(118);
+    expect(control.baseline.values.dimensions.width).toBeCloseTo(106.2);
+    expect(control.detected).toBe(true);
+  });
+
+  it("rejects a glyph that moves opposite its simulated world direction", async () => {
+    const { stdout } = await run(process.execPath, [
+      assessor,
+      "--self-test-directional-screen-motion",
+    ]);
+    const control = JSON.parse(stdout);
+
+    expect(control.baseline.pass).toBe(true);
+    expect(control.mutated.pass).toBe(false);
+    expect(control.mutated.opposingSteps).toBe(2);
+    expect(control.detected).toBe(true);
+  });
+
+  it("rejects logical close-up coordinates used directly on a physical backing", async () => {
+    const { stdout } = await run(process.execPath, [
+      capture,
+      "--self-test-logical-crop",
+    ]);
+    const control = JSON.parse(stdout);
+
+    expect(control.baseline.pass).toBe(true);
+    expect(control.mutated.pass).toBe(false);
+    expect(control.baseline.sourceRect.width).toBe(390);
+    expect(control.mutated.sourceRect.width).toBe(260);
     expect(control.detected).toBe(true);
   });
 });

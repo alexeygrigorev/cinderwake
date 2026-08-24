@@ -8,12 +8,23 @@ const ATTACHED_EFFECT_CORE_HALF_WIDTH = 24;
 const START_STOP_FOOT_ANCHOR_RANGE = 0.25;
 const START_STOP_FOOT_BOTTOM_RANGE = 1;
 const START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE = 8;
+const CAMERA_DEAD_ZONE_PIXELS = 56;
 
 const [timelineFile, outputFile] = process.argv.slice(2);
 if (timelineFile === "--self-test-start-stop-height-pop") {
   const control = startStopHeightPopNegativeControl(
     START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
   );
+  console.log(JSON.stringify(control));
+  process.exit(control.detected ? 0 : 1);
+}
+if (timelineFile === "--self-test-zoom-projection") {
+  const control = zoomProjectionNegativeControl();
+  console.log(JSON.stringify(control));
+  process.exit(control.detected ? 0 : 1);
+}
+if (timelineFile === "--self-test-directional-screen-motion") {
+  const control = directionalScreenMotionNegativeControl();
   console.log(JSON.stringify(control));
   process.exit(control.detected ? 0 : 1);
 }
@@ -202,6 +213,113 @@ function close(a, b, tolerance = 0.000001) {
   );
 }
 
+function projectedDimensions(dimensions, camera) {
+  return {
+    width: dimensions.width * camera.zoom,
+    height: dimensions.height * camera.zoom,
+  };
+}
+
+function projectedScreen(world, camera, viewport) {
+  return {
+    x: viewport.width / 2 + ((world.x / 1024) * 48 - camera.x) * camera.zoom,
+    y: viewport.height / 2 + ((world.y / 1024) * 48 - camera.y) * camera.zoom,
+  };
+}
+
+function zoomProjectionNegativeControl() {
+  const world = { x: 6144, y: 4096 };
+  const camera = { x: 240, y: 160, zoom: 0.9 };
+  const viewport = { width: 960, height: 540 };
+  const baseDimensions = { width: 118, height: 118 };
+  const baseScale = 118 / 256;
+  const actual = {
+    screen: projectedScreen(world, camera, viewport),
+    dimensions: projectedDimensions(baseDimensions, camera),
+    scale: baseScale * camera.zoom,
+  };
+  const legacyUnzoomed = {
+    screen: {
+      x: viewport.width / 2 + (world.x / 1024) * 48 - camera.x,
+      y: viewport.height / 2 + (world.y / 1024) * 48 - camera.y,
+    },
+    dimensions: baseDimensions,
+    scale: baseScale,
+  };
+  const matches = (candidate) =>
+    close(candidate.screen.x, actual.screen.x) &&
+    close(candidate.screen.y, actual.screen.y) &&
+    close(candidate.dimensions.width, actual.dimensions.width) &&
+    close(candidate.dimensions.height, actual.dimensions.height) &&
+    close(candidate.scale, actual.scale);
+  return {
+    id: "zoom-aware-manifest-projection",
+    expectedCheck: "stateManifestContract",
+    mutation:
+      "remove camera zoom from screen, destination, and scale projection",
+    baseline: { pass: matches(actual), values: actual },
+    mutated: { pass: matches(legacyUnzoomed), values: legacyUnzoomed },
+    detected: matches(actual) && !matches(legacyUnzoomed),
+  };
+}
+
+function anchoredScreenMotionAssessment(points) {
+  let samples = 0;
+  let opposingSteps = 0;
+  let overshoots = 0;
+  for (let index = 1; index < points.length; index += 1) {
+    const previous = points[index - 1];
+    const current = points[index];
+    for (const axis of ["x", "y"]) {
+      const worldDelta =
+        current.actor.worldAnchor[axis] - previous.actor.worldAnchor[axis];
+      if (Math.abs(worldDelta) <= 0.000001) continue;
+      const screenDelta =
+        current.actor.screenAnchor[axis] - previous.actor.screenAnchor[axis];
+      const maximumProjectedDelta =
+        (Math.abs(worldDelta) / 1024) * 48 * current.manifest.camera.zoom;
+      samples += 1;
+      if (screenDelta * worldDelta < -0.000001) opposingSteps += 1;
+      if (Math.abs(screenDelta) > maximumProjectedDelta + 0.000001)
+        overshoots += 1;
+    }
+  }
+  return {
+    samples,
+    opposingSteps,
+    overshoots,
+    pass: samples > 0 && opposingSteps === 0 && overshoots === 0,
+  };
+}
+
+function directionalScreenMotionNegativeControl() {
+  const point = (worldX, screenX) => ({
+    actor: {
+      worldAnchor: { x: worldX, y: 0 },
+      screenAnchor: { x: screenX, y: 270 },
+    },
+    manifest: { camera: { zoom: 0.9 } },
+  });
+  const baseline = anchoredScreenMotionAssessment([
+    point(0, 480),
+    point(100, 480),
+    point(200, 481),
+  ]);
+  const mutated = anchoredScreenMotionAssessment([
+    point(0, 480),
+    point(100, 479),
+    point(200, 478),
+  ]);
+  return {
+    id: "directional-glyph-screen-motion",
+    expectedCheck: "screenMotionNeverOpposesWorldMotion",
+    mutation: "move an eastbound glyph west on consecutive captured frames",
+    baseline,
+    mutated,
+    detected: baseline.pass && !mutated.pass,
+  };
+}
+
 function normalizedPixelRmse(first, second) {
   if (!first || !second || first.length !== second.length) return Infinity;
   let squaredError = 0;
@@ -319,6 +437,7 @@ const observations = frames.map((frame, index) => {
     actor,
     entity: stateEntity(frame.snapshot, trackedEntityId),
     mask: frame.mask,
+    crop: frame.crop,
     stateHash: frame.stateHash,
     files: frame.files,
   };
@@ -377,9 +496,43 @@ if (profile === "start-stop") {
 let stateHashMismatches = 0;
 let manifestContractErrors = 0;
 let artifactIntegrityErrors = 0;
+let closeupCropContractErrors = 0;
 for (const observation of observations) {
   if (snapshotHash(observation.snapshot) !== observation.stateHash)
     stateHashMismatches += 1;
+  const { crop, manifest } = observation;
+  const scaleX = crop?.backing?.width / manifest.viewport.width;
+  const scaleY = crop?.backing?.height / manifest.viewport.height;
+  const expectedSource = crop
+    ? {
+        x: crop.x * scaleX,
+        y: crop.y * scaleY,
+        width: crop.width * scaleX,
+        height: crop.height * scaleY,
+      }
+    : null;
+  if (
+    !crop ||
+    !Number.isFinite(scaleX) ||
+    !Number.isFinite(scaleY) ||
+    scaleX <= 0 ||
+    scaleY <= 0 ||
+    crop.x < 0 ||
+    crop.y < 0 ||
+    crop.width <= 0 ||
+    crop.height <= 0 ||
+    crop.x + crop.width > manifest.viewport.width ||
+    crop.y + crop.height > manifest.viewport.height ||
+    !close(crop.backing?.scaleX, scaleX) ||
+    !close(crop.backing?.scaleY, scaleY) ||
+    !close(crop.sourceRect?.x, expectedSource?.x) ||
+    !close(crop.sourceRect?.y, expectedSource?.y) ||
+    !close(crop.sourceRect?.width, expectedSource?.width) ||
+    !close(crop.sourceRect?.height, expectedSource?.height) ||
+    crop.sourceRect.x + crop.sourceRect.width > crop.backing.width ||
+    crop.sourceRect.y + crop.sourceRect.height > crop.backing.height
+  )
+    closeupCropContractErrors += 1;
 }
 for (const point of points) {
   const { actor, entity, manifest, mask } = point;
@@ -465,7 +618,7 @@ for (const point of points) {
             ? { width: 64, height: 64 }
             : { width: 54, height: 54 }
           : { width: 42, height: 42 };
-  const expectedScale =
+  const baseScale =
     expectedType === "player"
       ? 118 / 256
       : expectedType === "monster"
@@ -476,16 +629,21 @@ for (const point of points) {
             ? 0.25
             : 0.21
           : 0.16;
+  const expectedDimensionsAtZoom = projectedDimensions(
+    expectedDimensions,
+    manifest.camera,
+  );
+  const expectedScale = baseScale * manifest.camera.zoom;
   const expectedTint = "#ffffff";
   if (
     actor.type !== expectedType ||
     actor.geometryId !== expectedGeometry ||
     actor.clip !== expectedClip ||
     !close(actor.scale, expectedScale) ||
-    actor.destinationRect?.width !== Math.round(expectedDimensions.width) ||
-    actor.destinationRect?.height !== Math.round(expectedDimensions.height) ||
-    actor.bounds?.width !== Math.round(expectedDimensions.width) ||
-    actor.bounds?.height !== Math.round(expectedDimensions.height) ||
+    !close(actor.destinationRect?.width, expectedDimensionsAtZoom.width) ||
+    !close(actor.destinationRect?.height, expectedDimensionsAtZoom.height) ||
+    !close(actor.bounds?.width, expectedDimensionsAtZoom.width) ||
+    !close(actor.bounds?.height, expectedDimensionsAtZoom.height) ||
     actor.tint !== expectedTint
   )
     manifestContractErrors += 1;
@@ -502,10 +660,11 @@ for (const point of points) {
       : expectedType === "loot"
         ? { x: 0, y: 0 }
         : entity.facing;
-  const expectedScreen = {
-    x: 480 + (expectedWorld.x / 1024) * 48 - manifest.camera.x,
-    y: 270 + (expectedWorld.y / 1024) * 48 - manifest.camera.y,
-  };
+  const expectedScreen = projectedScreen(
+    expectedWorld,
+    manifest.camera,
+    manifest.viewport,
+  );
   const expectedVisualPhase =
     expectedType === "loot"
       ? ((((point.presentationTick + entity.bobOffset) % 48) + 48) % 48) / 48
@@ -740,6 +899,23 @@ const renderSignatureMismatches = [...visualSignatures.values()].filter(
 const cameraErrorIncreases = cameraErrors
   .slice(1)
   .filter((error, index) => error > cameraErrors[index] + 0.001).length;
+const finalCamera = points.at(-1)?.manifest.camera;
+const finalCameraTarget = points.at(-1)?.manifest.cameraTarget;
+const cameraDeadZone = finalCameraTarget
+  ? CAMERA_DEAD_ZONE_PIXELS / finalCameraTarget.zoom
+  : 0;
+const cameraFinalDeadZoneExcess =
+  finalCamera && finalCameraTarget
+    ? Math.max(
+        0,
+        Math.abs(finalCamera.x - finalCameraTarget.x) - cameraDeadZone,
+        Math.abs(finalCamera.y - finalCameraTarget.y) - cameraDeadZone,
+      )
+    : Infinity;
+const cameraZoomErrorEnd =
+  finalCamera && finalCameraTarget
+    ? Math.abs(finalCamera.zoom - finalCameraTarget.zoom)
+    : Infinity;
 const oneShotClips = points.filter(({ actor }) =>
   ["attack", "ability", "hurt"].includes(actor.clip),
 );
@@ -757,12 +933,7 @@ const sawDeathTerminal = deathClips.some(
 const loopFrameCount = points[0]?.actor.frameCount ?? 0;
 const loopFramesCovered = new Set(points.map(({ actor }) => actor.frameIndex));
 const requiresMotion = ["anchored-motion", "projectile"].includes(profile);
-const requiresAnchor = [
-  "pose",
-  "one-shot",
-  "anchored-motion",
-  "death",
-].includes(profile);
+const requiresAnchor = ["pose", "one-shot", "death"].includes(profile);
 const requiresAnimation = [
   "pose",
   "loop",
@@ -802,6 +973,7 @@ const startStopHeightComparison = visibleHeightComparison(
 const startStopNegativeControl = startStopHeightPopNegativeControl(
   START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
 );
+const anchoredScreenMotion = anchoredScreenMotionAssessment(points);
 
 const thresholds = {
   semanticFrameError: 0,
@@ -829,7 +1001,9 @@ const thresholds = {
   attachedEffectCentroidAcceleration: 10,
   recoverySeamPixelRmse: RECOVERY_SEAM_PIXEL_RMSE,
   cameraAcceleration: 40,
-  cameraFinalError: 2,
+  cameraFinalDeadZoneExcess: 2,
+  cameraDeadZonePixels: CAMERA_DEAD_ZONE_PIXELS,
+  cameraZoomError: 0.001,
   oneShotVisualPoses: 5,
   startStopFootAnchorRange: START_STOP_FOOT_ANCHOR_RANGE,
   startStopFootBottomRange: START_STOP_FOOT_BOTTOM_RANGE,
@@ -877,12 +1051,19 @@ const measurements = {
   cameraErrorStart: cameraErrors[0] ?? 0,
   cameraErrorEnd: cameraErrors.at(-1) ?? 0,
   cameraErrorIncreases,
+  cameraDeadZone,
+  cameraFinalDeadZoneExcess,
+  cameraZoomErrorEnd,
   cameraAccelerationPeak: maximum(cameraAccelerations),
   stateHashMismatches,
   manifestContractErrors,
   artifactIntegrityErrors,
+  closeupCropContractErrors,
   renderSignatureMismatches,
   geometryEnvelopeViolations,
+  directionalScreenMotionSamples: anchoredScreenMotion.samples,
+  opposingDirectionalScreenSteps: anchoredScreenMotion.opposingSteps,
+  directionalScreenMotionOvershoots: anchoredScreenMotion.overshoots,
 };
 const attachedEffectBloomIsContinuous =
   oneShotProfile &&
@@ -897,6 +1078,7 @@ const checks = {
   stateHashesExact: stateHashMismatches === 0,
   stateManifestContract: manifestContractErrors === 0,
   savedMaskArtifactsExact: artifactIntegrityErrors === 0,
+  closeupUsesLogicalCropContract: closeupCropContractErrors === 0,
   renderSignatureDeterministic: renderSignatureMismatches === 0,
   geometryEnvelope: geometryEnvelopeViolations === 0,
   actualInkVisible: points.every(({ mask }) => mask.alphaPixels > 0),
@@ -936,6 +1118,8 @@ const checks = {
     !requiresAnchor ||
     (measurements.footAnchorRangeX <= thresholds.footAnchorRange &&
       measurements.footAnchorRangeY <= thresholds.footAnchorRange),
+  screenMotionNeverOpposesWorldMotion:
+    profile !== "anchored-motion" || anchoredScreenMotion.pass,
   actualGroundingStable:
     !requiresAnchor || measurements.inkBottomRange <= thresholds.inkBottomRange,
   actualPoseContinuous:
@@ -973,7 +1157,9 @@ const checks = {
     profile !== "camera-smooth" ||
     (measurements.cameraErrorEnd < measurements.cameraErrorStart &&
       measurements.cameraErrorIncreases === 0 &&
-      measurements.cameraErrorEnd <= thresholds.cameraFinalError),
+      measurements.cameraFinalDeadZoneExcess <=
+        thresholds.cameraFinalDeadZoneExcess &&
+      measurements.cameraZoomErrorEnd <= thresholds.cameraZoomError),
   cameraAcceleration:
     profile !== "camera-smooth" ||
     measurements.cameraAccelerationPeak <= thresholds.cameraAcceleration,
