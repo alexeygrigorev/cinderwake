@@ -363,8 +363,26 @@ test("landscape game canvas fits without scrolling and keeps controls reachable"
   page,
 }) => {
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.goto("/?testMode=1&scenario=camera-track");
+  await page.goto("/?testMode=1&scenario=mid-action");
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  await expect(
+    page.locator('canvas[aria-label="Cinderwake game view"]'),
+  ).toBeVisible();
+  const visibleRoles = await page.evaluate(() => {
+    const manifest = window.__GAME_TEST__!.renderManifest();
+    return {
+      player: manifest.drawCalls.some((call) => call.entityId === "player"),
+      monster: manifest.drawCalls.some((call) =>
+        call.entityId?.startsWith("monster:"),
+      ),
+      scenery: manifest.sceneSprites.filter(
+        (sprite) => sprite.visible && sprite.layer !== "terrain",
+      ).length,
+    };
+  });
+  expect(visibleRoles.player).toBe(true);
+  expect(visibleRoles.monster).toBe(true);
+  expect(visibleRoles.scenery).toBeGreaterThan(0);
   const layout = await page.evaluate(() => {
     const stage = document.querySelector<HTMLElement>(".stage")!;
     const controls = document.querySelector<HTMLElement>(".mobile-controls")!;
