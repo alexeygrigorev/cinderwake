@@ -455,13 +455,16 @@ describe("public temporal scenario catalog", () => {
     );
   });
 
-  it("wins at the unlocked exit and loses at an injected lethal contact", () => {
-    const won = worldFromScenario(BUILTIN_SCENARIOS["temporal-run-win"]!);
-    stepGame(won, EMPTY_INPUT);
-    expect(won.phase).toBe("won");
-    expect(won.eventLog.filter(({ type }) => type === "run_won")).toEqual([
-      expect.objectContaining({ tick: 0, sourceId: "player" }),
-    ]);
+  it("enters the city at its unlocked gate and loses at an injected lethal contact", () => {
+    const entered = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-city-entry"]!,
+    );
+    stepGame(entered, EMPTY_INPUT);
+    expect(entered.phase).toBe("playing");
+    expect(entered.city.locationPhase).toBe("inside");
+    expect(
+      entered.eventLog.filter(({ type }) => type === "city_entered"),
+    ).toEqual([expect.objectContaining({ tick: 0, sourceId: "player" })]);
 
     const lost = worldFromScenario(BUILTIN_SCENARIOS["temporal-run-loss"]!);
     stepGame(lost, EMPTY_INPUT);

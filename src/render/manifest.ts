@@ -10,6 +10,12 @@ import {
   buildSceneryLayout,
   openingNorthWallFeature,
 } from "../game/sceneryLayout";
+import { EMBERCROSS_CITY } from "../game/city";
+import {
+  CITY_NPC_ACTOR_GEOMETRY,
+  cityNpcWorldAnchor,
+  isEmbercrossMap,
+} from "../game/cityWorld";
 import type { AnimationClip, GameState, Vec2 } from "../game/types";
 import {
   SPRITE_CATALOG,
@@ -43,7 +49,7 @@ export interface SpriteReferenceV2 {
 
 export interface DrawCallV1 extends SpriteReferenceV2 {
   entityId: string;
-  type: "player" | "monster" | "loot" | "projectile" | "effect";
+  type: "player" | "monster" | "npc" | "loot" | "projectile" | "effect";
   geometryId: string;
   clip: AnimationClip | "loot" | "projectile" | "static";
   frameIndex: number;
@@ -744,7 +750,9 @@ export function buildRenderManifest(
     );
     const directionalSpriteId =
       (bucket === "north" || bucket === "south") &&
-      (semantic.type === "player" || semantic.type === "monster")
+      (semantic.type === "player" ||
+        semantic.type === "monster" ||
+        semantic.type === "npc")
         ? `${semantic.geometryId}:${bucket}`
         : semantic.geometryId;
     calls.push({
@@ -798,6 +806,36 @@ export function buildRenderManifest(
     playerSpritePixels,
     playerSpritePixels,
   );
+
+  if (isEmbercrossMap(state.map) && state.city.locationPhase === "inside") {
+    const npcSpritePixels = 112;
+    const clip: AnimationClip = "idle";
+    const frame = actorFrame(clip, presentationTick, 0);
+    for (const npc of EMBERCROSS_CITY.npcs) {
+      add(
+        {
+          entityId: npc.id,
+          type: "npc",
+          geometryId: CITY_NPC_ACTOR_GEOMETRY[npc.id],
+          clip,
+          frameIndex: frame,
+          frameCount: CLIP_FRAMES[clip],
+          visualPhase: frame / Math.max(1, CLIP_FRAMES[clip] - 1),
+          clipDurationTicks: CLIP_DURATIONS[clip],
+          clipStartedAtTick: 0,
+          clipLockedUntilTick: 0,
+          facing: { x: 0, y: 1024 },
+          worldAnchor: cityNpcWorldAnchor(npc.id),
+          scale: npcSpritePixels / 256,
+          tint: "#ffffff",
+          opacity: 1,
+          layer: "actors",
+        },
+        npcSpritePixels,
+        npcSpritePixels,
+      );
+    }
+  }
 
   for (const monster of state.monsters) {
     const clip = monster.animation.clip;

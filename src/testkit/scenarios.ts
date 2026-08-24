@@ -1,7 +1,9 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
 import {
+  CITY_DISCOVERY_LANDMARK_ID,
   createInitialCityState,
   restoreCityState,
+  transitionCityProgression,
   type CityStateV1,
 } from "../game/city";
 import { TILE_PIXELS, UNITS_PER_TILE } from "../game/constants";
@@ -615,6 +617,8 @@ const EVENT_TYPES = [
   "player_damaged",
   "player_died",
   "movement_blocked",
+  "city_discovered",
+  "city_entered",
   "exit_unlocked",
   "run_won",
 ];
@@ -1385,8 +1389,8 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     inputAction: null,
     captureTicks: [0, 1, 4, 8, 12, 20, 30, 45, 60],
   },
-  "temporal-run-win": {
-    scenarioId: "temporal-run-win",
+  "temporal-city-entry": {
+    scenarioId: "temporal-city-entry",
     subjectId: "player",
     inputAction: null,
     contactEventTick: 0,
@@ -1401,6 +1405,16 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     captureTicks: [0, 1, 8, 16, 24, 32, 40, 48, 49],
   },
 } as const satisfies Record<string, TemporalScenarioContract>;
+
+function discoveredCityState(tick = 0): CityStateV1 {
+  const result = transitionCityProgression(createInitialCityState({ tick }), {
+    type: "discover_city",
+    tick,
+    landmarkId: CITY_DISCOVERY_LANDMARK_ID,
+  });
+  if (!result.ok) throw new Error(result.message);
+  return result.state;
+}
 
 function temporalHeroAction(
   classId: CharacterClass,
@@ -1796,15 +1810,16 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     camera: { mode: "smooth", centerTile: [4, 6] },
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
-  "temporal-run-win": {
+  "temporal-city-entry": {
     schemaVersion: 1,
-    id: "temporal-run-win",
-    seed: "quality-run-win-01",
+    id: "temporal-city-entry",
+    seed: "quality-city-entry-01",
     classId: "vanguard",
     map: { mode: "explicit", rows: arenaRows(22, 15) },
     player: { tile: [19, 2] },
     monsters: [],
     exitUnlocked: true,
+    city: discoveredCityState(),
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "temporal-run-loss": {

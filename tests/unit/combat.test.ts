@@ -1,4 +1,10 @@
 import { describe, expect, it } from "vitest";
+import {
+  CITY_DISCOVERY_LANDMARK_ID,
+  createInitialCityState,
+  transitionCityProgression,
+} from "../../src/game/city";
+import { isEmbercrossMap } from "../../src/game/cityWorld";
 import { CLIP_DURATIONS } from "../../src/game/constants";
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT, type CharacterClass } from "../../src/game/types";
@@ -306,22 +312,32 @@ describe("combat and lifecycle contracts", () => {
     expect(loss.eventLog).toHaveLength(deathEvents);
   });
 
-  it("wins once when an unlocked exit is reached", () => {
-    const win = worldFromScenario(
+  it("enters a discovered city once when its unlocked gate is reached", () => {
+    const discovered = transitionCityProgression(createInitialCityState(), {
+      type: "discover_city",
+      tick: 0,
+      landmarkId: CITY_DISCOVERY_LANDMARK_ID,
+    });
+    expect(discovered.ok).toBe(true);
+    if (!discovered.ok) throw new Error(discovered.message);
+    const entered = worldFromScenario(
       scenario("exit-win", "vanguard", {
         player: { tile: [19, 2] },
         monsters: [],
         exitUnlocked: true,
+        city: discovered.state,
       }),
     );
-    stepGame(win, EMPTY_INPUT);
-    expect(win.phase).toBe("won");
+    stepGame(entered, EMPTY_INPUT);
+    expect(entered.phase).toBe("playing");
+    expect(entered.city.locationPhase).toBe("inside");
+    expect(isEmbercrossMap(entered.map)).toBe(true);
     expect(
-      win.eventLog.filter((event) => event.type === "run_won"),
+      entered.eventLog.filter((event) => event.type === "city_entered"),
     ).toHaveLength(1);
-    stepGame(win, EMPTY_INPUT);
+    stepGame(entered, EMPTY_INPUT);
     expect(
-      win.eventLog.filter((event) => event.type === "run_won"),
+      entered.eventLog.filter((event) => event.type === "city_entered"),
     ).toHaveLength(1);
   });
 

@@ -1,5 +1,15 @@
 import { ARCHETYPES, MONSTERS } from "./content";
 import {
+  CITY_DISCOVERY_LANDMARK_ID,
+  CITY_GATE_ID,
+  transitionCityProgression,
+} from "./city";
+import {
+  createEmbercrossMap,
+  isEmbercrossMap,
+  wildernessCityLandmarkAnchor,
+} from "./cityWorld";
+import {
   CLIP_DURATIONS,
   DIAGONAL_SCALE,
   DIRECTION_SCALE,
@@ -1174,13 +1184,67 @@ function collectLoot(state: GameState): void {
   state.loot = remaining;
 }
 
+function enterEmbercross(state: GameState): void {
+  const arrived = transitionCityProgression(state.city, {
+    type: "arrive_at_gate",
+    tick: state.tick,
+    gateId: CITY_GATE_ID,
+  });
+  if (!arrived.ok) return;
+  const entered = transitionCityProgression(arrived.state, {
+    type: "enter_city",
+    tick: state.tick,
+    gateId: CITY_GATE_ID,
+  });
+  if (!entered.ok) return;
+  state.city = entered.state;
+  state.map = createEmbercrossMap();
+  const spawn = tileCenter(state.map.spawn);
+  state.player.position = { ...spawn };
+  state.player.previousPosition = { ...spawn };
+  state.player.velocity = { x: 0, y: 0 };
+  state.monsters = [];
+  state.pendingAttacks = [];
+  state.projectiles = [];
+  state.effects = [];
+  state.exitUnlocked = true;
+  emit(state, {
+    type: "city_entered",
+    sourceId: "player",
+    targetId: CITY_GATE_ID,
+    detail: state.city.cityId,
+  });
+}
+
 function checkExit(state: GameState): void {
   if (!state.exitUnlocked || state.phase !== "playing") return;
-  const exit = tileCenter(state.map.exit);
-  if (distanceSquared(exit, state.player.position) <= 650 * 650) {
-    state.phase = "won";
-    emit(state, { type: "run_won", sourceId: "player", detail: state.seed });
+  if (isEmbercrossMap(state.map)) return;
+  const landmark = wildernessCityLandmarkAnchor(state.map);
+  if (
+    state.city.locationPhase === "undiscovered" &&
+    distanceSquared(landmark, state.player.position) <= 720 * 720
+  ) {
+    const discovered = transitionCityProgression(state.city, {
+      type: "discover_city",
+      tick: state.tick,
+      landmarkId: CITY_DISCOVERY_LANDMARK_ID,
+    });
+    if (discovered.ok) {
+      state.city = discovered.state;
+      emit(state, {
+        type: "city_discovered",
+        sourceId: "player",
+        targetId: CITY_DISCOVERY_LANDMARK_ID,
+        detail: state.city.cityId,
+      });
+    }
   }
+  const exit = tileCenter(state.map.exit);
+  if (
+    state.city.locationPhase === "discovered" &&
+    distanceSquared(exit, state.player.position) <= 650 * 650
+  )
+    enterEmbercross(state);
 }
 
 export function stepGame(state: GameState, input: InputState): GameState {

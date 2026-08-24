@@ -1,4 +1,11 @@
 import { UNITS_PER_TILE } from "./constants";
+import {
+  CITY_DISCOVERY_LANDMARK_ID,
+  buildEmbercrossScenery,
+  isEmbercrossMap,
+  wildernessCityLandmarkAnchor,
+  wildernessCityLandmarkTile,
+} from "./cityWorld";
 import { isFloor, tileCenter } from "./dungeon";
 import type { DungeonMap, Vec2 } from "./types";
 
@@ -350,6 +357,10 @@ function openingKitPropAnchor(
  * placements without serializing derived collision objects.
  */
 export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
+  if (isEmbercrossMap(map))
+    return buildEmbercrossScenery().map((placement) =>
+      structuredClone(placement),
+    );
   const placements: SceneryPlacement[] = [];
   const threshold = openingRoomThreshold(map);
   const decorativeRooms = map.rooms.length
@@ -589,6 +600,26 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
         worldAnchor: { ...worldAnchor },
         collision: null,
       });
+    });
+  }
+
+  if (map.rooms.length > 0) {
+    const tile = wildernessCityLandmarkTile(map);
+    const worldAnchor = wildernessCityLandmarkAnchor(map);
+    placements.push({
+      id: CITY_DISCOVERY_LANDMARK_ID,
+      kind: "prop",
+      // Temporary same-style role mapping. The semantic ID and collision stay
+      // stable when the generated Embercross road-sign raster is registered.
+      name: "weapon-rack",
+      collisionMode: "solid",
+      tile,
+      worldAnchor,
+      collision: footprint(worldAnchor, {
+        halfWidth: 220,
+        halfHeight: 140,
+        offsetY: -30,
+      }),
     });
   }
 

@@ -52,7 +52,7 @@ export interface ManifestSpriteReferenceV2 {
 
 export interface ManifestDrawCallV2 extends ManifestSpriteReferenceV2 {
   entityId: string;
-  type: "player" | "monster" | "loot" | "projectile";
+  type: "player" | "monster" | "npc" | "loot" | "projectile" | "effect";
   geometryId: string;
   clip: string;
   frameIndex: number;
@@ -575,7 +575,11 @@ export function validateManifestSpriteContract(
       );
     if (call.frameIdentity !== clip.frameIdentities[frameIndex])
       fail(`${pathName}.frameIdentity does not match clip frameIndex`);
-    if (call.type === "player" || call.type === "monster") {
+    if (
+      call.type === "player" ||
+      call.type === "monster" ||
+      call.type === "npc"
+    ) {
       if (typeof call.scale !== "number" || !Number.isFinite(call.scale))
         fail(`${pathName}.scale must be a finite number`);
       if (Math.abs(call.scale * 256 - call.destinationRect.width) > 0.51)

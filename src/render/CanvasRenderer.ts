@@ -370,7 +370,11 @@ export class CanvasRenderer {
     state: GameState,
     worldUi: WorldUiCallV1 | undefined,
   ): void {
-    if (call.type === "player" || call.type === "monster") {
+    if (
+      call.type === "player" ||
+      call.type === "monster" ||
+      call.type === "npc"
+    ) {
       this.drawWorldSprite(
         context,
         "world-ui:shadow",
@@ -392,7 +396,12 @@ export class CanvasRenderer {
       call.opacity,
       this.rotationFor(call),
     );
-    if (call.type !== "player" && call.type !== "monster") return;
+    if (
+      call.type !== "player" &&
+      call.type !== "monster" &&
+      call.type !== "npc"
+    )
+      return;
     const actor = state.monsters.find(
       (monster) => monster.id === call.entityId,
     );

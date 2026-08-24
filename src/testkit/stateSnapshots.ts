@@ -33,6 +33,8 @@ const EVENT_TYPES = new Set<GameEventType>([
   "player_damaged",
   "player_died",
   "movement_blocked",
+  "city_discovered",
+  "city_entered",
   "exit_unlocked",
   "run_won",
 ]);
