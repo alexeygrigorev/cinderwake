@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v6-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v6.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v6.png",
+  "candidateSha256": "fd9a4cbfd1c4ab9f9470a8f2b163e15c47ada0f69329d9d00255a3a16d4fc22a",
+  "referenceFiles": [
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "role": "production species identity only; prone posture must be corrected",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated camera, simplified matte paint, runtime density, palette, and world scale",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    },
+    {
+      "file": "art/source/actors/hexer-source.png",
+      "role": "cast-compatible matte value grouping, restrained effects, camera, and light only",
+      "sha256": "7b36e04ae7e7ef09399aee9bb1172c11b4130ab8d9c24e52dbf3878c085acbf7"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-ffb15f62-8b83-4c4a-b66b-64f8785a2f9f.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one east-facing Ashfang-like creature",
+      "four source-scale paw terminals are present",
+      "broad production-like creature mass is restored",
+      "no sprite sheet, text, UI, architecture, prop, or attack effect"
+    ],
+    "failed": [
+      {
+        "code": "authored-occupancy-too-wide",
+        "detail": "The keyed source spans 879 normalized pixels, forcing canonical preparation below the 0.25 canvas scale and yielding a low runtime body."
+      },
+      {
+        "code": "camera-side-dominant",
+        "detail": "The long skull, flank, and low stance remain side-dominant rather than approximately 55-degree elevated."
+      },
+      {
+        "code": "prone-low-posture",
+        "detail": "The belly and head sit too low for the requested compact raised living identity master."
+      },
+      {
+        "code": "ground-shadow-authored",
+        "detail": "A broad dark cast shadow/ground wash is baked below the creature despite the explicit empty-background requirement."
+      },
+      {
+        "code": "specular-detail-persistent",
+        "detail": "Bright silver edges, dense plate subdivisions, and glossy rendering remain incompatible with the simplified matte cast."
+      },
+      {
+        "code": "limb-chains-overlap",
+        "detail": "Upper limb chains still merge into the belly and do not provide the requested broad negative-space channels."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta background is graded and shadowed rather than one flat literal #ff00ff field."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "Fresh cast references restored broad Ashfang mass but regressed framing, height, posture, background cleanliness, and limb separation."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v6.png --output art/generation/prepared/ashfang-idle-master-v6.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v6.png",
+    "sha256": "33031c909a8e3d7a802719466cd27ba06df1ce72e9cb2e19f7e9f9345aa814b7",
+    "status": "rejected",
+    "notes": "Safe-width fitting reduces the normalized 879x538 ink to scale 0.222513, producing 196x120 placement and 194x118 visible ink. Visible bottom and alpha-weighted contact remain centered, but preparation cannot manufacture the authored height, camera, clean background, or separated limbs."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_idle_master_v6",
+    "reviewedRawSha256": "fd9a4cbfd1c4ab9f9470a8f2b163e15c47ada0f69329d9d00255a3a16d4fc22a",
+    "reviewedPreparedSha256": "33031c909a8e3d7a802719466cd27ba06df1ce72e9cb2e19f7e9f9345aa814b7",
+    "reviewedPoseEvidenceSha256": "a1cc40f23f7bcfe44bfe994a5607a9c74ff451c13869fb1fb3e7ae4d343bdda8",
+    "reviewedRuntimeComparisonSha256": "623b39d833a5ba23d875b961027bd8efee00c1411c364357c81804d344e3467f",
+    "acceptedAxes": [
+      "Ashfang concept identity through black armored quadruped, dorsal spikes, and magma fissures",
+      "clearly living and alert",
+      "four paw terminals at source resolution",
+      "east-facing outer silhouette recognizable at runtime",
+      "stable grounded contact after preparation"
+    ],
+    "rejectedAxes": [
+      "approximately 55-degree elevated camera",
+      "raised neutral idle posture",
+      "common cast scale and mass",
+      "four independently connected limb chains",
+      "explicit diagonal support ownership",
+      "matte cast-compatible style",
+      "background and shadow cleanliness",
+      "runtime internal readability"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-aspect", "runtime-height"]
+  },
+  "recommendation": "Do not generate walk phases. V7 should use a schematic pose-layout reference that explicitly reserves four limb corridors and the correct compact canvas envelope before style rendering, rather than asking one generation step to infer anatomy, camera, framing, and material simultaneously."
+}

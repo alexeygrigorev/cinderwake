@@ -210,6 +210,15 @@ camera, lighter dragon-like mass, and glossy highlight density. The result
 demonstrates why the pipeline records connected limb readability rather than
 merely counting terminal paw shapes.
 
+Ashfang east-idle master v6 intentionally stops editing the glossy lineage and
+regenerates from production cast sheets. It restores a broad species mass, but
+the keyed source spans 879 × 538 normalized pixels and safe-width fitting must
+shrink it to 0.222513 scale. Runtime ink is consequently 98 × 59 at aspect
+1.661, reproducing the exact `runtime-height` and `runtime-aspect` rejection
+with 5/5 controls. Independent exact-hash review also rejects the low stalking
+posture, side camera, merged upper limbs, baked shadow/graded chroma, and glossy
+plate noise. A fresh reference set alone is not a pose-layout contract.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

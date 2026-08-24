@@ -81,6 +81,12 @@ not a gait correction. Review axes refer to complete joint-to-contact limb
 chains and explicit diagonal ownership at runtime scale, not isolated paw
 blobs.
 
+Ashfang v6 shows why generation benefits from a deterministic pose-layout
+reference before style rendering. A prompt can name camera, footprint, scale,
+and four limb corridors yet still emit a wide side-on body with a cast shadow.
+The next iteration uses an exact 1024-pixel guide to make those spatial
+constraints visible rather than relying only on prose.
+
 ## Consequence
 
 A new character can use the same manifest and fixed rig without new runtime
