@@ -1,10 +1,4 @@
-import {
-  TICK_MS,
-  TILE_PIXELS,
-  UNITS_PER_TILE,
-  VIEW_HEIGHT,
-  VIEW_WIDTH,
-} from "../game/constants";
+import { TICK_MS, TILE_PIXELS } from "../game/constants";
 import { stepGame } from "../game/simulation";
 import type { GameState, InputState, Vec2 } from "../game/types";
 import { EMPTY_INPUT } from "../game/types";
@@ -18,6 +12,7 @@ import type {
   EntityMaskV1,
   RenderManifestV1,
 } from "../render/manifest";
+import { worldForScreen } from "../render/manifest";
 
 export class GameHost {
   state: GameState;
@@ -142,18 +137,10 @@ export class GameHost {
     return m;
   }
   worldAt(screenX: number, screenY: number): Vec2 {
-    return {
-      x: Math.round(
-        ((screenX - VIEW_WIDTH / 2 + this.renderer.displayCamera.x) /
-          TILE_PIXELS) *
-          UNITS_PER_TILE,
-      ),
-      y: Math.round(
-        ((screenY - VIEW_HEIGHT / 2 + this.renderer.displayCamera.y) /
-          TILE_PIXELS) *
-          UNITS_PER_TILE,
-      ),
-    };
+    return worldForScreen(
+      { x: screenX, y: screenY },
+      this.renderer.displayCamera,
+    );
   }
   private loop = (now: number): void => {
     if (!this.running) return;

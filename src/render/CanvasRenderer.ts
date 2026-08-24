@@ -25,12 +25,15 @@ interface ImageBackedReference {
   sourceRect: SourceRectV1;
 }
 
+export const DEFAULT_CAMERA_ZOOM = 0.9;
+const CAMERA_DEAD_ZONE_PIXELS = 56;
+
 export class CanvasRenderer {
   readonly canvas: HTMLCanvasElement;
   readonly context: CanvasRenderingContext2D;
-  camera: CameraV1 = { x: 0, y: 0, zoom: 1 };
-  previousCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
-  displayCamera: CameraV1 = { x: 0, y: 0, zoom: 1 };
+  camera: CameraV1 = { x: 0, y: 0, zoom: DEFAULT_CAMERA_ZOOM };
+  previousCamera: CameraV1 = { x: 0, y: 0, zoom: DEFAULT_CAMERA_ZOOM };
+  displayCamera: CameraV1 = { x: 0, y: 0, zoom: DEFAULT_CAMERA_ZOOM };
   private manifest?: RenderManifestV1;
   private readonly sourceInkBounds = new Map<
     string,
@@ -78,6 +81,7 @@ export class CanvasRenderer {
   }
 
   cameraTarget(state: GameState): CameraV1 {
+    const zoom = DEFAULT_CAMERA_ZOOM;
     const targetX = (state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS;
     const targetY = (state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS;
     const threshold = openingRoomThreshold(state.map);
@@ -108,27 +112,29 @@ export class CanvasRenderer {
     const openingVerticalBias = -20 * openingBiasStrength;
     const mapWidth = state.map.width * TILE_PIXELS;
     const mapHeight = state.map.height * TILE_PIXELS;
+    const visibleHalfWidth = VIEW_WIDTH / (2 * zoom);
+    const visibleHalfHeight = VIEW_HEIGHT / (2 * zoom);
     const clampedX =
-      mapWidth <= VIEW_WIDTH
+      mapWidth <= VIEW_WIDTH / zoom
         ? mapWidth / 2
         : Math.max(
-            VIEW_WIDTH / 2,
+            visibleHalfWidth,
             Math.min(
-              mapWidth - VIEW_WIDTH / 2,
+              mapWidth - visibleHalfWidth,
               targetX + openingHorizontalBias,
             ),
           );
     const clampedY =
-      mapHeight <= VIEW_HEIGHT
+      mapHeight <= VIEW_HEIGHT / zoom
         ? mapHeight / 2
         : Math.max(
-            VIEW_HEIGHT / 2,
+            visibleHalfHeight,
             Math.min(
-              mapHeight - VIEW_HEIGHT / 2,
+              mapHeight - visibleHalfHeight,
               targetY + openingVerticalBias,
             ),
           );
-    return { x: clampedX, y: clampedY, zoom: 1 };
+    return { x: clampedX, y: clampedY, zoom };
   }
 
   resetCamera(state: GameState, camera?: CameraV1): void {
@@ -151,8 +157,17 @@ export class CanvasRenderer {
       this.camera = target;
       return;
     }
-    this.camera.x += (target.x - this.camera.x) * 0.13;
-    this.camera.y += (target.y - this.camera.y) * 0.13;
+    const deadZone = CAMERA_DEAD_ZONE_PIXELS / target.zoom;
+    const desiredAxis = (current: number, next: number): number => {
+      const delta = next - current;
+      if (Math.abs(delta) <= deadZone) return current;
+      return next - Math.sign(delta) * deadZone;
+    };
+    const desiredX = desiredAxis(this.camera.x, target.x);
+    const desiredY = desiredAxis(this.camera.y, target.y);
+    this.camera.x += (desiredX - this.camera.x) * 0.2;
+    this.camera.y += (desiredY - this.camera.y) * 0.2;
+    this.camera.zoom += (target.zoom - this.camera.zoom) * 0.2;
   }
 
   render(
@@ -445,7 +460,13 @@ export class CanvasRenderer {
         call.destinationRect.y +
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
       const width = Math.round(
-        Math.max(64, Math.min(76, call.destinationRect.width * 0.54)),
+        Math.max(
+          52,
+          Math.min(
+            76 * manifest.camera.zoom,
+            call.destinationRect.width * 0.54,
+          ),
+        ),
       );
       const height = Math.round((width * 82) / 197);
       const destinationRect = {

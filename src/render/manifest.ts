@@ -135,8 +135,25 @@ export interface EntityMaskV1 {
 
 export function screenFor(world: Vec2, camera: CameraV1): Vec2 {
   return {
-    x: VIEW_WIDTH / 2 + (world.x / UNITS_PER_TILE) * TILE_PIXELS - camera.x,
-    y: VIEW_HEIGHT / 2 + (world.y / UNITS_PER_TILE) * TILE_PIXELS - camera.y,
+    x:
+      VIEW_WIDTH / 2 +
+      ((world.x / UNITS_PER_TILE) * TILE_PIXELS - camera.x) * camera.zoom,
+    y:
+      VIEW_HEIGHT / 2 +
+      ((world.y / UNITS_PER_TILE) * TILE_PIXELS - camera.y) * camera.zoom,
+  };
+}
+
+export function worldForScreen(screen: Vec2, camera: CameraV1): Vec2 {
+  return {
+    x: Math.round(
+      (((screen.x - VIEW_WIDTH / 2) / camera.zoom + camera.x) / TILE_PIXELS) *
+        UNITS_PER_TILE,
+    ),
+    y: Math.round(
+      (((screen.y - VIEW_HEIGHT / 2) / camera.zoom + camera.y) / TILE_PIXELS) *
+        UNITS_PER_TILE,
+    ),
   };
 }
 
@@ -206,12 +223,15 @@ function destinationAt(
   width: number,
   height: number,
   sourceAnchor: Vec2 = { x: 128, y: 232 },
+  zoom = 1,
 ): DestinationRectV1 {
+  const destinationWidth = width * zoom;
+  const destinationHeight = height * zoom;
   return {
-    x: Math.round(anchor.x - (sourceAnchor.x / 256) * width),
-    y: Math.round(anchor.y - (sourceAnchor.y / 256) * height),
-    width: Math.round(width),
-    height: Math.round(height),
+    x: Math.round(anchor.x - (sourceAnchor.x / 256) * destinationWidth),
+    y: Math.round(anchor.y - (sourceAnchor.y / 256) * destinationHeight),
+    width: Math.round(destinationWidth),
+    height: Math.round(destinationHeight),
   };
 }
 
@@ -257,6 +277,7 @@ function buildSceneSprites(
     groundSize,
     groundSize,
     { x: 128, y: 128 },
+    camera.zoom,
   );
   scene.push({
     ...sceneReference("scenery:ground"),
@@ -288,6 +309,7 @@ function buildSceneSprites(
         TILE_PIXELS,
         TILE_PIXELS,
         { x: 128, y: 128 },
+        camera.zoom,
       );
       scene.push({
         // Every cell receives the same contiguous floor material at the same
@@ -383,6 +405,7 @@ function buildSceneSprites(
         TILE_PIXELS,
         TILE_PIXELS,
         { x: 128, y: 128 },
+        camera.zoom,
       );
       scene.push({
         ...sceneReference("scenery:edge:floor-blend", (y % 16) * 16 + (x % 16)),
@@ -438,6 +461,7 @@ function buildSceneSprites(
             x: 128,
             y: 128,
           },
+          camera.zoom,
         );
         scene.push({
           ...sceneReference(
@@ -468,10 +492,16 @@ function buildSceneSprites(
           x >= openingRoom.x &&
           x < openingRoom.x + openingRoom.width;
         if (openingBackWall && !northWallFeature) {
-          const facadeRect = destinationAt(screenAnchor, 62, 72, {
-            x: 128,
-            y: 232,
-          });
+          const facadeRect = destinationAt(
+            screenAnchor,
+            62,
+            72,
+            {
+              x: 128,
+              y: 232,
+            },
+            camera.zoom,
+          );
           scene.push({
             ...sceneReference("scenery:boundary:wall-front", (x + y) % 4),
             objectId: `wall-front:south:${x}:${y}`,
@@ -515,6 +545,7 @@ function buildSceneSprites(
         x: (wallAnchor.x / wallSize.width) * 256,
         y: (wallAnchor.y / wallSize.height) * 256,
       },
+      camera.zoom,
     );
     scene.push({
       ...sceneReference("scenery:architecture:north-wall-solid"),
@@ -591,6 +622,7 @@ function buildSceneSprites(
               y: (authoredAnchor.y / authoredSize.height) * 256,
             }
           : undefined,
+      camera.zoom,
     );
     const placementRoomIndex = Number(
       placement.id.match(/^(?:structure|prop|decal):(\d+):/)?.[1] ?? -1,
@@ -642,7 +674,13 @@ function buildSceneSprites(
   const exitSprite = state.exitUnlocked
     ? "scenery:exit:open"
     : "scenery:exit:locked";
-  const exitDestination = destinationAt(exitScreen, 132, 132);
+  const exitDestination = destinationAt(
+    exitScreen,
+    132,
+    132,
+    undefined,
+    camera.zoom,
+  );
   scene.push({
     ...sceneReference(exitSprite),
     objectId: "exit:rift-gate",
@@ -697,7 +735,13 @@ export function buildRenderManifest(
   ): void => {
     const bucket = facingBucket(semantic.facing);
     const screenAnchor = screenFor(semantic.worldAnchor, camera);
-    const destinationRect = destinationAt(screenAnchor, width, height);
+    const destinationRect = destinationAt(
+      screenAnchor,
+      width,
+      height,
+      undefined,
+      camera.zoom,
+    );
     const directionalSpriteId =
       (bucket === "north" || bucket === "south") &&
       (semantic.type === "player" || semantic.type === "monster")
@@ -705,6 +749,7 @@ export function buildRenderManifest(
         : semantic.geometryId;
     calls.push({
       ...semantic,
+      scale: semantic.scale * camera.zoom,
       ...spriteReference(
         directionalSpriteId,
         semantic.clip,
