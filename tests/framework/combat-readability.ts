@@ -12,7 +12,13 @@ export const COMBAT_READABILITY_LIMITS = {
   minimumHealthInkGap: 3,
   maximumHealthInkGap: 5,
   maximumHealthCenterOffset: 1,
+  maximumAttachedEffectAnchorDistance: 1,
+  maximumPresentationOffsetStepPerTick: 4,
 } as const;
+
+export interface CombatReadabilityRequirements {
+  requiredEffectOwnerIds?: string[];
+}
 
 export interface CombatReadabilityEvidence {
   actorPairs: Array<{
@@ -32,6 +38,7 @@ export interface CombatReadabilityEvidence {
     effectId: string;
     actorId: string;
     anchorDistance: number;
+    attached: boolean;
     paintsBehindActor: boolean;
   }>;
 }
@@ -77,6 +84,7 @@ function screenDistance(first: DrawCallV1, second: DrawCallV1): number {
  */
 export function assessCombatReadability(
   manifest: RenderManifestV1,
+  requirements: CombatReadabilityRequirements = {},
 ): CombatReadabilityAssessment {
   const violations: string[] = [];
   const player = manifest.drawCalls.find(
@@ -170,6 +178,10 @@ export function assessCombatReadability(
       centerOffset,
     };
   });
+  for (const monster of monsters) {
+    if (!manifest.worldUi.some(({ ownerId }) => ownerId === monster.entityId))
+      violations.push(`combat:health-missing:${monster.entityId}`);
+  }
 
   const attachedEffects = manifest.drawCalls
     .filter(({ type }) => type === "effect")
@@ -181,23 +193,102 @@ export function assessCombatReadability(
       )[0];
       if (!nearest) return [];
       const anchorDistance = screenDistance(effect, nearest);
-      if (anchorDistance > 1) return [];
+      const attached =
+        anchorDistance <=
+        COMBAT_READABILITY_LIMITS.maximumAttachedEffectAnchorDistance;
       const paintsBehindActor = effect.zOrder < nearest.zOrder;
-      if (!paintsBehindActor)
+      if (attached && !paintsBehindActor)
         violations.push(`combat:attached-effect-depth:${effect.entityId}`);
       return [
         {
           effectId: effect.entityId,
           actorId: nearest.entityId,
           anchorDistance,
+          attached,
           paintsBehindActor,
         },
       ];
     });
 
+  for (const actorId of requirements.requiredEffectOwnerIds ?? []) {
+    const candidates = attachedEffects
+      .filter(({ actorId: ownerId }) => ownerId === actorId)
+      .sort(
+        (first, second) =>
+          first.anchorDistance - second.anchorDistance ||
+          first.effectId.localeCompare(second.effectId),
+      );
+    if (candidates.length === 0) {
+      violations.push(`combat:attached-effect-missing:${actorId}`);
+      continue;
+    }
+    if (!candidates[0]!.attached)
+      violations.push(
+        `combat:attached-effect-detached:${candidates[0]!.effectId}`,
+      );
+  }
+
   return {
     verdict: violations.length === 0 ? "PASS" : "FAIL",
     violations,
     evidence: { actorPairs, health, attachedEffects },
+  };
+}
+
+export interface CombatSequenceFrame {
+  id: string;
+  manifest: RenderManifestV1;
+  requiredEffectOwnerIds?: string[];
+}
+
+export function assessCombatSequence(frames: CombatSequenceFrame[]): {
+  verdict: "PASS" | "FAIL";
+  violations: string[];
+  frames: Array<{ id: string; assessment: CombatReadabilityAssessment }>;
+} {
+  const violations: string[] = [];
+  const assessedFrames = frames.map((frame) => {
+    const assessment = assessCombatReadability(frame.manifest, {
+      requiredEffectOwnerIds: frame.requiredEffectOwnerIds,
+    });
+    violations.push(
+      ...assessment.violations.map((violation) => `${frame.id}:${violation}`),
+    );
+    return { id: frame.id, assessment };
+  });
+  for (let index = 1; index < frames.length; index += 1) {
+    const previous = frames[index - 1]!;
+    const current = frames[index]!;
+    const elapsedTicks = Math.max(
+      1,
+      current.manifest.presentationTick - previous.manifest.presentationTick,
+    );
+    for (const currentActor of current.manifest.drawCalls.filter(
+      ({ type }) => type === "player" || type === "monster",
+    )) {
+      const previousActor = previous.manifest.drawCalls.find(
+        ({ entityId }) => entityId === currentActor.entityId,
+      );
+      if (!previousActor) continue;
+      const previousOffset = previousActor.presentationOffset ?? { x: 0, y: 0 };
+      const currentOffset = currentActor.presentationOffset ?? { x: 0, y: 0 };
+      const offsetStep = Math.hypot(
+        currentOffset.x - previousOffset.x,
+        currentOffset.y - previousOffset.y,
+      );
+      if (
+        offsetStep >
+        COMBAT_READABILITY_LIMITS.maximumPresentationOffsetStepPerTick *
+          elapsedTicks
+      )
+        violations.push(
+          `${current.id}:combat:presentation-snap:${currentActor.entityId}`,
+        );
+    }
+  }
+  return {
+    verdict: violations.length === 0 ? "PASS" : "FAIL",
+    violations,
+    frames: assessedFrames,
   };
 }

@@ -1,14 +1,9 @@
 import { describe, expect, it } from "vitest";
-import {
-  combatantReadabilityDistance,
-  stepGame,
-} from "../../src/game/simulation";
+import { MONSTERS } from "../../src/game/content";
+import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
-import {
-  assessCombatReadability,
-  destinationOverlapRatio,
-} from "../framework/combat-readability";
+import { destinationOverlapRatio } from "../framework/combat-readability";
 import {
   worldFromScenario,
   type ScenarioV1,
@@ -49,56 +44,72 @@ function meleeScenario(monsterTile: [number, number]): ScenarioV1 {
   };
 }
 
-function combatantDistance(state: ReturnType<typeof worldFromScenario>) {
-  const monster = state.monsters[0]!;
-  return Math.hypot(
-    monster.position.x - state.player.position.x,
-    monster.position.y - state.player.position.y,
-  );
-}
-
-describe("combat readability mechanics", () => {
-  it("repairs a fully stacked arbitrary state without losing Ashfang reach", () => {
+describe("presentation-only combat readability", () => {
+  it("preserves original melee reach and a stacked state's simulation coordinates", () => {
     const state = worldFromScenario(meleeScenario([9, 7]));
     const monster = state.monsters[0]!;
+    const playerBefore = { ...state.player.position };
+    const monsterBefore = { ...monster.position };
 
     stepGame(state, EMPTY_INPUT);
 
-    const minimum = combatantReadabilityDistance(state.player.radius, monster);
-    expect(combatantDistance(state)).toBeGreaterThanOrEqual(minimum - 1);
-    expect(combatantDistance(state)).toBeLessThanOrEqual(monster.attackRange);
+    expect(MONSTERS.ashfang.attackRange).toBe(850);
+    expect(MONSTERS.stonekin.attackRange).toBe(1050);
+    expect(state.player.position).toEqual(playerBefore);
+    expect(monster.position).toEqual(monsterBefore);
     expect(
       state.pendingAttacks.some(({ ownerId }) => ownerId === monster.id),
     ).toBe(true);
     const manifest = buildRenderManifest(state, CAMERA);
-    const player = manifest.drawCalls.find(
-      ({ entityId }) => entityId === "player",
-    )!;
     const monsterCall = manifest.drawCalls.find(
       ({ entityId }) => entityId === monster.id,
     )!;
+    expect(monsterCall.worldAnchor).toEqual(monster.position);
+    expect(monsterCall.presentationOffset).toBeDefined();
     expect(
-      destinationOverlapRatio(
-        player.destinationRect,
-        monsterCall.destinationRect,
+      Math.hypot(
+        monsterCall.presentationOffset!.x,
+        monsterCall.presentationOffset!.y,
       ),
-    ).toBeLessThanOrEqual(0.57);
-    expect(assessCombatReadability(manifest).violations).toEqual([]);
+    ).toBeGreaterThan(0);
   });
 
-  it("stops direct player movement at the readable contact ring", () => {
+  it("does not add an invisible player/monster collision ring", () => {
     const state = worldFromScenario(meleeScenario([10.5, 7]));
     state.settings.ai = false;
     state.monsters[0]!.attackReadyTick = 10_000;
-    const startX = state.player.position.x;
+    const monsterX = state.monsters[0]!.position.x;
     for (let tick = 0; tick < 30; tick += 1)
       stepGame(state, { ...EMPTY_INPUT, moveX: 1 });
 
-    expect(state.player.position.x).toBeGreaterThan(startX);
-    expect(combatantDistance(state)).toBeGreaterThanOrEqual(
-      combatantReadabilityDistance(state.player.radius, state.monsters[0]!) - 1,
-    );
-    expect(state.player.position.x).toBeLessThan(state.monsters[0]!.position.x);
+    expect(state.player.position.x).toBeGreaterThan(monsterX);
+    expect(
+      state.eventLog.filter(({ type }) => type === "movement_blocked"),
+    ).toEqual([]);
+  });
+
+  it("keeps presented bodies legible while simulation anchors remain untouched", () => {
+    const state = worldFromScenario(meleeScenario([9.6, 7]));
+    const before = structuredClone(state);
+    const manifest = buildRenderManifest(state, CAMERA);
+    const player = manifest.drawCalls.find(
+      ({ entityId }) => entityId === "player",
+    )!;
+    const monster = manifest.drawCalls.find(
+      ({ entityId }) => entityId === "monster:readability",
+    )!;
+
+    expect(state).toEqual(before);
+    expect(monster.worldAnchor).toEqual(state.monsters[0]!.position);
+    expect(
+      Math.hypot(
+        monster.screenAnchor.x - player.screenAnchor.x,
+        monster.screenAnchor.y - player.screenAnchor.y,
+      ),
+    ).toBeGreaterThanOrEqual(50);
+    expect(
+      destinationOverlapRatio(player.destinationRect, monster.destinationRect),
+    ).toBeLessThanOrEqual(0.57);
   });
 
   it("binds effect zOrder to the same depth queue used by canvas painting", () => {
@@ -117,14 +128,5 @@ describe("combat readability mechanics", () => {
 
     expect(impact).toBeDefined();
     expect(impact.zOrder).toBeLessThan(player.zOrder);
-    expect(
-      assessCombatReadability(manifest).evidence.attachedEffects,
-    ).toContainEqual(
-      expect.objectContaining({
-        effectId: impact.entityId,
-        actorId: "player",
-        paintsBehindActor: true,
-      }),
-    );
   });
 });

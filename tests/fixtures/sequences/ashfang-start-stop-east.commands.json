@@ -14,22 +14,22 @@
         "clip": "idle",
         "clipStartedAtTick": 0,
         "firstObservedTick": 0,
-        "lastObservedTick": 60,
+        "lastObservedTick": 70,
         "requiredFrameIndices": [0, 1, 2, 3, 4, 5]
       },
       {
         "id": "walk-full-loop",
         "clip": "walk",
-        "clipStartedAtTick": 64,
-        "firstObservedTick": 65,
-        "lastObservedTick": 120,
+        "clipStartedAtTick": 74,
+        "firstObservedTick": 75,
+        "lastObservedTick": 115,
         "requiredFrameIndices": [0, 1, 2, 3, 4, 5, 6, 7]
       },
       {
         "id": "idle-recovery",
         "clip": "idle",
-        "clipStartedAtTick": 124,
-        "firstObservedTick": 125,
+        "clipStartedAtTick": 118,
+        "firstObservedTick": 120,
         "lastObservedTick": 180,
         "requiredFrameIndices": [0, 1, 2, 3, 4, 5]
       }

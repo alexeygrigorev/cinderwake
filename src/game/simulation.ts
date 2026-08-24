@@ -230,52 +230,12 @@ function recordBlockedMovement(
  * and preserves the visual gap after removing Ashfang's vertical squashing.
  */
 export const MONSTER_PERSONAL_SPACE_PADDING = 840;
-/**
- * Space between the collision discs of a hero and a living monster. The
- * collision radii describe only their feet; this extra ring keeps the much
- * wider painted bodies from becoming one unreadable silhouette in melee.
- * Ashfang still retains 50 units of reach beyond this boundary.
- */
-export const COMBATANT_READABILITY_PADDING = 580;
 // Combatants compress their formation near attack range so a crowd can still
 // surround and reach its target, while retaining substantially more space than
 // bare collision discs. This remains gameplay semantics, not sprite geometry.
 const ENGAGED_MONSTER_PERSONAL_SPACE_PADDING = 400;
 const MONSTER_SEPARATION_GAP = 8;
 const MONSTER_SEPARATION_PASSES = 24;
-
-export function combatantReadabilityDistance(
-  playerRadius: number,
-  monster: Pick<MonsterState, "radius" | "attackRange">,
-): number {
-  return Math.min(
-    monster.attackRange - MONSTER_SEPARATION_GAP,
-    playerRadius + monster.radius + COMBATANT_READABILITY_PADDING,
-  );
-}
-
-function monsterPursuitDistance(
-  playerRadius: number,
-  monster: MonsterState,
-): number {
-  // Hexers intentionally hold a ranged casting lane; the readability ring is
-  // the close-contact floor, not a reason to turn them into melee pursuers.
-  return monster.kind === "hexer"
-    ? monster.attackRange * 0.85
-    : combatantReadabilityDistance(playerRadius, monster);
-}
-
-function playerPositionClearOfLivingMonsters(
-  state: GameState,
-  position: Vec2,
-): boolean {
-  return state.monsters.every(
-    (monster) =>
-      monster.health <= 0 ||
-      distanceSquared(position, monster.position) >=
-        combatantReadabilityDistance(state.player.radius, monster) ** 2,
-  );
-}
 
 function stablePairDirection(firstId: string, secondId: string): Vec2 {
   let hash = 2_166_136_261;
@@ -444,67 +404,6 @@ function separateLivingMonsters(
         state.tick,
       );
   }
-}
-
-/**
- * Repairs imported or crowded states before they are presented. Normal
- * pursuit and player movement respect the same boundary, so this is usually
- * a no-op; it also makes arbitrary-state replay converge to a readable frame
- * instead of preserving an accidental full-body overlap forever.
- */
-function separatePlayerFromLivingMonsters(
-  state: GameState,
-  scenery: SceneryCollisionFootprint[],
-): Set<string> {
-  const adjusted = new Set<string>();
-  const living = state.monsters
-    .filter((monster) => monster.health > 0)
-    .sort((first, second) => first.id.localeCompare(second.id));
-  for (const monster of living) {
-    const minimumDistance = combatantReadabilityDistance(
-      state.player.radius,
-      monster,
-    );
-    const dx = monster.position.x - state.player.position.x;
-    const dy = monster.position.y - state.player.position.y;
-    const distance = Math.hypot(dx, dy);
-    if (distance >= minimumDistance) continue;
-    const fallback = stablePairDirection("player", monster.id);
-    const baseAngle =
-      distance < 1 ? Math.atan2(fallback.y, fallback.x) : Math.atan2(dy, dx);
-    const angleOffsets = [
-      0,
-      Math.PI / 8,
-      -Math.PI / 8,
-      Math.PI / 4,
-      -Math.PI / 4,
-    ];
-    for (const angleOffset of angleOffsets) {
-      const angle = baseAngle + angleOffset;
-      const candidate = {
-        x: Math.round(
-          state.player.position.x + Math.cos(angle) * minimumDistance,
-        ),
-        y: Math.round(
-          state.player.position.y + Math.sin(angle) * minimumDistance,
-        ),
-      };
-      if (
-        actorPathWalkable(
-          state,
-          scenery,
-          monster.position,
-          candidate,
-          monster.radius,
-        )
-      ) {
-        monster.position = candidate;
-        adjusted.add(monster.id);
-        break;
-      }
-    }
-  }
-  return adjusted;
 }
 
 function setAnimation(
@@ -900,26 +799,13 @@ function updatePlayer(
     x: player.position.x + moveX,
     y: player.position.y + moveY,
   };
-  const sceneryPosition = moveActor(
+  player.position = moveActor(
     state,
     player.position,
     { x: moveX, y: moveY },
     player.radius,
     scenery,
   );
-  if (playerPositionClearOfLivingMonsters(state, sceneryPosition)) {
-    player.position = sceneryPosition;
-  } else {
-    // Preserve the existing axis-slide convention at a monster's contact
-    // ring, just as moveActor does at static scenery.
-    const xOnly = { x: sceneryPosition.x, y: player.previousPosition.y };
-    const yOnly = { x: player.previousPosition.x, y: sceneryPosition.y };
-    player.position = playerPositionClearOfLivingMonsters(state, xOnly)
-      ? xOnly
-      : playerPositionClearOfLivingMonsters(state, yOnly)
-        ? yOnly
-        : { ...player.previousPosition };
-  }
   if (
     (moveX !== 0 || moveY !== 0) &&
     player.position.x === player.previousPosition.x &&
@@ -1005,7 +891,6 @@ function updateMonsters(
   state: GameState,
   scenery: SceneryCollisionFootprint[],
 ): void {
-  separatePlayerFromLivingMonsters(state, scenery);
   for (const monster of [...state.monsters].sort((a, b) =>
     a.id.localeCompare(b.id),
   )) {
@@ -1049,7 +934,7 @@ function updateMonsters(
         };
       }
     } else if (
-      distance > monsterPursuitDistance(state.player.radius, monster) &&
+      distance > monster.attackRange * 0.85 &&
       distance < 9 * UNITS_PER_TILE
     ) {
       const pursuit = navigationDirection(
@@ -1061,14 +946,9 @@ function updateMonsters(
       );
       if (pursuit) {
         monster.facing = pursuit;
-        const maximumAdvance = Math.max(
-          0,
-          distance - monsterPursuitDistance(state.player.radius, monster),
-        );
-        const advance = Math.min(monster.moveSpeed, maximumAdvance);
         monster.velocity = {
-          x: Math.round((pursuit.x * advance) / 1024),
-          y: Math.round((pursuit.y * advance) / 1024),
+          x: Math.round((pursuit.x * monster.moveSpeed) / 1024),
+          y: Math.round((pursuit.y * monster.moveSpeed) / 1024),
         };
       }
     }
@@ -1116,22 +996,7 @@ function updateMonsters(
       );
     }
   }
-  if (state.settings.ai) {
-    separateLivingMonsters(state, scenery);
-    const combatAdjusted = separatePlayerFromLivingMonsters(state, scenery);
-    for (const monster of state.monsters) {
-      if (!combatAdjusted.has(monster.id)) continue;
-      monster.velocity = {
-        x: monster.position.x - monster.previousPosition.x,
-        y: monster.position.y - monster.previousPosition.y,
-      };
-      if (
-        state.tick >= monster.animation.lockedUntilTick &&
-        ["idle", "walk"].includes(monster.animation.clip)
-      )
-        setAnimation(monster, "walk", state.tick);
-    }
-  }
+  if (state.settings.ai) separateLivingMonsters(state, scenery);
 }
 
 interface ProjectileObstacleHit {

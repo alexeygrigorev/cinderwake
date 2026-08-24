@@ -63,6 +63,11 @@ export interface DrawCallV1 extends SpriteReferenceV2 {
   flipX: boolean;
   worldAnchor: Vec2;
   screenAnchor: Vec2;
+  /**
+   * Render-only displacement from the projected simulation anchor. It never
+   * mutates world state, collision, reach, navigation, damage, or input.
+   */
+  presentationOffset?: Vec2;
   destinationRect: DestinationRectV1;
   bounds: DestinationRectV1;
   footAnchor: Vec2;
@@ -205,6 +210,57 @@ export function compareEntityPaintOrder(
     entityPaintPriority(first) - entityPaintPriority(second) ||
     first.entityId.localeCompare(second.entityId)
   );
+}
+
+/**
+ * Minimum presented anchor spacing as a fraction of the monster's rendered
+ * cell width. These values are derived from the widest non-transparent attack
+ * frames in the fixed actor atlas: Ashfang reaches 110/128 source pixels and
+ * Stonekin 111/128. The retained overlap is intentional melee contact; only
+ * the unreadable fully merged body core is separated.
+ */
+export const MELEE_PRESENTATION_INK_FRACTION = {
+  ashfang: { lateral: 0.44, vertical: 0.5 },
+  stonekin: { lateral: 0.46, vertical: 0.52 },
+} as const;
+
+export function meleePresentationOffset(
+  playerAnchor: Vec2,
+  monsterAnchor: Vec2,
+  monsterFacing: Vec2,
+  monsterKind: keyof typeof MELEE_PRESENTATION_INK_FRACTION,
+  renderedCellWidth: number,
+): Vec2 {
+  const profile = MELEE_PRESENTATION_INK_FRACTION[monsterKind];
+  const minimumDistance =
+    renderedCellWidth *
+    (Math.abs(monsterFacing.y) > Math.abs(monsterFacing.x)
+      ? profile.vertical
+      : profile.lateral);
+  const deltaX = monsterAnchor.x - playerAnchor.x;
+  const deltaY = monsterAnchor.y - playerAnchor.y;
+  const distance = Math.hypot(deltaX, deltaY);
+  if (distance >= minimumDistance) return { x: 0, y: 0 };
+  const facingLength = Math.hypot(monsterFacing.x, monsterFacing.y);
+  // A monster faces its target, so the opposite facing is the stable
+  // presentation direction for a fully stacked imported state.
+  const directionX =
+    distance > 0.001
+      ? deltaX / distance
+      : facingLength > 0.001
+        ? -monsterFacing.x / facingLength
+        : 1;
+  const directionY =
+    distance > 0.001
+      ? deltaY / distance
+      : facingLength > 0.001
+        ? -monsterFacing.y / facingLength
+        : 0;
+  const displacement = minimumDistance - distance;
+  return {
+    x: directionX * displacement,
+    y: directionY * displacement,
+  };
 }
 
 function intersectsViewport(bounds: DestinationRectV1): boolean {
@@ -779,9 +835,14 @@ export function buildRenderManifest(
     >,
     width: number,
     height: number,
+    presentationOffset: Vec2 = { x: 0, y: 0 },
   ): void => {
     const bucket = facingBucket(semantic.facing);
-    const screenAnchor = screenFor(semantic.worldAnchor, camera);
+    const simulationScreenAnchor = screenFor(semantic.worldAnchor, camera);
+    const screenAnchor = {
+      x: simulationScreenAnchor.x + presentationOffset.x,
+      y: simulationScreenAnchor.y + presentationOffset.y,
+    };
     const directionalSpriteId =
       (bucket === "north" || bucket === "south") &&
       (semantic.type === "player" || semantic.type === "monster")
@@ -804,6 +865,10 @@ export function buildRenderManifest(
         semantic.frameIndex,
       ),
       screenAnchor,
+      ...(Math.abs(presentationOffset.x) > 0.001 ||
+      Math.abs(presentationOffset.y) > 0.001
+        ? { presentationOffset: { ...presentationOffset } }
+        : {}),
       destinationRect,
       bounds: { ...destinationRect },
       footAnchor: { ...screenAnchor },
@@ -821,6 +886,10 @@ export function buildRenderManifest(
     state.player.animation.startedAtTick,
   );
   const playerSpritePixels = 118;
+  const playerWorldAnchor = presented(
+    state.player.previousPosition,
+    state.player.position,
+  );
   add(
     {
       entityId: "player",
@@ -834,10 +903,7 @@ export function buildRenderManifest(
       clipStartedAtTick: state.player.animation.startedAtTick,
       clipLockedUntilTick: state.player.animation.lockedUntilTick,
       facing: state.player.facing,
-      worldAnchor: presented(
-        state.player.previousPosition,
-        state.player.position,
-      ),
+      worldAnchor: playerWorldAnchor,
       scale: playerSpritePixels / 256,
       tint: "#ffffff",
       opacity: 1,
@@ -894,6 +960,20 @@ export function buildRenderManifest(
       stonekin: { width: 128, height: 128 },
     }[monster.kind];
     const eliteScale = monster.elite ? 1.16 : 1;
+    const monsterWorldAnchor = presented(
+      monster.previousPosition,
+      monster.position,
+    );
+    const presentationOffset =
+      monster.health > 0 && monster.kind !== "hexer"
+        ? meleePresentationOffset(
+            screenFor(playerWorldAnchor, camera),
+            screenFor(monsterWorldAnchor, camera),
+            monster.facing,
+            monster.kind,
+            dimensions.width * eliteScale * camera.zoom,
+          )
+        : { x: 0, y: 0 };
     add(
       {
         entityId: monster.id,
@@ -907,7 +987,7 @@ export function buildRenderManifest(
         clipStartedAtTick: monster.animation.startedAtTick,
         clipLockedUntilTick: monster.animation.lockedUntilTick,
         facing: monster.facing,
-        worldAnchor: presented(monster.previousPosition, monster.position),
+        worldAnchor: monsterWorldAnchor,
         scale: (dimensions.width / 256) * eliteScale,
         tint: "#ffffff",
         opacity: monster.health > 0 || monster.removeAtTick === null ? 1 : 0.8,
@@ -915,6 +995,7 @@ export function buildRenderManifest(
       },
       dimensions.width * eliteScale,
       dimensions.height * eliteScale,
+      presentationOffset,
     );
   }
 

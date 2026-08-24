@@ -1571,14 +1571,9 @@ function openingStartStopScenario(subject: "ashfang" | "arcanist"): ScenarioV1 {
             {
               id: "monster:start-stop-ashfang",
               kind: "ashfang",
-              // Begin exactly on the production combat-readability ring,
-              // west of the hero. The old fixture began fully stacked; the
-              // imported-state repair correctly moved the Ashfang in a
-              // stable but unrelated direction before this eastward gait
-              // tape could start.
-              tile: [20.828125, 16],
+              tile: [22, 16],
               facing: [1024, 0],
-              // The player extends the gap, then stops. Delaying combat lets
+              // The player first opens a gap, then stops. Delaying combat lets
               // ordinary pursuit produce a complete east-facing walk loop and
               // a natural idle recovery without a test-only actor mutation.
               attackReadyTick: 10_000,
