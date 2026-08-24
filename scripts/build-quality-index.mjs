@@ -68,7 +68,7 @@ const [
   readJson("quality-results/generation-pipeline/report.json"),
   readJson("quality-results/environment-composition/report.json"),
   readJson(
-    "quality-results/actor-candidate-calibration/ashfang-primary-trial-v7/report.json",
+    "quality-results/actor-candidate-calibration/ashfang-primary-trial-v9/report.json",
   ),
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
@@ -97,6 +97,20 @@ const sequenceMechanicsPass = sequenceProfiles.every(
   (entry) => entry.pass !== false && entry.status !== "failed",
 );
 const sequenceEvidenceFresh = staleSequenceProfiles.length === 0;
+const candidateExpectedRejectionVerified = Boolean(
+  candidate &&
+  candidate.status === "fail" &&
+  candidate.verificationStatus === "pass" &&
+  candidate.expectation?.met === true &&
+  candidate.expectation?.negativeControlsMet === true &&
+  candidate.expectation?.recordedPreparationMet === true &&
+  candidate.expectation?.visualReviewMet === true &&
+  candidate.recordedPreparationVerdict === "rejected" &&
+  candidate.recordedVisualReview?.verdict === "REJECT" &&
+  candidate.recordedVisualReview?.reviewedPreparedSha256 ===
+    candidate.candidate?.sha256 &&
+  candidate.negativeControls?.every(({ detected }) => detected),
+);
 
 const reports = [
   {
@@ -169,11 +183,14 @@ const reports = [
   {
     id: "candidate",
     title: "Ashfang candidate calibration",
-    href: "actor-candidate-calibration/ashfang-primary-trial-v7/",
-    status:
-      candidate?.recordedArtVerdict === "rejected" ? "rejected" : "missing",
+    href: "actor-candidate-calibration/ashfang-primary-trial-v9/",
+    status: candidate
+      ? candidateExpectedRejectionVerified
+        ? "rejected"
+        : "failed"
+      : "missing",
     summary: candidate
-      ? `V7 passes mechanical cut, scale, grounding, idle/walk envelope, and loop checks with ${candidate.negativeControls.filter(({ detected }) => detected).length}/${candidate.negativeControls.length} fixture-bound mutations; independent review still rejects its walk support cycle and production promotion.`
+      ? `V9 ${candidateExpectedRejectionVerified ? "reproduces" : "does not reproduce"} the exact named ${candidate.expectation?.violations?.join(", ") || "mechanical"} rejection at a ${((candidate.assessment?.projectedRuntimeWithoutActorOverrides?.walkSupportContact?.persistentContactRatio ?? 0) * 100).toFixed(2)}% persistent-contact ratio against the ${((candidate.thresholds?.maximumPersistentWalkContactRatio ?? 0) * 100).toFixed(0)}% maximum, with ${candidate.negativeControls.filter(({ detected }) => detected).length}/${candidate.negativeControls.length} fixture-bound mutations and a matching exact-hash visual veto.`
       : "No actor-candidate calibration report was generated.",
   },
   {

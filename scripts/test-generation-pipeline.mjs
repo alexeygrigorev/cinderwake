@@ -379,8 +379,10 @@ async function validateTrials(
       for (const [reasonIndex, reason] of trial.evaluation.reasons.entries()) {
         const reasonLabel = `${label}.evaluation.reasons[${reasonIndex}]`;
         assert(
-          reason.kind === "structural" || reason.kind === "visual",
-          `${reasonLabel}.kind must be structural or visual`,
+          reason.kind === "structural" ||
+            reason.kind === "mechanical" ||
+            reason.kind === "visual",
+          `${reasonLabel}.kind must be structural, mechanical, or visual`,
         );
         assertNonEmptyString(reason.code, `${reasonLabel}.code`);
         assertNonEmptyString(reason.detail, `${reasonLabel}.detail`);
@@ -453,6 +455,42 @@ async function validateTrials(
         sourceSheet: preparedSourceSheet,
       };
     }
+    let visualReview;
+    if (trial.visualReview) {
+      const reviewLabel = `${label}.visualReview`;
+      assert(
+        trial.visualReview.verdict === "ACCEPT" ||
+          trial.visualReview.verdict === "REJECT" ||
+          trial.visualReview.verdict === "UNCERTAIN",
+        `${reviewLabel}.verdict is invalid`,
+      );
+      assertNonEmptyString(
+        trial.visualReview.reviewer,
+        `${reviewLabel}.reviewer`,
+      );
+      assert(
+        preparation,
+        `${reviewLabel} requires a prepared candidate for hash binding`,
+      );
+      assert(
+        trial.visualReview.reviewedPreparedSha256 === preparation.sha256,
+        `${reviewLabel}.reviewedPreparedSha256 does not match preparation.sha256`,
+      );
+      for (const axisName of ["acceptedAxes", "rejectedAxes"]) {
+        const axes = trial.visualReview[axisName];
+        assert(
+          Array.isArray(axes) && axes.length > 0,
+          `${reviewLabel}.${axisName} must contain at least one axis`,
+        );
+        axes.forEach((axis, axisIndex) =>
+          assertNonEmptyString(
+            axis,
+            `${reviewLabel}.${axisName}[${axisIndex}]`,
+          ),
+        );
+      }
+      visualReview = structuredClone(trial.visualReview);
+    }
     evidence.push({
       id: trial.id,
       actorId: trial.actorId,
@@ -463,6 +501,7 @@ async function validateTrials(
       evaluation: trial.evaluation,
       sourceSheet: candidateSourceSheet,
       preparation,
+      visualReview,
     });
   }
   if (requireRepresentativeCoverage)
@@ -830,6 +869,7 @@ async function verifyTrialBuilds(manifest, temporaryRoot) {
           : "prepared-rejected-diagnostic"
         : "raw-rejected-diagnostic",
       preparationReproduction,
+      visualReview: trial.visualReview ?? null,
       atlasSha256: await fileSha256(atlasPath),
       rawNormalizedSourceFile: await writeNormalizedCandidate(
         rawCandidatePath,
@@ -1038,6 +1078,51 @@ async function verifyNegativeFixtures(temporaryRoot) {
   checks.push(
     await expectRejection("blank-cell", "cell 0 is blank", () =>
       validateFixture({ ...baseManifest, trials: [blankCell] }),
+    ),
+  );
+  const candidateRelativePath = path.relative(ROOT, validCandidate);
+  const visualReviewPreparedPath = path.join(
+    fixtureDirectory,
+    "visual-review-prepared.png",
+  );
+  await sharp(validCandidate)
+    .resize(ACTOR_SPEC.source.pixelWidth, ACTOR_SPEC.source.pixelHeight, {
+      fit: "fill",
+      kernel: "lanczos3",
+    })
+    .png()
+    .toFile(visualReviewPreparedPath);
+  const visualReviewPreparedRelativePath = path.relative(
+    ROOT,
+    visualReviewPreparedPath,
+  );
+  const staleVisualReview = {
+    ...baseManifest.trials[0],
+    preparation: {
+      tool: "scripts/prepare-actor-source.mjs",
+      command: `node scripts/prepare-actor-source.mjs --input ${candidateRelativePath} --output ${visualReviewPreparedRelativePath}`,
+      file: visualReviewPreparedRelativePath,
+      sha256: await fileSha256(visualReviewPreparedPath),
+      status: "rejected",
+      notes: "Synthetic prepared-source review binding fixture.",
+    },
+    visualReview: {
+      verdict: "REJECT",
+      reviewer: "synthetic-reviewer",
+      reviewedPreparedSha256: "0".repeat(64),
+      acceptedAxes: ["fixture accepted axis"],
+      rejectedAxes: ["fixture rejected axis"],
+    },
+  };
+  checks.push(
+    await expectRejection(
+      "stale-visual-review-hash",
+      "reviewedPreparedSha256 does not match preparation.sha256",
+      () =>
+        validateFixture({
+          ...baseManifest,
+          trials: [staleVisualReview],
+        }),
     ),
   );
   return checks;

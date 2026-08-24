@@ -598,6 +598,95 @@
         "status": "rejected",
         "notes": "Preparation is reproducible, all four row-two cells remain grounded, their loop continuity and aspect limits pass, and all three fixture-bound mutations are caught. The 71.5 px walk median differs from the 80.5 px idle median by 9 px, exceeding the unchanged 8 px start/stop limit, so the candidate is rejected before visual review."
       }
+    },
+    {
+      "id": "ashfang-primary-v9-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v9.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v9.png",
+      "candidateSha256": "a359092ff81d558dcc2a4ccf861e129cc30642a092129d04e74c7778ab6dcb26",
+      "referenceFiles": [
+        {
+          "file": "art/generation/candidates/ashfang-primary-trial-v8.png",
+          "sha256": "552536deb5fe4448bc65915175c520d014d7c7d11ed6c92cd1fd55439e6eceb4"
+        },
+        {
+          "file": "art/generation/candidates/ashfang-primary-trial-v7.png",
+          "sha256": "9975ba5ca66e4f66ce22213bfcd8f86261a21937cf376667f03323bf93a70587"
+        },
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-429b1b83-a233-4eb0-84c5-a5b82b3fd1e3.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background contains a graded hot-pink field rather than the requested literal flat #ff00ff key, so raw source ingress remains rejected."
+          },
+          {
+            "kind": "mechanical",
+            "code": "walk-support-contact-persistent",
+            "detail": "The bottom-band contact oracle measures 19.1% of occupied walk-support columns persisting through all four phases, above the frozen 12% maximum. The same lower-center paw remains contact-like while moving laterally."
+          },
+          {
+            "kind": "visual",
+            "code": "walk-support-cycle-ambiguous",
+            "detail": "Independent runtime-scale review cannot track the required diagonal support ownership swap across cells 4-7; paw relocation reads as ground sliding rather than weight transfer."
+          },
+          {
+            "kind": "visual",
+            "code": "walk-four-limb-readability",
+            "detail": "Only three paws remain consistently readable at runtime scale because the fourth and far-side limbs merge into the torso and underside."
+          },
+          {
+            "kind": "visual",
+            "code": "walk-width-envelope",
+            "detail": "Walk cells 4-6 measure 184, 191, and 185 source pixels wide, exceeding the frozen 164-178 request and producing avoidable horizontal breathing despite acceptable height continuity."
+          }
+        ],
+        "notes": "The v8-derived raw sheet is quarantined. It restores the idle/walk height envelope, grounding, aspect, and loop measurements, but the new contact oracle now catches the same support-paw slide independently identified in exact-hash runtime review. Cells 4-7 still lack a trackable four-limb diagonal gait and exceed the requested width envelope. Production and later-family generation remain prohibited."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v9.png --output art/generation/prepared/ashfang-primary-trial-v9.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v9.png",
+        "sha256": "4030c6a856a1d6da812fcf79d70b3c980af1d97809359d4d1e26339534bd3b06",
+        "status": "rejected",
+        "notes": "Deterministic keying, decontamination, shared scaling, and fixed-foot placement produced a reproducible 1024x1024 candidate. Grounding, safe bounds, aspect, loop continuity, and the 1 px idle-walk height delta pass, and all four fixture-bound mutations are caught. The persistent walk-contact ratio is 0.191 against the unchanged 0.12 maximum, so mechanical preparation and production promotion are rejected."
+      },
+      "visualReview": {
+        "verdict": "REJECT",
+        "reviewer": "/root/review_ashfang_v7",
+        "reviewedPreparedSha256": "4030c6a856a1d6da812fcf79d70b3c980af1d97809359d4d1e26339534bd3b06",
+        "acceptedAxes": [
+          "stable 77-78 px walk height against the 80-81 px idle bank",
+          "spatial loop closure without a large body pop",
+          "idle cells 0-3",
+          "grounded attack cells 8-11",
+          "restrained ability cells 12-15"
+        ],
+        "rejectedAxes": [
+          "alternating support and visible weight transfer in walk cells 4-7",
+          "four-limb readability in walk cells 4-7",
+          "foot-skate risk from the persistent lower-center paw",
+          "requested walk width envelope",
+          "fitness to seed later actor families"
+        ]
+      }
     }
   ]
 }

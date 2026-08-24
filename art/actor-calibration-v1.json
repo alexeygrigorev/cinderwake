@@ -17,7 +17,8 @@
         "runtimeIdleMaximumAspectRatio": 1.5,
         "runtimeLoopMaximumHeightStep": 8,
         "runtimeLoopMaximumCentroidStep": 5,
-        "runtimeIdleWalkMaximumMedianHeightDifference": 8
+        "runtimeIdleWalkMaximumMedianHeightDifference": 8,
+        "maximumPersistentWalkContactRatio": 0.12
       }
     }
   }

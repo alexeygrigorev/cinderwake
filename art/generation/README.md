@@ -42,7 +42,7 @@ West is the only runtime mirror and is derived from east. North and south are al
      --output art/generation/prepared/<trial>.png
    ```
 
-6. Add the raw and prepared hashes, exact preparation command/tool, every reference path/hash, tool artifact ID, raw dimensions, and separate verdicts to `trials.json`. `accepted-for-pipeline-proof` means structurally and visually usable as test input, not production-approved.
+6. Add the raw and prepared hashes, exact preparation command/tool, every reference path/hash, tool artifact ID, raw dimensions, and separate verdicts to `trials.json`. `accepted-for-pipeline-proof` means structurally usable as diagnostic packer input; it is never production approval and cannot override a recorded exact-hash visual rejection.
 7. Run the complete verifier:
 
    ```bash
@@ -68,17 +68,38 @@ ground anchor, the shared six-family runtime scale, and idle/walk loop height
 and centroid continuity. It writes a guided 4×4 contact sheet, a same-scale
 actor comparison, JSON, and HTML. Thresholds live in
 `art/actor-calibration-v1.json`, so a new actor profile does not require a new
-assessor. Three paired mutations must be rejected: a
-bad edge cut, one oversized frame that shrinks the complete rig, and a raised
-walk frame that would jump in motion. This remains a mechanical gate; it cannot
-approve anatomy, camera, material style, or action meaning.
+assessor. Four paired mutations must be rejected: a
+bad edge cut, one oversized frame that shrinks the complete rig, a raised walk
+frame that would jump in motion, and a repeated planted walk frame whose
+bottom-band support mask remains stuck across all four phases. This remains a
+mechanical gate; it cannot approve anatomy, camera, material style, or action
+meaning.
+
+For a known rejected candidate, CI must reproduce the exact named failure—not
+merely accept any nonzero exit. Declare both the outcome and every expected
+violation:
+
+```bash
+node scripts/assess-actor-candidate.mjs \
+  --actor ashfang \
+  --family primary \
+  --profile ashfang-primary-v1 \
+  --candidate art/generation/prepared/ashfang-primary-trial-v9.png \
+  --output quality-results/actor-candidate-calibration/ashfang-primary-trial-v9 \
+  --expect-assessment fail \
+  --expect-violation walk-support-contact-persistent
+```
+
+The command succeeds only when the actual violation set exactly equals the
+declared set, all independent mutations are caught, preparation is recorded as
+rejected, and the independent review hash matches the candidate bytes.
 
 ## What the verifier proves
 
 - trial prompts, references, candidates, legacy briefs, and manifests exist and have current hashes;
 - raw candidate images are square and at least 1024 pixels, then are analyzed on the declared normalized grid with literal-chroma ratio, per-cell component bounds, edge contact, and baseline evidence;
 - machine-readable rejection reasons exist for rejected raw candidates, so a permissive packer cannot relabel them as good source art;
-- prepared candidates reproduce from the exact raw hash and command, use literal chroma, keep all sixteen cells inside safe bounds, and retain an independent visual verdict;
+- prepared candidates reproduce from the exact raw hash and command, use literal chroma, keep all sixteen cells inside safe bounds, and bind any independent visual verdict to the exact prepared SHA-256;
 - every trial, including intentionally rejected art, can pass through the real packer as an explicitly labeled tolerance diagnostic;
 - complete Vanguard, Ranger, and Stonekin six-family source sets build twice to byte-identical atlases;
 - those isolated atlas bytes equal the committed production atlases;
@@ -92,6 +113,7 @@ The report is regenerated and published by CI. `quality-results/` is intentional
 - Ranger `actions`: raw and prepared art are rejected because preparation cannot repair the oversized effect or action-cell semantic mismatch.
 - Stonekin `reactions`: raw art is mechanically rejected; its prepared source is accepted only for pipeline proof because shared-scale grounding repairs the raster contract while preserving the visually coherent collapse.
 - Ashfang `primary` v2: its prepared idle/walk cut passes the measurable scale and continuity window (78.5-pixel median idle height), but raw and prepared art remain rejected. Independent review found a glossy style mismatch, a still-lateral camera, an airborne attack, and an oversized ground burst; preparation cannot repair those authored decisions.
+- Ashfang `primary` v9: the 80.5/77-pixel idle/walk medians repair the earlier height failure, but 18 of 94 occupied bottom-band columns persist through every walk phase (`19.15% > 12%`). Exact-hash review of `4030c6a856a1d6da812fcf79d70b3c980af1d97809359d4d1e26339534bd3b06` independently rejects the same sliding support paw, untrackable fourth limb, excessive walk width, and fitness to seed later families. Preparation is explicitly rejected; CI reproduces the named rejection with all four mutations caught.
 
 `accepted-production.json` covers all six accepted source families for those same actors. Exact historical prompts were not retained, so those entries point to `legacy-briefs/` marked `reconstructed-after-generation`; they preserve source hashes and generated artifact IDs without fabricating history.
 

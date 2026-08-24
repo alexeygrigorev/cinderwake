@@ -50,6 +50,8 @@ function parseArguments(arguments_) {
     profileId: "ashfang-primary-v1",
     candidate: defaultCandidate,
     output: defaultOutput,
+    expectedAssessment: "pass",
+    expectedViolations: [],
   };
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
@@ -61,7 +63,11 @@ Options:
   --family <id>         Candidate source family (currently primary)
   --profile <id>        Threshold profile from art/actor-calibration-v1.json
   --candidate <png>     Prepared 1024x1024 candidate source
-  --output <directory>  Derived JSON, HTML, and contact-sheet evidence`);
+  --output <directory>  Derived JSON, HTML, and contact-sheet evidence
+  --expect-assessment <pass|fail>
+                        Required mechanical outcome (default: pass)
+  --expect-violation <code>
+                        Named violation required for an expected failure; repeatable`);
       process.exit(0);
     }
     const [name, inlineValue] = argument.split("=", 2);
@@ -70,7 +76,9 @@ Options:
       name !== "--family" &&
       name !== "--profile" &&
       name !== "--candidate" &&
-      name !== "--output"
+      name !== "--output" &&
+      name !== "--expect-assessment" &&
+      name !== "--expect-violation"
     )
       throw new Error(`Unknown option: ${argument}`);
     const value = inlineValue ?? arguments_[++index];
@@ -81,8 +89,24 @@ Options:
     else if (name === "--profile") options.profileId = value;
     else if (name === "--candidate")
       options.candidate = path.resolve(root, value);
-    else options.output = path.resolve(root, value);
+    else if (name === "--output") options.output = path.resolve(root, value);
+    else if (name === "--expect-assessment") options.expectedAssessment = value;
+    else options.expectedViolations.push(value);
   }
+  if (!new Set(["pass", "fail"]).has(options.expectedAssessment))
+    throw new Error("--expect-assessment must be pass or fail");
+  if (
+    options.expectedAssessment === "fail" &&
+    options.expectedViolations.length === 0
+  )
+    throw new Error(
+      "Expected candidate failures require at least one --expect-violation",
+    );
+  if (
+    options.expectedAssessment === "pass" &&
+    options.expectedViolations.length > 0
+  )
+    throw new Error("--expect-violation requires --expect-assessment fail");
   if (options.sourceFamily !== "primary")
     throw new Error(
       "The current calibration profile requires the primary idle/walk layout",
@@ -384,6 +408,55 @@ function groupEvidence(cells) {
   };
 }
 
+function walkSupportContactEvidence(source) {
+  const masks = Array.from({ length: 4 }, (_, offset) => {
+    const index = 4 + offset;
+    const originX = (index % actorSpec.source.columns) * sourceCell;
+    const originY = Math.floor(index / actorSpec.source.columns) * sourceCell;
+    let bottom = -1;
+    for (let y = 0; y < sourceCell; y += 1) {
+      for (let x = 0; x < sourceCell; x += 1) {
+        const alpha =
+          source.data[
+            ((originY + y) * source.info.width + originX + x) * 4 + 3
+          ];
+        if (alpha > 96) bottom = Math.max(bottom, y);
+      }
+    }
+    return Array.from({ length: sourceCell }, (_, x) => {
+      let occupiedRows = 0;
+      for (let y = Math.max(0, bottom - 15); y <= bottom; y += 1) {
+        const alpha =
+          source.data[
+            ((originY + y) * source.info.width + originX + x) * 4 + 3
+          ];
+        if (alpha > 96) occupiedRows += 1;
+      }
+      return occupiedRows >= 2;
+    });
+  });
+  let unionColumns = 0;
+  let persistentColumns = 0;
+  for (let x = 0; x < sourceCell; x += 1) {
+    const occupiedPhases = masks.reduce(
+      (count, mask) => count + (mask[x] ? 1 : 0),
+      0,
+    );
+    if (occupiedPhases > 0) unionColumns += 1;
+    if (occupiedPhases === masks.length) persistentColumns += 1;
+  }
+  return {
+    alphaThreshold: 96,
+    contactBandHeight: 16,
+    minimumOccupiedRows: 2,
+    unionColumns,
+    persistentColumns,
+    persistentContactRatio: rounded(
+      unionColumns === 0 ? 1 : persistentColumns / unionColumns,
+    ),
+  };
+}
+
 async function assessSource(options, source) {
   const { thresholds } = options;
   const cells = sourceEvidence(source);
@@ -391,6 +464,7 @@ async function assessSource(options, source) {
   const projected = cells.map((cell) => projectedCell(cell, scale));
   const idle = groupEvidence(projected.slice(0, 4));
   const walk = groupEvidence(projected.slice(4, 8));
+  const walkSupportContact = walkSupportContactEvidence(source);
   const violations = [];
   const blankCells = cells
     .filter(
@@ -475,6 +549,17 @@ async function assessSource(options, source) {
       actual: idleWalkMedianHeightDifference,
       maximum: thresholds.runtimeIdleWalkMaximumMedianHeightDifference,
     });
+  if (
+    walkSupportContact.persistentContactRatio >
+    thresholds.maximumPersistentWalkContactRatio
+  )
+    violations.push({
+      code: "walk-support-contact-persistent",
+      actual: walkSupportContact.persistentContactRatio,
+      maximum: thresholds.maximumPersistentWalkContactRatio,
+      persistentColumns: walkSupportContact.persistentColumns,
+      unionColumns: walkSupportContact.unionColumns,
+    });
   return {
     pass: violations.length === 0,
     literalMagentaRatio: rounded(source.literalMagentaRatio),
@@ -489,6 +574,7 @@ async function assessSource(options, source) {
       idle,
       walk,
       idleWalkMedianHeightDifference,
+      walkSupportContact,
     },
     violations,
   };
@@ -586,6 +672,10 @@ async function negativeControls(options) {
     throw new Error(
       "Actor candidate rejection controls require the mechanically green v2 fixture",
     );
+  const repeatedWalkCell = await cellBuffer(fixture, 4);
+  let stuckWalk = fixture;
+  for (const index of [5, 6, 7])
+    stuckWalk = await replaceCell(stuckWalk, index, repeatedWalkCell);
   const mutations = [
     {
       id: "cut-cell-at-left-edge",
@@ -609,6 +699,11 @@ async function negativeControls(options) {
         6,
         await translatedCell(fixture, 6, 0, -24),
       ),
+    },
+    {
+      id: "walk-support-mask-stuck",
+      expectedViolation: "walk-support-contact-persistent",
+      source: stuckWalk,
     },
   ];
   return Promise.all(
@@ -887,19 +982,24 @@ function htmlReport(report) {
         `<li><code>${escapeHtml(reason.code)}</code>: ${escapeHtml(reason.detail)}</li>`,
     )
     .join("");
+  const visualReview = report.recordedVisualReview;
+  const visualReviewSection = visualReview
+    ? `<h2>Independent exact-hash review</h2><p>Verdict: <strong>${escapeHtml(visualReview.verdict)}</strong>. Reviewer: <code>${escapeHtml(visualReview.reviewer)}</code>. Prepared SHA-256: <code>${escapeHtml(visualReview.reviewedPreparedSha256)}</code>.</p><h3>Accepted axes</h3><ul>${visualReview.acceptedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul><h3>Rejected axes</h3><ul>${visualReview.rejectedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul>`
+    : "<p>No independent exact-hash visual review is recorded.</p>";
   return `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Actor candidate calibration</title>
 <style>body{max-width:1100px;margin:2rem auto;padding:0 1rem;background:#0d0b0d;color:#eadfce;font:16px/1.5 system-ui}code{color:#f1c77d}img{max-width:100%;height:auto;border:1px solid #5b4848;background:#171217}table{width:100%;border-collapse:collapse}th,td{padding:.45rem;border-bottom:1px solid #493b3d;text-align:left}.pass{color:#8ed59c}.warn{color:#efb267}figure{margin:1rem 0}figcaption{color:#bbaa9b}</style></head>
 <body><h1>Actor candidate calibration</h1>
 <p class="${report.status === "pass" ? "pass" : "warn"}">Mechanical gate: <strong>${escapeHtml(report.status.toUpperCase())}</strong>. Recorded art verdict: <strong>${escapeHtml(report.recordedArtVerdict)}</strong>.</p>
+<p class="${report.expectation.met ? "pass" : "warn"}">Expected mechanical outcome: <strong>${escapeHtml(report.expectation.assessment.toUpperCase())}</strong>${report.expectation.violations.length > 0 ? ` with <code>${escapeHtml(report.expectation.violations.join(", "))}</code>` : ""}. Reproduced: <strong>${report.expectation.met ? "YES" : "NO"}</strong>.</p>
 <p>This report proves cuts, scale, grounding, and loop continuity. It intentionally does not approve anatomy, style, action semantics, or production promotion.</p>
 <dl><dt>Candidate</dt><dd><code>${escapeHtml(report.candidate.file)}</code></dd><dt>SHA-256</dt><dd><code>${report.candidate.sha256}</code></dd><dt>Calibrated shared scale</dt><dd>${report.assessment.calibratedSharedScale}</dd><dt>Projected idle height</dt><dd>minimum ${report.assessment.projectedRuntimeWithoutActorOverrides.idle.minimumHeight}, median ${report.assessment.projectedRuntimeWithoutActorOverrides.idle.medianHeight}</dd><dt>Projected idle aspect</dt><dd>maximum ${report.assessment.projectedRuntimeWithoutActorOverrides.idle.maximumAspectRatio}</dd></dl>
 <figure><a href="contact-sheet.png"><img src="contact-sheet.png" alt="All sixteen prepared Ashfang cells with safe bounds and anchor guides"></a><figcaption>All sixteen deterministic cuts. The dashed box is safe ink; the orange line is the foot anchor.</figcaption></figure>
 <figure><a href="scale-comparison.png"><img src="scale-comparison.png" alt="Ashfang candidate beside production actors at one logical scale"></a><figcaption>Same-scale first-idle comparison. Visual acceptance remains human or vision-model review.</figcaption></figure>
 <h2>Every prepared cell</h2><table><thead><tr><th>Cell</th><th>row/column</th><th>ink px</th><th>ink bbox</th><th>ground offset</th><th>safe bounds</th></tr></thead><tbody>${cellRows}</tbody></table>
 <h2>Deterministic negative controls</h2><ul>${controls}</ul>
-<h2>Verdict boundary</h2><p>Mechanical assessment: <strong>${escapeHtml(report.status)}</strong>. Recorded raw/art verdict: <strong>${escapeHtml(report.recordedArtVerdict)}</strong>. Recorded prepared verdict: <strong>${escapeHtml(report.recordedPreparationVerdict)}</strong>. Mechanical success never implies visual or production approval.</p>${mechanicalViolations ? `<h3>Mechanical violations</h3><ul>${mechanicalViolations}</ul>` : "<p>No mechanical violations were measured.</p>"}${recordedReasons ? `<h3>Recorded raw/art reasons</h3><ul>${recordedReasons}</ul>` : ""}<p>${escapeHtml(report.recordedArtEvaluation.notes)}</p>
+<h2>Verdict boundary</h2><p>Mechanical assessment: <strong>${escapeHtml(report.status)}</strong>. Expected-rejection verification: <strong>${escapeHtml(report.verificationStatus)}</strong>. Recorded raw/art verdict: <strong>${escapeHtml(report.recordedArtVerdict)}</strong>. Recorded prepared verdict: <strong>${escapeHtml(report.recordedPreparationVerdict)}</strong>. Mechanical success never implies visual or production approval.</p>${mechanicalViolations ? `<h3>Mechanical violations</h3><ul>${mechanicalViolations}</ul>` : "<p>No mechanical violations were measured.</p>"}${recordedReasons ? `<h3>Recorded raw/art reasons</h3><ul>${recordedReasons}</ul>` : ""}<p>${escapeHtml(report.recordedArtEvaluation.notes)}</p>${visualReviewSection}
 </body></html>`;
 }
 
@@ -921,6 +1021,7 @@ async function recordedVerdict(options) {
     evaluation: trial.evaluation.status,
     preparation: trial.preparation.status,
     evaluationRecord: trial.evaluation,
+    visualReview: trial.visualReview ?? null,
   };
 }
 
@@ -937,6 +1038,33 @@ async function run() {
   const runtime = await runtimeEvidence(candidateAtlas, options.actorId);
   const controlsPass = controls.every(({ detected }) => detected);
   const status = assessment.pass && controlsPass ? "pass" : "fail";
+  const actualViolationCodes = new Set(
+    assessment.violations.map(({ code }) => code),
+  );
+  const missingExpectedViolations = options.expectedViolations.filter(
+    (code) => !actualViolationCodes.has(code),
+  );
+  const unexpectedViolations = [...actualViolationCodes].filter(
+    (code) => !options.expectedViolations.includes(code),
+  );
+  const expectedAssessmentMet =
+    options.expectedAssessment === "pass"
+      ? assessment.pass
+      : !assessment.pass &&
+        missingExpectedViolations.length === 0 &&
+        unexpectedViolations.length === 0;
+  const recordedPreparationMet =
+    options.expectedAssessment === "pass" || verdict.preparation === "rejected";
+  const candidateSha256 = sha256(candidateBytes);
+  const visualReviewMet =
+    options.expectedAssessment === "pass" ||
+    (verdict.visualReview?.verdict === "REJECT" &&
+      verdict.visualReview.reviewedPreparedSha256 === candidateSha256);
+  const expectationMet =
+    expectedAssessmentMet &&
+    controlsPass &&
+    recordedPreparationMet &&
+    visualReviewMet;
   await fs.mkdir(options.output, { recursive: true });
   await Promise.all([
     writeContactSheet(source, path.join(options.output, "contact-sheet.png")),
@@ -947,9 +1075,10 @@ async function run() {
     ),
   ]);
   const report = {
-    schemaVersion: 1,
-    contract: "CinderwakeActorCandidateCalibrationV1",
+    schemaVersion: 2,
+    contract: "CinderwakeActorCandidateCalibrationV2",
     status,
+    verificationStatus: expectationMet ? "pass" : "fail",
     scope:
       "Deterministic mechanical assessment only; visual art and production promotion remain separately reviewed.",
     candidate: {
@@ -957,11 +1086,23 @@ async function run() {
       sourceFamily: options.sourceFamily,
       trialId: verdict.trialId,
       file: path.relative(root, options.candidate),
-      sha256: sha256(candidateBytes),
+      sha256: candidateSha256,
     },
     recordedArtVerdict: verdict.evaluation,
     recordedPreparationVerdict: verdict.preparation,
     recordedArtEvaluation: verdict.evaluationRecord,
+    recordedVisualReview: verdict.visualReview,
+    expectation: {
+      assessment: options.expectedAssessment,
+      violations: options.expectedViolations,
+      missingExpectedViolations,
+      unexpectedViolations,
+      assessmentMet: expectedAssessmentMet,
+      negativeControlsMet: controlsPass,
+      recordedPreparationMet,
+      visualReviewMet,
+      met: expectationMet,
+    },
     profile: {
       id: options.profileId,
       acceptanceBrief: options.acceptanceBrief,
@@ -979,12 +1120,18 @@ async function run() {
     ),
     fs.writeFile(path.join(options.output, "index.html"), htmlReport(report)),
   ]);
-  if (status !== "pass")
+  if (!expectationMet)
     throw new Error(
-      `Actor candidate calibration failed: production=${assessment.pass}, negative-controls=${controlsPass}`,
+      `Actor candidate expectation failed: expected=${options.expectedAssessment}, actual=${assessment.pass ? "pass" : "fail"}, missing-violations=${missingExpectedViolations.join(",") || "none"}, unexpected-violations=${unexpectedViolations.join(",") || "none"}, negative-controls=${controlsPass}, recorded-preparation=${verdict.preparation}, visual-review=${visualReviewMet}`,
     );
+  if (options.expectedAssessment === "fail") {
+    console.log(
+      `Actor candidate rejection reproduced: ${options.expectedViolations.join(", ")}; 16/16 cells measured and ${controls.length}/${controls.length} rejection controls caught; recorded preparation remains ${verdict.preparation}.`,
+    );
+    return;
+  }
   console.log(
-    `Actor candidate calibration passed mechanically: 16/16 cells measured, idle median ${assessment.projectedRuntimeWithoutActorOverrides.idle.medianHeight}px, 3/3 rejection controls caught; recorded art verdict remains ${verdict.evaluation}.`,
+    `Actor candidate calibration passed mechanically: 16/16 cells measured, idle median ${assessment.projectedRuntimeWithoutActorOverrides.idle.medianHeight}px, ${controls.length}/${controls.length} rejection controls caught; recorded art verdict remains ${verdict.evaluation}.`,
   );
 }
 
