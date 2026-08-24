@@ -113,6 +113,7 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   "scenery:tile:wall": ["static"],
   "scenery:edge:floor-blend": ["static"],
   "scenery:boundary:stone": ["static"],
+  "scenery:boundary:wall-front": ["static"],
   "scenery:exit:locked": ["static"],
   "scenery:exit:open": ["static"],
 };

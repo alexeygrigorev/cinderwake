@@ -8,9 +8,12 @@ import {
 import {
   GROUND_DECAL_NAMES,
   buildSceneryLayout,
+  openingRoomThreshold,
   overlapsScenery,
   sceneryCollisions,
 } from "../../src/game/sceneryLayout";
+import { tileCenter } from "../../src/game/dungeon";
+import { findStateNavigationRoute } from "../../src/game/navigation";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
   createRunScenario,
@@ -118,9 +121,9 @@ describe("generated opening encounter", () => {
       createRunScenario("opening-decal-contract", "ranger"),
     );
     const layout = buildSceneryLayout(first.map);
-    const decals = layout.filter(({ kind }) => kind === "decal");
-    const repeatedDecals = buildSceneryLayout(second.map).filter(
-      ({ kind }) => kind === "decal",
+    const decals = layout.filter(({ id }) => id.startsWith("decal:"));
+    const repeatedDecals = buildSceneryLayout(second.map).filter(({ id }) =>
+      id.startsWith("decal:"),
     );
     const expectedCount = 6 + Math.max(0, first.map.rooms.length - 1) * 3;
 
@@ -155,6 +158,90 @@ describe("generated opening encounter", () => {
         halfWidth: 0,
         halfHeight: 0,
       });
+    }
+  });
+
+  it("builds a visible, navigable opening threshold from authoritative room tiles", () => {
+    for (let index = 0; index < 100; index += 1) {
+      const state = worldFromScenario(
+        createRunScenario(`opening-architecture-${index}`, "vanguard"),
+      );
+      const threshold = openingRoomThreshold(state.map);
+      expect(threshold, `threshold for seed ${index}`).not.toBeNull();
+      const layout = buildSceneryLayout(state.map);
+      const marker = layout.find(({ id }) =>
+        id.startsWith("architecture:opening:threshold:"),
+      );
+      const lanterns = layout.filter(({ id }) =>
+        id.startsWith("architecture:opening:lantern:"),
+      );
+      expect(marker).toMatchObject({
+        kind: "decal",
+        name: "banner-scrap",
+        collisionMode: "passable",
+        collision: null,
+      });
+      expect(lanterns).toHaveLength(2);
+      for (const lantern of lanterns) {
+        expect(
+          state.map.tiles[
+            Math.round(lantern.tile.y) * state.map.width +
+              Math.round(lantern.tile.x)
+          ],
+          `${lantern.id} remains backed by a blocked map tile for seed ${index}`,
+        ).toBe(1);
+        expect(lantern.collisionMode).toBe("solid");
+        expect(lantern.collision).not.toBeNull();
+      }
+
+      const target = tileCenter(threshold!.floorTiles[0]!);
+      const route = findStateNavigationRoute(
+        state,
+        state.player.position,
+        target,
+        state.player.radius,
+      );
+      expect(route.length, `route for seed ${index}`).toBeGreaterThan(0);
+      expect(route.at(-1), `route destination for seed ${index}`).toEqual(
+        target,
+      );
+
+      const manifest = buildRenderManifest(state, openingCamera(state));
+      const visibleWallFronts = manifest.sceneSprites.filter(
+        ({ objectId, visible }) =>
+          objectId.startsWith("wall-front:") && visible,
+      );
+      expect(
+        visibleWallFronts.length,
+        `wall-front count for seed ${index}`,
+      ).toBeGreaterThanOrEqual(6);
+      for (const wall of visibleWallFronts)
+        expect(
+          state.map.tiles[wall.tile.y * state.map.width + wall.tile.x],
+          `${wall.objectId} backed by blocked map tile for seed ${index}`,
+        ).toBe(1);
+      expect(
+        manifest.sceneSprites.find(({ objectId }) => objectId === marker?.id)
+          ?.visible,
+        `threshold marker visible for seed ${index}`,
+      ).toBe(true);
+      expect(
+        lanterns.every(
+          (lantern) =>
+            manifest.sceneSprites.find(
+              ({ objectId }) => objectId === lantern.id,
+            )?.visible,
+        ),
+        `threshold lanterns visible for seed ${index}`,
+      ).toBe(true);
+      expect(
+        manifest.sceneSprites
+          .filter(({ objectId }) =>
+            /^(?:structure|prop|decal):[1-9]\d*:/.test(objectId),
+          )
+          .every(({ visible }) => !visible),
+        `distant room dressing hidden while seed ${index} opens`,
+      ).toBe(true);
     }
   });
 

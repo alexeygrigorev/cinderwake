@@ -215,6 +215,18 @@ function buildSceneSprites(
   camera: CameraV1,
 ): SceneSpriteV2[] {
   const scene: SceneSpriteV2[] = [];
+  const openingRoom = state.map.rooms[0];
+  const playerTile = {
+    x: Math.floor(state.player.position.x / UNITS_PER_TILE),
+    y: Math.floor(state.player.position.y / UNITS_PER_TILE),
+  };
+  const openingFocused = Boolean(
+    openingRoom &&
+    playerTile.x >= openingRoom.x &&
+    playerTile.x < openingRoom.x + openingRoom.width &&
+    playerTile.y >= openingRoom.y &&
+    playerTile.y < openingRoom.y + openingRoom.height,
+  );
   const groundSize = Math.max(
     VIEW_WIDTH,
     VIEW_HEIGHT,
@@ -341,7 +353,7 @@ function buildSceneSprites(
           else diagonalFloor += 1;
         }
       }
-      const opacity = cardinalFloor > 0 ? 0.08 : diagonalFloor > 0 ? 0.04 : 0;
+      const opacity = cardinalFloor > 0 ? 0.24 : diagonalFloor > 0 ? 0.12 : 0;
       if (opacity === 0) continue;
       const worldAnchor = {
         x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
@@ -420,6 +432,26 @@ function buildSceneSprites(
           opacity: 0.28,
           rotation: direction.rotation,
         });
+        if (direction.id === "north" || direction.id === "south") {
+          const destinationRect = destinationAt(screenAnchor, 62, 72, {
+            x: 128,
+            y: 232,
+          });
+          scene.push({
+            ...sceneReference("scenery:boundary:wall-front", (x + y) % 4),
+            objectId: `wall-front:${direction.id}:${x}:${y}`,
+            kind: "prop",
+            tile: { x, y },
+            worldAnchor,
+            screenAnchor,
+            destinationRect,
+            layer: "structures",
+            zOrder: scene.length,
+            visible: intersectsViewport(destinationRect),
+            opacity: 0.96,
+            rotation: 0,
+          });
+        }
       }
     }
   }
@@ -459,6 +491,10 @@ function buildSceneSprites(
       size,
       placement.kind === "decal" ? { x: 128, y: 128 } : undefined,
     );
+    const placementRoomIndex = Number(
+      placement.id.match(/^(?:structure|prop|decal):(\d+):/)?.[1] ?? -1,
+    );
+    const hiddenOutsideOpeningFocus = openingFocused && placementRoomIndex > 0;
     scene.push({
       ...sceneReference(spriteId),
       objectId: placement.id,
@@ -474,7 +510,8 @@ function buildSceneSprites(
             ? "terrain"
             : "props",
       zOrder: scene.length,
-      visible: intersectsViewport(destinationRect),
+      visible:
+        !hiddenOutsideOpeningFocus && intersectsViewport(destinationRect),
       opacity: 1,
       collision: placement.collision
         ? {

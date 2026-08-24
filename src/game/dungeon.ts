@@ -45,6 +45,101 @@ function carveCorridor(
   }
 }
 
+function carveCorridorOutsideOpening(
+  tiles: number[],
+  mapWidth: number,
+  mapHeight: number,
+  from: Vec2,
+  to: Vec2,
+  openingRoom: Room,
+): void {
+  const exclusion = {
+    left: openingRoom.x - 1,
+    right: openingRoom.x + openingRoom.width,
+    top: openingRoom.y - 1,
+    bottom: openingRoom.y + openingRoom.height,
+  };
+  const key = ({ x, y }: Vec2) => `${x},${y}`;
+  const pointFor = (value: string): Vec2 => {
+    const [x, y] = value.split(",").map(Number);
+    return { x: x!, y: y! };
+  };
+  const valid = ({ x, y }: Vec2): boolean => {
+    if (x < 1 || y < 1 || x + 1 >= mapWidth - 1 || y + 1 >= mapHeight - 1)
+      return false;
+    return (
+      x + 1 < exclusion.left ||
+      x > exclusion.right ||
+      y + 1 < exclusion.top ||
+      y > exclusion.bottom
+    );
+  };
+  const queue: Vec2[] = [from];
+  const previous = new Map<string, string | null>([[key(from), null]]);
+  let cursor = 0;
+  while (cursor < queue.length && !previous.has(key(to))) {
+    const current = queue[cursor++]!;
+    for (const [dx, dy] of [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+    ] as const) {
+      const next = { x: current.x + dx, y: current.y + dy };
+      const nextKey = key(next);
+      if (!valid(next) || previous.has(nextKey)) continue;
+      previous.set(nextKey, key(current));
+      queue.push(next);
+    }
+  }
+  if (!previous.has(key(to)))
+    throw new Error("Unable to route a corridor around the opening room");
+
+  let currentKey: string | null = key(to);
+  while (currentKey) {
+    const point = pointFor(currentKey);
+    for (let dy = 0; dy <= 1; dy += 1) {
+      for (let dx = 0; dx <= 1; dx += 1)
+        tiles[(point.y + dy) * mapWidth + point.x + dx] = 0;
+    }
+    currentKey = previous.get(currentKey) ?? null;
+  }
+}
+
+/**
+ * Later room-to-room corridors are allowed to cross previously carved space,
+ * which can otherwise erase most of the opening room perimeter. Rebuilding a
+ * one-tile shell and then carving one deliberate two-tile route keeps the
+ * first encounter legible without inventing render-only walls: the visible
+ * boundary and collision map continue to describe the same topology.
+ */
+function frameOpeningRoom(
+  tiles: number[],
+  mapWidth: number,
+  room: Room,
+  nextRoom: Room | undefined,
+): void {
+  if (!nextRoom) return;
+  for (let x = room.x - 1; x <= room.x + room.width; x += 1) {
+    tiles[(room.y - 1) * mapWidth + x] = 1;
+    tiles[(room.y + room.height) * mapWidth + x] = 1;
+  }
+  for (let y = room.y - 1; y <= room.y + room.height; y += 1) {
+    tiles[y * mapWidth + room.x - 1] = 1;
+    tiles[y * mapWidth + room.x + room.width] = 1;
+  }
+
+  const from = center(room);
+  const to = center(nextRoom);
+  carveCorridor(
+    tiles,
+    mapWidth,
+    from,
+    to,
+    Math.abs(to.x - from.x) >= Math.abs(to.y - from.y),
+  );
+}
+
 function center(room: Room): Vec2 {
   return {
     x: Math.floor(room.x + room.width / 2),
@@ -98,14 +193,26 @@ export function generateDungeon(
 
   for (const room of rooms) carveRoom(tiles, width, room);
   for (let index = 1; index < rooms.length; index += 1) {
-    carveCorridor(
-      tiles,
-      width,
-      center(rooms[index - 1]!),
-      center(rooms[index]!),
-      randomInt(rng, 0, 2) === 0,
-    );
+    const horizontalFirst = randomInt(rng, 0, 2) === 0;
+    if (index === 1)
+      carveCorridor(
+        tiles,
+        width,
+        center(rooms[index - 1]!),
+        center(rooms[index]!),
+        horizontalFirst,
+      );
+    else
+      carveCorridorOutsideOpening(
+        tiles,
+        width,
+        height,
+        center(rooms[index - 1]!),
+        center(rooms[index]!),
+        first,
+      );
   }
+  frameOpeningRoom(tiles, width, first, rooms[1]);
 
   const spawn = center(first);
   const exit =

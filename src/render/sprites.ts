@@ -356,6 +356,29 @@ register({
     },
   },
 });
+const wallFrontFrames = Object.fromEntries(
+  Array.from({ length: 4 }, (_, index) => [
+    `scenery:boundary:wall-front:variant:${index}`,
+    {
+      x: index * GRID_CELL,
+      y: GRID_CELL * 2,
+      width: GRID_CELL,
+      height: GRID_CELL,
+    },
+  ]),
+);
+register({
+  id: "scenery:boundary:wall-front",
+  assetId: "atlas:terrain",
+  frames: wallFrontFrames,
+  clips: {
+    static: {
+      frameIdentities: ["scenery:boundary:wall-front:variant:0"],
+      durationTicks: 1,
+      looping: true,
+    },
+  },
+});
 register(singleFrameSprite("scenery:exit:locked", "atlas:structures", 3, 1));
 register(singleFrameSprite("scenery:exit:open", "atlas:structures", 3, 3));
 register(singleFrameSprite("scenery:backdrop", "atlas:terrain", 0, 3));
