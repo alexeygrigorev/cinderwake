@@ -1,22 +1,54 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "profile": "phone",
   "sample": "0000",
   "role": "behind",
   "tick": 0,
-  "snapshot": {
-    "x": 32256,
-    "y": 5956
+  "playerPosition": { "x": 32256, "y": 5956 },
+  "playerStart": { "x": 32256, "y": 5956 },
+  "playerFinal": { "x": 32256, "y": 7364 },
+  "movementBlockedEvents": [],
+  "pageViewport": { "width": 390, "height": 844, "dpr": 1, "mobile": true },
+  "logicalMask": { "width": 960, "height": 540 },
+  "camera": { "x": 1512, "y": 312, "zoom": 1 },
+  "playerOrder": 2960,
+  "propOrder": 2961,
+  "alphaIntersection": 502,
+  "playerPaintHash": "682b1d0c",
+  "propPaintHash": "d206b935",
+  "paintQueue": [
+    {
+      "paintId": "body:player",
+      "kind": "entity-body",
+      "zOrder": 2960,
+      "frameIdentity": "hero:vanguard:idle:0"
+    },
+    {
+      "paintId": "scene:prop:3:0:thorn-pillar",
+      "kind": "scene",
+      "zOrder": 2961,
+      "frameIdentity": "scenery:prop:thorn-pillar:static:0"
+    }
+  ],
+  "tapeSha256": "6a8a8426b4f79cf92badca29134289b5a449db6b59b2b4d134a98ef62f6c9022",
+  "captureSources": {
+    "pagePlayer": {
+      "sourceCommit": "1d942a77fdaa585be30cfcbbc4654b07be1c9620",
+      "sourceDirty": false,
+      "sourcePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "trackedWorktreeHash": "eaf62ba405ee8acf0e19bf6d4131c83a8654d652e2ac7fb5193ab818b8fd302a",
+      "sourceStatus": []
+    },
+    "prop": {
+      "sourceCommit": "e30323b15b626d2a2dcb0459074a23a6af3fa855",
+      "sourceDirty": false,
+      "sourcePatchSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "trackedWorktreeHash": "5c760f7f9d451ecd74cd9a5f02c8b46e68328ef17f94ed847d3ce5ec7ae85555",
+      "sourceStatus": []
+    }
   },
-  "camera": {
-    "x": 1512,
-    "y": 312,
-    "zoom": 1
-  },
-  "viewport": {
-    "width": 960,
-    "height": 540,
-    "dpr": 1.5666666666666667
-  },
-  "reproduction": "npm run capture:sequence -- --scenario depth-transition-thorn-pillar --commands-file tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json"
+  "reproduction": {
+    "pagePlayer": "npm run capture:sequence -- --id 'depth-thorn-phone-body-reproduced' --state-file 'quality-results/sequences/depth-thorn-phone-body/initial-state.json' --commands-file 'quality-results/sequences/depth-thorn-phone-body/commands.json' --scenario 'depth-transition-thorn-pillar' --action 'idle' --track 'player' --profile 'pose' --presence 'always' --frames 28 --step 2 --subframes 1 --viewport-width 390 --viewport-height 844 --mobile true",
+    "prop": "npm run capture:sequence -- --id 'depth-thorn-phone-prop-reproduced' --state-file 'quality-results/sequences/depth-thorn-phone-prop/initial-state.json' --commands-file 'quality-results/sequences/depth-thorn-phone-prop/commands.json' --scenario 'depth-transition-thorn-pillar' --action 'idle' --track 'player' --profile 'pose' --presence 'always' --frames 2 --step 54 --subframes 1 --viewport-width 390 --viewport-height 844 --mobile true --paint-mask 'scene:prop:3:0:thorn-pillar'"
+  }
 }
