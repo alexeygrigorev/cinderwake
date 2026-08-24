@@ -130,6 +130,9 @@ export class GameHost {
   getCanvas(): HTMLCanvasElement {
     return this.renderer.canvas;
   }
+  captureLogicalFrame(): string {
+    return this.renderer.captureLogicalFrame();
+  }
   /** Execute an action for the NPC currently within the player's service radius. */
   executeNearbyCityAction(
     actionId: CityServiceActionId,

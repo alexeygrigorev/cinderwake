@@ -350,6 +350,33 @@ export class CanvasRenderer {
     };
   }
 
+  /**
+   * Return a deterministic logical-resolution frame for exact visual tests.
+   * The live canvas backing store is deliberately responsive and may be larger
+   * than 960x540 for crisp high-DPI presentation; snapshot dimensions must not
+   * silently inherit that device-dependent storage choice.
+   */
+  captureLogicalFrame(): string {
+    const logical = document.createElement("canvas");
+    logical.width = VIEW_WIDTH;
+    logical.height = VIEW_HEIGHT;
+    const context = logical.getContext("2d");
+    if (!context) throw new Error("Logical capture Canvas 2D is unavailable");
+    context.imageSmoothingEnabled = true;
+    context.drawImage(
+      this.canvas,
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height,
+      0,
+      0,
+      VIEW_WIDTH,
+      VIEW_HEIGHT,
+    );
+    return logical.toDataURL("image/png");
+  }
+
   private drawSceneSprite(
     context: CanvasRenderingContext2D,
     scene: SceneSpriteV2,

@@ -344,7 +344,8 @@ export function assessOpeningComposition(
     northWallFeatureCount: northWalls.length,
     northWallStretchedCount: northWalls.filter(
       ({ destinationRect }) =>
-        destinationRect.width !== 187 || destinationRect.height !== 172,
+        Math.abs(destinationRect.width - 187 * manifest.camera.zoom) > 0.01 ||
+        Math.abs(destinationRect.height - 172 * manifest.camera.zoom) > 0.01,
     ).length,
     northWallLegacyFacadeCount: northWallLegacyFacades.length,
     northWallShellTileCount: northWallShellTiles.length,

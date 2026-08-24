@@ -125,7 +125,7 @@ test("idle loop keeps an exact foot anchor, bounds, and frame cadence", async ({
   ).toBe(true);
 });
 
-test("walk is monotonic at constant velocity with stable tracked camera", async ({
+test("walk is monotonic and the glyph advances in the movement direction", async ({
   page,
 }) => {
   const calls: any[] = await page.evaluate(() => {
@@ -146,10 +146,13 @@ test("walk is monotonic at constant velocity with stable tracked camera", async 
   expect(calls.map((call) => call.frameIndex)).toEqual(
     calls.map((_call, index) => Math.floor((((index + 1) % 40) * 8) / 40)),
   );
-  expect(
-    new Set(calls.map((call) => `${call.footAnchor.x},${call.footAnchor.y}`))
-      .size,
-  ).toBe(1);
+  const screenDeltas = calls
+    .slice(1)
+    .map((call, index) => call.footAnchor.x - calls[index]!.footAnchor.x);
+  expect(screenDeltas.every((delta) => delta >= 0)).toBe(true);
+  expect(Math.max(...screenDeltas)).toBeLessThanOrEqual(3.1);
+  expect(calls.at(-1).footAnchor.x - calls[0].footAnchor.x).toBeGreaterThan(30);
+  expect(new Set(calls.map((call) => call.footAnchor.y)).size).toBe(1);
   expect(
     new Set(calls.map((call) => `${call.bounds.width}x${call.bounds.height}`))
       .size,

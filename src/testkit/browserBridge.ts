@@ -29,6 +29,7 @@ export interface TestHost {
   render(interpolationAlpha?: number): void;
   getManifest(): RenderManifestV1;
   getCanvas(): HTMLCanvasElement | null;
+  captureLogicalFrame?(): string;
   captureEntityMask(entityId: string): EntityMaskV1;
   setCamera(camera: CameraV1, mode?: CameraMode): void;
   setCameraMode(mode: CameraMode): void;
@@ -201,6 +202,7 @@ export function installGameTestBridge(
     renderManifest: () => host.getManifest(),
     drainEvents: () => host.getState().events.map((event) => ({ ...event })),
     captureFrame() {
+      if (host.captureLogicalFrame) return host.captureLogicalFrame();
       const canvas = host.getCanvas();
       if (!canvas) throw new Error("Game canvas is unavailable");
       return canvas.toDataURL("image/png");

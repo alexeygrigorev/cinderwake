@@ -48,6 +48,7 @@ async function extractTerrainPixelEvidence(
     const manifest = window.__GAME_TEST__!.render();
     const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
     const context = canvas.getContext("2d", { willReadFrequently: true })!;
+    const backingScale = manifest.viewport.dpr;
     const raisedBounds = [
       ...manifest.sceneSprites
         .filter(({ layer, visible }) => layer !== "terrain" && visible)
@@ -72,7 +73,7 @@ async function extractTerrainPixelEvidence(
     } as const;
     const collisionSamples: Array<{
       floor: { x: number; y: number };
-      wall: { x: number; y: number };
+      ridge: { x: number; y: number };
     }> = [];
     for (const boundary of manifest.sceneSprites.filter(
       ({ objectId, visible }) => objectId.startsWith("boundary:") && visible,
@@ -86,12 +87,9 @@ async function extractTerrainPixelEvidence(
         x: boundary.screenAnchor.x + vector.x * 18,
         y: boundary.screenAnchor.y + vector.y * 18,
       };
-      const wall = {
-        x: boundary.screenAnchor.x - vector.x * 18,
-        y: boundary.screenAnchor.y - vector.y * 18,
-      };
-      if (covered(floor.x, floor.y) || covered(wall.x, wall.y)) continue;
-      collisionSamples.push({ floor, wall });
+      const ridge = { ...boundary.screenAnchor };
+      if (covered(floor.x, floor.y) || covered(ridge.x, ridge.y)) continue;
+      collisionSamples.push({ floor, ridge });
     }
 
     const tileByCoordinate = new Map(
@@ -155,7 +153,7 @@ async function extractTerrainPixelEvidence(
     if (mutationId === "erase-collision")
       for (const sample of collisionSamples) {
         paintPatch(sample.floor, 64, 4);
-        paintPatch(sample.wall, 64, 4);
+        paintPatch(sample.ridge, 64, 4);
       }
     if (mutationId === "exaggerate-seams")
       for (const sample of seamSamples) {
@@ -165,10 +163,21 @@ async function extractTerrainPixelEvidence(
 
     const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
     const patchLuma = (x: number, y: number, radius = 2) => {
+      const centerX = Math.round(x * backingScale);
+      const centerY = Math.round(y * backingScale);
+      const backingRadius = Math.max(1, Math.round(radius * backingScale));
       let sum = 0;
       let count = 0;
-      for (let patchY = y - radius; patchY <= y + radius; patchY += 1) {
-        for (let patchX = x - radius; patchX <= x + radius; patchX += 1) {
+      for (
+        let patchY = centerY - backingRadius;
+        patchY <= centerY + backingRadius;
+        patchY += 1
+      ) {
+        for (
+          let patchX = centerX - backingRadius;
+          patchX <= centerX + backingRadius;
+          patchX += 1
+        ) {
           if (
             patchX < 0 ||
             patchY < 0 ||
@@ -176,8 +185,7 @@ async function extractTerrainPixelEvidence(
             patchY >= canvas.height
           )
             continue;
-          const offset =
-            (Math.round(patchY) * canvas.width + Math.round(patchX)) * 4;
+          const offset = (patchY * canvas.width + patchX) * 4;
           sum +=
             pixels[offset]! * 0.2126 +
             pixels[offset + 1]! * 0.7152 +
@@ -189,8 +197,8 @@ async function extractTerrainPixelEvidence(
     };
     return {
       collisionContrasts: collisionSamples
-        .map(({ floor, wall }) =>
-          Math.abs(patchLuma(floor.x, floor.y) - patchLuma(wall.x, wall.y)),
+        .map(({ floor, ridge }) =>
+          Math.abs(patchLuma(floor.x, floor.y) - patchLuma(ridge.x, ridge.y)),
         )
         .filter(Number.isFinite),
       sameMaterialSeams: seamSamples
@@ -580,17 +588,19 @@ async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
       const worldRect = {
         left:
           canvasRect.left +
-          (destinationRect.x / canvas.width) * canvasRect.width,
+          (destinationRect.x / manifest.viewport.width) * canvasRect.width,
         top:
           canvasRect.top +
-          (destinationRect.y / canvas.height) * canvasRect.height,
+          (destinationRect.y / manifest.viewport.height) * canvasRect.height,
         right:
           canvasRect.left +
-          ((destinationRect.x + destinationRect.width) / canvas.width) *
+          ((destinationRect.x + destinationRect.width) /
+            manifest.viewport.width) *
             canvasRect.width,
         bottom:
           canvasRect.top +
-          ((destinationRect.y + destinationRect.height) / canvas.height) *
+          ((destinationRect.y + destinationRect.height) /
+            manifest.viewport.height) *
             canvasRect.height,
       };
       const width = Math.max(
@@ -667,9 +677,10 @@ for (const profile of contract.profiles) {
       );
       const openingViewport = await page.evaluate(() => {
         const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
+        const manifest = window.__GAME_OBSERVE__!.renderManifest();
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
+        const scaleX = manifest.viewport.width / rect.width;
+        const scaleY = manifest.viewport.height / rect.height;
         const left = Math.max(0, rect.left);
         const top = Math.max(0, rect.top);
         const right = Math.min(window.innerWidth, rect.right);
