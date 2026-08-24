@@ -453,11 +453,13 @@ async function reproducePreparation(trial) {
     const script = path.join(root, "scripts", "prepare-actor-pose.mjs");
     const input = path.resolve(root, trial.candidateFile);
     for (const output of [first, second]) {
-      const result = await executeFile(
-        process.execPath,
-        [script, "--input", input, "--output", output],
-        { cwd: root, maxBuffer: 10 * 1024 * 1024 },
-      );
+      const arguments_ = [script, "--input", input, "--output", output];
+      if (trial.preparation.preserveFraming)
+        arguments_.push("--preserve-framing");
+      const result = await executeFile(process.execPath, arguments_, {
+        cwd: root,
+        maxBuffer: 10 * 1024 * 1024,
+      });
       if (result.stderr.trim())
         throw new Error(`Pose preparation wrote to stderr: ${result.stderr}`);
     }

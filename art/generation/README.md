@@ -134,13 +134,18 @@ it non-destructively into one 256 × 256 source cell:
 ```bash
 node scripts/prepare-actor-pose.mjs \
   --input art/generation/candidates/<pose>.png \
-  --output art/generation/prepared/<pose>.png
+  --output art/generation/prepared/<pose>.png \
+  --preserve-framing
 ```
 
 The pose normalizer keys the raw background, removes boundary residue, applies
-one aspect-preserving scale, fits the existing safe box, and uses the declared
-bottom-center foot anchor. It never stretches a wide creature to manufacture
-the desired height. Audit a recorded trial with:
+one aspect-preserving scale, and uses the declared bottom-center foot anchor.
+Fresh identity masters use `--preserve-framing`: the scale is capped at the
+canonical 1024→256 factor and only shrinks further to respect the safe box, so
+the generator's declared canvas occupancy remains measurable. Historical v1/v2
+records omit the flag and retain their exact legacy safe-fit bytes. Neither
+mode stretches a wide creature to manufacture the desired height. Audit a
+recorded trial with:
 
 ```bash
 npm run art:pose:audit

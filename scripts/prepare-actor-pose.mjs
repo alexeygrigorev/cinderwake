@@ -23,15 +23,21 @@ const footAnchor = {
 const magenta = { r: 255, g: 0, b: 255, alpha: 1 };
 
 function parseArguments(arguments_) {
-  const options = {};
+  const options = { preserveFraming: false };
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
     if (argument === "--help") {
-      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png>
+      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png> [--preserve-framing]
 
 Normalizes one isolated generated actor pose into one fixed 256x256
-ActorAtlasV2 source cell without changing its aspect ratio.`);
+ActorAtlasV2 source cell without changing its aspect ratio. The optional
+framing mode preserves the canonical 1024-to-256 canvas scale and only
+shrinks further when required by the safe bounds.`);
       process.exit(0);
+    }
+    if (argument === "--preserve-framing") {
+      options.preserveFraming = true;
+      continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
     if (name !== "--input" && name !== "--output")
@@ -179,10 +185,13 @@ async function run() {
   const keyed = await normalizedKeyedInput(options.input);
   const cleaned = await removeBoundaryArtifacts(keyed);
   const inputBounds = await alphaBounds(cleaned, "isolated pose");
+  const maximumScale = options.preserveFraming
+    ? cellSize / normalizedInputSize
+    : 1;
   const scale = Math.min(
     safeBounds.width / inputBounds.width,
     safeBounds.height / inputBounds.height,
-    1,
+    maximumScale,
   );
   const width = Math.max(1, Math.round(inputBounds.width * scale));
   const height = Math.max(1, Math.round(inputBounds.height * scale));
@@ -220,6 +229,10 @@ async function run() {
         normalizedInputSize,
         outputSize: cellSize,
         inputBounds,
+        framingMode: options.preserveFraming
+          ? "preserve-canonical-canvas"
+          : "legacy-safe-fit",
+        maximumScale,
         uniformScale: Number(scale.toFixed(6)),
         preparedBounds: { left, top, width, height },
         footAnchor,
