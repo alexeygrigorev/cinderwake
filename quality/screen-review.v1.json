@@ -4,12 +4,13 @@
   "verdict": "REJECT",
   "reviewedAt": "2026-08-24",
   "reviewer": "independent visual-audit agent",
-  "reviewerTask": "/root/current_pixels_review",
-  "scope": "The exact 16-image public-route matrix: the twelve unchanged selection screens retained from the prior review plus four changed initial-gameplay screens reviewed at original resolution. Six additional changed mobile/raw-canvas regression PNGs were also reviewed at original resolution. Narrow approval to record deterministic baselines does not imply visual acceptance.",
+  "reviewerTask": "/root/current_head_visual_review",
+  "sourceCommit": "0f2246d94cfc25a7498687a754478531ae42a545",
+  "scope": "The exact current 16-image public-route matrix at original resolution, plus Embercross open/closed service states, the mobile fixture frames, combat/action snapshots, actor atlas overviews, and available temporal contact sheets. A follow-up exact-hash addendum reviewed the only later 35-pixel combat-impact change. Narrow approval to record deterministic baselines does not imply visual acceptance.",
   "contractSha256": "9943223e46752cfa420348d649126fc5d51ae6e706f219fc23cb9ede414219d2",
-  "snapshotSetSha256": "e34c081363e9ab86b8cd35dccd7a7e4becad130a151e9b742788eb05f4bc87a9",
+  "snapshotSetSha256": "d3b9d4c3858b5e53755cc30cb6bbe9e917490574da7cec313b8ba6aa085775e6",
   "measurements": {
-    "overallVisualRatingOutOf10": 6.7,
+    "overallVisualRatingOutOf10": 6.9,
     "publicGameplayProfilesReviewed": 4,
     "changedBaselineSnapshotsReviewed": 10,
     "changedBaselineSnapshotsNarrowlyApproved": 10
@@ -17,52 +18,52 @@
   "changedBaselineSnapshots": [
     {
       "file": "tests/e2e/mobile.spec.ts-snapshots/mobile-game-chromium-linux.png",
-      "sha256": "3ae481083ddd6f9c57646379d4c2c79d26b60646efe9f4805d6c8383e2f30ad5",
+      "sha256": "b8fbf933124f2f71a292b63e1f568bc3bd75421a9f82aa7685604360efaaa29e",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/e2e/mobile.spec.ts-snapshots/mobile-game-landscape-chromium-linux.png",
-      "sha256": "081bc37386f439ade5701ba2152a7358f11d27fd40af384f8221f22458b0bbe2",
+      "sha256": "183b0b778308f84dec80e2532b4dd45ac10bf59661edfb62e2fe1308fe223117",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/e2e/screen-contract.spec.ts-snapshots/desktop-game-chromium-linux.png",
-      "sha256": "49e2199cb9f484af086d5bcbbd6156d04711fa625058d31262f2021f96233976",
+      "sha256": "d23153f50b932d0a247a0f9f7c2f1f07afed64fb1eede2a5c6a8a31c4a228abc",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/e2e/screen-contract.spec.ts-snapshots/narrow-desktop-game-chromium-linux.png",
-      "sha256": "73222055d1d7ff1299f08eb0a9eebb6e01040efebdd46999bd88431076b0a8b5",
+      "sha256": "ed97ed772780fcf6633e459511ae7a829a7d42f0a444579c6c836ba27580f7d9",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/e2e/screen-contract.spec.ts-snapshots/phone-landscape-game-chromium-linux.png",
-      "sha256": "3dbd14d148b75e37023f9648e53f103502d4a8e7b8ebaee887ebfb941cd21bca",
+      "sha256": "1d0e4fcaf9d847395fa663310fe9cb0d971335d487cf71006c8ecb8b057b78a5",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/e2e/screen-contract.spec.ts-snapshots/phone-portrait-game-chromium-linux.png",
-      "sha256": "93b328274e2f43742827c313d0a44903e998e554b0c8c351180b32bc97051ff8",
+      "sha256": "e883e9aa542c0ecf8597406a952178c417dc7a842f7c7e381db09d2bd16eefc6",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/visual/animation.spec.ts-snapshots/animation-walk-tick-60-chromium-linux.png",
-      "sha256": "e43a3f1d28058063955e0ebbdf1fc32ce61e839361cdf28d10113124b3cf779b",
+      "sha256": "b87eee9499ecc9f93ae1c63696e58d16b41f8cca6b5ba830243594c83549a5a2",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/visual/animation.spec.ts-snapshots/combat-loot-impact-chromium-linux.png",
-      "sha256": "d2c27a64d3fd01b3ddbe68da2d6e5ff6708e9cd70b249e2d0d994f0a35214499",
+      "sha256": "32fbcc39c81807487481920a2289bfb5ad04fed01093629aec5ae8a77d72848e",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/visual/animation.spec.ts-snapshots/combat-loot-initial-chromium-linux.png",
-      "sha256": "1af2fc0123318b0cb8e726b203bb02520607d14a524be95618053bfba639c482",
+      "sha256": "84e144b4cdbfc5c36d1a360a76dd2beba159848554d27b27b2b3251d0b3ba3db",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     },
     {
       "file": "tests/visual/animation.spec.ts-snapshots/mid-action-injected-chromium-linux.png",
-      "sha256": "a716487ca0147ff8a3ff9b1a56a17c8856606bcc911bb05c9f080daf2e20e95d",
+      "sha256": "b58b75f68e3471258d36a76f9ad67f3da18aaeb91db1039dfb913c82315ddc36",
       "narrowVerdict": "APPROVE_REGRESSION_BASELINE"
     }
   ],
@@ -70,15 +71,18 @@
     "The detached black workshop wall bays are gone; retained wall caps and scenery bases read as deliberate solid architecture.",
     "Enemy health fill is contained inside a connected ornamental frame with no detached red or transparent spill.",
     "The irregular rock floor is visually coherent, and collision-relevant buildings, crates, lanterns, and masonry have legible grounded footprints.",
-    "Portrait and landscape touch controls remain contained, reachable, and clear of the central encounter."
+    "Portrait and landscape touch controls remain contained, reachable, and clear of the central encounter.",
+    "Three distinct wide wilderness silhouettes materially reduce the formerly empty side gutters without gross stretching or HUD overlap."
   ],
   "rejectedFindings": [
     "Ashfang still reads as a prone corpse or collapsed heap rather than a living moving threat.",
-    "Wide, landscape, and raw-canvas compositions devote too much of the frame to empty ground and under-stage the encounter.",
+    "Raw combat, animation, and later generated-room compositions still devote too much of the frame to low-information ground even though the public opening improved.",
     "Mobile microcopy is barely readable at physical play size.",
     "Enemy health bars are overly bright and blocky relative to the restrained environment palette.",
     "Several combat frames overlap the player and Ashfang ambiguously, and faint terrain-block seams remain visible in wide profiles.",
-    "Still-image approval cannot establish gait smoothness, support transfer, camera continuity, or the absence of frame-to-frame jumping; temporal evidence remains mandatory."
+    "The new major structures read as disconnected cutouts with pale fringes and do not yet make the broad blocked terrain edge visually self-explanatory.",
+    "The Embercross service sheet remains a flat CSS/DOM surface, contrary to the sprite-only presentation contract, and its prices/effects are not readable at phone scale.",
+    "Committed temporal evidence is stale relative to the reviewed commit, so gait smoothness, support transfer, camera continuity, and flicker remain unproved."
   ],
-  "promotionRule": "This 6.7/10 rejection applies only while both the contract and ordered public screenshot-set hashes match. Narrow approval records reviewed regression pixels but cannot promote visual quality. Any pixel or contract change invalidates the rejection and returns the gallery to candidate; no machine metric can override a matching rejection."
+  "promotionRule": "This 6.9/10 rejection applies only while both the contract and ordered public screenshot-set hashes match. Narrow approval records reviewed regression pixels but cannot promote visual quality. Any pixel or contract change invalidates the rejection and returns the gallery to candidate; no machine metric can override a matching rejection."
 }
