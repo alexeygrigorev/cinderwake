@@ -45,10 +45,33 @@ function openingCamera(state: ReturnType<typeof worldFromScenario>) {
   };
 }
 
+function destinationOverlapRatio(
+  first: { x: number; y: number; width: number; height: number },
+  second: { x: number; y: number; width: number; height: number },
+): number {
+  const width = Math.max(
+    0,
+    Math.min(first.x + first.width, second.x + second.width) -
+      Math.max(first.x, second.x),
+  );
+  const height = Math.max(
+    0,
+    Math.min(first.y + first.height, second.y + second.height) -
+      Math.max(first.y, second.y),
+  );
+  return (
+    (width * height) /
+    Math.min(first.width * first.height, second.width * second.height)
+  );
+}
+
 describe("generated opening encounter", () => {
   it("starts every sampled seed with three visible, reachable threats", () => {
     for (let index = 0; index < 80; index += 1) {
       const state = worldFromScenario(
+        createRunScenario(`opening-encounter-${index}`, "vanguard"),
+      );
+      const repeated = worldFromScenario(
         createRunScenario(`opening-encounter-${index}`, "vanguard"),
       );
       const collisions = sceneryCollisions(state.map);
@@ -67,6 +90,14 @@ describe("generated opening encounter", () => {
         "ashfang",
         "hexer",
       ]);
+      expect(
+        openingGroup.map(({ id, kind, position }) => ({ id, kind, position })),
+        `repeatable opening trio for seed ${index}`,
+      ).toEqual(
+        repeated.monsters
+          .slice(0, 3)
+          .map(({ id, kind, position }) => ({ id, kind, position })),
+      );
       expect(
         new Set(
           state.monsters.map(({ position }) => `${position.x}:${position.y}`),
@@ -94,9 +125,39 @@ describe("generated opening encounter", () => {
         expect(distance).toBeGreaterThanOrEqual(2);
         expect(distance).toBeLessThanOrEqual(3);
         expect(Math.abs(tile.x - state.map.spawn.x)).toBeLessThanOrEqual(1);
+        const route = findStateNavigationRoute(
+          state,
+          state.player.position,
+          monster.position,
+          state.player.radius,
+        );
+        expect(
+          route.length,
+          `${monster.id} route for seed ${index}`,
+        ).toBeGreaterThan(0);
+        expect(
+          route.at(-1),
+          `${monster.id} route destination for seed ${index}`,
+        ).toEqual(monster.position);
       }
 
       const manifest = buildRenderManifest(state, openingCamera(state));
+      const openingCalls = manifest.drawCalls.filter(
+        ({ entityId }) =>
+          entityId === "monster:00" ||
+          entityId === "monster:01" ||
+          entityId === "monster:02",
+      );
+      for (let first = 0; first < openingCalls.length; first += 1) {
+        for (let second = first + 1; second < openingCalls.length; second += 1)
+          expect(
+            destinationOverlapRatio(
+              openingCalls[first]!.destinationRect,
+              openingCalls[second]!.destinationRect,
+            ),
+            `${openingCalls[first]!.entityId} and ${openingCalls[second]!.entityId} visually stack for seed ${index}`,
+          ).toBeLessThanOrEqual(0.2);
+      }
       const visibleOpeningIds = new Set(
         manifest.drawCalls
           .filter(({ type, visible }) => type === "monster" && visible)
@@ -112,6 +173,31 @@ describe("generated opening encounter", () => {
         `only the authored opening trio intersects the camera for seed ${index}`,
       ).toEqual(openingGroup.map(({ id }) => id));
     }
+  });
+
+  it("rejects the former same-row stonekin and ashfang placement", () => {
+    const state = worldFromScenario(
+      createRunScenario("opening-overlap-negative-control", "ranger"),
+    );
+    const [stonekin, ashfang] = state.monsters;
+    const y = state.map.spawn.y + 1;
+    stonekin!.position = tileCenter({ x: state.map.spawn.x - 1, y });
+    stonekin!.previousPosition = { ...stonekin!.position };
+    ashfang!.position = tileCenter({ x: state.map.spawn.x + 1, y });
+    ashfang!.previousPosition = { ...ashfang!.position };
+
+    const calls = buildRenderManifest(state, openingCamera(state)).drawCalls;
+    const stonekinRect = calls.find(
+      ({ entityId }) => entityId === stonekin!.id,
+    )!.destinationRect;
+    const ashfangRect = calls.find(
+      ({ entityId }) => entityId === ashfang!.id,
+    )!.destinationRect;
+
+    expect(destinationOverlapRatio(stonekinRect, ashfangRect)).toBe(0.25);
+    expect(destinationOverlapRatio(stonekinRect, ashfangRect)).toBeGreaterThan(
+      0.2,
+    );
   });
 
   it("grounds generated rooms with deterministic passable sprite decals", () => {

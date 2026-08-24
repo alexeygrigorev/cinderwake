@@ -1,4 +1,5 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
+import { TILE_PIXELS } from "../game/constants";
 import {
   explicitDungeon,
   generateDungeon,
@@ -214,6 +215,99 @@ function createMonster(
   };
 }
 
+const OPENING_ACTOR_FOOTPRINTS: Record<
+  MonsterKind,
+  { width: number; height: number }
+> = {
+  ashfang: { width: 128, height: 108 },
+  hexer: { width: 102, height: 112 },
+  stonekin: { width: 128, height: 128 },
+};
+
+// Leave a little headroom below the browser contract's 20% ceiling so
+// integer destination rounding and a moving camera cannot turn a boundary
+// placement into a visually stacked pair.
+const OPENING_MAX_VISUAL_OVERLAP = 0.18;
+
+type OpeningTiles = [Vec2, Vec2, Vec2];
+
+interface OpeningPlacement {
+  tiles: OpeningTiles;
+  score: number;
+}
+
+function openingDestinationRect(kind: MonsterKind, tile: Vec2) {
+  const { width, height } = OPENING_ACTOR_FOOTPRINTS[kind];
+  const anchor = {
+    x: tile.x * TILE_PIXELS,
+    y: tile.y * TILE_PIXELS,
+  };
+  return {
+    x: Math.round(anchor.x - width / 2),
+    y: Math.round(anchor.y - (232 / 256) * height),
+    width,
+    height,
+  };
+}
+
+function openingVisualOverlapRatio(
+  firstKind: MonsterKind,
+  firstTile: Vec2,
+  secondKind: MonsterKind,
+  secondTile: Vec2,
+): number {
+  const first = openingDestinationRect(firstKind, firstTile);
+  const second = openingDestinationRect(secondKind, secondTile);
+  const width = Math.max(
+    0,
+    Math.min(first.x + first.width, second.x + second.width) -
+      Math.max(first.x, second.x),
+  );
+  const height = Math.max(
+    0,
+    Math.min(first.y + first.height, second.y + second.height) -
+      Math.max(first.y, second.y),
+  );
+  return (
+    (width * height) /
+    Math.min(first.width * first.height, second.width * second.height)
+  );
+}
+
+function openingTilesAreVisuallySeparated(
+  tiles: OpeningTiles,
+  kinds: MonsterKind[],
+): boolean {
+  for (let first = 0; first < tiles.length; first += 1) {
+    for (let second = first + 1; second < tiles.length; second += 1) {
+      if (
+        openingVisualOverlapRatio(
+          kinds[first]!,
+          tiles[first]!,
+          kinds[second]!,
+          tiles[second]!,
+        ) > OPENING_MAX_VISUAL_OVERLAP
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+function compareOpeningPlacements(
+  first: OpeningPlacement,
+  second: OpeningPlacement,
+): number {
+  if (first.score !== second.score) return first.score - second.score;
+  for (let index = 0; index < first.tiles.length; index += 1) {
+    const firstTile = first.tiles[index]!;
+    const secondTile = second.tiles[index]!;
+    if (firstTile.y !== secondTile.y) return firstTile.y - secondTile.y;
+    if (firstTile.x !== secondTile.x) return firstTile.x - secondTile.x;
+  }
+  return 0;
+}
+
 function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
   const nearCandidates: Vec2[] = [];
   const distantCandidates: Vec2[] = [];
@@ -270,22 +364,30 @@ function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
     { x: state.map.spawn.x + mirror, y: state.map.spawn.y + 2 },
     { x: state.map.spawn.x + mirror, y: state.map.spawn.y - 2 },
   ];
-  for (const slot of openingSlots) {
-    if (nearCandidates.length === 0) break;
-    const selectedIndex = nearCandidates.reduce((best, candidate, index) => {
-      const score = (candidate.x - slot.x) ** 2 + (candidate.y - slot.y) ** 2;
-      const incumbent = nearCandidates[best]!;
-      const incumbentScore =
-        (incumbent.x - slot.x) ** 2 + (incumbent.y - slot.y) ** 2;
-      return score < incumbentScore ||
-        (score === incumbentScore &&
-          (candidate.y < incumbent.y ||
-            (candidate.y === incumbent.y && candidate.x < incumbent.x)))
-        ? index
-        : best;
-    }, 0);
-    const tile = nearCandidates.splice(selectedIndex, 1)[0];
-    if (!tile) break;
+  const openingPlacements: OpeningPlacement[] = [];
+  for (let stonekin = 0; stonekin < nearCandidates.length; stonekin += 1) {
+    for (let ashfang = 0; ashfang < nearCandidates.length; ashfang += 1) {
+      if (stonekin === ashfang) continue;
+      for (let hexer = 0; hexer < nearCandidates.length; hexer += 1) {
+        if (stonekin === hexer || ashfang === hexer) continue;
+        const tiles: OpeningTiles = [
+          nearCandidates[stonekin]!,
+          nearCandidates[ashfang]!,
+          nearCandidates[hexer]!,
+        ];
+        if (!openingTilesAreVisuallySeparated(tiles, openingKinds)) continue;
+        const score = tiles.reduce((total, tile, index) => {
+          const slot = openingSlots[index]!;
+          return total + (tile.x - slot.x) ** 2 + (tile.y - slot.y) ** 2;
+        }, 0);
+        openingPlacements.push({ tiles, score });
+      }
+    }
+  }
+  const selectedOpening = openingPlacements.sort(compareOpeningPlacements)[0];
+  if (!selectedOpening)
+    throw new Error("Generated opening room has no visually separated trio");
+  for (const tile of selectedOpening.tiles) {
     specs.push({
       id: `monster:${specs.length.toString().padStart(2, "0")}`,
       kind: openingKinds[specs.length]!,
