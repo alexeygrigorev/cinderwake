@@ -1,0 +1,559 @@
+{
+  "schemaVersion": 1,
+  "id": "environment-kit-v1",
+  "status": "rejected-as-recorded",
+  "promotionApproved": false,
+  "sources": {
+    "record": "art/generation/environment-kit-v1.json",
+    "raw": {
+      "file": "art/generation/environment-kit/candidates/environment-kit-v1.png",
+      "sha256": "def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e"
+    },
+    "prepared": {
+      "file": "art/generation/environment-kit/prepared/environment-kit-v1.png",
+      "sha256": "d24bb007b9401bc083ad5e69241541a168dc934c516ae9044e196a3aeecdf95d"
+    },
+    "floorPreview": {
+      "file": "public/assets/sprites/environment-floor.png",
+      "sha256": "dc55eeeb0764be61d3c960f0b38c05b35d93286f920f891fae68715850e3a112"
+    }
+  },
+  "deterministicPreparation": {
+    "pass": true,
+    "reproductions": 2
+  },
+  "rawAssessment": {
+    "pass": false,
+    "checks": [
+      {
+        "id": "dimensions-3-to-2",
+        "pass": true,
+        "value": "1536x1024"
+      },
+      {
+        "id": "six-primary-components",
+        "pass": true,
+        "value": 6
+      },
+      {
+        "id": "literal-chroma-background",
+        "pass": false,
+        "value": 0.0000031789143880208335
+      },
+      {
+        "id": "deterministically-keyable-background",
+        "pass": true,
+        "value": 0.6776339213053385
+      },
+      {
+        "id": "separated-component-boxes",
+        "pass": true,
+        "value": 40
+      },
+      {
+        "id": "declared-12-percent-cell-padding",
+        "pass": false,
+        "value": 0
+      }
+    ],
+    "literalKeyRatio": 0.0000031789143880208335,
+    "keyableRatio": 0.6776339213053385,
+    "minimumPrimaryGap": 40,
+    "primaryComponents": [
+      {
+        "area": 138414,
+        "minX": 56,
+        "minY": 81,
+        "maxX": 575,
+        "maxY": 469,
+        "centroidX": 308.155547849206,
+        "centroidY": 282.5120074558932
+      },
+      {
+        "area": 124591,
+        "minX": 616,
+        "minY": 51,
+        "maxX": 1091,
+        "maxY": 476,
+        "centroidX": 861.763746980119,
+        "centroidY": 290.9026494690628
+      },
+      {
+        "area": 17524,
+        "minX": 1219,
+        "minY": 51,
+        "maxX": 1366,
+        "maxY": 453,
+        "centroidX": 1280.362417256334,
+        "centroidY": 279.7850376626341
+      },
+      {
+        "area": 28313,
+        "minX": 207,
+        "minY": 520,
+        "maxX": 392,
+        "maxY": 931,
+        "centroidX": 298.85250591601033,
+        "centroidY": 737.2118108289478
+      },
+      {
+        "area": 72921,
+        "minX": 496,
+        "minY": 571,
+        "maxX": 876,
+        "maxY": 915,
+        "centroidX": 687.4473197021434,
+        "centroidY": 776.4675333580176
+      },
+      {
+        "area": 115014,
+        "minX": 957,
+        "minY": 555,
+        "maxX": 1407,
+        "maxY": 941,
+        "centroidX": 1191.0123984906186,
+        "centroidY": 761.760490027301
+      }
+    ],
+    "cellCompliance": [
+      {
+        "index": 0,
+        "bounds": [
+          56,
+          81,
+          575,
+          469
+        ],
+        "margins": {
+          "left": 56,
+          "top": 81,
+          "right": -64,
+          "bottom": 42
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      },
+      {
+        "index": 1,
+        "bounds": [
+          616,
+          51,
+          1091,
+          476
+        ],
+        "margins": {
+          "left": 104,
+          "top": 51,
+          "right": -68,
+          "bottom": 35
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      },
+      {
+        "index": 2,
+        "bounds": [
+          1219,
+          51,
+          1366,
+          453
+        ],
+        "margins": {
+          "left": 195,
+          "top": 51,
+          "right": 169,
+          "bottom": 58
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      },
+      {
+        "index": 3,
+        "bounds": [
+          207,
+          520,
+          392,
+          931
+        ],
+        "margins": {
+          "left": 207,
+          "top": 8,
+          "right": 119,
+          "bottom": 92
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      },
+      {
+        "index": 4,
+        "bounds": [
+          496,
+          571,
+          876,
+          915
+        ],
+        "margins": {
+          "left": -16,
+          "top": 59,
+          "right": 147,
+          "bottom": 108
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      },
+      {
+        "index": 5,
+        "bounds": [
+          957,
+          555,
+          1407,
+          941
+        ],
+        "margins": {
+          "left": -67,
+          "top": 43,
+          "right": 128,
+          "bottom": 82
+        },
+        "requiredMargins": {
+          "x": 61,
+          "y": 61
+        },
+        "pass": false
+      }
+    ]
+  },
+  "preparedAssessment": {
+    "pass": false,
+    "violations": [
+      "cell-0-doorway-aperture"
+    ],
+    "opaqueRatio": 0.2842458089192708,
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-doorway",
+        "runtimeHeight": 145,
+        "collision": "two solid wall returns with a passable central aperture",
+        "bounds": {
+          "minX": 28,
+          "minY": 147,
+          "maxX": 480,
+          "maxY": 480,
+          "area": 102399
+        },
+        "margins": {
+          "left": 28,
+          "top": 147,
+          "right": 31,
+          "bottom": 31
+        },
+        "support": {
+          "band": 17,
+          "minX": 89,
+          "maxX": 279,
+          "pixels": 1112,
+          "width": 191,
+          "widthRatio": 0.4216335540838852
+        },
+        "runtime": {
+          "width": 196.66,
+          "height": 145,
+          "silhouetteArea": 19299,
+          "supportWidth": 82.92,
+          "suggestedCollisionHalfWidth": 36.48
+        },
+        "aperture": {
+          "medianTransparentWidth": 63,
+          "widthRatio": 0.1390728476821192
+        },
+        "safeToIntegrate": false,
+        "pass": false
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "runtimeHeight": 150,
+        "collision": "compact solid footprint beneath the workshop",
+        "bounds": {
+          "minX": 31,
+          "minY": 78,
+          "maxX": 480,
+          "maxY": 480,
+          "area": 111443
+        },
+        "margins": {
+          "left": 31,
+          "top": 78,
+          "right": 31,
+          "bottom": 31
+        },
+        "support": {
+          "band": 21,
+          "minX": 180,
+          "maxX": 340,
+          "pixels": 1647,
+          "width": 161,
+          "widthRatio": 0.35777777777777775
+        },
+        "runtime": {
+          "width": 167.49,
+          "height": 150,
+          "silhouetteArea": 15439,
+          "supportWidth": 59.93,
+          "suggestedCollisionHalfWidth": 26.37
+        },
+        "safeToIntegrate": false,
+        "pass": true
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base",
+        "bounds": {
+          "minX": 163,
+          "minY": 77,
+          "maxX": 348,
+          "maxY": 479,
+          "area": 26780
+        },
+        "margins": {
+          "left": 163,
+          "top": 77,
+          "right": 163,
+          "bottom": 32
+        },
+        "support": {
+          "band": 21,
+          "minX": 176,
+          "maxX": 300,
+          "pixels": 1093,
+          "width": 125,
+          "widthRatio": 0.6720430107526881
+        },
+        "runtime": {
+          "width": 33.23,
+          "height": 72,
+          "silhouetteArea": 855,
+          "supportWidth": 22.33,
+          "suggestedCollisionHalfWidth": 9.83
+        },
+        "safeToIntegrate": false,
+        "pass": true
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base",
+        "bounds": {
+          "minX": 163,
+          "minY": 68,
+          "maxX": 348,
+          "maxY": 479,
+          "area": 28335
+        },
+        "margins": {
+          "left": 163,
+          "top": 68,
+          "right": 163,
+          "bottom": 32
+        },
+        "support": {
+          "band": 21,
+          "minX": 172,
+          "maxX": 283,
+          "pixels": 1176,
+          "width": 112,
+          "widthRatio": 0.6021505376344086
+        },
+        "runtime": {
+          "width": 32.5,
+          "height": 72,
+          "silhouetteArea": 865,
+          "supportWidth": 19.57,
+          "suggestedCollisionHalfWidth": 8.61
+        },
+        "safeToIntegrate": false,
+        "pass": true
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "runtimeHeight": 78,
+        "collision": "wide shallow solid ellipse beneath the barricade",
+        "bounds": {
+          "minX": 66,
+          "minY": 135,
+          "maxX": 450,
+          "maxY": 479,
+          "area": 73243
+        },
+        "margins": {
+          "left": 66,
+          "top": 135,
+          "right": 61,
+          "bottom": 32
+        },
+        "support": {
+          "band": 18,
+          "minX": 182,
+          "maxX": 395,
+          "pixels": 1158,
+          "width": 214,
+          "widthRatio": 0.5558441558441558
+        },
+        "runtime": {
+          "width": 87.04,
+          "height": 78,
+          "silhouetteArea": 3744,
+          "supportWidth": 48.38,
+          "suggestedCollisionHalfWidth": 21.29
+        },
+        "safeToIntegrate": false,
+        "pass": true
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "runtimeHeight": 95,
+        "collision": "medium solid ellipse beneath the connected workbench",
+        "bounds": {
+          "minX": 32,
+          "minY": 108,
+          "maxX": 480,
+          "maxY": 480,
+          "area": 104880
+        },
+        "margins": {
+          "left": 32,
+          "top": 108,
+          "right": 31,
+          "bottom": 31
+        },
+        "support": {
+          "band": 19,
+          "minX": 197,
+          "maxX": 324,
+          "pixels": 879,
+          "width": 128,
+          "widthRatio": 0.28507795100222716
+        },
+        "runtime": {
+          "width": 114.36,
+          "height": 95,
+          "silhouetteArea": 6803,
+          "supportWidth": 32.6,
+          "suggestedCollisionHalfWidth": 14.34
+        },
+        "safeToIntegrate": false,
+        "pass": true
+      }
+    ]
+  },
+  "negativeControls": [
+    {
+      "id": "opaque-gray-matte",
+      "expectedViolation": "opaque-matte",
+      "detected": true,
+      "violations": [
+        "opaque-matte",
+        "cell-0-unsafe-border",
+        "cell-0-foot-anchor-drift",
+        "cell-0-collision-footprint",
+        "cell-0-doorway-aperture",
+        "cell-1-unsafe-border",
+        "cell-1-foot-anchor-drift",
+        "cell-1-collision-footprint",
+        "cell-2-unsafe-border",
+        "cell-2-foot-anchor-drift",
+        "cell-2-collision-footprint",
+        "cell-3-unsafe-border",
+        "cell-3-foot-anchor-drift",
+        "cell-3-collision-footprint",
+        "cell-4-unsafe-border",
+        "cell-4-foot-anchor-drift",
+        "cell-4-collision-footprint",
+        "cell-5-unsafe-border",
+        "cell-5-foot-anchor-drift",
+        "cell-5-collision-footprint"
+      ]
+    },
+    {
+      "id": "cell-border-bleed",
+      "expectedViolation": "cell-0-unsafe-border",
+      "detected": true,
+      "violations": [
+        "cell-0-unsafe-border",
+        "cell-0-doorway-aperture"
+      ]
+    },
+    {
+      "id": "cross-cell-bridge",
+      "expectedViolation": "cell-0-unsafe-border",
+      "detected": true,
+      "violations": [
+        "cell-0-unsafe-border",
+        "cell-0-doorway-aperture",
+        "cell-1-unsafe-border"
+      ]
+    },
+    {
+      "id": "floating-foot-anchor",
+      "expectedViolation": "cell-3-foot-anchor-drift",
+      "detected": true,
+      "violations": [
+        "cell-0-doorway-aperture",
+        "cell-3-foot-anchor-drift"
+      ]
+    },
+    {
+      "id": "needle-contact-footprint",
+      "expectedViolation": "cell-4-collision-footprint",
+      "detected": true,
+      "violations": [
+        "cell-0-doorway-aperture",
+        "cell-4-collision-footprint",
+        "cell-4-runtime-silhouette"
+      ]
+    }
+  ],
+  "visualReview": {
+    "evaluation": "rejected",
+    "productionApproved": false,
+    "strengths": [
+      "The six silhouettes form one unusually coherent masonry, timber, iron, and ember-light family.",
+      "The elevated camera, material rendering, forge-light direction, doorway aperture, and collision-readable bases are visually consistent.",
+      "Every requested component is present with no actor, UI, text, ground plane, or extra standalone item."
+    ],
+    "failures": [
+      "The backdrop is a generated near-magenta field rather than the required literal #ff00ff source key.",
+      "The wall, forge, barricade, and bench cross their declared equal-cell boundaries and do not retain the required 12 percent cell padding.",
+      "Both lanterns are authored at almost the same source-pixel height as the forge, contradicting the requested shared physical scale even though runtime metadata can shrink them.",
+      "The north wall reads as a standalone ruined gate rather than a safely repeatable wall module with clear continuation seams.",
+      "Prepared edges retain small red-purple spill flecks around rubble, making promotion unsafe without another deterministic cleanup contract."
+    ],
+    "decision": "Quarantine this one-shot candidate as positive coordinated-art evidence and negative ingress evidence. Do not copy it into production atlases or runtime manifests."
+  },
+  "integration": {
+    "safeCells": 0,
+    "totalCells": 6,
+    "note": "Five prepared cells pass the mechanical proxies and the doorway fails usable-aperture width; no cell is integration-safe while the shared raw and visual verdict remains rejected."
+  }
+}
