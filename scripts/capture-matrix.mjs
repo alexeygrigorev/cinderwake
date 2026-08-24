@@ -45,6 +45,28 @@ const entries = [
     mobile: true,
   },
   ...[
+    {
+      id: "ashfang-start-stop-east",
+      label: "Ashfang · idle, east walk loop, idle recovery",
+      scenario: "ashfang-start-stop-east",
+      track: "monster:start-stop-ashfang",
+    },
+    {
+      id: "arcanist-start-stop-east",
+      label: "Arcanist · idle, east walk loop, idle recovery",
+      scenario: "arcanist-start-stop-east",
+      track: "player",
+    },
+  ].map((entry) => ({
+    ...entry,
+    category: "clip transitions",
+    action: "idle",
+    profile: "start-stop",
+    frames: 37,
+    step: 5,
+    commandsFile: `tests/fixtures/sequences/${entry.id}.commands.json`,
+  })),
+  ...[
     ["vanguard-primary", "attack", 16],
     ["vanguard-ability", "ability", 20],
     ["ranger-primary", "attack", 16],
@@ -224,6 +246,7 @@ function captureArguments(entry) {
     "--viewport-height",
     String(entry.viewportHeight ?? 900),
     ...(entry.mobile ? ["--mobile", "true"] : []),
+    ...(entry.commandsFile ? ["--commands-file", entry.commandsFile] : []),
   ];
 }
 
@@ -232,6 +255,15 @@ function runCapture(entry) {
     stdio: "inherit",
   });
   return new Promise((resolve) => child.on("exit", resolve));
+}
+
+async function retainedHref(directory, fileName, href) {
+  try {
+    await fs.access(path.join(directory, fileName));
+    return href;
+  } catch {
+    return null;
+  }
 }
 
 const outputRoot = path.resolve("quality-results/sequences");
@@ -256,6 +288,16 @@ for (const entry of entries) {
   } catch {
     // The entry below remains a useful explicit failure in the catalog.
   }
+  const report = await retainedHref(
+    directory,
+    "report.html",
+    `${entry.id}/report.html`,
+  );
+  const contactSheet = await retainedHref(
+    directory,
+    "contact-sheet.png",
+    `${entry.id}/contact-sheet.png`,
+  );
   results.push({
     id: entry.id,
     label: entry.label,
@@ -266,9 +308,11 @@ for (const entry of entries) {
     pass: exitCode === 0 && analysis?.pass === true,
     checks: analysis?.checks ?? {},
     measurements: analysis?.measurements ?? {},
+    clipTransitionContract: analysis?.clipTransitionContract ?? null,
+    negativeControls: analysis?.negativeControls ?? [],
     sourceCommit: metadata?.sourceCommit ?? null,
-    report: `${entry.id}/report.html`,
-    contactSheet: `${entry.id}/contact-sheet.png`,
+    report,
+    contactSheet,
     metadata: `${entry.id}/metadata.json`,
     analysis: `${entry.id}/animation-analysis.json`,
   });

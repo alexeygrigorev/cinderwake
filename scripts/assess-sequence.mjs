@@ -5,8 +5,18 @@ import sharp from "sharp";
 
 const RECOVERY_SEAM_PIXEL_RMSE = 0.001;
 const ATTACHED_EFFECT_CORE_HALF_WIDTH = 24;
+const START_STOP_FOOT_ANCHOR_RANGE = 0.25;
+const START_STOP_FOOT_BOTTOM_RANGE = 1;
+const START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE = 8;
 
 const [timelineFile, outputFile] = process.argv.slice(2);
+if (timelineFile === "--self-test-start-stop-height-pop") {
+  const control = startStopHeightPopNegativeControl(
+    START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
+  );
+  console.log(JSON.stringify(control));
+  process.exit(control.detected ? 0 : 1);
+}
 if (!timelineFile)
   throw new Error(
     "Usage: node scripts/assess-sequence.mjs <render-manifest-timeline.json> [output.json]",
@@ -27,6 +37,7 @@ const profiles = new Set([
   "one-shot-floating",
   "death",
   "anchored-motion",
+  "start-stop",
   "projectile",
   "camera-smooth",
 ]);
@@ -57,6 +68,124 @@ function stateEntity(snapshot, entityId) {
 
 function range(values) {
   return values.length > 1 ? Math.max(...values) - Math.min(...values) : 0;
+}
+
+function median(values) {
+  if (values.length === 0) return 0;
+  const ordered = [...values].sort((first, second) => first - second);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 === 0
+    ? (ordered[middle - 1] + ordered[middle]) / 2
+    : ordered[middle];
+}
+
+function visibleHeightComparison(idleHeights, walkHeights, maximumDifference) {
+  const idleMedian = median(idleHeights);
+  const walkMedian = median(walkHeights);
+  const difference = Math.abs(idleMedian - walkMedian);
+  return {
+    idleMedian,
+    walkMedian,
+    difference,
+    maximumDifference,
+    pass:
+      idleHeights.length > 0 &&
+      walkHeights.length > 0 &&
+      difference <= maximumDifference,
+  };
+}
+
+function startStopHeightPopNegativeControl(maximumDifference) {
+  const baselineIdle = [48, 49, 48, 49, 48, 49];
+  const baselineWalk = [...baselineIdle];
+  const mutatedWalk = baselineWalk.map(
+    (height) => height + maximumDifference + 1,
+  );
+  const baseline = visibleHeightComparison(
+    baselineIdle,
+    baselineWalk,
+    maximumDifference,
+  );
+  const mutation = visibleHeightComparison(
+    baselineIdle,
+    mutatedWalk,
+    maximumDifference,
+  );
+  return {
+    id: "start-stop-walk-height-pop",
+    expectedCheck: "startStopIdleWalkMedianVisibleHeight",
+    mutation: `raise every walk mask by ${maximumDifference + 1} logical pixels`,
+    baseline,
+    mutated: mutation,
+    detected: baseline.pass && !mutation.pass,
+  };
+}
+
+function validateClipTransitionContract(contract) {
+  if (
+    !contract ||
+    contract.schemaVersion !== 1 ||
+    contract.facingBucket !== "east" ||
+    !Array.isArray(contract.phases) ||
+    contract.phases.length !== 3 ||
+    contract.thresholds?.maximumFootAnchorRange !==
+      START_STOP_FOOT_ANCHOR_RANGE ||
+    contract.thresholds?.maximumFootBottomRange !==
+      START_STOP_FOOT_BOTTOM_RANGE ||
+    contract.thresholds?.maximumIdleWalkMedianVisibleHeightDifference !==
+      START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE
+  )
+    throw new Error("Start/stop clip-transition contract is invalid");
+  const expectedClips = ["idle", "walk", "idle"];
+  for (const [index, phase] of contract.phases.entries()) {
+    if (
+      typeof phase?.id !== "string" ||
+      phase.clip !== expectedClips[index] ||
+      !Number.isInteger(phase.clipStartedAtTick) ||
+      !Number.isInteger(phase.firstObservedTick) ||
+      !Number.isInteger(phase.lastObservedTick) ||
+      phase.lastObservedTick < phase.firstObservedTick ||
+      !Array.isArray(phase.requiredFrameIndices) ||
+      phase.requiredFrameIndices.some(
+        (frameIndex) => !Number.isInteger(frameIndex) || frameIndex < 0,
+      )
+    )
+      throw new Error(`Start/stop phase ${index} is invalid`);
+  }
+  return contract;
+}
+
+function observedClipPhases(points) {
+  const phases = [];
+  for (const point of points) {
+    let phase = phases.at(-1);
+    if (!phase || phase.clip !== point.actor.clip) {
+      phase = {
+        clip: point.actor.clip,
+        clipStartedAtTick: point.actor.clipStartedAtTick,
+        firstObservedTick: point.tick,
+        lastObservedTick: point.tick,
+        frameIndices: [],
+      };
+      phases.push(phase);
+    }
+    phase.lastObservedTick = point.tick;
+    if (!phase.frameIndices.includes(point.actor.frameIndex))
+      phase.frameIndices.push(point.actor.frameIndex);
+  }
+  return phases;
+}
+
+function phaseSatisfiesContract(observed, expected) {
+  return (
+    observed?.clip === expected.clip &&
+    observed.clipStartedAtTick === expected.clipStartedAtTick &&
+    observed.firstObservedTick === expected.firstObservedTick &&
+    observed.lastObservedTick === expected.lastObservedTick &&
+    expected.requiredFrameIndices.every((frameIndex) =>
+      observed.frameIndices.includes(frameIndex),
+    )
+  );
 }
 
 function maximum(values) {
@@ -224,6 +353,26 @@ if (points.length < 2)
   throw new Error(
     "A sequence needs at least two present tracked-entity frames",
   );
+
+let expectedClipTransitionContract = null;
+if (profile === "start-stop") {
+  let commands;
+  try {
+    commands = JSON.parse(
+      await fs.readFile(
+        path.join(path.dirname(timelineFile), "commands.json"),
+        "utf8",
+      ),
+    );
+  } catch (error) {
+    throw new Error("Start/stop sequence requires commands.json", {
+      cause: error,
+    });
+  }
+  expectedClipTransitionContract = validateClipTransitionContract(
+    commands.clipTransitionContract,
+  );
+}
 
 let stateHashMismatches = 0;
 let manifestContractErrors = 0;
@@ -411,10 +560,18 @@ for (const point of points) {
 
 const anchorsX = points.map(({ actor }) => actor.footAnchor.x);
 const anchorsY = points.map(({ actor }) => actor.footAnchor.y);
+const maskAnchorsX = points.map(({ mask }) => mask.anchor.x);
+const maskAnchorsY = points.map(({ mask }) => mask.anchor.y);
 const maskBottomOffsets = points.map(({ mask }) => mask.bottomOffset);
 const maskWidths = points.map(({ mask }) => mask.inkBounds.width);
 const maskHeights = points.map(({ mask }) => mask.inkBounds.height);
 const maskAreas = points.map(({ mask }) => mask.alphaPixels);
+const idleVisibleHeights = points
+  .filter(({ actor }) => actor.clip === "idle")
+  .map(({ mask }) => mask.inkBounds.height);
+const walkVisibleHeights = points
+  .filter(({ actor }) => actor.clip === "walk")
+  .map(({ mask }) => mask.inkBounds.height);
 const frameErrors = points.map(({ actor, presentationTick }) =>
   Math.abs(actor.frameIndex - expectedFrame(actor, presentationTick)),
 );
@@ -613,12 +770,37 @@ const requiresAnimation = [
   "one-shot-floating",
   "death",
   "anchored-motion",
+  "start-stop",
 ].includes(profile);
 const oneShotProfile = ["one-shot", "one-shot-floating"].includes(profile);
 const samplesInsideSimulationTick = points.some(
   (point, index) =>
     index > 0 &&
     point.presentationTick - points[index - 1].presentationTick < 1,
+);
+
+const startStopObservedPhases =
+  profile === "start-stop" ? observedClipPhases(points) : [];
+const startStopPhaseContractSatisfied =
+  profile !== "start-stop" ||
+  (startStopObservedPhases.length ===
+    expectedClipTransitionContract.phases.length &&
+    expectedClipTransitionContract.phases.every((phase, index) =>
+      phaseSatisfiesContract(startStopObservedPhases[index], phase),
+    ));
+const startStopFacingSatisfied =
+  profile !== "start-stop" ||
+  points.every(
+    ({ actor }) =>
+      actor.facingBucket === expectedClipTransitionContract.facingBucket,
+  );
+const startStopHeightComparison = visibleHeightComparison(
+  idleVisibleHeights,
+  walkVisibleHeights,
+  START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
+);
+const startStopNegativeControl = startStopHeightPopNegativeControl(
+  START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
 );
 
 const thresholds = {
@@ -649,6 +831,10 @@ const thresholds = {
   cameraAcceleration: 40,
   cameraFinalError: 2,
   oneShotVisualPoses: 5,
+  startStopFootAnchorRange: START_STOP_FOOT_ANCHOR_RANGE,
+  startStopFootBottomRange: START_STOP_FOOT_BOTTOM_RANGE,
+  startStopIdleWalkMedianVisibleHeightDifference:
+    START_STOP_IDLE_WALK_MEDIAN_HEIGHT_DIFFERENCE,
 };
 const measurements = {
   profile,
@@ -662,6 +848,8 @@ const measurements = {
   uniquePixelMasks: new Set(points.map(({ mask }) => mask.pixelHash)).size,
   footAnchorRangeX: range(anchorsX),
   footAnchorRangeY: range(anchorsY),
+  isolatedMaskFootAnchorRangeX: range(maskAnchorsX),
+  isolatedMaskFootAnchorRangeY: range(maskAnchorsY),
   velocityErrorPeak: maximum(velocityErrors),
   speedRange: range(worldSpeeds),
   maximumFrameAdvance: maximum(frameAdvances),
@@ -675,6 +863,9 @@ const measurements = {
   inkWidthRange: range(maskWidths),
   inkHeightRange: range(maskHeights),
   inkAreaRange: range(maskAreas),
+  idleMedianVisibleHeight: startStopHeightComparison.idleMedian,
+  walkMedianVisibleHeight: startStopHeightComparison.walkMedian,
+  idleWalkMedianVisibleHeightDifference: startStopHeightComparison.difference,
   inkCentroidStepPeak: maximum(centroidSteps),
   inkCentroidAccelerationPeak: maximum(centroidAccelerations),
   coreCentroidStepPeak: maximum(coreCentroidSteps),
@@ -726,6 +917,21 @@ const checks = {
   loopLifecycle:
     profile !== "loop" ||
     (loopFramesCovered.size === loopFrameCount && loopWraps >= 1),
+  startStopClipTransitionContract: startStopPhaseContractSatisfied,
+  startStopEastFacing: startStopFacingSatisfied,
+  startStopFootAnchorStable:
+    profile !== "start-stop" ||
+    (measurements.isolatedMaskFootAnchorRangeX <=
+      thresholds.startStopFootAnchorRange &&
+      measurements.isolatedMaskFootAnchorRangeY <=
+        thresholds.startStopFootAnchorRange),
+  startStopFootBottomStable:
+    profile !== "start-stop" ||
+    measurements.inkBottomRange <= thresholds.startStopFootBottomRange,
+  startStopIdleWalkMedianVisibleHeight:
+    profile !== "start-stop" || startStopHeightComparison.pass,
+  startStopHeightPopNegativeControl:
+    profile !== "start-stop" || startStopNegativeControl.detected,
   screenAnchorStable:
     !requiresAnchor ||
     (measurements.footAnchorRangeX <= thresholds.footAnchorRange &&
@@ -776,6 +982,21 @@ const result = {
   schemaVersion: 2,
   thresholds,
   measurements,
+  clipTransitionContract:
+    profile === "start-stop"
+      ? {
+          schemaVersion: 1,
+          expected: expectedClipTransitionContract,
+          observed: {
+            facingBuckets: [
+              ...new Set(points.map(({ actor }) => actor.facingBucket)),
+            ],
+            phases: startStopObservedPhases,
+          },
+          pass: startStopPhaseContractSatisfied && startStopFacingSatisfied,
+        }
+      : null,
+  negativeControls: profile === "start-stop" ? [startStopNegativeControl] : [],
   checks,
   pass: Object.values(checks).every(Boolean),
 };

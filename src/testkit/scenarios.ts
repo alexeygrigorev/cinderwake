@@ -1341,6 +1341,44 @@ function temporalEnemyAttack(kind: MonsterKind): ScenarioV1 {
   };
 }
 
+function openingStartStopScenario(subject: "ashfang" | "arcanist"): ScenarioV1 {
+  const scenarioId = `${subject}-start-stop-east`;
+  return {
+    schemaVersion: 1,
+    id: scenarioId,
+    // This is the production opening seed. Keeping the fixture on the
+    // generated map (instead of the old empty arena) means browser evidence
+    // exercises the floor, scenery, camera, and collision path players see.
+    seed: "cinder-041",
+    classId: "arcanist",
+    map: { mode: "generated" },
+    player: {
+      tile: [22, 16],
+      facing: [1024, 0],
+    },
+    monsters:
+      subject === "ashfang"
+        ? [
+            {
+              id: "monster:start-stop-ashfang",
+              kind: "ashfang",
+              tile: [22, 16],
+              facing: [1024, 0],
+              // The player first opens a gap, then stops. Delaying combat lets
+              // ordinary pursuit produce a complete east-facing walk loop and
+              // a natural idle recovery without a test-only actor mutation.
+              attackReadyTick: 10_000,
+            },
+          ]
+        : [],
+    settings: {
+      ai: subject === "ashfang",
+      autoPickup: false,
+      cameraFollow: true,
+    },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1360,6 +1398,8 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     monsters: [],
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
+  "ashfang-start-stop-east": openingStartStopScenario("ashfang"),
+  "arcanist-start-stop-east": openingStartStopScenario("arcanist"),
   "combat-loot": {
     schemaVersion: 1,
     id: "combat-loot",
