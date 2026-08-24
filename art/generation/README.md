@@ -352,6 +352,19 @@ The next natural master may use a new silhouette, but it must still satisfy the
 quantified camera, runtime size, grounding, gap, paw-order, diagonal, detail,
 and exact-hash review contracts before motion generation.
 
+Identity master v11 is the first fresh natural silhouette after retiring that
+lineage. The generator receives only the accepted Stonekin source for cast
+rendering language; the production Ashfang sheet, guide, blockout, and v4–v10
+pixels are excluded because v6/v7 proved they force the old prone side view.
+V11 materially repairs animal anatomy, elevated camera, Ashfang identity, and
+broad painterly materials, but it remains an exact rejection: normalized ink
+occupies 868 × 712 pixels, runtime ink is 109 × 90, only three complete limb
+chains/paws are visible, the raw literal-magenta ratio is zero, and surface
+strong/readability scores are `0.253306` / `0.349696`. Independent review
+allows one v12 correction to use v11 only for identity, natural anatomy
+quality, camera intent, palette, and material treatment. Its silhouette,
+framing, support, paw layout, scale, and phase pixels have no authority.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.
