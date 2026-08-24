@@ -4,6 +4,7 @@ import { generateDungeon, tileCenter } from "../../src/game/dungeon";
 import {
   buildSceneryLayout,
   overlapsScenery,
+  sceneryCollisionContractViolations,
 } from "../../src/game/sceneryLayout";
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
@@ -11,6 +12,7 @@ import { buildRenderManifest } from "../../src/render/manifest";
 import { canonicalState } from "../../src/testkit/canonical";
 import {
   BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 import { stateFromSnapshot } from "../../src/testkit/stateSnapshots";
@@ -90,7 +92,7 @@ describe("deterministic scenery collision", () => {
     );
   });
 
-  it("blocks monsters at solid props while leaving rubble explicitly passable", () => {
+  it("blocks monsters at raised props and keeps every raised object solid", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
     const prop = buildSceneryLayout(state.map).find(
       ({ kind }) => kind === "prop",
@@ -167,15 +169,39 @@ describe("deterministic scenery collision", () => {
       );
     }
     expect(rubble).toBeDefined();
-    expect(rubble?.collisionMode).toBe("passable");
-    expect(rubble?.collision).toBeNull();
+    expect(rubble?.collisionMode).toBe("solid");
+    expect(rubble?.collision).not.toBeNull();
     expect(
-      buildSceneryLayout(state.map)
-        .filter(({ kind, name }) => kind !== "decal" && name !== "rubble")
-        .every(
-          ({ collisionMode, collision }) =>
-            collisionMode === "solid" && collision !== null,
-        ),
-    ).toBe(true);
+      sceneryCollisionContractViolations(buildSceneryLayout(state.map)),
+    ).toEqual([]);
+  });
+
+  it("rejects a raised-object pass-through mutation while preserving flat decals", () => {
+    const state = worldFromScenario(
+      createRunScenario("collision-contract", "vanguard"),
+    );
+    const layout = buildSceneryLayout(state.map);
+    const raisedIndex = layout.findIndex(({ kind }) => kind !== "decal");
+    const broken = structuredClone(layout);
+    broken[raisedIndex] = {
+      ...broken[raisedIndex]!,
+      collisionMode: "passable",
+      collision: null,
+    };
+
+    expect(sceneryCollisionContractViolations(layout)).toEqual([]);
+    expect(sceneryCollisionContractViolations(broken)).toEqual([
+      `${broken[raisedIndex]!.id}:raised-object-must-be-solid`,
+    ]);
+
+    const raisedDecal = structuredClone(layout);
+    const decalIndex = raisedDecal.findIndex(({ kind }) => kind === "decal");
+    raisedDecal[decalIndex] = {
+      ...raisedDecal[decalIndex]!,
+      name: "chain-coil",
+    };
+    expect(sceneryCollisionContractViolations(raisedDecal)).toEqual([
+      `${raisedDecal[decalIndex]!.id}:raised-decal-must-be-solid`,
+    ]);
   });
 });

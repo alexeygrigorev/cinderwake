@@ -22,6 +22,7 @@ const defaultScreenRoot = path.join(
 
 const VIEW_WIDTH = 960;
 const VIEW_HEIGHT = 720;
+const SCREEN_VIEW_HEIGHT = 540;
 const FLOOR_ATLAS_GRID = 16;
 const FLOOR_SOURCE_CELL = 64;
 const DECAL_ATLAS_GRID = 4;
@@ -38,8 +39,8 @@ const THRESHOLDS = Object.freeze({
   floorMaximumEdgeBandToCoreRatio: 1.25,
   floorMaximumBoundaryToInteriorRatio: 1.35,
   floorMaximumRepeatedTileFraction: 0.25,
-  screenMaximumCoarseOrthogonalEdgeShare: 0.385,
-  screenMaximumMeanCoarseOrthogonalEdgeShare: 0.365,
+  screenMaximumPeriodicSeamSalience: 2.4,
+  screenMaximumMeanPeriodicSeamSalience: 1.9,
 });
 
 const GAME_SCREEN_NAMES = [
@@ -421,49 +422,119 @@ function squareSeamMutation(composition, tilePixels) {
   return mutated;
 }
 
-async function screenGridEvidence(pixels, info) {
-  const blurred = await sharp(pixels, { raw: info })
-    .grayscale()
-    .blur(4)
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const gradients = [];
-  for (let y = 4; y < blurred.info.height - 4; y += 2) {
-    for (let x = 4; x < blurred.info.width - 4; x += 2) {
-      const horizontal =
-        blurred.data[y * blurred.info.width + x + 2] -
-        blurred.data[y * blurred.info.width + x - 2];
-      const vertical =
-        blurred.data[(y + 2) * blurred.info.width + x] -
-        blurred.data[(y - 2) * blurred.info.width + x];
-      gradients.push({
-        horizontal,
-        vertical,
-        magnitude: Math.hypot(horizontal, vertical),
-      });
+function periodicAxisEvidence(lineEnergy, period) {
+  const baseline = mean(lineEnergy);
+  const bandRadius = Math.max(1, Math.round(period * 0.025));
+  let strongestMean = 0;
+  let strongestPhase = 0;
+  let strongestSampleCount = 0;
+  for (let phase = 0; phase < period; phase += 1) {
+    const samples = [];
+    for (
+      let position = phase;
+      position < lineEnergy.length;
+      position += period
+    ) {
+      const center = Math.round(position);
+      let local = 0;
+      for (let offset = -bandRadius; offset <= bandRadius; offset += 1) {
+        const value = lineEnergy[center + offset];
+        if (value !== undefined) local = Math.max(local, value);
+      }
+      samples.push(local);
+    }
+    const candidate = samples.length === 0 ? 0 : mean(samples);
+    if (candidate > strongestMean) {
+      strongestMean = candidate;
+      strongestPhase = phase;
+      strongestSampleCount = samples.length;
     }
   }
-  const strongThreshold = percentile(
-    gradients.map(({ magnitude }) => magnitude),
-    0.75,
-  );
-  let coarseOrthogonalEnergy = 0;
-  let strongEnergy = 0;
-  for (const gradient of gradients) {
-    if (gradient.magnitude < strongThreshold || gradient.magnitude <= 0.5)
-      continue;
-    const angle =
-      (Math.atan2(Math.abs(gradient.vertical), Math.abs(gradient.horizontal)) *
-        180) /
-      Math.PI;
-    strongEnergy += gradient.magnitude;
-    if (angle <= 15 || angle >= 75)
-      coarseOrthogonalEnergy += gradient.magnitude;
-  }
   return {
-    coarseOrthogonalEdgeShare: rounded(coarseOrthogonalEnergy / strongEnergy),
-    strongGradientThreshold: rounded(strongThreshold),
-    sampleCount: gradients.length,
+    baselineMean: rounded(baseline),
+    strongestPeriodicMean: rounded(strongestMean),
+    periodicToBaselineRatio: rounded(
+      baseline > 0.001 ? strongestMean / baseline : 0,
+    ),
+    strongestPhase: rounded(strongestPhase),
+    sampleCount: strongestSampleCount,
+    bandRadius,
+  };
+}
+
+async function screenGridEvidence(pixels, info) {
+  // The browser preserves the logical 960x540 canvas inside a centered 16:9
+  // stage. Measure complete rows/columns inside that stage at the scaled
+  // runtime tile period. Averaging each full line makes intentional walls and
+  // collision architecture sparse evidence, while a repeated floor seam that
+  // crosses the playfield remains strong in both axes.
+  const scaleY = info.height / SCREEN_VIEW_HEIGHT;
+  const canvasWidth = Math.max(info.width, VIEW_WIDTH * scaleY);
+  const scaleX = canvasWidth / VIEW_WIDTH;
+  const canvasRect = {
+    x: Math.round((info.width - canvasWidth) / 2),
+    y: 0,
+    width: Math.round(canvasWidth),
+    height: info.height,
+  };
+  const visibleBounds = {
+    x: Math.max(0, canvasRect.x),
+    y: Math.max(0, canvasRect.y),
+    right: Math.min(info.width, canvasRect.x + canvasRect.width),
+    bottom: Math.min(info.height, canvasRect.y + canvasRect.height),
+  };
+  const runtimeTilePeriod = { x: 48 * scaleX, y: 48 * scaleY };
+  const blurred = await sharp(pixels, { raw: info })
+    .grayscale()
+    .blur(1)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const verticalLineEnergy = [];
+  for (let x = visibleBounds.x + 1; x < visibleBounds.right; x += 1) {
+    let energy = 0;
+    for (let y = visibleBounds.y; y < visibleBounds.bottom; y += 1) {
+      energy += Math.abs(
+        blurred.data[y * blurred.info.width + x] -
+          blurred.data[y * blurred.info.width + x - 1],
+      );
+    }
+    verticalLineEnergy.push(energy / (visibleBounds.bottom - visibleBounds.y));
+  }
+  const horizontalLineEnergy = [];
+  for (let y = visibleBounds.y + 1; y < visibleBounds.bottom; y += 1) {
+    let energy = 0;
+    for (let x = visibleBounds.x; x < visibleBounds.right; x += 1) {
+      energy += Math.abs(
+        blurred.data[y * blurred.info.width + x] -
+          blurred.data[(y - 1) * blurred.info.width + x],
+      );
+    }
+    horizontalLineEnergy.push(energy / (visibleBounds.right - visibleBounds.x));
+  }
+  const vertical = periodicAxisEvidence(
+    verticalLineEnergy,
+    runtimeTilePeriod.x,
+  );
+  const horizontal = periodicAxisEvidence(
+    horizontalLineEnergy,
+    runtimeTilePeriod.y,
+  );
+  return {
+    runtimeTilePeriod: {
+      x: rounded(runtimeTilePeriod.x),
+      y: rounded(runtimeTilePeriod.y),
+    },
+    canvasRect,
+    visibleBounds,
+    vertical,
+    horizontal,
+    // A square floor-grid defect must repeat across full lines in both axes.
+    // Using the weaker axis prevents a single authored wall or corridor edge
+    // from masquerading as a two-dimensional texture seam.
+    periodicSeamSalience: Math.min(
+      vertical.periodicToBaselineRatio,
+      horizontal.periodicToBaselineRatio,
+    ),
   };
 }
 
@@ -486,26 +557,24 @@ async function assessGameScreens(screenRoot) {
       ...(await screenGridEvidence(decoded.data, decoded.info)),
     });
   }
-  const edgeShares = profiles.map(
-    ({ coarseOrthogonalEdgeShare }) => coarseOrthogonalEdgeShare,
+  const seamSaliences = profiles.map(
+    ({ periodicSeamSalience }) => periodicSeamSalience,
   );
-  const meanCoarseOrthogonalEdgeShare = rounded(mean(edgeShares));
-  const maximumCoarseOrthogonalEdgeShare = Math.max(...edgeShares);
+  const meanPeriodicSeamSalience = rounded(mean(seamSaliences));
+  const maximumPeriodicSeamSalience = Math.max(...seamSaliences);
   const violations = [];
   if (
-    maximumCoarseOrthogonalEdgeShare >
-    THRESHOLDS.screenMaximumCoarseOrthogonalEdgeShare
+    maximumPeriodicSeamSalience > THRESHOLDS.screenMaximumPeriodicSeamSalience
   )
-    violations.push("screen-square-grid-salience");
+    violations.push("screen-square-grid-periodicity");
   if (
-    meanCoarseOrthogonalEdgeShare >
-    THRESHOLDS.screenMaximumMeanCoarseOrthogonalEdgeShare
+    meanPeriodicSeamSalience > THRESHOLDS.screenMaximumMeanPeriodicSeamSalience
   )
-    violations.push("screen-orthogonal-edge-mean");
+    violations.push("screen-square-grid-periodicity-mean");
   return {
     pass: violations.length === 0,
-    meanCoarseOrthogonalEdgeShare,
-    maximumCoarseOrthogonalEdgeShare,
+    meanPeriodicSeamSalience,
+    maximumPeriodicSeamSalience,
     profiles,
     violations,
   };
@@ -513,12 +582,22 @@ async function assessGameScreens(screenRoot) {
 
 function squareGridScreenMutation(pixels, info) {
   const mutated = Buffer.from(pixels);
-  const scale = Math.max(info.width / VIEW_WIDTH, info.height / VIEW_HEIGHT);
-  const period = 48 * scale;
-  const thickness = Math.max(5, Math.round(period * 0.07));
+  const scaleY = info.height / SCREEN_VIEW_HEIGHT;
+  const canvasWidth = Math.max(info.width, VIEW_WIDTH * scaleY);
+  const scaleX = canvasWidth / VIEW_WIDTH;
+  const periodX = 48 * scaleX;
+  const periodY = 48 * scaleY;
+  const canvasX = Math.round((info.width - canvasWidth) / 2);
+  const thicknessX = Math.max(5, Math.round(periodX * 0.07));
+  const thicknessY = Math.max(5, Math.round(periodY * 0.07));
   for (let y = 0; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
-      if (x % period < period - thickness && y % period < period - thickness)
+      const localX = x - canvasX;
+      const localY = y;
+      if (
+        localX % periodX < periodX - thicknessX &&
+        localY % periodY < periodY - thicknessY
+      )
         continue;
       const offset = (y * info.width + x) * 4;
       for (let channel = 0; channel < 3; channel += 1)
@@ -651,7 +730,7 @@ function renderHtml(report) {
   const screens = report.production.screens.profiles
     .map(
       (screen) =>
-        `<tr><td>${escapeHtml(screen.fileName)}</td><td>${screen.dimensions.width}×${screen.dimensions.height}</td><td>${screen.coarseOrthogonalEdgeShare}</td><td><code>${screen.sha256.slice(0, 16)}</code></td></tr>`,
+        `<tr><td>${escapeHtml(screen.fileName)}</td><td>${screen.dimensions.width}×${screen.dimensions.height}</td><td>${screen.runtimeTilePeriod.x}×${screen.runtimeTilePeriod.y}</td><td>${screen.periodicSeamSalience}</td><td><code>${screen.sha256.slice(0, 16)}</code></td></tr>`,
     )
     .join("");
   return `<!doctype html>
@@ -682,7 +761,7 @@ function renderHtml(report) {
   <p class="note">${escapeHtml(report.scopeNote)}</p>
   <h2>Committed production pixels</h2>
   <div class="gallery">
-    <figure><a href="screen-game-matrix.png"><img src="screen-game-matrix.png" alt="Four actual screen-contract gameplay PNGs"></a><figcaption>The four committed screen-contract gameplay PNGs used by the coarse square-grid detector.</figcaption></figure>
+    <figure><a href="screen-game-matrix.png"><img src="screen-game-matrix.png" alt="Four actual screen-contract gameplay PNGs"></a><figcaption>The four committed screen-contract gameplay PNGs used by the runtime-period seam detector.</figcaption></figure>
     <figure><a href="floor-composition.png"><img src="floor-composition.png" alt="Runtime-scale floor composition"></a><figcaption>960×720 floor composition using the renderer's 16×16 atlas order and runtime tile size.</figcaption></figure>
     <figure><a href="decal-composition.png"><img src="decal-composition.png" alt="Decals composited over the real floor"></a><figcaption>Every decal composited over committed floor pixels at its runtime size.</figcaption></figure>
     <figure><a href="decal-alpha-evidence.png"><img src="decal-alpha-evidence.png" alt="Decal alpha evidence"></a><figcaption>Exact alpha field used for matte and cell-boundary checks.</figcaption></figure>
@@ -697,8 +776,8 @@ function renderHtml(report) {
     <figure><a href="mutations/screen-square-grid.png"><img src="mutations/screen-square-grid.png" alt="Injected square grid over an actual gameplay screen"></a><figcaption>An actual committed gameplay screenshot with the rejected hard square-grid failure exaggerated at runtime tile scale.</figcaption></figure>
   </div>
   <h2>Actual gameplay screen measurements</h2>
-  <table><thead><tr><th>Screen</th><th>Size</th><th>coarse orthogonal edge share</th><th>SHA-256</th></tr></thead><tbody>${screens}</tbody></table>
-  <p class="note">Cross-profile mean: <code>${report.production.screens.meanCoarseOrthogonalEdgeShare}</code>; maximum: <code>${report.production.screens.maximumCoarseOrthogonalEdgeShare}</code>. This signal is a regression tripwire for the independently rejected rectilinear floor, not a semantic judgment of scenery quality.</p>
+  <table><thead><tr><th>Screen</th><th>Size</th><th>tile period</th><th>periodic seam salience</th><th>SHA-256</th></tr></thead><tbody>${screens}</tbody></table>
+  <p class="note">Cross-profile mean: <code>${report.production.screens.meanPeriodicSeamSalience}</code>; maximum: <code>${report.production.screens.maximumPeriodicSeamSalience}</code>. Full-line averaging separates a repeated two-axis floor grid from sparse intentional collision architecture. This is a regression tripwire, not a semantic judgment of scenery quality.</p>
   <h2>Per-decal measurements</h2>
   <table><thead><tr><th>Cell</th><th>Name</th><th>bbox fill</th><th>border ink</th><th>Result</th></tr></thead><tbody>${cells}</tbody></table>
   <p class="note">Floor boundary/core ratio: <code>${report.production.floor.boundaryToInteriorRatio}</code>; edge-band/core ratio: <code>${report.production.floor.edgeBandToCoreRatio}</code>; repeated tile fraction: <code>${report.production.floor.repeatedTileFraction}</code>.</p>
@@ -743,23 +822,42 @@ async function run() {
   const crossCellAtlas = crossCellMutation(decalRaw.data, decalRaw.info.width);
   const seamFloor = squareSeamMutation(floor, tilePixels);
   const repeatedFloor = await composeFloor(tilePixels, true);
-  const desktopScreen = await sharp(path.join(screenRoot, GAME_SCREEN_NAMES[0]))
-    .ensureAlpha()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-  const squareGridScreen = squareGridScreenMutation(
-    desktopScreen.data,
-    desktopScreen.info,
-  );
-  const squareGridScreenAssessment = await screenGridEvidence(
-    squareGridScreen,
-    desktopScreen.info,
-  );
-  const squareGridScreenViolations =
-    squareGridScreenAssessment.coarseOrthogonalEdgeShare >
-    THRESHOLDS.screenMaximumCoarseOrthogonalEdgeShare
-      ? ["screen-square-grid-salience"]
-      : [];
+  const squareGridMutations = [];
+  for (const fileName of GAME_SCREEN_NAMES) {
+    const decoded = await sharp(path.join(screenRoot, fileName))
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    const pixels = squareGridScreenMutation(decoded.data, decoded.info);
+    const evidence = await screenGridEvidence(pixels, decoded.info);
+    squareGridMutations.push({
+      fileName,
+      pixels,
+      info: decoded.info,
+      evidence,
+    });
+  }
+  const squareGridScreenAssessment = {
+    profiles: squareGridMutations.map(({ fileName, evidence }) => ({
+      fileName,
+      ...evidence,
+    })),
+    minimumPeriodicSeamSalience: Math.min(
+      ...squareGridMutations.map(
+        ({ evidence }) => evidence.periodicSeamSalience,
+      ),
+    ),
+  };
+  const squareGridScreenViolations = squareGridMutations.every(
+    ({ evidence }) =>
+      evidence.periodicSeamSalience >
+      THRESHOLDS.screenMaximumPeriodicSeamSalience,
+  )
+    ? ["screen-square-grid-periodicity"]
+    : [];
+  const desktopGridMutation = squareGridMutations[0];
+  if (!desktopGridMutation)
+    throw new Error("Desktop square-grid mutation was not generated");
   const matteAssessment = assessDecalAtlas(matteAtlas, decalRaw.info.width);
   const crossCellAssessment = assessDecalAtlas(
     crossCellAtlas,
@@ -794,7 +892,7 @@ async function run() {
     },
     {
       id: "screen-square-grid",
-      expectedViolation: "screen-square-grid-salience",
+      expectedViolation: "screen-square-grid-periodicity",
       assessment: {
         pass: squareGridScreenViolations.length === 0,
         violations: squareGridScreenViolations,
@@ -872,9 +970,9 @@ async function run() {
       outputRoot,
       "mutations/screen-square-grid.png",
       await pngBuffer(
-        squareGridScreen,
-        desktopScreen.info.width,
-        desktopScreen.info.height,
+        desktopGridMutation.pixels,
+        desktopGridMutation.info.width,
+        desktopGridMutation.info.height,
       ),
       artifacts,
     ),
@@ -893,7 +991,7 @@ async function run() {
         ? "pass"
         : "fail",
     scopeNote:
-      "These deterministic pixel metrics inspect the four actual gameplay screen-contract PNGs and catch known rectangular matte, atlas-boundary contamination, coarse square-grid, tile seam, and obvious-repeat regressions. Passing them does not prove that an environment is beautiful, well composed, or ready for human visual acceptance.",
+      "These deterministic pixel metrics inspect the four actual gameplay screen-contract PNGs and catch known rectangular matte, atlas-boundary contamination, runtime-period full-line floor grids, tile seams, and obvious-repeat regressions. Full-line averaging separates texture periodicity from sparse intentional collision architecture. Passing them does not prove that an environment is beautiful, well composed, or ready for human visual acceptance.",
     runtimeContract: {
       viewport: { width: VIEW_WIDTH, height: VIEW_HEIGHT },
       floorAtlasGrid: FLOOR_ATLAS_GRID,

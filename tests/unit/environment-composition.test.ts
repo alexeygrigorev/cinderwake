@@ -34,13 +34,14 @@ let report: {
     };
     screens: {
       pass: boolean;
-      meanCoarseOrthogonalEdgeShare: number;
-      maximumCoarseOrthogonalEdgeShare: number;
+      meanPeriodicSeamSalience: number;
+      maximumPeriodicSeamSalience: number;
       profiles: Array<{
         fileName: string;
         sha256: string;
         dimensions: { width: number; height: number };
-        coarseOrthogonalEdgeShare: number;
+        runtimeTilePeriod: { x: number; y: number };
+        periodicSeamSalience: number;
       }>;
       violations: string[];
     };
@@ -104,11 +105,11 @@ describe("environment composition quality gate", () => {
     });
     expect(report.production.screens.profiles).toHaveLength(4);
     expect(
-      report.production.screens.maximumCoarseOrthogonalEdgeShare,
-    ).toBeLessThanOrEqual(0.385);
+      report.production.screens.maximumPeriodicSeamSalience,
+    ).toBeLessThanOrEqual(2.4);
     expect(
-      report.production.screens.meanCoarseOrthogonalEdgeShare,
-    ).toBeLessThanOrEqual(0.365);
+      report.production.screens.meanPeriodicSeamSalience,
+    ).toBeLessThanOrEqual(1.9);
     expect(
       report.production.screens.profiles.map(({ fileName }) => fileName),
     ).toEqual([
@@ -145,16 +146,36 @@ describe("environment composition quality gate", () => {
       }),
       expect.objectContaining({
         id: "screen-square-grid",
-        expectedViolation: "screen-square-grid-salience",
+        expectedViolation: "screen-square-grid-periodicity",
         detected: true,
       }),
     ]);
     for (const control of report.negativeControls)
       expect(control.violations).toContain(control.expectedViolation);
-    expect(
-      report.negativeControls.find(({ id }) => id === "screen-square-grid")
-        ?.evidence.coarseOrthogonalEdgeShare,
-    ).toEqual(expect.any(Number));
+    const screenGrid = report.negativeControls.find(
+      ({ id }) => id === "screen-square-grid",
+    );
+    expect(screenGrid?.evidence).toMatchObject({
+      minimumPeriodicSeamSalience: expect.any(Number),
+      profiles: expect.arrayContaining([
+        expect.objectContaining({
+          fileName: "desktop-game-chromium-linux.png",
+          periodicSeamSalience: expect.any(Number),
+        }),
+        expect.objectContaining({
+          fileName: "narrow-desktop-game-chromium-linux.png",
+          periodicSeamSalience: expect.any(Number),
+        }),
+        expect.objectContaining({
+          fileName: "phone-landscape-game-chromium-linux.png",
+          periodicSeamSalience: expect.any(Number),
+        }),
+        expect.objectContaining({
+          fileName: "phone-portrait-game-chromium-linux.png",
+          periodicSeamSalience: expect.any(Number),
+        }),
+      ]),
+    });
   });
 
   it("writes hash-bound PNG and readable HTML evidence", async () => {

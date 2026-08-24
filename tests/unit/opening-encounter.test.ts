@@ -7,6 +7,7 @@ import {
 } from "../../src/game/constants";
 import {
   GROUND_DECAL_NAMES,
+  PASSABLE_GROUND_DECAL_NAMES,
   buildSceneryLayout,
   openingRoomThreshold,
   overlapsScenery,
@@ -131,6 +132,8 @@ describe("generated opening encounter", () => {
     expect(decals).toEqual(repeatedDecals);
     const decalNames = new Set<string>(GROUND_DECAL_NAMES);
     expect(decals.every(({ name }) => decalNames.has(name))).toBe(true);
+    const passableNames = new Set<string>(PASSABLE_GROUND_DECAL_NAMES);
+    expect(decals.every(({ name }) => passableNames.has(name))).toBe(true);
     expect(
       decals.every(
         ({ collisionMode, collision }) =>
@@ -183,13 +186,6 @@ describe("generated opening encounter", () => {
       });
       expect(lanterns).toHaveLength(2);
       for (const lantern of lanterns) {
-        expect(
-          state.map.tiles[
-            Math.round(lantern.tile.y) * state.map.width +
-              Math.round(lantern.tile.x)
-          ],
-          `${lantern.id} remains backed by a blocked map tile for seed ${index}`,
-        ).toBe(1);
         expect(lantern.collisionMode).toBe("solid");
         expect(lantern.collision).not.toBeNull();
       }
@@ -207,15 +203,14 @@ describe("generated opening encounter", () => {
       );
 
       const manifest = buildRenderManifest(state, openingCamera(state));
-      const visibleWallFronts = manifest.sceneSprites.filter(
-        ({ objectId, visible }) =>
-          objectId.startsWith("wall-front:") && visible,
+      const visibleBoundaries = manifest.sceneSprites.filter(
+        ({ objectId, visible }) => objectId.startsWith("boundary:") && visible,
       );
       expect(
-        visibleWallFronts.length,
-        `wall-front count for seed ${index}`,
-      ).toBeGreaterThanOrEqual(6);
-      for (const wall of visibleWallFronts)
+        visibleBoundaries.length,
+        `boundary count for seed ${index}`,
+      ).toBeGreaterThanOrEqual(12);
+      for (const wall of visibleBoundaries)
         expect(
           state.map.tiles[wall.tile.y * state.map.width + wall.tile.x],
           `${wall.objectId} backed by blocked map tile for seed ${index}`,

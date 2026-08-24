@@ -1,5 +1,5 @@
 import { UNITS_PER_TILE } from "./constants";
-import { isFloor } from "./dungeon";
+import { isFloor, tileCenter } from "./dungeon";
 import type { DungeonMap, Vec2 } from "./types";
 
 export type SceneryPlacementKind = "structure" | "prop" | "decal";
@@ -77,6 +77,15 @@ export const GROUND_DECAL_NAMES = [
   "grave-flowers",
 ] as const;
 
+export const PASSABLE_GROUND_DECAL_NAMES = [
+  "scorch-ring",
+  "blood-smear",
+  "occult-circle",
+  "claw-tracks",
+  "cracked-embers",
+  "banner-scrap",
+] as const;
+
 type StructureName = (typeof STRUCTURE_NAMES)[number];
 type PropName = (typeof PROP_NAMES)[number];
 type GroundDecalName = (typeof GROUND_DECAL_NAMES)[number];
@@ -90,7 +99,7 @@ interface CollisionProfile {
 // Footprints cover the object base, not its tall painted silhouette. This lets
 // actors walk behind roofs and branches while still preventing them from
 // crossing the masonry, trunk, wagon, or other solid contact surface.
-const STRUCTURE_COLLISIONS: Record<StructureName, CollisionProfile | null> = {
+const STRUCTURE_COLLISIONS: Record<StructureName, CollisionProfile> = {
   chapel: { halfWidth: 1_520, halfHeight: 620, offsetY: -120 },
   watchtower: { halfWidth: 1_430, halfHeight: 620, offsetY: -120 },
   forge: { halfWidth: 1_390, halfHeight: 580, offsetY: -100 },
@@ -100,9 +109,7 @@ const STRUCTURE_COLLISIONS: Record<StructureName, CollisionProfile | null> = {
   well: { halfWidth: 820, halfHeight: 440, offsetY: -60 },
   wagon: { halfWidth: 1_180, halfHeight: 500, offsetY: -70 },
   obelisk: { halfWidth: 620, halfHeight: 430, offsetY: -70 },
-  // Rubble is authored as low ground clutter. It remains deliberately
-  // passable so incidental decoration cannot trap an actor in a narrow route.
-  rubble: null,
+  rubble: { halfWidth: 780, halfHeight: 380, offsetY: -50 },
 };
 
 const PROP_COLLISIONS: Record<PropName, CollisionProfile> = {
@@ -252,8 +259,14 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       let y = room.y + 1;
       if (roomIndex === 0 && threshold) {
         if (threshold.side === "north") y = room.y + room.height - 2;
-        if (threshold.side === "east") x = room.x + 1;
-        if (threshold.side === "west") x = room.x + room.width - 2;
+        if (threshold.side === "west") {
+          x = room.x + 1;
+          y = room.y + 2;
+        }
+        if (threshold.side === "east") {
+          x = room.x + room.width - 2;
+          y = room.y + 2;
+        }
       }
       const name: StructureName =
         roomIndex === 0
@@ -262,8 +275,21 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
             ? STRUCTURE_NAMES[sceneVariant(map, x, y, STRUCTURE_NAMES.length)]!
             : "chapel";
       const worldAnchor = {
-        x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-        y: y * UNITS_PER_TILE - UNITS_PER_TILE / 4,
+        x:
+          x * UNITS_PER_TILE +
+          UNITS_PER_TILE / 2 +
+          (roomIndex === 0 && threshold?.side === "west"
+            ? (UNITS_PER_TILE * 3) / 4
+            : roomIndex === 0 && threshold?.side === "east"
+              ? (-UNITS_PER_TILE * 3) / 4
+              : 0),
+        y:
+          y * UNITS_PER_TILE +
+          (roomIndex === 0 &&
+          threshold &&
+          ["east", "south", "west"].includes(threshold.side)
+            ? 0
+            : -UNITS_PER_TILE / 4),
       };
       placements.push({
         id: `structure:${roomIndex}:${name}`,
@@ -276,7 +302,8 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       });
     }
 
-    for (let propIndex = 0; propIndex < 2; propIndex += 1) {
+    const propIndexes = roomIndex === 0 ? [1] : [0, 1];
+    for (const propIndex of propIndexes) {
       const x = room.x + 1 + propIndex * Math.max(1, room.width - 3);
       const y = room.y + Math.max(1, room.height - 2);
       const name = PROP_NAMES[sceneVariant(map, x, y, PROP_NAMES.length)]!;
@@ -315,13 +342,13 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       let y = room.y + slot.y;
       const name: GroundDecalName =
         roomIndex === 0
-          ? GROUND_DECAL_NAMES[decalIndex]!
-          : GROUND_DECAL_NAMES[
+          ? PASSABLE_GROUND_DECAL_NAMES[decalIndex]!
+          : PASSABLE_GROUND_DECAL_NAMES[
               sceneVariant(
                 map,
                 x + decalIndex * 11,
                 y + roomIndex * 7,
-                GROUND_DECAL_NAMES.length,
+                PASSABLE_GROUND_DECAL_NAMES.length,
               )
             ]!;
       const driftX = sceneVariant(map, x + decalIndex, y, 7) - 3;
@@ -355,30 +382,49 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
   });
 
   if (threshold) {
+    // Place the doorway furniture on the nearest in-room flank tiles beside
+    // the map-authored opening. This keeps the pair attached to the pictured
+    // route while their solid footprints remain authoritative scenery.
+    const cueInset =
+      threshold.side === "west"
+        ? { x: 1, y: 0 }
+        : threshold.side === "east"
+          ? { x: -1, y: 0 }
+          : threshold.side === "north"
+            ? { x: 0, y: 1 }
+            : { x: 0, y: -1 };
+    const cueCenterTile = {
+      x: threshold.centerTile.x + cueInset.x,
+      y: threshold.centerTile.y + cueInset.y,
+    };
     const thresholdAnchor = {
-      x: threshold.centerTile.x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-      y: threshold.centerTile.y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+      x: cueCenterTile.x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+      y: cueCenterTile.y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
     };
     placements.push({
       id: `architecture:opening:threshold:${threshold.side}`,
       kind: "decal",
       name: "banner-scrap",
       collisionMode: "passable",
-      tile: { ...threshold.centerTile },
+      tile: cueCenterTile,
       worldAnchor: thresholdAnchor,
       collision: null,
     });
     threshold.flankTiles.forEach((tile, index) => {
+      const cueTile = {
+        x: tile.x + cueInset.x,
+        y: tile.y + cueInset.y,
+      };
       const worldAnchor = {
-        x: tile.x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
-        y: tile.y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+        x: cueTile.x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+        y: cueTile.y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
       };
       placements.push({
         id: `architecture:opening:lantern:${index}`,
         kind: "prop",
         name: "witchlight-lantern",
         collisionMode: "solid",
-        tile: { ...tile },
+        tile: cueTile,
         worldAnchor,
         collision: footprint(
           worldAnchor,
@@ -388,7 +434,14 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
     });
   }
 
-  return placements;
+  const protectedCenters = [tileCenter(map.spawn), tileCenter(map.exit)];
+  return placements.filter(
+    ({ collision }) =>
+      !collision ||
+      protectedCenters.every(
+        (point) => !overlapsScenery(point, 300, collision),
+      ),
+  );
 }
 
 export function overlapsScenery(
@@ -409,4 +462,25 @@ export function sceneryCollisions(
   return buildSceneryLayout(map).flatMap(({ collision }) =>
     collision ? [collision] : [],
   );
+}
+
+export function sceneryCollisionContractViolations(
+  placements: SceneryPlacement[],
+): string[] {
+  return placements.flatMap((placement) => {
+    if (placement.kind === "decal") {
+      if (
+        !PASSABLE_GROUND_DECAL_NAMES.includes(
+          placement.name as (typeof PASSABLE_GROUND_DECAL_NAMES)[number],
+        )
+      )
+        return [`${placement.id}:raised-decal-must-be-solid`];
+      return placement.collisionMode === "passable" && !placement.collision
+        ? []
+        : [`${placement.id}:ground-decal-must-be-passable`];
+    }
+    return placement.collisionMode === "solid" && placement.collision
+      ? []
+      : [`${placement.id}:raised-object-must-be-solid`];
+  });
 }

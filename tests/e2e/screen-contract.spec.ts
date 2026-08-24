@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Page } from "@playwright/test";
 import contract from "../../quality/screen-contract.v1.json" with { type: "json" };
+import { assessOpeningComposition } from "../framework/opening-composition";
 
 type Profile = (typeof contract.profiles)[number];
 type TargetEvidence = {
@@ -661,6 +662,38 @@ for (const profile of contract.profiles) {
         await expect(page.locator(selector)).toHaveCount(0);
       await gameGeometry(page, profile);
       expect(await hudWorldOverlapViolations(page)).toEqual([]);
+      const openingComposition = await page.evaluate(() =>
+        window.__GAME_OBSERVE__!.renderManifest(),
+      );
+      const openingViewport = await page.evaluate(() => {
+        const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const left = Math.max(0, rect.left);
+        const top = Math.max(0, rect.top);
+        const right = Math.min(window.innerWidth, rect.right);
+        const bottom = Math.min(window.innerHeight, rect.bottom);
+        return {
+          x: (left - rect.left) * scaleX,
+          y: (top - rect.top) * scaleY,
+          width: Math.max(0, right - left) * scaleX,
+          height: Math.max(0, bottom - top) * scaleY,
+        };
+      });
+      const openingAssessment = assessOpeningComposition(
+        openingComposition,
+        openingViewport,
+      );
+      expect(openingAssessment.violations).toEqual([]);
+      if (profile.id === "phone-portrait") {
+        expect(openingAssessment.evidence.maximumOpeningFocalAreaRatio).toBe(
+          0.36,
+        );
+        expect(openingAssessment.evidence.openingFocalAreaRatio).toBeLessThan(
+          0.3,
+        );
+      }
       await expect(page).toHaveScreenshot(`${profile.id}-game.png`);
       expect(errors).toEqual([]);
     } finally {

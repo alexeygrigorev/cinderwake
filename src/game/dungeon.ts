@@ -9,6 +9,8 @@ interface Room {
   height: number;
 }
 
+const OPENING_ROOM_CLEARANCE = 5;
+
 function carveRoom(tiles: number[], mapWidth: number, room: Room): void {
   for (let y = room.y; y < room.y + room.height; y += 1) {
     for (let x = room.x; x < room.x + room.width; x += 1)
@@ -54,10 +56,10 @@ function carveCorridorOutsideOpening(
   openingRoom: Room,
 ): void {
   const exclusion = {
-    left: openingRoom.x - 1,
-    right: openingRoom.x + openingRoom.width,
-    top: openingRoom.y - 1,
-    bottom: openingRoom.y + openingRoom.height,
+    left: openingRoom.x - OPENING_ROOM_CLEARANCE,
+    right: openingRoom.x + openingRoom.width - 1 + OPENING_ROOM_CLEARANCE,
+    top: openingRoom.y - OPENING_ROOM_CLEARANCE,
+    bottom: openingRoom.y + openingRoom.height - 1 + OPENING_ROOM_CLEARANCE,
   };
   const key = ({ x, y }: Vec2) => `${x},${y}`;
   const pointFor = (value: string): Vec2 => {
@@ -156,6 +158,15 @@ function overlaps(a: Room, b: Room): boolean {
   );
 }
 
+function overlapsOpeningClearance(opening: Room, candidate: Room): boolean {
+  return !(
+    opening.x + opening.width - 1 + OPENING_ROOM_CLEARANCE < candidate.x ||
+    candidate.x + candidate.width - 1 + OPENING_ROOM_CLEARANCE < opening.x ||
+    opening.y + opening.height - 1 + OPENING_ROOM_CLEARANCE < candidate.y ||
+    candidate.y + candidate.height - 1 + OPENING_ROOM_CLEARANCE < opening.y
+  );
+}
+
 export function mapDigest(
   map: Pick<DungeonMap, "width" | "height" | "tiles" | "spawn" | "exit">,
 ): string {
@@ -172,9 +183,9 @@ export function generateDungeon(
   const tiles = new Array<number>(width * height).fill(1);
   const rooms: Room[] = [];
   const first: Room = {
-    x: Math.floor(width / 2) - 4,
+    x: Math.floor(width / 2) - 3,
     y: Math.floor(height / 2) - 3,
-    width: 9,
+    width: 7,
     height: 7,
   };
   rooms.push(first);
@@ -188,7 +199,11 @@ export function generateDungeon(
       width: roomWidth,
       height: roomHeight,
     };
-    if (!rooms.some((room) => overlaps(room, candidate))) rooms.push(candidate);
+    if (
+      !overlapsOpeningClearance(first, candidate) &&
+      !rooms.some((room) => overlaps(room, candidate))
+    )
+      rooms.push(candidate);
   }
 
   for (const room of rooms) carveRoom(tiles, width, room);

@@ -5,6 +5,7 @@ import {
   VIEW_WIDTH,
 } from "../game/constants";
 import type { GameState } from "../game/types";
+import { openingRoomThreshold } from "../game/sceneryLayout";
 import {
   buildRenderManifest,
   type CameraMode,
@@ -50,6 +51,28 @@ export class CanvasRenderer {
   cameraTarget(state: GameState): CameraV1 {
     const targetX = (state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS;
     const targetY = (state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS;
+    const threshold = openingRoomThreshold(state.map);
+    const openingRoom = state.map.rooms[0];
+    const playerTileX = state.player.position.x / UNITS_PER_TILE;
+    const playerTileY = state.player.position.y / UNITS_PER_TILE;
+    const distanceOutsideOpening = openingRoom
+      ? Math.hypot(
+          Math.max(
+            openingRoom.x - playerTileX,
+            playerTileX - (openingRoom.x + openingRoom.width),
+            0,
+          ),
+          Math.max(
+            openingRoom.y - playerTileY,
+            playerTileY - (openingRoom.y + openingRoom.height),
+            0,
+          ),
+        )
+      : 4;
+    const openingBiasStrength = Math.max(0, 1 - distanceOutsideOpening / 4);
+    const openingHorizontalBias =
+      (threshold?.side === "east" ? 4 : threshold?.side === "west" ? -4 : 0) *
+      openingBiasStrength;
     const mapWidth = state.map.width * TILE_PIXELS;
     const mapHeight = state.map.height * TILE_PIXELS;
     const clampedX =
@@ -57,7 +80,10 @@ export class CanvasRenderer {
         ? mapWidth / 2
         : Math.max(
             VIEW_WIDTH / 2,
-            Math.min(mapWidth - VIEW_WIDTH / 2, targetX),
+            Math.min(
+              mapWidth - VIEW_WIDTH / 2,
+              targetX + openingHorizontalBias,
+            ),
           );
     const clampedY =
       mapHeight <= VIEW_HEIGHT

@@ -217,16 +217,24 @@ function buildSceneSprites(
   const scene: SceneSpriteV2[] = [];
   const openingRoom = state.map.rooms[0];
   const playerTile = {
-    x: Math.floor(state.player.position.x / UNITS_PER_TILE),
-    y: Math.floor(state.player.position.y / UNITS_PER_TILE),
+    x: state.player.position.x / UNITS_PER_TILE,
+    y: state.player.position.y / UNITS_PER_TILE,
   };
-  const openingFocused = Boolean(
-    openingRoom &&
-    playerTile.x >= openingRoom.x &&
-    playerTile.x < openingRoom.x + openingRoom.width &&
-    playerTile.y >= openingRoom.y &&
-    playerTile.y < openingRoom.y + openingRoom.height,
-  );
+  const openingDistance = openingRoom
+    ? Math.hypot(
+        Math.max(
+          openingRoom.x - playerTile.x,
+          playerTile.x - (openingRoom.x + openingRoom.width),
+          0,
+        ),
+        Math.max(
+          openingRoom.y - playerTile.y,
+          playerTile.y - (openingRoom.y + openingRoom.height),
+          0,
+        ),
+      )
+    : 4;
+  const outsideOpeningReveal = Math.min(1, openingDistance / 4);
   const groundSize = Math.max(
     VIEW_WIDTH,
     VIEW_HEIGHT,
@@ -313,8 +321,12 @@ function buildSceneSprites(
           else diagonalFloor += 1;
         }
       }
+      // Edge-adjacent blocked cells are already described by the continuous
+      // masonry cap below. Keeping their square overlay nearly transparent
+      // avoids turning a valid wall into a row of detached black tile stamps;
+      // deeper blocked material still supplies visual mass beyond the edge.
       const wallOpacity =
-        cardinalFloor > 0 ? 0.52 : diagonalFloor > 0 ? 0.62 : 0.72;
+        cardinalFloor > 0 ? 0.04 : diagonalFloor > 0 ? 0.12 : 0.35;
       scene.push({
         ...sceneReference("scenery:tile:wall", (y % 16) * 16 + (x % 16)),
         objectId: `wall-overlay:${x}:${y}`,
@@ -411,10 +423,16 @@ function buildSceneSprites(
           y: (y + direction.ay) * UNITS_PER_TILE,
         };
         const screenAnchor = screenFor(worldAnchor, camera);
-        const destinationRect = destinationAt(screenAnchor, 54, 12, {
-          x: 128,
-          y: 128,
-        });
+        const cadence = ((x * 3 + y * 5) % 5) - 2;
+        const destinationRect = destinationAt(
+          screenAnchor,
+          52 + cadence * 3,
+          10 + Math.abs(cadence),
+          {
+            x: 128,
+            y: 128,
+          },
+        );
         scene.push({
           ...sceneReference(
             "scenery:boundary:stone",
@@ -429,27 +447,48 @@ function buildSceneSprites(
           layer: "terrain",
           zOrder: scene.length,
           visible: intersectsViewport(destinationRect),
-          opacity: 0.28,
-          rotation: direction.rotation,
+          opacity: 0.38,
+          rotation: direction.rotation + cadence * 0.008,
         });
-        if (direction.id === "north" || direction.id === "south") {
-          const destinationRect = destinationAt(screenAnchor, 62, 72, {
+
+        // A single continuous authored facade establishes the opening room's
+        // back wall. It is emitted only along the north shell (whose floor is
+        // south of the blocked cell), while the lower masonry caps carry the
+        // remaining collision outline without detached facade stamps.
+        const openingBackWall =
+          direction.id === "south" &&
+          openingRoom !== undefined &&
+          y === openingRoom.y - 1 &&
+          x >= openingRoom.x &&
+          x < openingRoom.x + openingRoom.width;
+        if (openingBackWall) {
+          const facadeRect = destinationAt(screenAnchor, 62, 72, {
             x: 128,
             y: 232,
           });
           scene.push({
             ...sceneReference("scenery:boundary:wall-front", (x + y) % 4),
-            objectId: `wall-front:${direction.id}:${x}:${y}`,
+            objectId: `wall-front:south:${x}:${y}`,
             kind: "prop",
             tile: { x, y },
             worldAnchor,
             screenAnchor,
-            destinationRect,
-            layer: "structures",
+            destinationRect: facadeRect,
+            layer: "props",
             zOrder: scene.length,
-            visible: intersectsViewport(destinationRect),
+            visible: intersectsViewport(facadeRect),
             opacity: 0.96,
             rotation: 0,
+            collision: {
+              mode: "solid",
+              shape: "ellipse",
+              worldCenter: {
+                x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+                y: y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+              },
+              halfWidth: UNITS_PER_TILE / 2,
+              halfHeight: UNITS_PER_TILE / 2,
+            },
           });
         }
       }
@@ -494,7 +533,8 @@ function buildSceneSprites(
     const placementRoomIndex = Number(
       placement.id.match(/^(?:structure|prop|decal):(\d+):/)?.[1] ?? -1,
     );
-    const hiddenOutsideOpeningFocus = openingFocused && placementRoomIndex > 0;
+    const openingRevealOpacity =
+      placementRoomIndex > 0 ? outsideOpeningReveal : 1;
     scene.push({
       ...sceneReference(spriteId),
       objectId: placement.id,
@@ -511,8 +551,8 @@ function buildSceneSprites(
             : "props",
       zOrder: scene.length,
       visible:
-        !hiddenOutsideOpeningFocus && intersectsViewport(destinationRect),
-      opacity: 1,
+        openingRevealOpacity > 0.001 && intersectsViewport(destinationRect),
+      opacity: openingRevealOpacity,
       collision: placement.collision
         ? {
             mode: "solid",
