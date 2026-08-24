@@ -1225,7 +1225,7 @@ export function buildRenderManifest(
   calls.forEach((call, index) => {
     call.zOrder = index;
   });
-  return {
+  const manifest: RenderManifestV1 = {
     schemaVersion: 2,
     spriteCatalogRevision: SPRITE_CATALOG_REVISION,
     tick: state.tick,
@@ -1245,4 +1245,9 @@ export function buildRenderManifest(
     worldUi: [],
     paintQueue: [],
   };
+  // Pure manifest callers (unit contracts, capture tools, and arbitrary-state
+  // diagnostics) receive the same valid base queue as the Canvas renderer.
+  // CanvasRenderer rebuilds it after deriving health chrome from sprite ink.
+  manifest.paintQueue = buildPaintQueue(manifest);
+  return manifest;
 }

@@ -130,6 +130,9 @@ describe("sprite atlas quality contract", () => {
       drawCalls: [call],
       sceneSprites: [],
       worldUi: [],
+      paintQueue: [
+        { paintId: `body:${call.entityId}`, kind: "entity-body", zOrder: 0, ownerId: call.entityId, call },
+      ],
     };
     expect(() =>
       validateManifestSpriteContract(
@@ -206,6 +209,7 @@ describe("sprite atlas quality contract", () => {
       drawCalls: [],
       sceneSprites: [],
       worldUi: [health],
+      paintQueue: [],
     };
     expect(() =>
       validateManifestSpriteContract(manifest, catalog),

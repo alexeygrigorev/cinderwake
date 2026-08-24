@@ -301,8 +301,8 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Ordered artifacts: ordered draw calls with Z/layer and world/screen foot anchors; per-frame masks; overlap geometry; full frames/contact sheet; owner IDs for attached UI/effects.
 - Machine signal and threshold: stable unique draw order; depth relation changes only at the declared ground/foot ordering boundary; attached UI/effects retain owner and calibrated offset; no duplicate owner body.
 - Required negative control: swap actor/prop Z, render health behind owner, detach effect, duplicate actor draw, and let a rear actor cover a front actor.
-- Current evidence: manifest records stable Z; health attachment checks in `tests/e2e/live-player-journey.spec.ts`; sequence attached-effect body-core checks; broad appearance criterion in `quality/screen-contract.v1.json`.
-- Missing automation/next implementation: no general depth-transition oracle or paired Z mutations across scenery/actors/effects.
+- Current evidence: `RenderManifestV1.paintQueue` is the Canvas renderer's exact scene/shadow/body/health paint plan; `tests/unit/depth-transition.test.ts` rejects actor/prop swaps, health-behind-owner, duplicate bodies, invalid queue indices, and rear-actor coverage. `tests/e2e/browser-bridge.spec.ts` captures isolated named paint masks. Effect detachment remains owned by the combat-specific `assessCombatReadability` control because only combat effects have an owner semantic.
+- Missing automation/next implementation: capture the verified `cinder-041` thorn-pillar behind→front journey (desktop and 390×844), with ordered frames and a nonzero actor/prop alpha-mask intersection. This row remains **Partial** until that route/tape exists.
 - Independent visual-agent review mandatory: **yes**, because artistically correct partial occlusion depends on silhouette.
 
 ### PRES-PROP-020 — buildings, props, objects, and complex scenery are visibly present

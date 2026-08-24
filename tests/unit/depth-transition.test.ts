@@ -4,12 +4,22 @@ import {
   buildRenderManifest,
   type PaintQueueItemV1,
 } from "../../src/render/manifest";
-import { createRunScenario, worldFromScenario } from "../../src/testkit/scenarios";
+import {
+  BUILTIN_SCENARIOS,
+  createRunScenario,
+  worldFromScenario,
+} from "../../src/testkit/scenarios";
 import { assessDepthTransition } from "../framework/depth-transition";
 
 function productionManifest() {
   const state = worldFromScenario(createRunScenario("cinder-041", "vanguard"));
   const manifest = buildRenderManifest(state, { x: 22.5 * 48, y: 16.5 * 48, zoom: 0.9 });
+  return manifest;
+}
+
+function overlappingActorsManifest() {
+  const state = worldFromScenario(BUILTIN_SCENARIOS["temporal-ashfang-attack"]!);
+  const manifest = buildRenderManifest(state, { x: 9 * 48, y: 7 * 48, zoom: 0.9 });
   manifest.paintQueue = buildPaintQueue(manifest);
   return manifest;
 }
@@ -77,5 +87,41 @@ describe("PRES-DEPTH-019 paint queue", () => {
     healthBehind.paintQueue.unshift(healthBehind.paintQueue.pop()!);
     healthBehind.paintQueue.forEach((item, index) => (item.zOrder = index));
     expect(assessDepthTransition(healthBehind).violations.join(" ")).toContain("health-z-order-mismatch:player");
+
+    const badZOrder = structuredClone(manifest);
+    badZOrder.paintQueue[0]!.zOrder = 99;
+    expect(assessDepthTransition(badZOrder).violations.join(" ")).toContain("paint-z-order-mismatch");
+  });
+
+  it("keeps overlapping actors in foot order and rejects a rear actor covering front", () => {
+    const manifest = overlappingActorsManifest();
+    const bodies = manifest.paintQueue.filter(
+      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> => item.kind === "entity-body",
+    );
+    expect(bodies).toHaveLength(2);
+    expect(assessDepthTransition(manifest)).toMatchObject({
+      verdict: "PASS",
+      evidence: { actorActorIntersections: 1 },
+    });
+
+    const swapped = structuredClone(manifest);
+    const [first, second] = bodies.map(({ paintId }) =>
+      swapped.paintQueue.find((item) => item.paintId === paintId)!,
+    );
+    const firstIndex = swapped.paintQueue.indexOf(first!);
+    const secondIndex = swapped.paintQueue.indexOf(second!);
+    [swapped.paintQueue[firstIndex], swapped.paintQueue[secondIndex]] = [
+      swapped.paintQueue[secondIndex]!,
+      swapped.paintQueue[firstIndex]!,
+    ];
+    swapped.paintQueue.forEach((item, index) => (item.zOrder = index));
+    expect(assessDepthTransition(swapped).violations.join(" ")).toContain("actor-depth-inverted");
+
+    const tied = structuredClone(manifest);
+    const tiedBodies = tied.paintQueue.filter(
+      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> => item.kind === "entity-body",
+    );
+    tiedBodies[1]!.call.footAnchor.y = tiedBodies[0]!.call.footAnchor.y;
+    expect(assessDepthTransition(tied).verdict).toBe("PASS");
   });
 });

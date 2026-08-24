@@ -28,12 +28,19 @@ function indexByPaintId(queue: readonly PaintQueueItemV1[]): Map<string, number>
 }
 
 /** Pure paint-queue oracle for PRES-DEPTH-019. */
+// Effect ownership/detachment remains deliberately covered by
+// assessCombatReadability: effects carry combat-only owner semantics, while
+// this gate owns generic actor/prop/body/shadow/health paint ordering.
 export function assessDepthTransition(
   manifest: RenderManifestV1,
 ): DepthTransitionAssessment {
   const violations: string[] = [];
   const { paintQueue: queue } = manifest;
   const indexes = indexByPaintId(queue);
+  for (const [index, item] of queue.entries()) {
+    if (item.zOrder !== index)
+      violations.push(`paint-z-order-mismatch:${item.paintId}`);
+  }
   const bodies = queue.filter(
     (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> =>
       item.kind === "entity-body",
@@ -71,16 +78,22 @@ export function assessDepthTransition(
     }
   }
   let actorActorIntersections = 0;
-  for (const rear of bodies) {
-    for (const front of bodies) {
-      if (rear.ownerId >= front.ownerId) continue;
-      if (!intersects(rear.call.destinationRect, front.call.destinationRect)) continue;
+  for (const first of bodies) {
+    for (const second of bodies) {
+      if (first.ownerId >= second.ownerId) continue;
+      if (!intersects(first.call.destinationRect, second.call.destinationRect)) continue;
       actorActorIntersections += 1;
-      const rearIsNorth = rear.call.footAnchor.y < front.call.footAnchor.y;
-      const rearIndex = indexes.get(rear.paintId)!;
-      const frontIndex = indexes.get(front.paintId)!;
-      if (rearIsNorth ? rearIndex >= frontIndex : frontIndex >= rearIndex)
-        violations.push(`actor-depth-inverted:${rear.ownerId}:${front.ownerId}`);
+      const firstIndex = indexes.get(first.paintId)!;
+      const secondIndex = indexes.get(second.paintId)!;
+      const footDelta = first.call.footAnchor.y - second.call.footAnchor.y;
+      const correct =
+        Math.abs(footDelta) < 0.01
+          ? firstIndex < secondIndex
+          : footDelta < 0
+            ? firstIndex < secondIndex
+            : firstIndex > secondIndex;
+      if (!correct)
+        violations.push(`actor-depth-inverted:${first.ownerId}:${second.ownerId}`);
     }
   }
   return {
