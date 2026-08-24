@@ -32,12 +32,25 @@ let report: {
       repeatedTileFraction: number;
       violations: string[];
     };
+    screens: {
+      pass: boolean;
+      meanCoarseOrthogonalEdgeShare: number;
+      maximumCoarseOrthogonalEdgeShare: number;
+      profiles: Array<{
+        fileName: string;
+        sha256: string;
+        dimensions: { width: number; height: number };
+        coarseOrthogonalEdgeShare: number;
+      }>;
+      violations: string[];
+    };
   };
   negativeControls: Array<{
     id: string;
     expectedViolation: string;
     detected: boolean;
     violations: string[];
+    evidence: Record<string, unknown>;
   }>;
   artifacts: Record<string, { sha256: string; bytes: number }>;
 };
@@ -85,6 +98,25 @@ describe("environment composition quality gate", () => {
       dimensions: { width: 960, height: 720, tilePixels: 48 },
       violations: [],
     });
+    expect(report.production.screens).toMatchObject({
+      pass: true,
+      violations: [],
+    });
+    expect(report.production.screens.profiles).toHaveLength(4);
+    expect(
+      report.production.screens.maximumCoarseOrthogonalEdgeShare,
+    ).toBeLessThanOrEqual(0.385);
+    expect(
+      report.production.screens.meanCoarseOrthogonalEdgeShare,
+    ).toBeLessThanOrEqual(0.365);
+    expect(
+      report.production.screens.profiles.map(({ fileName }) => fileName),
+    ).toEqual([
+      "desktop-game-chromium-linux.png",
+      "narrow-desktop-game-chromium-linux.png",
+      "phone-landscape-game-chromium-linux.png",
+      "phone-portrait-game-chromium-linux.png",
+    ]);
     expect(report.deterministicRepeatSha256Match).toBe(true);
     expect(report.scopeNote).toContain("does not prove");
   });
@@ -111,9 +143,18 @@ describe("environment composition quality gate", () => {
         expectedViolation: "obvious-repeated-floor-tiles",
         detected: true,
       }),
+      expect.objectContaining({
+        id: "screen-square-grid",
+        expectedViolation: "screen-square-grid-salience",
+        detected: true,
+      }),
     ]);
     for (const control of report.negativeControls)
       expect(control.violations).toContain(control.expectedViolation);
+    expect(
+      report.negativeControls.find(({ id }) => id === "screen-square-grid")
+        ?.evidence.coarseOrthogonalEdgeShare,
+    ).toEqual(expect.any(Number));
   });
 
   it("writes hash-bound PNG and readable HTML evidence", async () => {
@@ -121,10 +162,12 @@ describe("environment composition quality gate", () => {
       "floor-composition.png",
       "decal-composition.png",
       "decal-alpha-evidence.png",
+      "screen-game-matrix.png",
       "mutations/decal-opaque-matte.png",
       "mutations/decal-cross-cell.png",
       "mutations/floor-square-seams.png",
       "mutations/floor-obvious-repeat.png",
+      "mutations/screen-square-grid.png",
     ];
     for (const relativePath of expectedPngs) {
       const bytes = await fs.readFile(path.join(outputRoot, relativePath));

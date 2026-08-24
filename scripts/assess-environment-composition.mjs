@@ -13,6 +13,12 @@ const defaultOutput = path.join(
   "quality-results",
   "environment-composition",
 );
+const defaultScreenRoot = path.join(
+  root,
+  "tests",
+  "e2e",
+  "screen-contract.spec.ts-snapshots",
+);
 
 const VIEW_WIDTH = 960;
 const VIEW_HEIGHT = 720;
@@ -32,7 +38,16 @@ const THRESHOLDS = Object.freeze({
   floorMaximumEdgeBandToCoreRatio: 1.25,
   floorMaximumBoundaryToInteriorRatio: 1.35,
   floorMaximumRepeatedTileFraction: 0.25,
+  screenMaximumCoarseOrthogonalEdgeShare: 0.385,
+  screenMaximumMeanCoarseOrthogonalEdgeShare: 0.365,
 });
+
+const GAME_SCREEN_NAMES = [
+  "desktop-game-chromium-linux.png",
+  "narrow-desktop-game-chromium-linux.png",
+  "phone-landscape-game-chromium-linux.png",
+  "phone-portrait-game-chromium-linux.png",
+];
 
 const DECAL_NAMES = [
   "scorch-ring",
@@ -406,6 +421,142 @@ function squareSeamMutation(composition, tilePixels) {
   return mutated;
 }
 
+async function screenGridEvidence(pixels, info) {
+  const blurred = await sharp(pixels, { raw: info })
+    .grayscale()
+    .blur(4)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const gradients = [];
+  for (let y = 4; y < blurred.info.height - 4; y += 2) {
+    for (let x = 4; x < blurred.info.width - 4; x += 2) {
+      const horizontal =
+        blurred.data[y * blurred.info.width + x + 2] -
+        blurred.data[y * blurred.info.width + x - 2];
+      const vertical =
+        blurred.data[(y + 2) * blurred.info.width + x] -
+        blurred.data[(y - 2) * blurred.info.width + x];
+      gradients.push({
+        horizontal,
+        vertical,
+        magnitude: Math.hypot(horizontal, vertical),
+      });
+    }
+  }
+  const strongThreshold = percentile(
+    gradients.map(({ magnitude }) => magnitude),
+    0.75,
+  );
+  let coarseOrthogonalEnergy = 0;
+  let strongEnergy = 0;
+  for (const gradient of gradients) {
+    if (gradient.magnitude < strongThreshold || gradient.magnitude <= 0.5)
+      continue;
+    const angle =
+      (Math.atan2(Math.abs(gradient.vertical), Math.abs(gradient.horizontal)) *
+        180) /
+      Math.PI;
+    strongEnergy += gradient.magnitude;
+    if (angle <= 15 || angle >= 75)
+      coarseOrthogonalEnergy += gradient.magnitude;
+  }
+  return {
+    coarseOrthogonalEdgeShare: rounded(coarseOrthogonalEnergy / strongEnergy),
+    strongGradientThreshold: rounded(strongThreshold),
+    sampleCount: gradients.length,
+  };
+}
+
+async function assessGameScreens(screenRoot) {
+  const profiles = [];
+  for (const fileName of GAME_SCREEN_NAMES) {
+    const filePath = path.join(screenRoot, fileName);
+    const bytes = await fs.readFile(filePath);
+    const decoded = await sharp(bytes)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    profiles.push({
+      fileName,
+      sha256: sha256(bytes),
+      dimensions: {
+        width: decoded.info.width,
+        height: decoded.info.height,
+      },
+      ...(await screenGridEvidence(decoded.data, decoded.info)),
+    });
+  }
+  const edgeShares = profiles.map(
+    ({ coarseOrthogonalEdgeShare }) => coarseOrthogonalEdgeShare,
+  );
+  const meanCoarseOrthogonalEdgeShare = rounded(mean(edgeShares));
+  const maximumCoarseOrthogonalEdgeShare = Math.max(...edgeShares);
+  const violations = [];
+  if (
+    maximumCoarseOrthogonalEdgeShare >
+    THRESHOLDS.screenMaximumCoarseOrthogonalEdgeShare
+  )
+    violations.push("screen-square-grid-salience");
+  if (
+    meanCoarseOrthogonalEdgeShare >
+    THRESHOLDS.screenMaximumMeanCoarseOrthogonalEdgeShare
+  )
+    violations.push("screen-orthogonal-edge-mean");
+  return {
+    pass: violations.length === 0,
+    meanCoarseOrthogonalEdgeShare,
+    maximumCoarseOrthogonalEdgeShare,
+    profiles,
+    violations,
+  };
+}
+
+function squareGridScreenMutation(pixels, info) {
+  const mutated = Buffer.from(pixels);
+  const scale = Math.max(info.width / VIEW_WIDTH, info.height / VIEW_HEIGHT);
+  const period = 48 * scale;
+  const thickness = Math.max(5, Math.round(period * 0.07));
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      if (x % period < period - thickness && y % period < period - thickness)
+        continue;
+      const offset = (y * info.width + x) * 4;
+      for (let channel = 0; channel < 3; channel += 1)
+        mutated[offset + channel] = Math.round(mutated[offset + channel] * 0.1);
+    }
+  }
+  return mutated;
+}
+
+async function screenContactSheet(screenRoot) {
+  const cells = [];
+  for (const [index, fileName] of GAME_SCREEN_NAMES.entries()) {
+    const image = await sharp(path.join(screenRoot, fileName))
+      .resize(480, 300, {
+        fit: "contain",
+        background: { r: 5, g: 8, b: 9, alpha: 1 },
+      })
+      .png()
+      .toBuffer();
+    cells.push({
+      input: image,
+      left: (index % 2) * 480,
+      top: Math.floor(index / 2) * 300,
+    });
+  }
+  return sharp({
+    create: {
+      width: 960,
+      height: 600,
+      channels: 4,
+      background: { r: 5, g: 8, b: 9, alpha: 1 },
+    },
+  })
+    .composite(cells)
+    .png()
+    .toBuffer();
+}
+
 async function pngBuffer(raw, width, height) {
   return sharp(raw, { raw: { width, height, channels: 4 } })
     .png({ compressionLevel: 9, adaptiveFiltering: false })
@@ -497,6 +648,12 @@ function renderHtml(report) {
         `<tr><td>${cell.index}</td><td>${escapeHtml(cell.name)}</td><td>${cell.boundingBoxFillRatio}</td><td>${cell.safeBorderInkPixels}</td><td>${cell.violations.length ? escapeHtml(cell.violations.join(", ")) : "pass"}</td></tr>`,
     )
     .join("");
+  const screens = report.production.screens.profiles
+    .map(
+      (screen) =>
+        `<tr><td>${escapeHtml(screen.fileName)}</td><td>${screen.dimensions.width}×${screen.dimensions.height}</td><td>${screen.coarseOrthogonalEdgeShare}</td><td><code>${screen.sha256.slice(0, 16)}</code></td></tr>`,
+    )
+    .join("");
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -525,6 +682,7 @@ function renderHtml(report) {
   <p class="note">${escapeHtml(report.scopeNote)}</p>
   <h2>Committed production pixels</h2>
   <div class="gallery">
+    <figure><a href="screen-game-matrix.png"><img src="screen-game-matrix.png" alt="Four actual screen-contract gameplay PNGs"></a><figcaption>The four committed screen-contract gameplay PNGs used by the coarse square-grid detector.</figcaption></figure>
     <figure><a href="floor-composition.png"><img src="floor-composition.png" alt="Runtime-scale floor composition"></a><figcaption>960×720 floor composition using the renderer's 16×16 atlas order and runtime tile size.</figcaption></figure>
     <figure><a href="decal-composition.png"><img src="decal-composition.png" alt="Decals composited over the real floor"></a><figcaption>Every decal composited over committed floor pixels at its runtime size.</figcaption></figure>
     <figure><a href="decal-alpha-evidence.png"><img src="decal-alpha-evidence.png" alt="Decal alpha evidence"></a><figcaption>Exact alpha field used for matte and cell-boundary checks.</figcaption></figure>
@@ -536,7 +694,11 @@ function renderHtml(report) {
     <figure><a href="mutations/decal-cross-cell.png"><img src="mutations/decal-cross-cell.png" alt="Injected cross-cell decal contamination"></a><figcaption>Real decal pixels shifted across their atlas cell.</figcaption></figure>
     <figure><a href="mutations/floor-square-seams.png"><img src="mutations/floor-square-seams.png" alt="Injected square floor seams"></a><figcaption>Runtime composition with an injected trailing-edge seam.</figcaption></figure>
     <figure><a href="mutations/floor-obvious-repeat.png"><img src="mutations/floor-obvious-repeat.png" alt="Injected repeated floor tile"></a><figcaption>Runtime composition reusing one real committed floor cell.</figcaption></figure>
+    <figure><a href="mutations/screen-square-grid.png"><img src="mutations/screen-square-grid.png" alt="Injected square grid over an actual gameplay screen"></a><figcaption>An actual committed gameplay screenshot with the rejected hard square-grid failure exaggerated at runtime tile scale.</figcaption></figure>
   </div>
+  <h2>Actual gameplay screen measurements</h2>
+  <table><thead><tr><th>Screen</th><th>Size</th><th>coarse orthogonal edge share</th><th>SHA-256</th></tr></thead><tbody>${screens}</tbody></table>
+  <p class="note">Cross-profile mean: <code>${report.production.screens.meanCoarseOrthogonalEdgeShare}</code>; maximum: <code>${report.production.screens.maximumCoarseOrthogonalEdgeShare}</code>. This signal is a regression tripwire for the independently rejected rectilinear floor, not a semantic judgment of scenery quality.</p>
   <h2>Per-decal measurements</h2>
   <table><thead><tr><th>Cell</th><th>Name</th><th>bbox fill</th><th>border ink</th><th>Result</th></tr></thead><tbody>${cells}</tbody></table>
   <p class="note">Floor boundary/core ratio: <code>${report.production.floor.boundaryToInteriorRatio}</code>; edge-band/core ratio: <code>${report.production.floor.edgeBandToCoreRatio}</code>; repeated tile fraction: <code>${report.production.floor.repeatedTileFraction}</code>.</p>
@@ -548,12 +710,19 @@ function renderHtml(report) {
 async function run() {
   const args = process.argv.slice(2);
   const outputIndex = args.indexOf("--output");
+  const screenRootIndex = args.indexOf("--screen-root");
   const outputRoot =
     outputIndex >= 0
       ? path.resolve(root, args[outputIndex + 1])
       : defaultOutput;
   if (outputIndex >= 0 && !args[outputIndex + 1])
     throw new Error("--output requires a path");
+  const screenRoot =
+    screenRootIndex >= 0
+      ? path.resolve(root, args[screenRootIndex + 1])
+      : defaultScreenRoot;
+  if (screenRootIndex >= 0 && !args[screenRootIndex + 1])
+    throw new Error("--screen-root requires a path");
 
   const tilePixels = await readRuntimeTilePixels();
   const [floorBytes, decalBytes, decalRaw] = await Promise.all([
@@ -568,46 +737,91 @@ async function run() {
   const deterministicFloor = await composeFloor(tilePixels);
   const productionDecals = assessDecalAtlas(decalRaw.data, decalRaw.info.width);
   const productionFloor = assessFloorComposition(floor, tilePixels);
+  const productionScreens = await assessGameScreens(screenRoot);
 
   const matteAtlas = opaqueMatteMutation(decalRaw.data, decalRaw.info.width);
   const crossCellAtlas = crossCellMutation(decalRaw.data, decalRaw.info.width);
   const seamFloor = squareSeamMutation(floor, tilePixels);
   const repeatedFloor = await composeFloor(tilePixels, true);
+  const desktopScreen = await sharp(path.join(screenRoot, GAME_SCREEN_NAMES[0]))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const squareGridScreen = squareGridScreenMutation(
+    desktopScreen.data,
+    desktopScreen.info,
+  );
+  const squareGridScreenAssessment = await screenGridEvidence(
+    squareGridScreen,
+    desktopScreen.info,
+  );
+  const squareGridScreenViolations =
+    squareGridScreenAssessment.coarseOrthogonalEdgeShare >
+    THRESHOLDS.screenMaximumCoarseOrthogonalEdgeShare
+      ? ["screen-square-grid-salience"]
+      : [];
+  const matteAssessment = assessDecalAtlas(matteAtlas, decalRaw.info.width);
+  const crossCellAssessment = assessDecalAtlas(
+    crossCellAtlas,
+    decalRaw.info.width,
+  );
+  const seamAssessment = assessFloorComposition(seamFloor, tilePixels);
+  const repeatAssessment = assessFloorComposition(repeatedFloor, tilePixels);
   const mutationAssessments = [
     {
       id: "decal-opaque-matte",
       expectedViolation: "opaque-rectangular-matte",
-      assessment: assessDecalAtlas(matteAtlas, decalRaw.info.width),
+      assessment: matteAssessment,
+      evidence: matteAssessment,
     },
     {
       id: "decal-cross-cell",
       expectedViolation: "cross-cell-boundary-ink",
-      assessment: assessDecalAtlas(crossCellAtlas, decalRaw.info.width),
+      assessment: crossCellAssessment,
+      evidence: crossCellAssessment,
     },
     {
       id: "floor-square-seams",
       expectedViolation: "square-floor-seams",
-      assessment: assessFloorComposition(seamFloor, tilePixels),
+      assessment: seamAssessment,
+      evidence: seamAssessment,
     },
     {
       id: "floor-obvious-repeat",
       expectedViolation: "obvious-repeated-floor-tiles",
-      assessment: assessFloorComposition(repeatedFloor, tilePixels),
+      assessment: repeatAssessment,
+      evidence: repeatAssessment,
+    },
+    {
+      id: "screen-square-grid",
+      expectedViolation: "screen-square-grid-salience",
+      assessment: {
+        pass: squareGridScreenViolations.length === 0,
+        violations: squareGridScreenViolations,
+      },
+      evidence: squareGridScreenAssessment,
     },
   ];
   const negativeControls = mutationAssessments.map(
-    ({ id, expectedViolation, assessment }) => ({
+    ({ id, expectedViolation, assessment, evidence }) => ({
       id,
       expectedViolation,
       detected:
         !assessment.pass && assessment.violations.includes(expectedViolation),
       violations: assessment.violations,
+      evidence,
     }),
   );
 
   const artifacts = {};
   await fs.mkdir(outputRoot, { recursive: true });
   await Promise.all([
+    writeArtifact(
+      outputRoot,
+      "screen-game-matrix.png",
+      await screenContactSheet(screenRoot),
+      artifacts,
+    ),
     writeArtifact(
       outputRoot,
       "floor-composition.png",
@@ -654,11 +868,22 @@ async function run() {
       ),
       artifacts,
     ),
+    writeArtifact(
+      outputRoot,
+      "mutations/screen-square-grid.png",
+      await pngBuffer(
+        squareGridScreen,
+        desktopScreen.info.width,
+        desktopScreen.info.height,
+      ),
+      artifacts,
+    ),
   ]);
 
   const deterministicRepeatSha256Match =
     sha256(floor.pixels) === sha256(deterministicFloor.pixels);
-  const productionPass = productionDecals.pass && productionFloor.pass;
+  const productionPass =
+    productionDecals.pass && productionFloor.pass && productionScreens.pass;
   const controlsPass = negativeControls.every(({ detected }) => detected);
   const report = {
     schemaVersion: 1,
@@ -668,7 +893,7 @@ async function run() {
         ? "pass"
         : "fail",
     scopeNote:
-      "These deterministic pixel metrics catch known rectangular matte, atlas-boundary contamination, square seam, and obvious-repeat regressions. Passing them does not prove that an environment is beautiful, well composed, or ready for human visual acceptance.",
+      "These deterministic pixel metrics inspect the four actual gameplay screen-contract PNGs and catch known rectangular matte, atlas-boundary contamination, coarse square-grid, tile seam, and obvious-repeat regressions. Passing them does not prove that an environment is beautiful, well composed, or ready for human visual acceptance.",
     runtimeContract: {
       viewport: { width: VIEW_WIDTH, height: VIEW_HEIGHT },
       floorAtlasGrid: FLOOR_ATLAS_GRID,
@@ -687,6 +912,7 @@ async function run() {
       pass: productionPass,
       decals: productionDecals,
       floor: productionFloor,
+      screens: productionScreens,
     },
     negativeControls,
     artifacts: Object.fromEntries(
@@ -706,7 +932,7 @@ async function run() {
       `Environment composition gate failed: production=${productionPass}, negative-controls=${controlsPass}, deterministic=${deterministicRepeatSha256Match}`,
     );
   console.log(
-    `Environment composition gate passed: 16 decals, ${floor.columns * floor.rows} runtime floor tiles, 4/4 paired mutations caught.`,
+    `Environment composition gate passed: 16 decals, ${floor.columns * floor.rows} runtime floor tiles, 4 gameplay screens, 5/5 paired mutations caught.`,
   );
 }
 
