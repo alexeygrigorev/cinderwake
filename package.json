@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:topology:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -29,6 +29,7 @@
     "art:presentation:audit": "node scripts/assess-actor-presentation-transform.mjs --experiment art/presentation-experiments/ashfang-uniform-transform-v1.json --output quality-results/actor-presentation/ashfang-uniform-transform-v1",
     "art:pose:audit": "node scripts/assess-actor-pose.mjs --trial art/generation/pose-trials/ashfang-idle-master-v7.json --output quality-results/actor-pose/ashfang-idle-master-v7",
     "art:pose:check": "node scripts/test-actor-pose-trials.mjs",
+    "art:topology:check": "node scripts/test-actor-topology-stencil.mjs && node scripts/test-actor-topology-assessment.mjs",
     "art:pose:guide:check": "node scripts/build-pose-layout-guide.mjs --check",
     "art:anatomy:check": "node scripts/test-anatomy-blockout-trials.mjs",
     "art:pose:assembly:check": "node scripts/test-actor-pose-assembly.mjs",

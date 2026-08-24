@@ -77,7 +77,7 @@ const trials = [
   {
     id: "ashfang-idle-master-v8",
     manifest: "art/generation/pose-trials/ashfang-idle-master-v8.json",
-    expectedViolations: [],
+    expectedViolations: ["topology-mask-drift"],
     requiresReview: true,
   },
 ];

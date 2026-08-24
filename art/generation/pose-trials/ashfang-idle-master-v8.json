@@ -44,7 +44,7 @@
     "failed": [
       {
         "code": "topology-mask-drift",
-        "detail": "The keyed silhouette differs from v4 at 1,959 prepared pixels before alignment and 689 pixels after the best one-pixel correction; the near-fore footprint shortens while the tail and left contour shift."
+        "detail": "The authoritative alpha-24 oracle finds 969 exact prepared-cell mask differences: 463 v4 pixels are missing and 506 candidate pixels are extra. A diagnostic one-pixel alignment still leaves 253 differences and cannot excuse the drift."
       },
       {
         "code": "runtime-mass-and-material-drift",
@@ -72,6 +72,14 @@
     "sha256": "4f9aac8921d16c6cfc69d2810345f07399a335adbe9c96d6aa54809c52fcb5df",
     "status": "rejected",
     "notes": "Contact-aware safe fitting preserves v4's 0.231122 scale, producing 147x157 prepared ink with exact visible grounding and a contact centroid within half a source pixel. Exact review still rejects topology, mass, material, lighting, detail frequency, and downstream seed safety."
+  },
+  "topologyLock": {
+    "reference": {
+      "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+      "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc"
+    },
+    "alphaThreshold": 24,
+    "maximumChangedPixels": 0
   },
   "visualReview": {
     "verdict": "REJECT",
@@ -110,8 +118,8 @@
     "collisionRadiusWorldUnits": 300,
     "unitsPerTile": 1024,
     "tilePixels": 48,
-    "expectedAssessment": "pass",
-    "expectedViolationCodes": []
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["topology-mask-drift"]
   },
   "recommendation": "Do not generate idle or walk phases from v8. Enforce v4's keyed silhouette deterministically instead of trusting a prompt-only topology lock, then make one more surface-only candidate with six to eight broad matte groups, no stone grain or silver rims, simplified seams, soft warm upper-left light, and no movement of any limb, paw, gap, contact, or camera feature."
 }

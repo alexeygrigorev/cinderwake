@@ -479,6 +479,154 @@ async function validateFile(record, label) {
   return { filePath, bytes, sha256: sha256(bytes) };
 }
 
+function visibleMask(image, alphaThreshold) {
+  const mask = new Uint8Array(image.info.width * image.info.height);
+  let visiblePixels = 0;
+  for (let index = 0; index < mask.length; index += 1) {
+    if (image.data[index * 4 + 3] < alphaThreshold) continue;
+    mask[index] = 1;
+    visiblePixels += 1;
+  }
+  return { mask, visiblePixels };
+}
+
+function compareVisibleMasks(
+  candidateMask,
+  referenceMask,
+  width,
+  height,
+  candidateOffsetX = 0,
+  candidateOffsetY = 0,
+) {
+  let candidateVisiblePixels = 0;
+  let referenceVisiblePixels = 0;
+  let missingPixels = 0;
+  let extraPixels = 0;
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const candidateX = x - candidateOffsetX;
+      const candidateY = y - candidateOffsetY;
+      const candidateVisible =
+        candidateX >= 0 &&
+        candidateX < width &&
+        candidateY >= 0 &&
+        candidateY < height
+          ? candidateMask[candidateY * width + candidateX]
+          : 0;
+      const referenceVisible = referenceMask[y * width + x];
+      candidateVisiblePixels += candidateVisible;
+      referenceVisiblePixels += referenceVisible;
+      if (referenceVisible && !candidateVisible) missingPixels += 1;
+      if (candidateVisible && !referenceVisible) extraPixels += 1;
+    }
+  }
+  return {
+    candidateOffset: { x: candidateOffsetX, y: candidateOffsetY },
+    candidateVisiblePixels,
+    referenceVisiblePixels,
+    missingPixels,
+    extraPixels,
+    changedPixels: missingPixels + extraPixels,
+  };
+}
+
+function assessTopologyLock(prepared, reference, topologyLock) {
+  const alphaThreshold = topologyLock.alphaThreshold;
+  const maximumChangedPixels = topologyLock.maximumChangedPixels;
+  if (
+    !Number.isInteger(alphaThreshold) ||
+    alphaThreshold < 1 ||
+    alphaThreshold > 255
+  )
+    throw new Error(
+      "topologyLock.alphaThreshold must be an integer from 1 to 255",
+    );
+  if (!Number.isInteger(maximumChangedPixels) || maximumChangedPixels < 0)
+    throw new Error(
+      "topologyLock.maximumChangedPixels must be a non-negative integer",
+    );
+  if (
+    reference.info.width !== sourceCell ||
+    reference.info.height !== sourceCell ||
+    reference.info.width !== prepared.info.width ||
+    reference.info.height !== prepared.info.height
+  )
+    throw new Error(
+      `topologyLock reference dimensions must be ${sourceCell}x${sourceCell} and match the prepared candidate; received ${reference.info.width}x${reference.info.height}`,
+    );
+  const candidate = visibleMask(prepared, alphaThreshold);
+  const expected = visibleMask(reference, alphaThreshold);
+  const exact = compareVisibleMasks(
+    candidate.mask,
+    expected.mask,
+    sourceCell,
+    sourceCell,
+  );
+  const alignments = [];
+  for (let y = -1; y <= 1; y += 1)
+    for (let x = -1; x <= 1; x += 1)
+      alignments.push(
+        compareVisibleMasks(
+          candidate.mask,
+          expected.mask,
+          sourceCell,
+          sourceCell,
+          x,
+          y,
+        ),
+      );
+  alignments.sort(
+    (left, right) =>
+      left.changedPixels - right.changedPixels ||
+      Math.abs(left.candidateOffset.x) +
+        Math.abs(left.candidateOffset.y) -
+        (Math.abs(right.candidateOffset.x) +
+          Math.abs(right.candidateOffset.y)) ||
+      left.candidateOffset.y - right.candidateOffset.y ||
+      left.candidateOffset.x - right.candidateOffset.x,
+  );
+  const best = alignments[0];
+  return {
+    pass: exact.changedPixels <= maximumChangedPixels,
+    alphaThreshold,
+    maximumChangedPixels,
+    exact,
+    bestAlignmentDiagnostic: {
+      searchRadiusPixels: 1,
+      affectsVerdict: false,
+      ...best,
+      improvementPixels: exact.changedPixels - best.changedPixels,
+    },
+    candidateMask: candidate.mask,
+    referenceMask: expected.mask,
+  };
+}
+
+async function topologyDiff(topology) {
+  const data = Buffer.alloc(sourceCell * sourceCell * 4);
+  for (let index = 0; index < topology.candidateMask.length; index += 1) {
+    const candidate = topology.candidateMask[index];
+    const reference = topology.referenceMask[index];
+    const color =
+      candidate && reference
+        ? [232, 216, 184, 255]
+        : reference
+          ? [242, 74, 86, 255]
+          : candidate
+            ? [62, 202, 224, 255]
+            : [18, 16, 22, 255];
+    data[index * 4] = color[0];
+    data[index * 4 + 1] = color[1];
+    data[index * 4 + 2] = color[2];
+    data[index * 4 + 3] = color[3];
+  }
+  return sharp(data, {
+    raw: { width: sourceCell, height: sourceCell, channels: 4 },
+  })
+    .png({ compressionLevel: 9, palette: false })
+    .toBuffer();
+}
+
 async function reproducePreparation(trial) {
   const temporaryRoot = await fs.mkdtemp(
     path.join(os.tmpdir(), "cinderwake-pose-ingress-"),
@@ -488,16 +636,41 @@ async function reproducePreparation(trial) {
     const second = path.join(temporaryRoot, "prepared-b.png");
     const script = path.join(root, "scripts", "prepare-actor-pose.mjs");
     const input = path.resolve(root, trial.candidateFile);
+    const topologyMask = trial.preparation.topologyMask
+      ? await validateFile(
+          trial.preparation.topologyMask,
+          "preparation topology mask",
+        )
+      : null;
+    let topologyDiagnostics = null;
     for (const output of [first, second]) {
       const arguments_ = [script, "--input", input, "--output", output];
       if (trial.preparation.preserveFraming)
         arguments_.push("--preserve-framing");
+      if (topologyMask)
+        arguments_.push("--topology-mask", topologyMask.filePath);
       const result = await executeFile(process.execPath, arguments_, {
         cwd: root,
         maxBuffer: 10 * 1024 * 1024,
       });
       if (result.stderr.trim())
         throw new Error(`Pose preparation wrote to stderr: ${result.stderr}`);
+      const report = JSON.parse(result.stdout);
+      if (topologyMask) {
+        if (!report.topology?.exactMaskAfterEnforcement)
+          throw new Error(
+            "Pose preparation did not enforce its topology mask exactly",
+          );
+        if (
+          topologyDiagnostics &&
+          JSON.stringify(topologyDiagnostics) !==
+            JSON.stringify(report.topology)
+        )
+          throw new Error(
+            "Pose preparation topology diagnostics are not deterministic",
+          );
+        topologyDiagnostics = report.topology;
+      }
     }
     const [firstBytes, secondBytes, committedBytes] = await Promise.all([
       fs.readFile(first),
@@ -520,6 +693,15 @@ async function reproducePreparation(trial) {
       sha256: firstSha256,
       deterministicRepeatSha256Match: true,
       byteIdenticalToCommitted: true,
+      ...(topologyMask
+        ? {
+            topologyMask: {
+              file: trial.preparation.topologyMask.file,
+              sha256: topologyMask.sha256,
+            },
+            topology: topologyDiagnostics,
+          }
+        : {}),
     };
   } finally {
     await fs.rm(temporaryRoot, { recursive: true, force: true });
@@ -702,12 +884,45 @@ async function run() {
     }),
     keyedImage(prepared.filePath),
   ]);
+  let topology = null;
+  let topologyReference = null;
+  if (trial.topologyLock) {
+    if (
+      !trial.topologyLock.reference ||
+      typeof trial.topologyLock.reference !== "object" ||
+      typeof trial.topologyLock.reference.file !== "string" ||
+      typeof trial.topologyLock.reference.sha256 !== "string"
+    )
+      throw new Error(
+        "topologyLock.reference must declare exact file and sha256 fields",
+      );
+    topologyReference = await validateFile(
+      trial.topologyLock.reference,
+      "topologyLock reference",
+    );
+    const referenceImage = await keyedImage(topologyReference.filePath);
+    topology = assessTopologyLock(
+      preparedImage,
+      referenceImage,
+      trial.topologyLock,
+    );
+  }
   const runtime = await projectRuntime(preparedImage);
   const assessment = assessPose(
     preparedImage,
     runtime.image,
     trial.mechanicalTargets,
   );
+  if (topology && !topology.pass) {
+    assessment.violations.push({
+      code: "topology-mask-drift",
+      actual: topology.exact.changedPixels,
+      maximum: topology.maximumChangedPixels,
+      missingPixels: topology.exact.missingPixels,
+      extraPixels: topology.exact.extraPixels,
+    });
+    assessment.pass = false;
+  }
   const negativeControlsResult = await negativeControls(
     trial.mechanicalTargets,
   );
@@ -740,6 +955,10 @@ async function run() {
     options.output,
     "runtime-scale-comparison.png",
   );
+  const topologyDiffPath = topology
+    ? path.join(options.output, "topology-diff.png")
+    : null;
+  const topologyDiffBuffer = topology ? await topologyDiff(topology) : null;
   await Promise.all([
     writePoseEvidence(
       candidate.filePath,
@@ -749,6 +968,9 @@ async function run() {
       poseEvidencePath,
     ),
     writeScaleComparison(runtime.buffer, runtimeComparisonPath),
+    ...(topologyDiffPath
+      ? [fs.writeFile(topologyDiffPath, topologyDiffBuffer)]
+      : []),
   ]);
   const [poseEvidenceSha256, runtimeComparisonSha256] = await Promise.all([
     fs.readFile(poseEvidencePath).then(sha256),
@@ -820,6 +1042,26 @@ async function run() {
       ),
     },
     assessment,
+    ...(topology
+      ? {
+          topologyLock: {
+            reference: {
+              file: trial.topologyLock.reference.file,
+              sha256: topologyReference.sha256,
+              dimensions: `${sourceCell}x${sourceCell}`,
+            },
+            alphaThreshold: topology.alphaThreshold,
+            maximumChangedPixels: topology.maximumChangedPixels,
+            pass: topology.pass,
+            exact: topology.exact,
+            bestAlignmentDiagnostic: topology.bestAlignmentDiagnostic,
+            diffArtifact: {
+              file: "topology-diff.png",
+              sha256: sha256(topologyDiffBuffer),
+            },
+          },
+        }
+      : {}),
     expectation: {
       expectedAssessment: expectedMechanicalAssessment,
       expectedViolationCodes,
@@ -836,7 +1078,11 @@ async function run() {
         }
       : null,
     negativeControls: negativeControlsResult,
-    artifacts: ["pose-evidence.png", "runtime-scale-comparison.png"],
+    artifacts: [
+      "pose-evidence.png",
+      "runtime-scale-comparison.png",
+      ...(topology ? ["topology-diff.png"] : []),
+    ],
   };
   await Promise.all([
     fs.writeFile(

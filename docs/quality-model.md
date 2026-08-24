@@ -18,8 +18,30 @@ Quality is assessed at declared scenarios and frame ranges, not by a vague claim
 | Device-safe encounter | The first three threats are wholly inside the unobstructed viewport after the real CSS canvas crop and do not deeply stack.                                                           | device-space projected manifest bounds            | opening reads as an encounter rather than clipped scenery               |
 | World-UI attachment   | A monster health bar is centered and 2–4 logical pixels above the current frame's actual alpha-ink top.                                                                               | alpha-derived world-UI manifest geometry          | bars clearly belong to bodies instead of floating as debris             |
 | Isolated-pose scale   | Every separately generated pose is normalized in the 1024-pixel source space, receives one shared scale, and ends on the fixed source anchor; no cell-local transform is permitted.   | assembly report, exact hashes, 16 mutations       | identity, camera, anatomy, support ownership, and weight transfer agree |
+| Topology-locked paint | A surface-only edit has the exact reviewed keyed silhouette after deterministic stencil preparation; translation or best alignment never excuses a changed contour.                   | exact mask diff, stencil report, named mutations  | internal materials preserve limb ownership and read naturally at scale  |
 
 Numeric tolerances belong in scenario/test metadata, never hidden in an evaluator’s judgment. Pixel comparisons are valuable for regressions but may vary with browser rasterization; manifests and semantic snapshots are the source of truth for geometry and timing. Conversely, passing all metrics is not proof of quality: reviewers inspect screenshots and especially multi-frame strips for unnatural rhythm, overlap, visual hierarchy, and whether the action is understandable at a glance.
+
+## Topology-locked isolated edits
+
+`npm run art:topology:check` covers both enforcement and detection. The
+preparer's optional `--topology-mask` mode operates before safe fitting in the
+normalized 1024-pixel space. It uses the reviewed reference alpha, clips extra
+candidate ink, fills missing reference foreground from the nearest candidate
+foreground with deterministic Manhattan distance and tie order, and refuses a
+blank candidate or reference. With the option absent, historical output bytes
+remain unchanged.
+
+The pose manifest's optional `topologyLock` points to one exact 256 × 256
+prepared reference, declares alpha threshold `24`, and normally permits zero
+changed pixels. The oracle reports missing, extra, exact changed, and best
+one-pixel-alignment counts plus `topology-diff.png`. Only the unshifted exact
+comparison controls `topology-mask-drift`. Synthetic controls prove identical
+masks pass, one contour pixel fails, a translated mask remains red even when
+alignment can explain it, reference hashes/dimensions are strict, stencil holes
+receive non-magenta color, extra ink is clipped, and repeated artifacts are
+byte-identical. Exact topology is still not evidence of good anatomy, value
+design, identity, or movement; independent visual review retains veto power.
 
 ## Enforced sequence thresholds
 

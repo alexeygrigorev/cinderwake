@@ -27,12 +27,13 @@ function parseArguments(arguments_) {
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
     if (argument === "--help") {
-      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png> [--preserve-framing]
+      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png> [--preserve-framing] [--topology-mask <png>]
 
 Normalizes one isolated generated actor pose into one fixed 256x256
 ActorAtlasV2 source cell without changing its aspect ratio. The optional
 framing mode preserves the canonical 1024-to-256 canvas scale and only
-shrinks further when required by the safe bounds.`);
+shrinks further when required by the safe bounds. The optional topology mask
+replaces the candidate silhouette in normalized 1024-space before placement.`);
       process.exit(0);
     }
     if (argument === "--preserve-framing") {
@@ -40,17 +41,20 @@ shrinks further when required by the safe bounds.`);
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
-    if (name !== "--input" && name !== "--output")
+    if (name !== "--input" && name !== "--output" && name !== "--topology-mask")
       throw new Error(`Unknown option: ${argument}`);
     const value = inlineValue ?? arguments_[++index];
     if (!value || value.startsWith("--"))
       throw new Error(`${name} requires a value`);
-    options[name.slice(2)] = path.resolve(root, value);
+    const key = name === "--topology-mask" ? "topologyMask" : name.slice(2);
+    options[key] = path.resolve(root, value);
   }
   if (!options.input || !options.output)
     throw new Error("--input and --output are required");
   if (options.input === options.output)
     throw new Error("Preparation cannot overwrite its raw input");
+  if (options.topologyMask === options.output)
+    throw new Error("Preparation cannot overwrite its topology mask");
   return options;
 }
 
@@ -103,6 +107,29 @@ async function normalizedKeyedInput(inputPath) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
+async function normalizedKeyedTopology(inputPath) {
+  const metadata = await sharp(inputPath).metadata();
+  if (!metadata.width || metadata.width !== metadata.height)
+    throw new Error(
+      `Topology mask must be a non-empty square image; received ${metadata.width}x${metadata.height}`,
+    );
+  const { data, info } = await sharp(inputPath)
+    .resize(normalizedInputSize, normalizedInputSize, {
+      fit: "fill",
+      kernel: "lanczos3",
+    })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (let offset = 0; offset < data.length; offset += 4) {
+    data[offset + 3] = Math.min(
+      data[offset + 3],
+      keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+    );
+  }
+  return sharp(data, { raw: info }).png().toBuffer();
+}
+
 async function removeBoundaryArtifacts(buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -151,6 +178,146 @@ async function removeBoundaryArtifacts(buffer) {
     for (const pixel of component.pixels) data[pixel * 4 + 3] = 0;
   }
   return sharp(data, { raw: info }).png().toBuffer();
+}
+
+async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
+  const [candidate, topology] = await Promise.all(
+    [candidateBuffer, topologyBuffer].map((buffer) =>
+      sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+  if (
+    candidate.info.width !== topology.info.width ||
+    candidate.info.height !== topology.info.height
+  )
+    throw new Error("Candidate and topology mask normalized sizes differ");
+
+  const { width, height } = candidate.info;
+  const pixelCount = width * height;
+  const candidateVisible = new Uint8Array(pixelCount);
+  const referenceVisible = new Uint8Array(pixelCount);
+  const referenceAlpha = new Uint8Array(pixelCount);
+  const nearestSource = new Int32Array(pixelCount);
+  nearestSource.fill(-1);
+  const queue = new Int32Array(pixelCount);
+  let queueLength = 0;
+  let candidateVisiblePixels = 0;
+  let referenceVisiblePixels = 0;
+  let referenceAntialiasPixels = 0;
+  let missingVisiblePixels = 0;
+  let extraVisiblePixels = 0;
+
+  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+    const offset = pixel * 4;
+    const candidateAlpha = Math.min(
+      candidate.data[offset + 3],
+      keyedAlpha(
+        candidate.data[offset],
+        candidate.data[offset + 1],
+        candidate.data[offset + 2],
+      ),
+    );
+    const maskAlpha = Math.min(
+      topology.data[offset + 3],
+      keyedAlpha(
+        topology.data[offset],
+        topology.data[offset + 1],
+        topology.data[offset + 2],
+      ),
+    );
+    referenceAlpha[pixel] = maskAlpha;
+    if (candidateAlpha >= 24) {
+      candidateVisible[pixel] = 1;
+      candidateVisiblePixels += 1;
+      nearestSource[pixel] = pixel;
+      queue[queueLength++] = pixel;
+    }
+    if (maskAlpha >= 24) {
+      referenceVisible[pixel] = 1;
+      referenceVisiblePixels += 1;
+    } else if (maskAlpha > 0) {
+      referenceAntialiasPixels += 1;
+    }
+  }
+  if (candidateVisiblePixels === 0) throw new Error("isolated pose is blank");
+  if (referenceVisiblePixels === 0) throw new Error("topology mask is blank");
+
+  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+    if (referenceVisible[pixel] && !candidateVisible[pixel])
+      missingVisiblePixels += 1;
+    if (candidateVisible[pixel] && !referenceVisible[pixel])
+      extraVisiblePixels += 1;
+  }
+
+  // A row-major multi-source flood gives every missing mask pixel the nearest
+  // candidate foreground under four-neighbor Manhattan distance. Seed order,
+  // followed by left/right/up/down neighbor order, is the stable tie break.
+  for (let cursor = 0; cursor < queueLength; cursor += 1) {
+    const pixel = queue[cursor];
+    const x = pixel % width;
+    const neighbors = [
+      x > 0 ? pixel - 1 : -1,
+      x + 1 < width ? pixel + 1 : -1,
+      pixel >= width ? pixel - width : -1,
+      pixel + width < pixelCount ? pixel + width : -1,
+    ];
+    for (const neighbor of neighbors) {
+      if (neighbor < 0 || nearestSource[neighbor] !== -1) continue;
+      nearestSource[neighbor] = nearestSource[pixel];
+      queue[queueLength++] = neighbor;
+    }
+  }
+
+  const output = Buffer.alloc(candidate.data.length);
+  let changedPixels = 0;
+  let exactMaskAfterEnforcement = true;
+  for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+    const offset = pixel * 4;
+    const maskAlpha = referenceAlpha[pixel];
+    if (maskAlpha > 0) {
+      const source = candidateVisible[pixel] ? pixel : nearestSource[pixel];
+      const sourceOffset = source * 4;
+      output[offset] = candidate.data[sourceOffset];
+      output[offset + 1] = candidate.data[sourceOffset + 1];
+      output[offset + 2] = candidate.data[sourceOffset + 2];
+      output[offset + 3] = maskAlpha;
+    }
+    const candidateAlpha = candidate.data[offset + 3];
+    const colorChanged =
+      maskAlpha > 0 &&
+      (output[offset] !== candidate.data[offset] ||
+        output[offset + 1] !== candidate.data[offset + 1] ||
+        output[offset + 2] !== candidate.data[offset + 2]);
+    if (maskAlpha !== candidateAlpha || colorChanged) changedPixels += 1;
+    const outputVisible =
+      Math.min(
+        output[offset + 3],
+        keyedAlpha(output[offset], output[offset + 1], output[offset + 2]),
+      ) >= 24;
+    if (outputVisible !== Boolean(referenceVisible[pixel]))
+      exactMaskAfterEnforcement = false;
+  }
+  if (!exactMaskAfterEnforcement)
+    throw new Error(
+      "Topology enforcement did not reproduce the reference mask",
+    );
+
+  return {
+    buffer: await sharp(output, { raw: candidate.info }).png().toBuffer(),
+    diagnostics: {
+      coordinateSpace: `${width}x${height}`,
+      distanceMetric: "four-neighbor-manhattan",
+      tieOrder: "row-major-sources;left,right,up,down-neighbors",
+      candidateVisiblePixels,
+      referenceVisiblePixels,
+      referenceAntialiasPixels,
+      candidateMissingVisiblePixels: missingVisiblePixels,
+      candidateExtraVisiblePixels: extraVisiblePixels,
+      changedVisiblePixels: missingVisiblePixels + extraVisiblePixels,
+      changedPixels,
+      exactMaskAfterEnforcement,
+    },
+  };
 }
 
 async function alphaBounds(buffer, label) {
@@ -247,7 +414,24 @@ function safeScaleCorrection(bounds) {
 async function run() {
   const options = parseArguments(process.argv.slice(2));
   const keyed = await normalizedKeyedInput(options.input);
-  const cleaned = await removeBoundaryArtifacts(keyed);
+  let cleaned = await removeBoundaryArtifacts(keyed);
+  let topologyDiagnostics;
+  if (options.topologyMask) {
+    // Check the candidate independently so a topology stencil can never turn
+    // a blank generation into an apparently valid prepared pose.
+    await alphaBounds(cleaned, "isolated pose");
+    const normalizedTopology = await normalizedKeyedTopology(
+      options.topologyMask,
+    );
+    const cleanedTopology = await removeBoundaryArtifacts(normalizedTopology);
+    await alphaBounds(cleanedTopology, "topology mask");
+    const enforced = await enforceTopologyMask(cleaned, cleanedTopology);
+    cleaned = enforced.buffer;
+    topologyDiagnostics = {
+      reference: path.relative(root, options.topologyMask),
+      ...enforced.diagnostics,
+    };
+  }
   const inputBounds = await alphaBounds(cleaned, "isolated pose");
   const maximumScale = options.preserveFraming
     ? cellSize / normalizedInputSize
@@ -360,6 +544,7 @@ async function run() {
         },
         footAnchor,
         safeBounds,
+        ...(topologyDiagnostics ? { topology: topologyDiagnostics } : {}),
       },
       null,
       2,

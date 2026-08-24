@@ -286,14 +286,34 @@ support row locked; the result starts unreviewed and must pass the full gates.
 Isolated identity master v8 uses v4 as the sole spatial authority and limits
 production Ashfang plus Stonekin to identity and cast-rendering roles. It keeps
 four runtime-readable chains, both diagonals, the elevated living stance, a
-75 × 79 mechanical envelope, centered support, and 5/5 controls. Exact-hash
-review still rejects it as a phase-generation seed. A keyed-mask comparison
-finds 1,959 changed prepared silhouette pixels before alignment and 689 after
-the best one-pixel correction; the near-fore footprint shortens while other
-contours shift. Dense stone grain, fine borders, silver rims, and claw detail
-also collapse into dark runtime noise that would vary across phases. A prompt
-claiming “immutable stencil” is not evidence. V4's keyed silhouette must become
-a deterministic gate or transformation before the next broad-matte repaint.
+75 × 79 envelope, centered support, and 5/5 controls. Exact-hash review still
+rejects it as a phase-generation seed. The authoritative alpha-24 oracle finds
+969 exact prepared-cell mask differences: 463 expected pixels are missing and
+506 candidate pixels are extra. Best one-pixel alignment leaves 253 differences
+and is diagnostic only. Dense stone grain, fine borders, silver rims, and claw
+detail also collapse into dark runtime noise that would vary across phases. A
+prompt claim that a stencil is immutable is not evidence.
+
+Use `npm run art:topology:check` to test both boundaries. The topology oracle
+compares exact prepared-cell keyed masks and emits `topology-diff.png`; a best
+alignment can explain drift but never excuse it. The opt-in preparer mode:
+
+```bash
+node scripts/prepare-actor-pose.mjs \
+  --input <candidate.png> \
+  --output <prepared.png> \
+  --preserve-framing \
+  --topology-mask <reviewed-raw-topology.png>
+```
+
+clips extra candidate ink, fills missing reference foreground from the nearest
+candidate foreground with a fixed Manhattan/tie order, preserves the reviewed
+alpha mask, and reports all changed pixels. A manifest using that mode records
+the exact topology-mask file and hash under `preparation.topologyMask`; a
+separate `topologyLock` binds the reviewed prepared reference, alpha threshold,
+and permitted difference count. Enforcement establishes silhouette identity,
+not artistic quality: material, lighting, anatomy readability, and motion still
+require exact-hash and temporal review.
 
 ## Mobile selection scenes
 
