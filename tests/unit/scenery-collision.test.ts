@@ -194,14 +194,16 @@ describe("deterministic scenery collision", () => {
       `${broken[raisedIndex]!.id}:raised-object-must-be-solid`,
     ]);
 
-    const raisedDecal = structuredClone(layout);
-    const decalIndex = raisedDecal.findIndex(({ kind }) => kind === "decal");
-    raisedDecal[decalIndex] = {
-      ...raisedDecal[decalIndex]!,
-      name: "chain-coil",
-    };
-    expect(sceneryCollisionContractViolations(raisedDecal)).toEqual([
-      `${raisedDecal[decalIndex]!.id}:raised-decal-must-be-solid`,
-    ]);
+    for (const raisedName of ["chain-coil", "cracked-embers"]) {
+      const raisedDecal = structuredClone(layout);
+      const decalIndex = raisedDecal.findIndex(({ kind }) => kind === "decal");
+      raisedDecal[decalIndex] = {
+        ...raisedDecal[decalIndex]!,
+        name: raisedName,
+      };
+      expect(sceneryCollisionContractViolations(raisedDecal)).toEqual([
+        `${raisedDecal[decalIndex]!.id}:raised-decal-must-be-solid`,
+      ]);
+    }
   });
 });

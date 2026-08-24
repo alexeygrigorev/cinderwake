@@ -82,9 +82,17 @@ export const PASSABLE_GROUND_DECAL_NAMES = [
   "blood-smear",
   "occult-circle",
   "claw-tracks",
-  "cracked-embers",
   "banner-scrap",
 ] as const;
+
+const OPENING_GROUND_DECAL_NAMES = [
+  "scorch-ring",
+  "blood-smear",
+  "occult-circle",
+  "claw-tracks",
+  "banner-scrap",
+  "blood-smear",
+] as const satisfies readonly (typeof PASSABLE_GROUND_DECAL_NAMES)[number][];
 
 type StructureName = (typeof STRUCTURE_NAMES)[number];
 type PropName = (typeof PROP_NAMES)[number];
@@ -342,7 +350,7 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       let y = room.y + slot.y;
       const name: GroundDecalName =
         roomIndex === 0
-          ? PASSABLE_GROUND_DECAL_NAMES[decalIndex]!
+          ? OPENING_GROUND_DECAL_NAMES[decalIndex]!
           : PASSABLE_GROUND_DECAL_NAMES[
               sceneVariant(
                 map,

@@ -134,6 +134,7 @@ describe("generated opening encounter", () => {
     expect(decals.every(({ name }) => decalNames.has(name))).toBe(true);
     const passableNames = new Set<string>(PASSABLE_GROUND_DECAL_NAMES);
     expect(decals.every(({ name }) => passableNames.has(name))).toBe(true);
+    expect(passableNames.has("cracked-embers")).toBe(false);
     expect(
       decals.every(
         ({ collisionMode, collision }) =>
