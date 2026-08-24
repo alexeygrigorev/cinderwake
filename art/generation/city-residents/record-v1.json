@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "id": "embercross-residents-idle-v1",
+  "status": "raw-ingress-fail-opaque-checker-candidate-for-deterministic-preparation",
+  "created": "2026-08-24",
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-f7004093-00fa-47df-8e7a-95a3a9ec3bce",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "calls": 1,
+    "prompt": {
+      "file": "art/generation/city-residents/prompts/embercross-residents-idle-v1.md",
+      "sha256": "ef58bb10471dadb240bddf2fcdb698695431fd6ce9fa99b869f41a5e9cac167c"
+    },
+    "references": [
+      {
+        "file": "art/generation/city-kit/prepared/embercross-city-kit-v3.png",
+        "role": "production city palette, material, camera, and light reference",
+        "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85"
+      },
+      {
+        "file": "public/assets/sprites/actor-vanguard.png",
+        "role": "production actor body scale, foot anchor, and camera reference",
+        "sha256": "5004facbf1b0400554b30c80fe1f83dd097786c7c61f8b235734c551f8d620a4"
+      },
+      {
+        "file": "public/assets/sprites/actor-ranger.png",
+        "role": "production unarmored actor silhouette and scale reference",
+        "sha256": "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862"
+      }
+    ],
+    "raw": {
+      "file": "art/generation/city-residents/raw/embercross-residents-idle-v1.png",
+      "sha256": "23b6ab6438d9c1b20d6965ee80cb15605d525e5bc886a2d637db430289e3266c",
+      "width": 1254,
+      "height": 1254,
+      "channels": "srgb"
+    }
+  },
+  "declaredGrid": {
+    "columns": 4,
+    "rows": 4,
+    "rowIds": [
+      "npc:embercross:mara",
+      "npc:embercross:oren",
+      "npc:embercross:tess",
+      "npc:embercross:ileya"
+    ],
+    "columnPoses": ["neutral", "inhale", "weight-shift", "return"]
+  },
+  "rawIngress": {
+    "pass": false,
+    "requestedTransparency": true,
+    "actualAlphaChannel": false,
+    "observedBackdrop": "opaque light-neutral checkerboard",
+    "decision": "Preserve raw bytes. Permit only a deterministic border-connected neutral-background extraction trial; do not register or render the raw image."
+  }
+}
