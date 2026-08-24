@@ -725,10 +725,12 @@ async function run() {
   const maximumCleanedHeight = Math.max(
     ...isolatedCells.map(({ rawBounds }) => rawBounds.height),
   );
+  const canonicalIsolatedCanvasScale =
+    contract.source.cellWidth / contract.source.pixelWidth;
   const sharedScale = Math.min(
     safeInkBounds.width / maximumCleanedWidth,
     safeInkBounds.height / maximumCleanedHeight,
-    1,
+    canonicalIsolatedCanvasScale,
   );
   assert(
     Number.isFinite(sharedScale) && sharedScale > 0,
@@ -915,6 +917,7 @@ async function run() {
       },
       literalBackground: contract.source.background.toLowerCase(),
       sourceScale,
+      canonicalIsolatedCanvasScale,
       footAnchor,
       safeInkBounds,
       sharedIsolatedPoseScale: Number(sharedScale.toFixed(8)),

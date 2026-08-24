@@ -25,7 +25,9 @@ separately generated poses:
 2. Key and clean every isolated pose without changing its silhouette
    independently.
 3. Derive one uniform scale from the maximum isolated-pose width and height,
-   then apply that exact scale to every isolated cell.
+   cap it at the canonical 1024→256 canvas factor `0.25`, then apply that exact
+   scale to every isolated cell. The assembler may shrink an oversized set but
+   never magnify away the authored canvas framing.
 4. Ground every placement box on the contract-derived source anchor `(128,
 232)` and retain the `(10, 8, 236, 224)` safe region.
 5. Reject every cell-local scale, resize, or transform field. Inherited cells

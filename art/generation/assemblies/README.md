@@ -25,6 +25,9 @@ master must not seed more poses.
      --report quality-results/actor-pose-assembly/<actor>-<family>-v1.json
    ```
 
+   The common scale is capped at the canonical 1024→256 factor, so compliant
+   raw framing is preserved and only an oversized set is reduced.
+
 6. Run candidate calibration, atlas build/audit, real start→walk→stop and mobile
    captures, then inspect the exact source and runtime frame sequence.
 7. Add the resulting output hash and independent six-axis review. Rerun the same
@@ -143,7 +146,8 @@ For a four-phase east walk, use explicit roles:
 | 6    | contact B — far fore and near hind own support               |
 | 7    | passing B — the complementary pair returns cleanly to cell 4 |
 
-Source assembly proves only shared isolated-pose scale, fixed placement, and
-provenance. `npm run art:candidate:check`, `npm run art:animation:check`, and
-the temporal capture matrix remain mandatory because a clean cut cannot prove
-natural gait or consistency with inherited cells.
+Source assembly proves only shared isolated-pose scale, preserved 1024→256
+canvas framing, fixed placement, and provenance.
+`npm run art:candidate:check`, `npm run art:animation:check`, and the temporal
+capture matrix remain mandatory because a clean cut cannot prove natural gait
+or consistency with inherited cells.

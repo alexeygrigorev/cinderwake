@@ -274,6 +274,11 @@ async function main() {
     assert(isolatedReports.length === 4, "report omitted isolated cells");
     const sharedScale = first.report.assembly.sharedIsolatedPoseScale;
     assert(
+      first.report.assembly.canonicalIsolatedCanvasScale === 0.25 &&
+        sharedScale <= first.report.assembly.canonicalIsolatedCanvasScale,
+      "isolated-pose assembly enlarged authored 1024px canvas framing",
+    );
+    assert(
       isolatedReports.every(
         ({ effectiveScale }) => effectiveScale === sharedScale,
       ),
