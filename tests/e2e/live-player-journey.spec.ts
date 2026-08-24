@@ -84,7 +84,7 @@ test("ordinary production route advances in real time and opens on a visible enc
           health.destinationRect.width / 2 -
           (actor.destinationRect.x + actor.destinationRect.width / 2),
       );
-      return gap < 2 || gap > 4 || centerDelta > 1
+      return gap < 3 || gap > 5 || centerDelta > 1
         ? [`${health.ownerId}:detached-health-bar`]
         : [];
     });
@@ -194,18 +194,48 @@ test("ordinary touch movement and Strike produce different live outcomes", async
     const player = observer
       .renderManifest()
       .drawCalls.find(({ entityId }) => entityId === "player")!;
+    const monsters = observer
+      .renderManifest()
+      .drawCalls.filter(({ type, visible }) => type === "monster" && visible);
+    const directions = [
+      { x: 72, y: 0, worldAxis: "x", worldSign: 1 },
+      { x: -72, y: 0, worldAxis: "x", worldSign: -1 },
+      { x: 0, y: 72, worldAxis: "y", worldSign: 1 },
+      { x: 0, y: -72, worldAxis: "y", worldSign: -1 },
+    ] as const;
+    const direction = directions
+      .map((candidate) => ({
+        ...candidate,
+        clearance: Math.min(
+          ...monsters.map(({ screenAnchor }) =>
+            Math.hypot(
+              player.screenAnchor.x + candidate.x - screenAnchor.x,
+              player.screenAnchor.y + candidate.y - screenAnchor.y,
+            ),
+          ),
+        ),
+      }))
+      .sort((first, second) => second.clearance - first.clearance)[0]!;
     return {
-      x: canvas.left + ((player.screenAnchor.x + 72) / 960) * canvas.width,
-      y: canvas.top + (player.screenAnchor.y / 540) * canvas.height,
+      x:
+        canvas.left +
+        ((player.screenAnchor.x + direction.x) / 960) * canvas.width,
+      y:
+        canvas.top +
+        ((player.screenAnchor.y + direction.y) / 540) * canvas.height,
+      worldAxis: direction.worldAxis,
+      worldSign: direction.worldSign,
       before: observer.snapshot(),
     };
   });
   await page.touchscreen.tap(destination.x, destination.y);
   await page.waitForTimeout(350);
   const moved = await page.evaluate(() => window.__GAME_OBSERVE__!.snapshot());
-  expect(moved.player.position.x).toBeGreaterThan(
-    destination.before.player.position.x,
-  );
+  expect(
+    (moved.player.position[destination.worldAxis] -
+      destination.before.player.position[destination.worldAxis]) *
+      destination.worldSign,
+  ).toBeGreaterThan(0);
   expect(
     moved.eventLog.some(
       ({ type, sourceId }) =>

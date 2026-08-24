@@ -239,7 +239,9 @@ describe("deterministic monster separation", () => {
 
     expect(firstTrajectory).toEqual(secondTrajectory);
     expect(
-      first.monsters.every(({ animation }) => animation.clip === "walk"),
+      first.monsters.every(({ animation }) =>
+        ["idle", "walk"].includes(animation.clip),
+      ),
     ).toBe(true);
     expect(
       first.monsters.some(

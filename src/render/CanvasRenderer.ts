@@ -8,6 +8,7 @@ import type { GameState } from "../game/types";
 import { openingRoomThreshold } from "../game/sceneryLayout";
 import {
   buildRenderManifest,
+  entityPaintPriority,
   type CameraMode,
   type CameraV1,
   type DestinationRectV1,
@@ -221,14 +222,7 @@ export class CanvasRenderer {
       ...manifest.drawCalls.map((call) => ({
         kind: "entity" as const,
         depth: call.screenAnchor.y,
-        priority:
-          call.layer === "effects"
-            ? -2
-            : call.layer === "items"
-              ? -1
-              : call.layer === "actors"
-                ? 1
-                : 2,
+        priority: entityPaintPriority(call),
         stableId: call.entityId,
         call,
       })),
@@ -502,17 +496,17 @@ export class CanvasRenderer {
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
       const width = Math.round(
         Math.max(
-          52,
+          38,
           Math.min(
-            76 * manifest.camera.zoom,
-            call.destinationRect.width * 0.54,
+            52 * manifest.camera.zoom,
+            call.destinationRect.width * 0.35,
           ),
         ),
       );
       const height = Math.round((width * 82) / 197);
       const destinationRect = {
         x: Math.round(call.screenAnchor.x - width / 2),
-        y: Math.round(actorInkTop - height - 3),
+        y: Math.round(actorInkTop - height - 4),
         width,
         height,
       };
@@ -612,7 +606,7 @@ export class CanvasRenderer {
       },
       worldUi.frame.destinationRect,
       false,
-      1,
+      0.8,
       0,
     );
     this.drawImageReference(
@@ -623,7 +617,7 @@ export class CanvasRenderer {
       },
       worldUi.fill.destinationRect,
       false,
-      0.95,
+      0.7,
       0,
     );
   }

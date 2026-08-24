@@ -186,6 +186,27 @@ export function actorFrame(
   return Math.floor(((elapsed % duration) * frameCount) / duration);
 }
 
+export function entityPaintPriority(call: Pick<DrawCallV1, "layer">): number {
+  return call.layer === "effects"
+    ? -2
+    : call.layer === "items"
+      ? -1
+      : call.layer === "actors"
+        ? 1
+        : 2;
+}
+
+export function compareEntityPaintOrder(
+  first: Pick<DrawCallV1, "screenAnchor" | "layer" | "entityId">,
+  second: Pick<DrawCallV1, "screenAnchor" | "layer" | "entityId">,
+): number {
+  return (
+    first.screenAnchor.y - second.screenAnchor.y ||
+    entityPaintPriority(first) - entityPaintPriority(second) ||
+    first.entityId.localeCompare(second.entityId)
+  );
+}
+
 function intersectsViewport(bounds: DestinationRectV1): boolean {
   return (
     bounds.x + bounds.width >= 0 &&
@@ -982,18 +1003,10 @@ export function buildRenderManifest(
     );
   }
 
-  const layerRank = {
-    items: 0,
-    actors: 1,
-    projectiles: 2,
-    effects: 3,
-  } as const;
-  calls.sort(
-    (a, b) =>
-      layerRank[a.layer] - layerRank[b.layer] ||
-      a.footAnchor.y - b.footAnchor.y ||
-      a.entityId.localeCompare(b.entityId),
-  );
+  // zOrder is the actual entity paint order, rather than a second ordering
+  // that disagrees with CanvasRenderer's depth queue. Contact effects at an
+  // actor's feet paint beneath the actor; projectiles paint above it.
+  calls.sort(compareEntityPaintOrder);
   calls.forEach((call, index) => {
     call.zOrder = index;
   });
