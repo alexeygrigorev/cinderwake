@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-natural-east-idle-master-v13-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "reference-free-four-chain-east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-natural-master-v13.txt",
+  "candidateFile": "art/generation/candidates/ashfang-natural-master-v13.png",
+  "candidateSha256": "a4809c90973cd649a8de737a5344af054e3dae995fe414ce4d246bc590b071e8",
+  "referenceFiles": [
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "sole generation reference: accepted Cinderwake camera, broad matte rendering, light, palette, and native-runtime density only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-425e5c04-3829-4885-9f2d-57c68fc0da76.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "fresh natural heavy quadruped without any Ashfang candidate, blockout, or stencil image input",
+      "elevated east-facing camera, continuous muscular joints, strong Ashfang head and tail identity, and broad cast-compatible materials",
+      "one isolated quiet creature without floor, shadow, sheet, UI, text, scenery, or action"
+    ],
+    "failed": [
+      {
+        "code": "fourth-limb-chain-occluded",
+        "detail": "Text-only route instructions again yield only three complete body-to-paw chains and three visible terminals; realistic occlusion wins without an explicit spatial reference."
+      },
+      {
+        "code": "authored-occupancy-too-large",
+        "detail": "Normalized raw ink spans 864x810 pixels, approximately 84.4% by 79.1% of the logical canvas rather than the frozen 60-64% by 58-63% envelope."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The visually magenta raw background contains no literal #ff00ff pixels; deterministic preparation repairs the matte but raw-generation compliance fails."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V13 is quarantined. Removing all Ashfang image references prevents silhouette inheritance but exact review proves that text plus cast style still does not overcome the generator's three-visible-limb prior or authored scale bias. V13 pixels are forbidden as future references even though their surface metrics pass."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-natural-master-v13.png --output art/generation/prepared/ashfang-natural-master-v13.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-natural-master-v13.png",
+    "sha256": "6ad3e4c625d5cb0d8a4e86c8d34d2c1c57e1e8de85d4f2f52748374c649382f9",
+    "status": "rejected",
+    "notes": "Canonical framing turns 864x810 normalized ink into 216x202 prepared ink with bottom y=231 and contact centroid offset -0.388963 pixels. Preparation cannot reduce authored occupancy, reveal the missing fourth route, or repair raw-source literalness."
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT",
+    "nextReferenceDecision": "REJECT_V13_PIXELS; APPROVE_REVIEWED_CORRIDOR_GUIDE_PLUS_STONEKIN_ONLY_FOR_V14",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "a4809c90973cd649a8de737a5344af054e3dae995fe414ce4d246bc590b071e8",
+    "reviewedPreparedSha256": "6ad3e4c625d5cb0d8a4e86c8d34d2c1c57e1e8de85d4f2f52748374c649382f9",
+    "reviewedPoseEvidenceSha256": "5aed874b52620974e37fc2b102696b44a6e9fe26b79c9cefb4ab84f9db0d54c4",
+    "reviewedRuntimeComparisonSha256": "96d0bd78b482c90b128e076373cb696371f857fa967fa8c989ddbae103d7e1bd",
+    "reviewedRuntimeDetailMapSha256": "d6af1d550ea31ba0fccfdf1a647e3dc712ff6eaca3d64baa0af57eeee72a0c06",
+    "acceptedAxes": [
+      "fresh natural animal anatomy without blockout tubes, ring joints, straight stilts, or shell-on-columns construction",
+      "strong living Ashfang identity through heavy volcanic mass, compact predatory skull, hooked tail, basalt armor, restrained ember vents, and dorsal plates",
+      "elevated east-facing three-quarter camera with readable skull, shoulder, rib, hip, and spine top planes",
+      "three visible organic body-to-paw routes and their three terminals remain readable at native runtime scale",
+      "Cinderwake-compatible charcoal, ochre, ember, warm-top, and cool-shadow material hierarchy",
+      "surface-detail contract passes exactly at 0.308391 strong occupancy, 0.401811 readability, and 0.013095 isolated-extrema occupancy",
+      "one isolated creature without floor, shadow, scenery, action, text, UI, sheet, or duplicate"
+    ],
+    "rejectedAxes": [
+      "exactly four complete independent body-to-paw routes and four visible terminals",
+      "missing fourth far-side limb root, joints, lower limb, and paw",
+      "both diagonal gait-pair ownerships",
+      "balanced two-near-paw support row and complete four-paw support footprint",
+      "runtime scale at 110x103 pixels, with height exceeding the accepted 72-86 range",
+      "authored occupancy at approximately 84.4 percent width and 79.1 percent height instead of 60-64 by 58-63 percent",
+      "literal #ff00ff raw-source compliance, with raw literal-magenta ratio equal to zero",
+      "v13 as any attached visual, silhouette, identity, material, or phase reference",
+      "idle or walk phase generation"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-height"]
+  },
+  "recommendation": "Do not reuse v13 pixels. The next generation should attach the reviewed four-corridor pose-layout guide plus Stonekin, with no Ashfang reference and no exact topology lock. Use the guide only to make four positions and negative-space corridors visible to the generator while requiring fresh natural joints and a new silhouette."
+}

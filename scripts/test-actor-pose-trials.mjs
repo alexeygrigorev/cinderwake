@@ -109,6 +109,13 @@ const trials = [
     expectedSurfaceViolations: ["runtime-detail-collapse"],
     requiresReview: true,
   },
+  {
+    id: "ashfang-natural-master-v13",
+    manifest: "art/generation/pose-trials/ashfang-natural-master-v13.json",
+    expectedViolations: ["runtime-height"],
+    expectedSurfaceViolations: [],
+    requiresReview: true,
+  },
 ];
 
 function assert(condition, message) {

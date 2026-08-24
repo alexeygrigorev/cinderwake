@@ -375,6 +375,17 @@ are therefore both forbidden as future image references. Their useful identity,
 natural-anatomy, camera, and material findings continue only as text and test
 criteria. A mechanically green prepared pose remains rejected art.
 
+Natural master v13 removes every Ashfang image reference and keeps only
+Stonekin as cast-style evidence. This escapes inherited silhouette pixels and
+passes the finished-surface gate at `0.308391` strong occupancy and `0.401811`
+readability, but text alone still produces realistic occlusion: only three
+complete routes/paws are visible. Its 110 × 103 runtime body is also oversized
+and the raw literal-magenta ratio remains zero. Exact review rejects all v13
+pixels as future references despite the attractive rendering; otherwise the
+three-chain silhouette would become self-reinforcing. It authorizes the
+reviewed four-corridor guide plus Stonekin, with no Ashfang pixels and no exact
+contour lock, as the next spatial-conditioning experiment.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.
