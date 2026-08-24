@@ -20,6 +20,34 @@ const PAGE_VIEWPORTS = {
 const LOGICAL_MASK = { width: 960, height: 540 };
 const PROP_PAINT_ID = "scene:prop:3:0:thorn-pillar";
 const PLAYER_PAINT_ID = "body:player";
+const NARROW_REVIEW = {
+  schemaVersion: 1,
+  reviewerId: "/root/thorn_depth_exact_review",
+  verdict: "ACCEPT",
+  scope: "THORN_PILLAR_BEHIND_TO_FRONT_JOURNEY_ONLY",
+  reviewedCommit: "be36b4acb9c3db2c1932de09092aaabd0087ec74",
+  reviewedManifestSha256:
+    "d37065d8eccfe652dc0ed48657f9b1e9d7b7f8196ca210abcebf7fe4d9145622",
+  reviewedTapeSha256:
+    "6a8a8426b4f79cf92badca29134289b5a449db6b59b2b4d134a98ef62f6c9022",
+  reviewedProfiles: ["desktop", "phone"],
+  reviewedRoles: ["behind", "boundary-before", "boundary-after", "front"],
+  reviewedRoleRecords: 8,
+  reviewedArtifactCount: 34,
+  reviewedMutationControlCount: 13,
+  reasons: [
+    "Both physical profiles clearly show the same actor crossing from behind the thorn pillar to its front without a blocked movement event.",
+    "All four ordered roles per profile have intersecting actor/prop alpha masks and the paint queue flips on the exact boundary pair.",
+    "The retained frames, masks, evidence records, sources, reproduction commands, and tape are hash-bound and the focused validator rejects all 13 required corpus mutations.",
+  ],
+  invalidation: [
+    "reviewed-manifest-projection-hash-changes",
+    "command-tape-hash-changes",
+    "profile-role-or-artifact-matrix-changes",
+    "capture-source-or-reproduction-binding-changes",
+    "validator-or-13-mutation-matrix-no-longer-passes",
+  ],
+};
 const DEFAULT_ROOT = path.resolve(
   "quality/evidence/depth-transition-thorn-pillar",
 );
@@ -37,6 +65,13 @@ function sha256(bytes) {
 
 async function jsonFile(value) {
   return format(JSON.stringify(value), { parser: "json" });
+}
+
+async function reviewSubjectHash(manifest) {
+  const subject = structuredClone(manifest);
+  subject.status = "REQUIRES_INDEPENDENT_REVIEW";
+  delete subject.review;
+  return sha256(await jsonFile(subject));
 }
 
 function fnv1a(bytes) {
@@ -273,7 +308,7 @@ export async function writeDepthEvidenceCorpus({
   );
   const manifest = {
     schemaVersion: 2,
-    status: "REQUIRES_INDEPENDENT_REVIEW",
+    status: "ACCEPTED_NARROW_JOURNEY",
     scenarioId: "depth-transition-thorn-pillar",
     propPaintId: PROP_PAINT_ID,
     playerPaintId: PLAYER_PAINT_ID,
@@ -285,6 +320,7 @@ export async function writeDepthEvidenceCorpus({
     artifactKinds: ARTIFACT_KINDS,
     captureProfiles,
     artifacts,
+    review: NARROW_REVIEW,
   };
   await fs.writeFile(
     path.join(root, "manifest.v1.json"),
@@ -556,12 +592,13 @@ export async function validateDepthEvidenceCorpus({
       "artifactKinds",
       "captureProfiles",
       "artifacts",
+      "review",
     ],
     "manifest",
   );
   if (
     manifest.schemaVersion !== 2 ||
-    manifest.status !== "REQUIRES_INDEPENDENT_REVIEW" ||
+    manifest.status !== "ACCEPTED_NARROW_JOURNEY" ||
     manifest.scenarioId !== "depth-transition-thorn-pillar" ||
     manifest.propPaintId !== PROP_PAINT_ID ||
     manifest.playerPaintId !== PLAYER_PAINT_ID ||
@@ -569,6 +606,20 @@ export async function validateDepthEvidenceCorpus({
       "tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json"
   )
     fail("manifest identity is invalid");
+  if (JSON.stringify(manifest.review) !== JSON.stringify(NARROW_REVIEW))
+    fail("independent narrow review identity or verdict is stale");
+  if (manifest.review.reviewedTapeSha256 !== manifest.tapeSha256)
+    fail("independent narrow review is bound to a stale command tape");
+  if (
+    manifest.review.reviewedRoleRecords !== 8 ||
+    manifest.review.reviewedArtifactCount !== 34 ||
+    manifest.review.reviewedMutationControlCount !== 13 ||
+    JSON.stringify(manifest.review.reviewedProfiles) !==
+      JSON.stringify(PROFILES) ||
+    JSON.stringify(manifest.review.reviewedRoles) !==
+      JSON.stringify(ROLE_SAMPLES.map(({ role }) => role))
+  )
+    fail("independent narrow review matrix is incomplete");
   if (
     JSON.stringify(manifest.profiles) !== JSON.stringify(PROFILES) ||
     JSON.stringify(manifest.roleSamples) !== JSON.stringify(ROLE_SAMPLES) ||
@@ -653,6 +704,11 @@ export async function validateDepthEvidenceCorpus({
         item,
         tape,
       });
+  if (
+    (await reviewSubjectHash(manifest)) !==
+    manifest.review.reviewedManifestSha256
+  )
+    fail("accepted narrow review was invalidated by a corpus change");
   return {
     profiles: 2,
     roles: 8,

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "status": "REQUIRES_INDEPENDENT_REVIEW",
+  "status": "ACCEPTED_NARROW_JOURNEY",
   "scenarioId": "depth-transition-thorn-pillar",
   "propPaintId": "scene:prop:3:0:thorn-pillar",
   "playerPaintId": "body:player",
@@ -390,5 +390,31 @@
       "width": 398,
       "height": 852
     }
-  ]
+  ],
+  "review": {
+    "schemaVersion": 1,
+    "reviewerId": "/root/thorn_depth_exact_review",
+    "verdict": "ACCEPT",
+    "scope": "THORN_PILLAR_BEHIND_TO_FRONT_JOURNEY_ONLY",
+    "reviewedCommit": "be36b4acb9c3db2c1932de09092aaabd0087ec74",
+    "reviewedManifestSha256": "d37065d8eccfe652dc0ed48657f9b1e9d7b7f8196ca210abcebf7fe4d9145622",
+    "reviewedTapeSha256": "6a8a8426b4f79cf92badca29134289b5a449db6b59b2b4d134a98ef62f6c9022",
+    "reviewedProfiles": ["desktop", "phone"],
+    "reviewedRoles": ["behind", "boundary-before", "boundary-after", "front"],
+    "reviewedRoleRecords": 8,
+    "reviewedArtifactCount": 34,
+    "reviewedMutationControlCount": 13,
+    "reasons": [
+      "Both physical profiles clearly show the same actor crossing from behind the thorn pillar to its front without a blocked movement event.",
+      "All four ordered roles per profile have intersecting actor/prop alpha masks and the paint queue flips on the exact boundary pair.",
+      "The retained frames, masks, evidence records, sources, reproduction commands, and tape are hash-bound and the focused validator rejects all 13 required corpus mutations."
+    ],
+    "invalidation": [
+      "reviewed-manifest-projection-hash-changes",
+      "command-tape-hash-changes",
+      "profile-role-or-artifact-matrix-changes",
+      "capture-source-or-reproduction-binding-changes",
+      "validator-or-13-mutation-matrix-no-longer-passes"
+    ]
+  }
 }
