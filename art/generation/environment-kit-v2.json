@@ -40,37 +40,37 @@
       {
         "index": 0,
         "id": "north-wall-solid",
-        "runtimeHeight": 145,
+        "runtimeHeight": 172,
         "collision": "one continuous solid wall footprint with no passable center"
       },
       {
         "index": 1,
         "id": "forge-workshop",
-        "runtimeHeight": 150,
+        "runtimeHeight": 195,
         "collision": "compact solid footprint beneath the workshop"
       },
       {
         "index": 2,
         "id": "lantern-a",
-        "runtimeHeight": 72,
+        "runtimeHeight": 118,
         "collision": "small solid ellipse centered on the post base"
       },
       {
         "index": 3,
         "id": "lantern-b",
-        "runtimeHeight": 72,
+        "runtimeHeight": 118,
         "collision": "small solid ellipse centered on the post base"
       },
       {
         "index": 4,
         "id": "barricade",
-        "runtimeHeight": 78,
+        "runtimeHeight": 88,
         "collision": "wide shallow solid ellipse beneath the barricade"
       },
       {
         "index": 5,
         "id": "raised-clutter-bench",
-        "runtimeHeight": 95,
+        "runtimeHeight": 103,
         "collision": "medium solid ellipse beneath the connected workbench"
       }
     ]
@@ -116,8 +116,11 @@
     ],
     "warnings": [
       "The generated raw backdrop is tolerant near-magenta rather than literal #ff00ff and therefore fails the strict raw contract.",
-      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe."
+      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe.",
+      "The first independent review passed the source kit at 7.5/10 for a controlled trial but found the initial declared runtime sizes miniature beside the 118px player. The declared heights now use its recommended bands and require a second exact contact-sheet review before runtime promotion.",
+      "The wall must be a single centered feature with retained tile-backed outer facades; it must never be stretched or visibly repeated.",
+      "Runtime collision must follow the visible composite masses rather than the audit's narrow alpha-support proxy."
     ],
-    "decision": "Keep the candidate quarantined. Mechanical prepared-ingress success may make cells eligible for independent visual acceptance, but this record does not authorize runtime or production promotion."
+    "decision": "Keep the candidate quarantined while the rescaled runtime contact sheet receives a second independent visual review. The first review authorizes a controlled integration trial only at wall 165-180px, forge 185-205px, identical lanterns 110-125px, barricade 80-95px, and bench 95-110px."
   }
 }

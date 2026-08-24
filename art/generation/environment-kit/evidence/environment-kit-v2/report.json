@@ -206,7 +206,7 @@
       {
         "index": 0,
         "id": "north-wall-solid",
-        "runtimeHeight": 145,
+        "runtimeHeight": 172,
         "collision": "one continuous solid wall footprint with no passable center",
         "bounds": {
           "minX": 65,
@@ -225,11 +225,11 @@
           "widthRatio": 0.306282722513089
         },
         "runtime": {
-          "width": 157.81,
-          "height": 145,
-          "silhouetteArea": 15574,
-          "supportWidth": 48.33,
-          "suggestedCollisionHalfWidth": 21.27
+          "width": 187.19,
+          "height": 172,
+          "silhouetteArea": 21914,
+          "supportWidth": 57.33,
+          "suggestedCollisionHalfWidth": 25.23
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -251,7 +251,7 @@
       {
         "index": 1,
         "id": "forge-workshop",
-        "runtimeHeight": 150,
+        "runtimeHeight": 195,
         "collision": "compact solid footprint beneath the workshop",
         "bounds": {
           "minX": 65,
@@ -270,11 +270,11 @@
           "widthRatio": 0.4151436031331593
         },
         "runtime": {
-          "width": 168.97,
-          "height": 150,
-          "silhouetteArea": 17695,
-          "supportWidth": 70.15,
-          "suggestedCollisionHalfWidth": 30.86
+          "width": 219.66,
+          "height": 195,
+          "silhouetteArea": 29904,
+          "supportWidth": 91.19,
+          "suggestedCollisionHalfWidth": 40.12
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -286,7 +286,7 @@
       {
         "index": 2,
         "id": "lantern-a",
-        "runtimeHeight": 72,
+        "runtimeHeight": 118,
         "collision": "small solid ellipse centered on the post base",
         "bounds": {
           "minX": 169,
@@ -305,11 +305,11 @@
           "widthRatio": 0.6842105263157895
         },
         "runtime": {
-          "width": 32.15,
-          "height": 72,
-          "silhouetteArea": 870,
-          "supportWidth": 21.99,
-          "suggestedCollisionHalfWidth": 9.68
+          "width": 52.68,
+          "height": 118,
+          "silhouetteArea": 2337,
+          "supportWidth": 36.05,
+          "suggestedCollisionHalfWidth": 15.86
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -321,7 +321,7 @@
       {
         "index": 3,
         "id": "lantern-b",
-        "runtimeHeight": 72,
+        "runtimeHeight": 118,
         "collision": "small solid ellipse centered on the post base",
         "bounds": {
           "minX": 170,
@@ -340,11 +340,11 @@
           "widthRatio": 0.6184971098265896
         },
         "runtime": {
-          "width": 32.61,
-          "height": 72,
-          "silhouetteArea": 885,
-          "supportWidth": 20.17,
-          "suggestedCollisionHalfWidth": 8.87
+          "width": 53.44,
+          "height": 118,
+          "silhouetteArea": 2377,
+          "supportWidth": 33.05,
+          "suggestedCollisionHalfWidth": 14.54
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -356,7 +356,7 @@
       {
         "index": 4,
         "id": "barricade",
-        "runtimeHeight": 78,
+        "runtimeHeight": 88,
         "collision": "wide shallow solid ellipse beneath the barricade",
         "bounds": {
           "minX": 65,
@@ -375,11 +375,11 @@
           "widthRatio": 0.2961038961038961
         },
         "runtime": {
-          "width": 94.43,
-          "height": 78,
-          "silhouetteArea": 4280,
-          "supportWidth": 27.96,
-          "suggestedCollisionHalfWidth": 12.3
+          "width": 106.54,
+          "height": 88,
+          "silhouetteArea": 5448,
+          "supportWidth": 31.55,
+          "suggestedCollisionHalfWidth": 13.88
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -391,7 +391,7 @@
       {
         "index": 5,
         "id": "raised-clutter-bench",
-        "runtimeHeight": 95,
+        "runtimeHeight": 103,
         "collision": "medium solid ellipse beneath the connected workbench",
         "bounds": {
           "minX": 63,
@@ -410,11 +410,11 @@
           "widthRatio": 0.2994791666666667
         },
         "runtime": {
-          "width": 114.72,
-          "height": 95,
-          "silhouetteArea": 7096,
-          "supportWidth": 34.36,
-          "suggestedCollisionHalfWidth": 15.12
+          "width": 124.38,
+          "height": 103,
+          "silhouetteArea": 8342,
+          "supportWidth": 37.25,
+          "suggestedCollisionHalfWidth": 16.39
         },
         "violations": [],
         "preparedIntegrationSafe": true,
@@ -522,9 +522,12 @@
     ],
     "warnings": [
       "The generated raw backdrop is tolerant near-magenta rather than literal #ff00ff and therefore fails the strict raw contract.",
-      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe."
+      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe.",
+      "The first independent review passed the source kit at 7.5/10 for a controlled trial but found the initial declared runtime sizes miniature beside the 118px player. The declared heights now use its recommended bands and require a second exact contact-sheet review before runtime promotion.",
+      "The wall must be a single centered feature with retained tile-backed outer facades; it must never be stretched or visibly repeated.",
+      "Runtime collision must follow the visible composite masses rather than the audit's narrow alpha-support proxy."
     ],
-    "decision": "Keep the candidate quarantined. Mechanical prepared-ingress success may make cells eligible for independent visual acceptance, but this record does not authorize runtime or production promotion."
+    "decision": "Keep the candidate quarantined while the rescaled runtime contact sheet receives a second independent visual review. The first review authorizes a controlled integration trial only at wall 165-180px, forge 185-205px, identical lanterns 110-125px, barricade 80-95px, and bench 95-110px."
   },
   "integration": {
     "preparedSafeCells": 6,
