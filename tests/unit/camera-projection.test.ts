@@ -50,17 +50,21 @@ describe("uniform camera zoom projection", () => {
       ({ objectId }) => objectId === "tile:12:10",
     )!;
 
-    expect(playerZoomed.destinationRect.width).toBe(
-      Math.round(playerAtOne.destinationRect.width * 0.9),
+    expect(playerZoomed.destinationRect.width).toBeCloseTo(
+      playerAtOne.destinationRect.width * 0.9,
+      8,
     );
-    expect(playerZoomed.destinationRect.height).toBe(
-      Math.round(playerAtOne.destinationRect.height * 0.9),
+    expect(playerZoomed.destinationRect.height).toBeCloseTo(
+      playerAtOne.destinationRect.height * 0.9,
+      8,
     );
-    expect(tileZoomed.destinationRect.width).toBe(
-      Math.round(tileAtOne.destinationRect.width * 0.9),
+    expect(tileZoomed.destinationRect.width).toBeCloseTo(
+      tileAtOne.destinationRect.width * 0.9,
+      8,
     );
-    expect(tileZoomed.destinationRect.height).toBe(
-      Math.round(tileAtOne.destinationRect.height * 0.9),
+    expect(tileZoomed.destinationRect.height).toBeCloseTo(
+      tileAtOne.destinationRect.height * 0.9,
+      8,
     );
     expect(
       playerZoomed.destinationRect.width / playerZoomed.destinationRect.height,
@@ -68,5 +72,39 @@ describe("uniform camera zoom projection", () => {
       playerAtOne.destinationRect.width / playerAtOne.destinationRect.height,
       8,
     );
+  });
+
+  it("keeps zoomed terrain cells edge-contiguous without raster gaps", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["animation-idle"]!);
+    const manifest = buildRenderManifest(state, {
+      x: 720,
+      y: 420,
+      zoom: 0.9,
+    });
+    const tiles = new Map(
+      manifest.sceneSprites
+        .filter(({ objectId }) => /^tile:\d+:\d+$/.test(objectId))
+        .map((tile) => [tile.objectId, tile]),
+    );
+
+    for (let y = 0; y < state.map.height; y += 1) {
+      for (let x = 0; x < state.map.width; x += 1) {
+        const tile = tiles.get(`tile:${x}:${y}`)!;
+        const east = tiles.get(`tile:${x + 1}:${y}`);
+        const south = tiles.get(`tile:${x}:${y + 1}`);
+        if (east)
+          expect(
+            east.destinationRect.x -
+              (tile.destinationRect.x + tile.destinationRect.width),
+            `${tile.objectId} east edge`,
+          ).toBeCloseTo(0, 8);
+        if (south)
+          expect(
+            south.destinationRect.y -
+              (tile.destinationRect.y + tile.destinationRect.height),
+            `${tile.objectId} south edge`,
+          ).toBeCloseTo(0, 8);
+      }
+    }
   });
 });

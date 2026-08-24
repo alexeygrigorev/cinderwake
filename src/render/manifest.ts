@@ -228,10 +228,10 @@ function destinationAt(
   const destinationWidth = width * zoom;
   const destinationHeight = height * zoom;
   return {
-    x: Math.round(anchor.x - (sourceAnchor.x / 256) * destinationWidth),
-    y: Math.round(anchor.y - (sourceAnchor.y / 256) * destinationHeight),
-    width: Math.round(destinationWidth),
-    height: Math.round(destinationHeight),
+    x: anchor.x - (sourceAnchor.x / 256) * destinationWidth,
+    y: anchor.y - (sourceAnchor.y / 256) * destinationHeight,
+    width: destinationWidth,
+    height: destinationHeight,
   };
 }
 
