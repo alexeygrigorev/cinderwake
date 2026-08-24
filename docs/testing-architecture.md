@@ -20,6 +20,16 @@ The browser bridge is a deliberately narrow test API that can load a scenario, a
 
 The ordinary public route additionally installs an **observe-only player boundary**. It returns cloned state, manifests, pixels, and a bounded history of real `requestAnimationFrame` presentation samples, but exposes no load, input, step, reset, pause, or clock control. The live-player journey enters through character selection, waits wall-clock time, sends physical touch, and reads only this observer. It therefore detects a frozen production loop, a launch button that never enters play, or an input adapter disconnected from simulation even when every exact-step fixture still passes.
 
+The production gesture temporal journey binds that liveness proof to ordered
+pixels and causal postconditions. Desktop keyboard, canvas mouse, mobile ground
+touch, a real Chromium touch stream across the joystick, and both Strike
+buttons run without the mutating test bridge. The test attaches opening,
+movement, and attack canvas frames plus observer snapshots and presentation
+ticks. Movement must change position without emitting `attack_started`; Strike
+must emit `attack_started` without becoming a route command. Exact-step
+captures remain the deterministic oracle, while this ordinary-route evidence
+proves the browser adapters and visible animation are actually connected.
+
 The renderer emits a **render manifest** alongside each capture. It records logical viewport, device scale, camera transform, ordered draw calls/layers, atlas/sprite identity, source rectangle, world/screen/foot anchors, destination bounds, facing, scale, opacity, tint, animation clip and frame, visibility, and stable Z order. Solid scenery additionally records its world collision shape, center, dimensions, and solid/passable mode. Monster world-UI records the owning entity, health ratio, destination, and current frame's measured alpha-ink top, so a floating health bar is diagnosable as geometry rather than a vague screenshot complaint. Simulation and rendering derive scenery placements from the same pure `DungeonMap` layout, so a browser test can join real input, actor position, visible object ID, and collision footprint without making gameplay depend on the renderer. The manifest explains a pixel regression in ways an image diff cannot; it contains no nondeterministic timestamps or object iteration order. The corresponding [art pipeline](art-pipeline.md) requires atlas decoding/validation before capture readiness.
 
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
