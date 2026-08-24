@@ -1,0 +1,14 @@
+Edit the attached original Cinderwake Ashfang 4 by 4 sprite-source sheet. Treat it as the immutable authority for creature identity, painterly style, palette, lighting, material texture, cell order, action meaning, and effect restraint. This is a corrective sprite-sheet edit, not a redesign and not promotional concept art.
+
+Preserve exactly one identical volcanic quadruped in every cell: the same wedge head, pale eyes, fangs, four clawed limbs, armored charcoal back plates, long tail, sparse narrow ember fissures, realistic heavy anatomy, and no equipment. Preserve the original rough low-sheen painted rendering, softened material transitions, subdued charcoal mass, restrained orange accents, warm upper-left light, cool bounce, and small contact shadow. Do not sharpen it into glossy plastic, comic ink, or neon concept art.
+
+Keep all sixteen existing cell roles and their restrained intensity. Row 1 remains four quiet planted idle-breathing phases. Row 2 remains four planted east walk phases with alternating support and controlled weight transfer. Row 3 remains the original compact grounded attack phases. Row 4 remains the original compact grounded ability phases. Do not add a leap, roar pose, airborne phase, enlarged mouth, detached particle, trail, ring, fire arc, ground eruption, smoke, duplicate body, or new effect. Do not change which action occurs in any cell.
+
+Make only these anatomical-camera corrections consistently in every cell:
+- raise the chest and shoulder ridge moderately so the creature is visibly alive and supported rather than prone;
+- separate the head from the torso and preserve clear negative space among four limbs;
+- view it from an elevated three-quarter world camera near 55 degrees, exposing top planes on the skull, shoulders, spine plates, and hips while it still faces east;
+- foreshorten the torso and curl the tail slightly inward so the ink is less horizontally dominant;
+- keep the same apparent body mass, foot baseline, contact point, scale, and camera in all frames.
+
+Return one square image with exactly the same implicit four columns and four rows as the reference. Keep the complete creature centered inside each equal cell with generous safe margin. No dividers, frames, labels, guides, scenery, floor plane, horizon, or long cast shadow. Every empty pixel must be one perfectly flat literal #ff00ff chroma value with no gradient, texture, checkerboard, vignette, or color variation. The result must look like the original Cinderwake Ashfang carefully reposed for the existing elevated world camera—not like a newly designed monster.

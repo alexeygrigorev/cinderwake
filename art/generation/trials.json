@@ -316,6 +316,68 @@
         "status": "rejected",
         "notes": "Preparation repairs the 4x4 cut, key, and shared anchors, but cannot invent planted locomotion, remove baked effects without changing art, or repair style and clip semantics."
       }
+    },
+    {
+      "id": "ashfang-primary-v4-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v4.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v4.png",
+      "candidateSha256": "4577cdbdf8dbb75be87e10b3c1344a5f5408d3f56bc0bd0e35a3da2b69d7e583",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-8f1cb383-6435-4827-96a8-6c6a69f53706.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The raw background is a varying hot-pink field rather than the requested literal flat #ff00ff key."
+          },
+          {
+            "kind": "visual",
+            "code": "edit-contract-not-preserved",
+            "detail": "The edit request explicitly froze original cell roles, but the output substantially redrew the sheet and repeated the prior trial's invented dramatic phases."
+          },
+          {
+            "kind": "visual",
+            "code": "idle-and-walk-semantic-mismatch",
+            "detail": "Idle cells become attack roars and the locomotion row again uses airborne leaps instead of planted alternating support."
+          },
+          {
+            "kind": "visual",
+            "code": "oversized-detached-ability-effects",
+            "detail": "The ability row again introduces broad fire trails, detached energy, and ground eruptions forbidden by the corrective edit prompt."
+          },
+          {
+            "kind": "visual",
+            "code": "style-material-mismatch",
+            "detail": "The output remains glossy, sharply outlined, and neon-lit rather than preserving the original restrained painted material."
+          }
+        ],
+        "notes": "This trial tested whether a narrow edit-style request could preserve a mechanically usable production sheet while correcting only camera and torso height. It could not: the generator redrew action semantics and repeated the same airborne/effect defects. Full-sheet prompting is therefore rejected as the next production iteration; future work must isolate poses or assemble approved per-pose frames deterministically."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v4.png --output art/generation/prepared/ashfang-primary-trial-v4.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v4.png",
+        "sha256": "92786daaeb2afd505b0b850ff8a99c3f88ebb704c27fe3dca9627db565b44751",
+        "status": "rejected",
+        "notes": "Preparation can repair the key, cut, scale, and anchors but cannot restore the original clip roles or remove invented effects without changing authored art."
+      }
     }
   ]
 }
