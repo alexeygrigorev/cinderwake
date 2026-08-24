@@ -143,22 +143,23 @@ const PROP_COLLISIONS: Record<PropName, CollisionProfile> = {
   barricade: { halfWidth: 820, halfHeight: 380, offsetY: -40 },
 };
 
-// Environment-kit v2 footprints follow the full visible contact masses, not
-// the narrower alpha-support proxy used by the ingress audit. In particular,
-// the workshop footprint includes its anvil foreground, while the lantern
-// ellipses cover only the small post bases that actually touch the floor.
+// Environment-kit v2 footprints follow the visible ground-contact masses.
+// They intentionally stay narrower than the broad upper silhouettes: using
+// a roof, worktop, or leaning plank as the player's foot-level boundary feels
+// like an invisible fence. The player's own collision radius supplies the
+// small contact margin around each painted support.
 const FORGE_WORKSHOP_COLLISION: CollisionProfile = {
-  halfWidth: 1_480,
-  halfHeight: 760,
-  offsetY: -360,
+  halfWidth: 856,
+  halfHeight: 320,
+  offsetY: -200,
 };
 
 const ENVIRONMENT_KIT_PROP_COLLISIONS = {
   "lantern-a": { halfWidth: 180, halfHeight: 110, offsetY: -30 },
   "lantern-b": { halfWidth: 180, halfHeight: 110, offsetY: -30 },
-  "barricade-v2": { halfWidth: 680, halfHeight: 180, offsetY: -80 },
+  "barricade-v2": { halfWidth: 296, halfHeight: 180, offsetY: -80 },
   "raised-clutter-bench": {
-    halfWidth: 780,
+    halfWidth: 350,
     halfHeight: 380,
     offsetY: -220,
   },

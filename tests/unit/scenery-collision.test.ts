@@ -106,9 +106,9 @@ describe("deterministic scenery collision", () => {
 
     expect(forge).toMatchObject({
       name: "forge-workshop",
-      collision: { halfWidth: 1_480, halfHeight: 760 },
+      collision: { halfWidth: 856, halfHeight: 320 },
     });
-    expect(forge.collision!.center.y).toBe(forge.worldAnchor.y - 360);
+    expect(forge.collision!.center.y).toBe(forge.worldAnchor.y - 200);
     expect(lanterns.map(({ collision }) => collision)).toEqual(
       lanterns.map(({ worldAnchor }) => ({
         shape: "ellipse",
@@ -118,13 +118,48 @@ describe("deterministic scenery collision", () => {
       })),
     );
     expect(barricade.collision).toMatchObject({
-      halfWidth: 680,
+      halfWidth: 296,
       halfHeight: 180,
     });
     expect(bench.collision).toMatchObject({
-      halfWidth: 780,
+      halfWidth: 350,
       halfHeight: 380,
     });
+  });
+
+  it("keeps opening collision contact within the visible alpha supports", () => {
+    const state = worldFromScenario(
+      createRunScenario("environment-kit-contact-clarity", "vanguard"),
+    );
+    const layout = buildSceneryLayout(state.map);
+    const logicalPixelsPerWorldUnit = 48 / UNITS_PER_TILE;
+    const supportWidths = new Map([
+      ["structure:0:forge", 91.19],
+      ["prop:0:barricade-v2", 31.55],
+      ["prop:0:raised-clutter-bench", 37.25],
+    ]);
+
+    for (const [objectId, visibleSupportWidth] of supportWidths) {
+      const placement = layout.find(({ id }) => id === objectId)!;
+      const collision = placement.collision!;
+      const blockedPlayerCenterDistance =
+        (collision.halfWidth + state.player.radius) * logicalPixelsPerWorldUnit;
+      const excessBeyondVisibleSupport =
+        blockedPlayerCenterDistance - visibleSupportWidth / 2;
+
+      // The player disc is itself 15 logical pixels from center to foot edge.
+      // A larger excess means the prop, rather than visible actor contact, is
+      // creating an invisible barrier.
+      expect(excessBeyondVisibleSupport, objectId).toBeLessThanOrEqual(15);
+    }
+
+    const forge = layout.find(({ id }) => id === "structure:0:forge")!;
+    const forgeBottomBeyondAnchor =
+      (forge.collision!.center.y +
+        forge.collision!.halfHeight -
+        forge.worldAnchor.y) *
+      logicalPixelsPerWorldUnit;
+    expect(forgeBottomBeyondAnchor).toBeLessThanOrEqual(8);
   });
 
   it("keeps collision placements aligned with visible scenery", () => {
@@ -415,10 +450,29 @@ describe("deterministic scenery collision", () => {
       const collision = buildSceneryLayout(state.map).find(
         ({ id }) => id === "structure:0:forge",
       )!.collision!;
-      monster.position = {
-        x: collision.center.x,
-        y: collision.center.y + collision.halfHeight + monster.radius + 32,
-      };
+      const nearbyWalkableStart = Array.from(
+        { length: state.map.width * state.map.height },
+        (_, index) =>
+          tileCenter({
+            x: index % state.map.width,
+            y: Math.floor(index / state.map.width),
+          }),
+      )
+        .filter((point) =>
+          navigationPointWalkable(state.map, collisions, point, monster.radius),
+        )
+        .sort(
+          (first, second) =>
+            Math.hypot(
+              first.x - collision.center.x,
+              first.y - collision.center.y,
+            ) -
+            Math.hypot(
+              second.x - collision.center.x,
+              second.y - collision.center.y,
+            ),
+        )[0]!;
+      monster.position = { ...nearbyWalkableStart };
       monster.previousPosition = { ...monster.position };
       monster.attackReadyTick = 10_000;
       const target = Array.from(
