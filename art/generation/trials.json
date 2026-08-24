@@ -687,6 +687,140 @@
           "fitness to seed later actor families"
         ]
       }
+    },
+    {
+      "id": "vanguard-primary-walk-v2-2026-08-24",
+      "actorId": "vanguard",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/vanguard-primary-walk-v2.txt",
+      "candidateFile": "art/generation/candidates/vanguard-primary-walk-v2.png",
+      "candidateSha256": "9308de5b936a6e4ecccaed443c2c31799f115ebef934fad98c0c78c6d79554dc",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI built-in image generation tool",
+        "artifactId": "exec-0addf234-6397-4e91-83b5-05bfccc0e825.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized, keyed, safe-fitted, and foot-anchored on the ActorAtlasV2 1024x1024 ingress grid before review."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background is a graded hot-pink field rather than literal flat #ff00ff, so raw source ingress remains rejected."
+          },
+          {
+            "kind": "visual",
+            "code": "east-walk-support-cycle-ambiguous",
+            "detail": "Prepared east walk cells 5-7 repeat effectively the same planted/forward-leg stance with only small cloth and sword changes; cell 4 is the only clearly distinct stride."
+          }
+        ],
+        "notes": "The candidate materially improves upright idle-to-walk stature, identity consistency, equipment continuity, and safe cutting. Independent exact-hash review still rejects its motion semantics, so it cannot replace production or seed other facings."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/vanguard-primary-walk-v2.png --output art/generation/prepared/vanguard-primary-walk-v2.png",
+        "file": "art/generation/prepared/vanguard-primary-walk-v2.png",
+        "sha256": "d4af4f4413c1ba3c663fa307d18b1fb3db6062291e97318c2be18d9855633aa5",
+        "status": "rejected",
+        "notes": "Preparation reproducibly repairs chroma, safe bounds, shared scale, and foot anchoring. It cannot author the missing left/right support transfer."
+      },
+      "visualReview": {
+        "verdict": "REJECT",
+        "reviewer": "/root/prop_depth_gate",
+        "reviewedPreparedSha256": "d4af4f4413c1ba3c663fa307d18b1fb3db6062291e97318c2be18d9855633aa5",
+        "acceptedAxes": [
+          "Vanguard identity and ember-gothic material style",
+          "upright idle-to-walk scale continuity",
+          "equipment continuity and safe cell cuts"
+        ],
+        "rejectedAxes": [
+          "four distinct east walk phases",
+          "readable alternating left/right support",
+          "fitness for production promotion"
+        ]
+      }
+    },
+    {
+      "id": "vanguard-directions-walk-v2-2026-08-24",
+      "actorId": "vanguard",
+      "sourceFamily": "directions",
+      "promptFile": "art/generation/prompts/vanguard-directions-walk-v2.txt",
+      "candidateFile": "art/generation/candidates/vanguard-directions-walk-v2.png",
+      "candidateSha256": "78a8e791b44a922610b1378f432f14270088f49a271c4153b358a8fe525c6e25",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+        },
+        {
+          "file": "art/source/actors/vanguard-directions-source.png",
+          "sha256": "16a99686ec59d9d11f28baac434f7805333612b025c7f825f372a113f8b35390"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI built-in image generation tool",
+        "artifactId": "exec-c81b6860-4965-4c3b-b28d-13fc3f9d7fd7.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized, keyed, safe-fitted, and foot-anchored on the ActorAtlasV2 1024x1024 ingress grid before review."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background is a graded hot-pink field rather than literal flat #ff00ff, so raw source ingress remains rejected."
+          },
+          {
+            "kind": "visual",
+            "code": "north-walk-support-cycle-ambiguous",
+            "detail": "Prepared north walk cells 4-7 all read as the same rear-view stepping pose rather than alternating support."
+          },
+          {
+            "kind": "visual",
+            "code": "south-walk-support-cycle-ambiguous",
+            "detail": "Prepared south walk cells 12-15 are near-static front-facing stances without four distinguishable gait phases."
+          }
+        ],
+        "notes": "Identity, cardinal views, upright scale, equipment, and safe cutting remain coherent. Independent exact-hash review rejects both walk rows for missing semantic gait, so the candidate cannot replace production."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/vanguard-directions-walk-v2.png --output art/generation/prepared/vanguard-directions-walk-v2.png",
+        "file": "art/generation/prepared/vanguard-directions-walk-v2.png",
+        "sha256": "8ceae49a7eb687b89f1d69d80da53c8cfb75f3be8f4f52a0d05528c10d2538ca",
+        "status": "rejected",
+        "notes": "Preparation reproducibly repairs chroma, safe bounds, shared scale, and foot anchoring. It cannot author the missing left/right support transfer."
+      },
+      "visualReview": {
+        "verdict": "REJECT",
+        "reviewer": "/root/prop_depth_gate",
+        "reviewedPreparedSha256": "8ceae49a7eb687b89f1d69d80da53c8cfb75f3be8f4f52a0d05528c10d2538ca",
+        "acceptedAxes": [
+          "Vanguard identity and ember-gothic material style",
+          "north-rear and south-front view consistency",
+          "upright scale, equipment continuity, and safe cell cuts"
+        ],
+        "rejectedAxes": [
+          "four distinct north walk phases",
+          "four distinct south walk phases",
+          "readable alternating left/right support",
+          "fitness for production promotion"
+        ]
+      }
     }
   ]
 }
