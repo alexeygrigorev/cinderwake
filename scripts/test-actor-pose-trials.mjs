@@ -116,6 +116,13 @@ const trials = [
     expectedSurfaceViolations: [],
     requiresReview: true,
   },
+  {
+    id: "ashfang-guide-master-v14",
+    manifest: "art/generation/pose-trials/ashfang-guide-master-v14.json",
+    expectedViolations: ["runtime-height"],
+    expectedSurfaceViolations: [],
+    requiresReview: true,
+  },
 ];
 
 function assert(condition, message) {

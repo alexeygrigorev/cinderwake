@@ -386,6 +386,18 @@ three-chain silhouette would become self-reinforcing. It authorizes the
 reviewed four-corridor guide plus Stonekin, with no Ashfang pixels and no exact
 contour lock, as the next spatial-conditioning experiment.
 
+Guided master v14 attaches that reviewed corridor guide plus Stonekin and no
+Ashfang pixels. It is the first fresh rendered candidate with four complete
+routes, four paws, both diagonals, open gaps, and two near paws contributing to
+the contact band. It also passes surface detail at `0.350681` strong occupancy
+and `0.451546` readability. Exact review still rejects the raster: right-biased
+support forces contact-aware scale down to `0.200785`, producing a 73 × 69
+runtime body whose visual centroid sits far left of the anchor, while spherical
+joints, bands, columns, loop tail, and regular plates copy guide/golem
+construction. V14 pixels cannot be attached again. Only its measured route
+coordinates may inform one new sparse, rebalanced guide with no surface or
+silhouette authority.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-guided-natural-east-idle-master-v14-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "guided-four-chain-natural-east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-guide-master-v14.txt",
+  "candidateFile": "art/generation/candidates/ashfang-guide-master-v14.png",
+  "candidateSha256": "6aeac17203c76b7f99a008286eaaabd2f7d531704385fa548588a3fd9cd1dc11",
+  "referenceFiles": [
+    {
+      "file": "art/generation/guides/quadruped-pose-layout.png",
+      "role": "reviewed spatial conditioning only: four route centers, four paw positions, gaps, diagonals, support rows, elevated composition, envelope, and baseline; no contour or anatomy authority",
+      "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "accepted Cinderwake camera, broad matte rendering, light, palette, and native-runtime density only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-5c773ca5-94c5-43d4-8008-8063377f2709.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "the reviewed corridor guide overcomes the text-only prior: four distinct shoulder-or-hip-to-paw routes and four three-claw terminals are visible",
+      "near/far paw rows, open belly gaps, both diagonal pairings, elevated head-right/tail-upper-left camera, and living Ashfang identity remain legible",
+      "one isolated quiet creature appears without floor, shadow, sheet, UI, text, scenery, or action"
+    ],
+    "failed": [
+      {
+        "code": "contact-aware-scale-collapse",
+        "detail": "The authored footprint and right-biased lowest support require preparation to shrink below canonical 0.25 to 0.200785, yielding only 69 runtime pixels of height."
+      },
+      {
+        "code": "authored-occupancy-too-large",
+        "detail": "Normalized raw ink remains approximately 70.1% by 66.7% of the logical canvas rather than the frozen 60-64% by 58-63% authored envelope."
+      },
+      {
+        "code": "guide-anatomy-residue",
+        "detail": "Although substantially rendered, several large ball joints, limb bands, and regular plate rows retain a constructed guide/golem reading rather than fully uninterrupted animal anatomy."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The visually magenta raw background contains no literal #ff00ff pixels; deterministic preparation repairs the matte but raw-generation compliance fails."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V14 is quarantined after exact review. Spatial guide conditioning solves the four-route topology problem and surface detail passes, but the current pixels cannot seed animation or another generation: support imbalance forces undersizing and the raster preserves guide/golem anatomy. Only its measured route coordinates may inform one new sparse guide."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-guide-master-v14.png --output art/generation/prepared/ashfang-guide-master-v14.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-guide-master-v14.png",
+    "sha256": "0dd7b59c91290728865961067326ee914b55abe299825b4be2c57e3dcb5769a3",
+    "status": "rejected",
+    "notes": "Contact-aware fitting reduces scale to 0.200785: 718x683 normalized ink becomes 143x137 prepared ink with bottom y=231 and contact centroid offset 0.062107 pixels. Four-route content survives, but the resulting native height is below contract."
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT",
+    "spatialSeedDecision": "ACCEPT_ROUTE_CENTERS_ONLY_FOR_ONE_BASELINE_AND_ANATOMY_CORRECTION; DO_NOT_ATTACH_V14_PIXELS",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "6aeac17203c76b7f99a008286eaaabd2f7d531704385fa548588a3fd9cd1dc11",
+    "reviewedPreparedSha256": "0dd7b59c91290728865961067326ee914b55abe299825b4be2c57e3dcb5769a3",
+    "reviewedPoseEvidenceSha256": "98f8fd2f75256d67e7e180cf645188580fc1cf57b5ed558fe9b7cddb2f9ff0c9",
+    "reviewedRuntimeComparisonSha256": "677db72820440599c3c6a772c122b0dc4f70d286cf142ce4ceba8ffde58d8ed7",
+    "reviewedRuntimeDetailMapSha256": "624f20fd92565be1ca7d1c1e7ce0155583d981d707a06300da2fb70be9a419ff",
+    "acceptedAxes": [
+      "exactly four distinct body-to-paw chains and four three-claw terminals remain visible at source, prepared, and native runtime scales",
+      "far-hind, near-hind, far-fore, and near-fore route ownership is assignable without guessing",
+      "both diagonal pairs are labelable and continuous magenta gaps remain between lower limbs and belly",
+      "both near paws contribute to the native-runtime lowest contact band while far paws remain on higher perspective rows",
+      "elevated head-right and tail-upper-left three-quarter camera with broad readable top planes",
+      "recognizable living Ashfang identity through armored basalt hound mass, compact horned skull, hooked tail, ochre plates, and ember seams",
+      "surface contract passes at 0.350681 strong occupancy, 0.451546 readability, and 0.020016 extrema occupancy",
+      "broad value hierarchy, light direction, palette, and native detail density are compatible with the current cast"
+    ],
+    "rejectedAxes": [
+      "runtime cast scale at only 73x69 pixels, below the accepted 72-86 height interval",
+      "balanced support placement relative to body mass and canvas anchor",
+      "canonical-scale preparation, because right-biased support forces scale down to 0.200785",
+      "fully natural uninterrupted animal anatomy",
+      "large ball-like shoulder and hip joints, regular limb bands, columnar lower limbs, looped tail, and repeated plate rows inherited from guide/golem construction",
+      "authored occupancy at approximately 70.1 percent width and 66.7 percent height instead of 60-64 by 58-63 percent",
+      "literal #ff00ff raw-source compliance, with raw literal-magenta ratio equal to zero",
+      "v14 surface, armor layout, outer silhouette, or exact pixels as authority for a subsequent correction",
+      "animation-phase generation"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-height"]
+  },
+  "recommendation": "Permit one baseline-and-anatomy correction using only v14's measured four route centerlines, joint order, paw centers, gaps, and diagonal labels. Do not attach the v14 raster itself: derive a sparse corrected guide so its surface and silhouette cannot dominate. Bring the two near-paw contact centers into a balanced pair beneath the torso while keeping one baseline; preserve four routes but replace ball joints, bands, columns, loop tail, and regular plate rows with organic anatomy. Use Stonekin alone for material rendering and require every gate before phases."
+}
