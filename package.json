@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
@@ -25,6 +25,7 @@
     "art:selection:build": "node scripts/build-selection-assets.mjs",
     "art:selection:check": "node scripts/build-selection-assets.mjs --check",
     "art:candidate:check": "node scripts/assess-actor-candidate.mjs --actor ashfang --family primary --profile ashfang-primary-v1 --candidate art/generation/prepared/ashfang-primary-trial-v9.png --output quality-results/actor-candidate-calibration/ashfang-primary-trial-v9 --expect-assessment fail --expect-violation walk-support-contact-persistent",
+    "art:candidate:expectations:check": "node scripts/test-actor-candidate-expectations.mjs",
     "art:presentation:audit": "node scripts/assess-actor-presentation-transform.mjs --experiment art/presentation-experiments/ashfang-uniform-transform-v1.json --output quality-results/actor-presentation/ashfang-uniform-transform-v1",
     "art:pose:audit": "node scripts/assess-actor-pose.mjs --trial art/generation/pose-trials/ashfang-idle-master-v1.json --output quality-results/actor-pose/ashfang-idle-master-v1",
     "art:animation:audit": "node scripts/audit-actor-atlases.mjs --report-only",

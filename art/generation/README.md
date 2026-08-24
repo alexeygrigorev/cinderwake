@@ -94,6 +94,13 @@ The command succeeds only when the actual violation set exactly equals the
 declared set, all independent mutations are caught, preparation is recorded as
 rejected, and the independent review hash matches the candidate bytes.
 
+Conversely, `--expect-assessment pass` is a promotion gate rather than a way to
+print a mechanically green report. It also requires recorded art and prepared
+status `accepted`, an independent `ACCEPT` verdict bound to the candidate hash,
+at least one accepted review axis, and no rejected axes. A candidate such as
+Ashfang v2 can therefore remain useful mechanically without being mislabeled as
+promotable.
+
 ## What the verifier proves
 
 - trial prompts, references, candidates, legacy briefs, and manifests exist and have current hashes;

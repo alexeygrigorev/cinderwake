@@ -65,7 +65,9 @@ Options:
   --candidate <png>     Prepared 1024x1024 candidate source
   --output <directory>  Derived JSON, HTML, and contact-sheet evidence
   --expect-assessment <pass|fail>
-                        Required mechanical outcome (default: pass)
+                        Required promotable pass or exact mechanical failure
+                        (default: pass; pass also requires accepted art,
+                        preparation, and exact-hash visual review)
   --expect-violation <code>
                         Named violation required for an expected failure; repeatable`);
       process.exit(0);
@@ -1053,16 +1055,28 @@ async function run() {
       : !assessment.pass &&
         missingExpectedViolations.length === 0 &&
         unexpectedViolations.length === 0;
+  const recordedArtVerdictMet =
+    options.expectedAssessment === "pass"
+      ? verdict.evaluation === "accepted"
+      : verdict.evaluation === "rejected";
   const recordedPreparationMet =
-    options.expectedAssessment === "pass" || verdict.preparation === "rejected";
+    options.expectedAssessment === "pass"
+      ? verdict.preparation === "accepted"
+      : verdict.preparation === "rejected";
   const candidateSha256 = sha256(candidateBytes);
   const visualReviewMet =
-    options.expectedAssessment === "pass" ||
-    (verdict.visualReview?.verdict === "REJECT" &&
-      verdict.visualReview.reviewedPreparedSha256 === candidateSha256);
+    verdict.visualReview?.reviewedPreparedSha256 === candidateSha256 &&
+    (options.expectedAssessment === "pass"
+      ? verdict.visualReview.verdict === "ACCEPT" &&
+        Array.isArray(verdict.visualReview.acceptedAxes) &&
+        verdict.visualReview.acceptedAxes.length > 0 &&
+        Array.isArray(verdict.visualReview.rejectedAxes) &&
+        verdict.visualReview.rejectedAxes.length === 0
+      : verdict.visualReview.verdict === "REJECT");
   const expectationMet =
     expectedAssessmentMet &&
     controlsPass &&
+    recordedArtVerdictMet &&
     recordedPreparationMet &&
     visualReviewMet;
   await fs.mkdir(options.output, { recursive: true });
@@ -1099,6 +1113,7 @@ async function run() {
       unexpectedViolations,
       assessmentMet: expectedAssessmentMet,
       negativeControlsMet: controlsPass,
+      recordedArtVerdictMet,
       recordedPreparationMet,
       visualReviewMet,
       met: expectationMet,
@@ -1122,7 +1137,7 @@ async function run() {
   ]);
   if (!expectationMet)
     throw new Error(
-      `Actor candidate expectation failed: expected=${options.expectedAssessment}, actual=${assessment.pass ? "pass" : "fail"}, missing-violations=${missingExpectedViolations.join(",") || "none"}, unexpected-violations=${unexpectedViolations.join(",") || "none"}, negative-controls=${controlsPass}, recorded-preparation=${verdict.preparation}, visual-review=${visualReviewMet}`,
+      `Actor candidate expectation failed: expected=${options.expectedAssessment}, actual=${assessment.pass ? "pass" : "fail"}, missing-violations=${missingExpectedViolations.join(",") || "none"}, unexpected-violations=${unexpectedViolations.join(",") || "none"}, negative-controls=${controlsPass}, recorded-art=${verdict.evaluation}, recorded-preparation=${verdict.preparation}, visual-review=${visualReviewMet}`,
     );
   if (options.expectedAssessment === "fail") {
     console.log(
@@ -1131,7 +1146,7 @@ async function run() {
     return;
   }
   console.log(
-    `Actor candidate calibration passed mechanically: 16/16 cells measured, idle median ${assessment.projectedRuntimeWithoutActorOverrides.idle.medianHeight}px, ${controls.length}/${controls.length} rejection controls caught; recorded art verdict remains ${verdict.evaluation}.`,
+    `Actor candidate calibration and exact-hash review passed: 16/16 cells measured, idle median ${assessment.projectedRuntimeWithoutActorOverrides.idle.medianHeight}px, ${controls.length}/${controls.length} rejection controls caught; recorded art and preparation are accepted.`,
   );
 }
 
