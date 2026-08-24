@@ -272,6 +272,17 @@ Exact-hash review permits one baseline-only edit: restore v2's two-near-paw
 contact row and compact centered footprint without changing v3's improved
 anatomy.
 
+Anatomy blockout v4 performs only that baseline repair. Its 74 × 79 runtime
+silhouette, exact grounding, centered two-near-paw support, aspect, safe bounds,
+and all 5/5 controls pass. Independent exact-hash review also confirms that the
+organic joints, four body-connected chains and terminals, gaps, elevated
+camera, near/far order, and both diagonals survive at runtime. That acceptance
+is limited to an internal topology seed: preparation still shrinks to 0.231122,
+the source matte is not uniformly literal, and the mannequin has neither
+Ashfang identity nor production material/value design. One identity/style edit
+may use v4 only with its camera, joints, paw positions, gaps, diagonals, and
+support row locked; the result starts unreviewed and must pass the full gates.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

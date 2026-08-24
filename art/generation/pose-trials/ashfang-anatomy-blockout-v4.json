@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-anatomy-blockout-v4-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-baseline-repaired-anatomy-blockout",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-anatomy-blockout-v4.txt",
+  "candidateFile": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+  "candidateSha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v3.png",
+      "role": "exact organic anatomy, four-chain topology, camera, body, gaps, and neutral-material edit target",
+      "sha256": "0622c4b8896fc3f77aeab81619bc66443e7f43cf6f55791769abf8423dce1828"
+    },
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v2.png",
+      "role": "accepted compact support footprint and two-near-paw baseline only",
+      "sha256": "b93ed1bfea62bf42272f5c33b74cf3663941e32f1aa4c0c8342705bae7308d27"
+    },
+    {
+      "file": "art/generation/guides/quadruped-pose-layout.png",
+      "role": "reviewed perspective ordering, diagonal ownership, and compact-footprint guide only",
+      "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-9bebb7c9-1039-42b9-81f3-3af5f82c4916.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly four connected organic limb chains and four three-claw paw terminals remain visible",
+      "the near forepaw returns inward and upward while the near hind paw returns to a coherent shared support region",
+      "elevated camera, broad body, negative-space gaps, near/far ordering, and diagonal ownership remain legible",
+      "runtime height, grounding, contact centering, safe bounds, and aspect return to the accepted mechanical envelope"
+    ],
+    "failed": [
+      {
+        "code": "canonical-scale-not-restored",
+        "detail": "The taller generated silhouette still requires scale 0.231122 instead of the canonical 0.25 ceiling even though its runtime geometry passes."
+      },
+      {
+        "code": "internal-blockout-only",
+        "detail": "The neutral mannequin intentionally remains rejected as production art and lacks Ashfang surface identity."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta field remains graded rather than a uniformly literal #ff00ff source matte."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V4 repairs the support footprint enough to pass the runtime pose mechanics, but remains an internal blockout pending exact-hash visual review and a later identity/style pass."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-anatomy-blockout-v4.png --output art/generation/prepared/ashfang-anatomy-blockout-v4.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+    "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc",
+    "status": "rejected",
+    "notes": "Contact-aware safe fitting scales 642x681 normalized ink to 0.231122, producing 148x156 prepared ink. Visible grounding and support centering are exact, and projected runtime geometry returns to the accepted envelope."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "internalTopologySeed": "ACCEPT",
+    "reviewer": "/root/review_anatomy_blockout_v3",
+    "reviewedRawSha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5",
+    "reviewedPreparedSha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc",
+    "reviewedPoseEvidenceSha256": "3ff78564854958b418e15ab1950c6986179dccb2db7bdcb0d00ffa15012cd583",
+    "reviewedRuntimeComparisonSha256": "a87ca21dc770d32789b7aef93113d681dc992dca02876e35b9e20d22aa3db134",
+    "acceptedAxes": [
+      "v3's improved organic shoulders, elbows, hocks, tapered lower limbs, and three-claw paws remain intact",
+      "four body-connected limb chains and four separate paw terminals are readable at source and runtime scale",
+      "both near paws form a coherent shared runtime support band with a centered contact footprint",
+      "elevated three-quarter camera and broad top plane remain readable",
+      "negative-space gaps preserve near and far limb separation",
+      "near/far ordering and both diagonal gait pairs are unambiguous",
+      "74x79 runtime silhouette provides viable common gameplay mass for a structural seed"
+    ],
+    "rejectedAxes": [
+      "production-art readiness and Ashfang species identity",
+      "finished material, value grouping, surface detail, and cast-compatible rendering",
+      "canonical authored scale because preparation still requires 0.231122 rather than the 0.25 ceiling",
+      "literal key-color compliance"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Use v4 only as the locked topology for one identity/style edit. Lock camera, body-to-limb connections, joint and paw positions, four negative-space corridors, near/far ordering, diagonal ownership, and the two-near-paw support row. The styled result must independently preserve all four terminals at runtime, recover canonical occupancy where possible, pass every mechanical gate, and receive a new exact-hash visual review."
+}
