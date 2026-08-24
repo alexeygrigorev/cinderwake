@@ -191,6 +191,16 @@ ambiguous diagonal support ownership. The mechanically green/no-review mutation
 must fail, so a manifest claim alone cannot convert v3 into a reviewed
 rejection or a walk-generation seed.
 
+Ashfang east-idle master v4 improves again without being rounded up. It keeps
+canonical scale and measures 84 × 81 runtime ink with exact grounding, centered
+support, no mechanical violations, and 5/5 controls. The source visibly contains
+four paws and the runtime mass matches the cast more closely. Exact-hash review
+still vetoes it: the far forepaw exists, but its leg merges beneath the chest at
+actual runtime scale, so a reviewer cannot trace four limb chains or assign
+diagonal support ownership. The camera also remains too low and the bright
+plate edges muddy internal anatomy. Source-scale paw count is therefore not a
+substitute for runtime-scale gait-seed readability.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

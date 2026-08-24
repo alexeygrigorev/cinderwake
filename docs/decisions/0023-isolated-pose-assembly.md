@@ -71,6 +71,11 @@ mass, missing fourth paw, and undefined diagonal support. A mechanically green
 trial therefore requires a matching visual veto to verify its recorded
 rejection; without that review, the audit exits nonzero.
 
+Ashfang v4 adds another necessary distinction: four paws can be countable in
+the raw image while one limb connection disappears after reduction. Review is
+performed on raw, prepared, runtime evidence, and a same-scale cast comparison;
+source-scale anatomy alone cannot authorize generation of motion phases.
+
 ## Consequence
 
 A new character can use the same manifest and fixed rig without new runtime

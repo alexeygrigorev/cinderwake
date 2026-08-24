@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v4-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v4.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v4.png",
+  "candidateSha256": "5ebe7f4e9f7006c69b0c378b6857da2c844dfcd1538e4f45af95517ee6369e35",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v3.png",
+      "role": "edit target for proven framing, baseline, support center, living posture, and species direction",
+      "sha256": "e29416ddc7e4775d0207a93bbe794b0c067acc3b64e089feadb46512de727726"
+    },
+    {
+      "file": "art/generation/prepared/ashfang-primary-trial-v7.png",
+      "role": "production-compatible Ashfang mass and game-world silhouette",
+      "sha256": "bc0d6bd4c32e9d295361bdfe1e450162f3ab56fc89cef4ffa0615ce2f4de4acf"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated world camera, gameplay scale, matte material density, and soft upper-left light only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-7e65976e-51a9-4492-9575-f12fbd529f3a.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one creature and one quiet east-facing idle pose",
+      "all four legs connect anatomically to four independently visible paws",
+      "far forepaw is separated from the near foreleg by readable negative space",
+      "camera is more elevated and the body is broader than v3",
+      "compact raised torso remains visibly alive and weight-bearing",
+      "authored occupancy, baseline, and centered support preserve canonical framing",
+      "no scenery, detached effect, text, UI, floor, or cast shadow"
+    ],
+    "failed": [
+      {
+        "code": "camera-too-low",
+        "detail": "Independent runtime review sees a low three-quarter view rather than the required approximately 55-degree elevated gameplay camera."
+      },
+      {
+        "code": "far-forelimb-runtime-merge",
+        "detail": "Four paws exist at source scale, but the far forelimb connection merges beneath the chest and cannot be traced independently at 128-pixel runtime scale."
+      },
+      {
+        "code": "diagonal-support-ambiguous",
+        "detail": "The merged far forelimb prevents explicit near-fore/far-hind versus far-fore/near-hind diagonal ownership."
+      },
+      {
+        "code": "specular-highlight-density",
+        "detail": "Bright plate-edge treatment remains too glossy for the matte cast and muddies internal anatomy on reduction."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta background is visibly graded rather than one flat literal #ff00ff value."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V4 repairs source-scale paw count, gameplay mass, and outer silhouette, but exact-hash review rejects its runtime far-forelimb connection, camera, diagonal support ownership, and specular detail."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v4.png --output art/generation/prepared/ashfang-idle-master-v4.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v4.png",
+    "sha256": "c4831ca89448a7559a8b4ee767f5d1d6a9f7585285ef417c6c2f2d59934e0cff",
+    "status": "rejected",
+    "notes": "Canonical framing applies exact 0.25 scale to the 661x647 normalized ink, producing 165x162 placement and 165x161 visible ink. Visible bottom is exact and the alpha-weighted lowest eight source pixels are centered to -0.449 px from anchor X. Raster preparation cannot authorize visual semantics."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_idle_master_v4",
+    "reviewedRawSha256": "5ebe7f4e9f7006c69b0c378b6857da2c844dfcd1538e4f45af95517ee6369e35",
+    "reviewedPreparedSha256": "c4831ca89448a7559a8b4ee767f5d1d6a9f7585285ef417c6c2f2d59934e0cff",
+    "reviewedPoseEvidenceSha256": "51f2f86196fd58b1673311410f304cad725e215766c1a8bd630da8d64eb670f7",
+    "reviewedRuntimeComparisonSha256": "b40ac9aa462beff62cd6eb177b7898b396385d8a23f2b865f01cb6b1b09b63f8",
+    "acceptedAxes": [
+      "Ashfang identity and style continuity",
+      "living alert idle posture",
+      "appropriate gameplay mass and scale",
+      "visually centered stable support",
+      "clear runtime outer silhouette"
+    ],
+    "rejectedAxes": [
+      "camera is low three-quarter rather than approximately 55-degree overhead",
+      "far forelimb connection is not independently readable at runtime",
+      "diagonal limb ownership is ambiguous because the far forelimb merges under the chest",
+      "material is specular and highlight-heavy rather than matte cast-compatible",
+      "internal anatomy muddies on runtime reduction"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Do not generate walk phases. V5 should preserve v4's exact mass, framing, baseline, living posture, and four source-scale paws while increasing elevation, separating the entire far forelimb from chest to paw at runtime, and simplifying plates into broad matte value groups."
+}
