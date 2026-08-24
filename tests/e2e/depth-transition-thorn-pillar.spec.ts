@@ -1,12 +1,22 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { assessDepthTransition } from "../framework/depth-transition";
 
 const PROP_ID = "prop:3:0:thorn-pillar";
 const FIXED_CAMERA = { x: 31.5 * 48, y: 6.5 * 48, zoom: 1 };
+const TAPE = JSON.parse(
+  readFileSync(
+    new URL("../fixtures/sequences/depth-transition-thorn-pillar.commands.json", import.meta.url),
+    "utf8",
+  ),
+) as {
+  entries: Array<{ tick: number; input: Record<string, number> }>;
+  expected: { playerStart: { x: number; y: number }; playerFinal: { x: number; y: number } };
+};
 
 async function runThornPillarRoute(page: Page) {
-  return page.evaluate(async ({ propId, camera }) => {
+  return page.evaluate(async ({ propId, camera, tape }) => {
     const bridge = window.__GAME_TEST__!;
     bridge.loadScenario("depth-transition-thorn-pillar");
     bridge.setCamera(camera, "fixed");
@@ -53,22 +63,23 @@ async function runThornPillarRoute(page: Page) {
       };
     };
     const behind = await capture("behind");
-    bridge.setInput({ moveX: -1 });
-    bridge.step(16, { render: true });
-    bridge.setInput({ moveX: 0, moveY: 1 });
-    bridge.step(22, { render: true });
+    const apply = (entry: (typeof tape.entries)[number]) => bridge.setInput(entry.input);
+    apply(tape.entries[0]!);
+    bridge.step(tape.entries[1]!.tick - tape.entries[0]!.tick, { render: true });
+    apply(tape.entries[1]!);
+    bridge.step(tape.entries[2]!.tick - tape.entries[1]!.tick, { render: true });
     const crossing = await capture("crossing");
-    bridge.setInput({ moveX: 1, moveY: 0 });
-    bridge.step(16, { render: true });
-    bridge.setInput({ moveX: 0, moveY: 0 });
+    apply(tape.entries[2]!);
+    bridge.step(tape.entries[3]!.tick - tape.entries[2]!.tick, { render: true });
+    apply(tape.entries[3]!);
     const front = await capture("front");
     return { behind, crossing, front, events: bridge.drainEvents() };
-  }, { propId: PROP_ID, camera: FIXED_CAMERA });
+  }, { propId: PROP_ID, camera: FIXED_CAMERA, tape: TAPE });
 }
 
 function assertRoute(result: Awaited<ReturnType<typeof runThornPillarRoute>>) {
-  expect(result.behind.player).toEqual({ x: 32256, y: 5956 });
-  expect(result.front.player).toEqual({ x: 32256, y: 7364 });
+  expect(result.behind.player).toEqual(TAPE.expected.playerStart);
+  expect(result.front.player).toEqual(TAPE.expected.playerFinal);
   expect(result.events.filter(({ type }) => type === "movement_blocked")).toEqual([]);
   for (const frame of [result.behind, result.front]) {
     expect(frame.alphaIntersection, frame.id).toBeGreaterThan(0);

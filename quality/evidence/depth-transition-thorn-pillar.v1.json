@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "kind": "DepthTransitionEvidencePlanV1",
+  "status": "partial",
+  "scenarioId": "depth-transition-thorn-pillar",
+  "source": {
+    "seed": "cinder-041",
+    "propId": "prop:3:0:thorn-pillar",
+    "commandTape": "tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json",
+    "commandTapeSha256": "6a8a8426b4f79cf92badca29134289b5a449db6b59b2b4d134a98ef62f6c9022",
+    "introducedCommit": "1f540f8a714164acf49e9d2205ffed4745bebea3"
+  },
+  "requiredProfiles": ["desktop", "phone-390x844"],
+  "requiredSamples": ["behind", "boundary-before", "boundary-after", "front"],
+  "requiredArtifactsPerSample": [
+    "full-page-or-game-frame",
+    "body-player-mask",
+    "scene-prop-mask",
+    "render-manifest",
+    "sha256"
+  ],
+  "acceptance": {
+    "alphaIntersectionRequired": true,
+    "queueOrderMustFlip": true,
+    "noMovementBlocked": true,
+    "finalPlayerWorld": { "x": 32256, "y": 7364 }
+  },
+  "remaining": ["persisted committed image/mask timeline", "all tall occluders", "attack on both sides", "independent visual review"]
+}
