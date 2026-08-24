@@ -1113,9 +1113,13 @@ async function run() {
     recordedVisualReview.rejectedAxes.length > 0,
   );
   const visualReviewRequired = expectedMechanicalAssessment === "pass";
-  const visualReviewSatisfied = recordedVisualReview
-    ? visualReviewHashesMatch
-    : !visualReviewRequired;
+  const visualReviewIsExplicitlyUnreviewed =
+    recordedVisualReview?.verdict === "UNREVIEWED";
+  const visualReviewSatisfied = visualReviewIsExplicitlyUnreviewed
+    ? !visualReviewRequired
+    : recordedVisualReview
+      ? visualReviewHashesMatch
+      : !visualReviewRequired;
   const surfaceOutcomeMet = surface?.expectation.expectedOutcomeMet ?? true;
   const report = {
     schemaVersion: 1,

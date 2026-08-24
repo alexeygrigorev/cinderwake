@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v16-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "fresh-sparse-guided-living-east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v16.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v16.png",
+  "candidateSha256": "8b8ff68f5414f79c7857f39716342fa9137a75b95f5aef389deebd3158c1fc8b",
+  "referenceFiles": [
+    {
+      "file": "art/generation/guides/ashfang-idle-sparse-layout-v3.png",
+      "role": "exact-hash spatial conditioning only: four open chain centers, east axis, head/tail directions, near-paw baseline, midpoint, and lower-foreleg separation. No contour, width, anatomy, material, or production-pixel authority.",
+      "sha256": "274345c19c0b667f8aa04fbbffbaed7828b2627b8ec66912ddf3a34c31b28b5d"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "Cinderwake rendering style only: elevated camera, broad quiet matte planes, light, palette, and native-runtime density. No creature anatomy, pose, grid, silhouette, or production-pixel authority.",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-9327c0dc-91d1-4698-85dc-460c6edf435e.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1,
+    "promptSha256": "634258834b7858199d16de8c8cd65459b8daec4e6ef51e642f5c330eab68f8d4"
+  },
+  "semanticReview": {
+    "passed": [],
+    "failed": [
+      {
+        "code": "visual-review-unreviewed",
+        "detail": "No exact-hash human visual verdict has been recorded. This provenance record deliberately makes no semantic, topology, anatomy, style, or promotion claim."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V16 is retained as generated-candidate evidence only. Its visual review is unreviewed and no follow-up phase is authorized, regardless of mechanical assessment."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v16.png --output art/generation/prepared/ashfang-idle-master-v16.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v16.png",
+    "sha256": "c3118bf07460793c3d666ae6df6772092689ff80f53860f4409c1032c6e794f4",
+    "status": "rejected",
+    "notes": "Deterministic preserve-framing preparation reports normalized input bounds 817x561, prepared bounds 204x139, contact y=224–231, and centroid offset -0.293783. These are ingress facts, not visual approval."
+  },
+  "visualReview": {
+    "verdict": "UNREVIEWED",
+    "phaseAuthorization": "UNAUTHORIZED",
+    "pixelReuseDecision": "PIXEL_REUSE_PROHIBITED_UNLESS_A_LATER_EXACT_HASH_REVIEW_ACCEPTS_THIS_CANDIDATE",
+    "reviewer": null,
+    "acceptedAxes": [],
+    "rejectedAxes": [
+      "all visual claims remain unreviewed",
+      "animation-phase generation and any production promotion",
+      "candidate-pixel reuse before later exact-hash acceptance"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-height"]
+  },
+  "mechanicalEvidence": {
+    "assessmentReport": "quality-results/actor-pose/ashfang-idle-master-v16/report.json",
+    "verificationStatus": "pass",
+    "rawNormalizedInkBounds": { "width": 817, "height": 561 },
+    "preparedInkBounds": { "width": 204, "height": 139 },
+    "runtimeInkBounds": { "width": 103, "height": 71, "aspectRatio": 1.4507 },
+    "runtimeContact": {
+      "band": [112, 115],
+      "centroidOffsetFromAnchor": -0.3204
+    },
+    "actualViolationCodes": ["runtime-height"],
+    "negativeControlsCaught": 5
+  },
+  "recommendation": "Do not promote this candidate, attach it to another generation, reuse its pixels, or generate phases. Preserve it only as exact provenance until an independent exact-hash visual review records a verdict and explicitly authorizes a next action."
+}

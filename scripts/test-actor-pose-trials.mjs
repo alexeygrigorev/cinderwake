@@ -123,6 +123,12 @@ const trials = [
     expectedSurfaceViolations: [],
     requiresReview: true,
   },
+  {
+    id: "ashfang-idle-master-v16",
+    manifest: "art/generation/pose-trials/ashfang-idle-master-v16.json",
+    expectedViolations: ["runtime-height"],
+    requiresUnreviewedVisualReview: true,
+  },
 ];
 
 function assert(condition, message) {
@@ -345,6 +351,13 @@ for (const trial of trials) {
       report.visualReview?.verdict === "REJECT" &&
         report.visualReview.hashesMatch,
       `${trial.id} is missing its exact-hash independent rejection`,
+    );
+  if (trial.requiresUnreviewedVisualReview)
+    assert(
+      report.visualReview?.verdict === "UNREVIEWED" &&
+        report.visualReview.phaseAuthorization === "UNAUTHORIZED" &&
+        report.expectation.visualReviewSatisfied,
+      `${trial.id} did not retain its explicit unreviewed non-promotion state`,
     );
 }
 
