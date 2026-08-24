@@ -73,7 +73,38 @@ test("mobile city service actions synchronize loaded player state and report rej
 
   const buy = page.locator("[data-city-action='merchant:buy-tonic']");
   await expect(buy).toBeVisible();
-  expect((await buy.boundingBox())?.height).toBeGreaterThanOrEqual(48);
+  await expect(buy).toHaveAttribute("aria-label", "Buy tonic. 18G / +1 tonic");
+  await expect(
+    page.locator("[data-city-action='merchant:sell-ashfang-pelt']"),
+  ).toHaveAttribute("aria-label", "Sell pelt. +9G / 0 held");
+  const presentation = await page.evaluate(() => {
+    const panel = document.querySelector<HTMLElement>("#city-services")!;
+    const action = panel.querySelector<HTMLElement>("button")!;
+    const label = action.querySelector<HTMLElement>(".sprite-city-action")!;
+    const detail = action.querySelector<HTMLElement>(".sprite-city-detail")!;
+    const panelStyle = getComputedStyle(panel);
+    const actionStyle = getComputedStyle(action);
+    const bounds = action.getBoundingClientRect();
+    return {
+      panelBackground: panelStyle.backgroundImage,
+      panelBorderImage: panelStyle.borderImageSource,
+      actionBackground: actionStyle.backgroundImage,
+      actionBorderImage: actionStyle.borderImageSource,
+      target: { width: bounds.width, height: bounds.height },
+      labelFontSize: Number.parseFloat(getComputedStyle(label).fontSize),
+      detailFontSize: Number.parseFloat(getComputedStyle(detail).fontSize),
+    };
+  });
+  expect(presentation).toMatchObject({
+    panelBackground: "none",
+    actionBackground: "none",
+    labelFontSize: 13,
+    detailFontSize: 10,
+  });
+  expect(presentation.panelBorderImage).toContain("ui-service-panel.png");
+  expect(presentation.actionBorderImage).toContain("ui-service-button.png");
+  expect(presentation.target.width).toBeGreaterThanOrEqual(48);
+  expect(presentation.target.height).toBeGreaterThanOrEqual(48);
   await buy.tap();
   const afterBuy = await page.evaluate(() => window.__GAME_TEST__!.snapshot());
   expect(afterBuy.player).toMatchObject({ gold: 22, health: 52, tonics: 2 });

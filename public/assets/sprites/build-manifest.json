@@ -69,6 +69,14 @@
       "sha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
       "source": "public/assets/sprites/ui.png"
     },
+    "ui-service-panel.png": {
+      "sha256": "99fb489628613834d05fba82355f26d4562e3c79726b6c4db27e404c99f50d79",
+      "source": "public/assets/sprites/ui-service-panel.png"
+    },
+    "ui-service-button.png": {
+      "sha256": "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
+      "source": "public/assets/sprites/ui-service-button.png"
+    },
     "effects.png": {
       "sha256": "a841fc3f96c40398f3fbbfd41eb9b1a231a7f7716ad682c5d07c58107dc80061",
       "source": "public/assets/sprites/effects.png"
@@ -81,10 +89,6 @@
       "sha256": "3aaca8a2e678d37efda9f615a22aa6b55f2485808b87f5cea05737e9f508d501",
       "source": "public/assets/sprites/glyphs.png"
     },
-    "environment-kit-v2.png": {
-      "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
-      "source": "public/assets/sprites/environment-kit-v2.png"
-    },
     "embercross-city-kit-v1.png": {
       "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85",
       "source": "art/generation/city-kit/prepared/embercross-city-kit-v3.png"
@@ -92,6 +96,10 @@
     "embercross-residents-idle-v1.png": {
       "sha256": "0c5e7fc390603b5958a8b5389ded0da55cc67390e2ceea475aab764b4b620f80",
       "source": "art/generation/city-residents/prepared/embercross-residents-idle-v1.png"
+    },
+    "environment-kit-v2.png": {
+      "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
+      "source": "public/assets/sprites/environment-kit-v2.png"
     }
   }
 }

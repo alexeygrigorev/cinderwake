@@ -15,6 +15,12 @@ const ENVIRONMENT_KIT_SPEC_PATH = path.join(
 const ENVIRONMENT_KIT_SPEC = JSON.parse(
   await fs.readFile(ENVIRONMENT_KIT_SPEC_PATH, "utf8"),
 );
+const CITY_KIT_SPEC = JSON.parse(
+  await fs.readFile(path.join(ROOT, "art", "city-kit-v1.json"), "utf8"),
+);
+const RESIDENT_ATLAS_SPEC = JSON.parse(
+  await fs.readFile(path.join(ROOT, "art", "resident-atlas-v1.json"), "utf8"),
+);
 const ACTOR_CELL = ACTOR_SPEC.atlas.cellWidth;
 const SOURCE_CELL = ACTOR_SPEC.source.cellWidth;
 const GRID_CELL = ACTOR_SPEC.source.cellWidth;
@@ -786,6 +792,41 @@ async function buildGlyphAtlas() {
   return destination;
 }
 
+const UI_COMPONENTS = [
+  {
+    file: "ui-service-panel.png",
+    sourceRect: { left: 431, top: 534, width: 294, height: 198 },
+  },
+  {
+    file: "ui-service-button.png",
+    sourceRect: { left: 583, top: 95, width: 197, height: 82 },
+  },
+];
+
+async function buildUiComponents(uiPath) {
+  return Promise.all(
+    UI_COMPONENTS.map(async ({ file, sourceRect }) => {
+      const destination = outputPath(file);
+      await sharp(uiPath)
+        .extract(sourceRect)
+        .png({ compressionLevel: 9, palette: true, quality: 100 })
+        .toFile(destination);
+      return destination;
+    }),
+  );
+}
+
+async function copyApprovedAtlas(spec) {
+  const source = path.join(ROOT, spec.provenance.preparedFile);
+  if ((await sha256(source)) !== spec.atlas.sha256)
+    throw new Error(
+      `${spec.id} prepared source differs from its approved hash`,
+    );
+  const destination = outputPath(spec.atlas.file);
+  await fs.copyFile(source, destination);
+  return destination;
+}
+
 await fs.mkdir(outputPath("."), { recursive: true });
 const outputs = [];
 if (!OPTIONS.environmentKitOnly)
@@ -827,6 +868,7 @@ if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
     outputPath("effects.png"),
     "magenta",
   );
+  const uiComponents = await buildUiComponents(uiPath);
   outputs.push(
     terrainPath,
     groundPath,
@@ -835,9 +877,12 @@ if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
     propsPath,
     decalsPath,
     uiPath,
+    ...uiComponents,
     effectsPath,
     await buildLootAtlas(propsPath, effectsPath),
     await buildGlyphAtlas(),
+    await copyApprovedAtlas(CITY_KIT_SPEC),
+    await copyApprovedAtlas(RESIDENT_ATLAS_SPEC),
   );
 }
 if (!OPTIONS.actorsOnly) outputs.push(await buildEnvironmentKit());
@@ -876,6 +921,10 @@ const manifest = {
     ),
   ),
 };
+for (const spec of [CITY_KIT_SPEC, RESIDENT_ATLAS_SPEC]) {
+  if (!manifest.outputs[spec.atlas.file]) continue;
+  manifest.outputs[spec.atlas.file].source = spec.provenance.preparedFile;
+}
 await fs.writeFile(
   outputPath("build-manifest.json"),
   `${JSON.stringify(manifest, null, 2)}\n`,

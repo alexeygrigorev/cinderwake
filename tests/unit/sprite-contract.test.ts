@@ -288,6 +288,22 @@ describe("sprite atlas quality contract", () => {
     }
   });
 
+  it("registers deterministic tight UI components for nine-slice services", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    expect(catalog.assets["atlas:ui:service-panel"]).toMatchObject({
+      url: "/assets/sprites/ui-service-panel.png",
+      mimeType: "image/png",
+      pixelWidth: 294,
+      pixelHeight: 198,
+    });
+    expect(catalog.assets["atlas:ui:service-button"]).toMatchObject({
+      url: "/assets/sprites/ui-service-button.png",
+      mimeType: "image/png",
+      pixelWidth: 197,
+      pixelHeight: 82,
+    });
+  });
+
   it("registers the reviewed environment kit with tight aspect-preserving frames", async () => {
     const catalog = await loadProductionSpriteCatalog();
     const expectedFrames = {

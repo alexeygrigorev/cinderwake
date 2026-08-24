@@ -174,6 +174,36 @@ for (const fileName of [
     throw new Error(`${fileName} must be exactly 1024x1024`);
 }
 
+const uiComponentContracts = {
+  "ui-service-panel.png": {
+    sourceRect: { left: 431, top: 534, width: 294, height: 198 },
+  },
+  "ui-service-button.png": {
+    sourceRect: { left: 583, top: 95, width: 197, height: 82 },
+  },
+};
+for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
+  const componentPath = path.join(atlasDirectory, fileName);
+  const metadata = await sharp(componentPath).metadata();
+  if (
+    metadata.width !== sourceRect.width ||
+    metadata.height !== sourceRect.height
+  )
+    throw new Error(
+      `${fileName} must be the declared ${sourceRect.width}x${sourceRect.height} tight UI crop`,
+    );
+  const [componentPixels, sourcePixels] = await Promise.all([
+    sharp(componentPath).ensureAlpha().raw().toBuffer(),
+    sharp(path.join(atlasDirectory, "ui.png"))
+      .extract(sourceRect)
+      .ensureAlpha()
+      .raw()
+      .toBuffer(),
+  ]);
+  if (!componentPixels.equals(sourcePixels))
+    throw new Error(`${fileName} pixels differ from its declared ui.png crop`);
+}
+
 const decalPath = path.join(atlasDirectory, "environment-decals.png");
 for (let cellIndex = 0; cellIndex < 16; cellIndex += 1) {
   const cellSize = 256;

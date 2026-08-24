@@ -196,6 +196,18 @@ const assets: Record<string, SpriteAssetV1> = {
   "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
   "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
   "atlas:ui": asset("atlas:ui", "ui.png", 1024, 1024),
+  "atlas:ui:service-panel": asset(
+    "atlas:ui:service-panel",
+    "ui-service-panel.png",
+    294,
+    198,
+  ),
+  "atlas:ui:service-button": asset(
+    "atlas:ui:service-button",
+    "ui-service-button.png",
+    197,
+    82,
+  ),
   "atlas:glyphs": asset("atlas:glyphs", "glyphs.png", 1024, 512),
 };
 
