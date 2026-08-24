@@ -13,7 +13,6 @@ const CARDINAL_DIRECTIONS = [
   { x: 0, y: 1 },
   { x: -1, y: 0 },
 ] as const;
-const SEGMENT_SAMPLE_UNITS = 128;
 
 interface SearchCell {
   x: number;
@@ -55,30 +54,116 @@ export function navigationPointWalkable(
   );
 }
 
-function segmentWalkable(
+function segmentEntersOpenBox(
+  from: Vec2,
+  to: Vec2,
+  minimum: Vec2,
+  maximum: Vec2,
+): boolean {
+  let enter = 0;
+  let exit = 1;
+  for (const axis of ["x", "y"] as const) {
+    const delta = to[axis] - from[axis];
+    if (Math.abs(delta) < Number.EPSILON) {
+      if (from[axis] <= minimum[axis] || from[axis] >= maximum[axis])
+        return false;
+      continue;
+    }
+    const first = (minimum[axis] - from[axis]) / delta;
+    const second = (maximum[axis] - from[axis]) / delta;
+    enter = Math.max(enter, Math.min(first, second));
+    exit = Math.min(exit, Math.max(first, second));
+    if (enter >= exit) return false;
+  }
+  return enter < exit;
+}
+
+function segmentEntersOpenEllipse(
+  from: Vec2,
+  to: Vec2,
+  radius: number,
+  collision: SceneryCollisionFootprint,
+): boolean {
+  const radiusX = collision.halfWidth + radius;
+  const radiusY = collision.halfHeight + radius;
+  const startX = (from.x - collision.center.x) / radiusX;
+  const startY = (from.y - collision.center.y) / radiusY;
+  const deltaX = (to.x - from.x) / radiusX;
+  const deltaY = (to.y - from.y) / radiusY;
+  const denominator = deltaX * deltaX + deltaY * deltaY;
+  const closestProgress =
+    denominator < Number.EPSILON
+      ? 0
+      : Math.max(
+          0,
+          Math.min(1, -(startX * deltaX + startY * deltaY) / denominator),
+        );
+  const closestX = startX + deltaX * closestProgress;
+  const closestY = startY + deltaY * closestProgress;
+  return closestX * closestX + closestY * closestY < 1;
+}
+
+/**
+ * Proves the complete actor-radius-expanded segment is walkable. This is an
+ * analytic test rather than fixed-interval sampling: a short near-tangent
+ * chord through a small prop is still collision, even when both endpoints are
+ * outside. The tile broadphase is bounded by the finite map.
+ */
+export function navigationSegmentWalkable(
   map: DungeonMap,
   scenery: readonly SceneryCollisionFootprint[],
   from: Vec2,
   to: Vec2,
   radius: number,
 ): boolean {
-  const length = Math.hypot(to.x - from.x, to.y - from.y);
-  const samples = Math.max(1, Math.ceil(length / SEGMENT_SAMPLE_UNITS));
-  for (let index = 1; index <= samples; index += 1) {
-    const progress = index / samples;
-    if (
-      !navigationPointWalkable(
-        map,
-        scenery,
-        {
-          x: Math.round(from.x + (to.x - from.x) * progress),
-          y: Math.round(from.y + (to.y - from.y) * progress),
-        },
-        radius,
+  if (
+    !navigationPointWalkable(map, scenery, from, radius) ||
+    !navigationPointWalkable(map, scenery, to, radius)
+  )
+    return false;
+
+  const minimumTileX = Math.max(
+    0,
+    Math.floor((Math.min(from.x, to.x) - radius) / UNITS_PER_TILE),
+  );
+  const maximumTileX = Math.min(
+    map.width - 1,
+    Math.floor((Math.max(from.x, to.x) + radius) / UNITS_PER_TILE),
+  );
+  const minimumTileY = Math.max(
+    0,
+    Math.floor((Math.min(from.y, to.y) - radius) / UNITS_PER_TILE),
+  );
+  const maximumTileY = Math.min(
+    map.height - 1,
+    Math.floor((Math.max(from.y, to.y) + radius) / UNITS_PER_TILE),
+  );
+  for (let tileY = minimumTileY; tileY <= maximumTileY; tileY += 1) {
+    for (let tileX = minimumTileX; tileX <= maximumTileX; tileX += 1) {
+      if (isFloor(map, tileX, tileY)) continue;
+      if (
+        segmentEntersOpenBox(
+          from,
+          to,
+          {
+            x: tileX * UNITS_PER_TILE - radius,
+            y: tileY * UNITS_PER_TILE - radius,
+          },
+          {
+            x: (tileX + 1) * UNITS_PER_TILE + radius,
+            y: (tileY + 1) * UNITS_PER_TILE + radius,
+          },
+        )
       )
-    )
-      return false;
+        return false;
+    }
   }
+  if (
+    scenery.some((collision) =>
+      segmentEntersOpenEllipse(from, to, radius, collision),
+    )
+  )
+    return false;
   return true;
 }
 
@@ -145,7 +230,13 @@ export function findNavigationRoute(
       requestedWalkable &&
       current.x === requestedCell.x &&
       current.y === requestedCell.y &&
-      segmentWalkable(map, scenery, currentPoint, requestedTarget, radius)
+      navigationSegmentWalkable(
+        map,
+        scenery,
+        currentPoint,
+        requestedTarget,
+        radius,
+      )
     ) {
       const route = reconstructRoute(current, parents);
       if (
@@ -167,7 +258,13 @@ export function findNavigationRoute(
       const nextPoint = tileCenter(next);
       if (
         !navigationPointWalkable(map, scenery, nextPoint, radius) ||
-        !segmentWalkable(map, scenery, currentPoint, nextPoint, radius)
+        !navigationSegmentWalkable(
+          map,
+          scenery,
+          currentPoint,
+          nextPoint,
+          radius,
+        )
       )
         continue;
       parents.set(nextKey, cellKey(current.x, current.y));

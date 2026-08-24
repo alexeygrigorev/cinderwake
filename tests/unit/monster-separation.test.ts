@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { navigationDirection } from "../../src/game/navigation";
+import {
+  navigationDirection,
+  navigationSegmentWalkable,
+} from "../../src/game/navigation";
 import {
   overlapsScenery,
   sceneryCollisions,
@@ -207,7 +210,7 @@ describe("deterministic monster separation", () => {
           maximumPenetration(first),
           "wide pursuit padding was not established",
         ).toBeLessThanOrEqual(2);
-      for (const monster of first.monsters)
+      for (const monster of first.monsters) {
         expect(
           scenery.every(
             (collision) =>
@@ -215,6 +218,17 @@ describe("deterministic monster separation", () => {
           ),
           `${monster.id} entered scenery at tick ${tick}`,
         ).toBe(true);
+        expect(
+          navigationSegmentWalkable(
+            first.map,
+            scenery,
+            monster.previousPosition,
+            monster.position,
+            monster.radius,
+          ),
+          `${monster.id} crossed scenery at tick ${tick}`,
+        ).toBe(true);
+      }
       if (tick === 0)
         pursuitManifest = buildRenderManifest(first, {
           x: first.player.position.x,

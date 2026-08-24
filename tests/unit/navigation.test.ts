@@ -5,6 +5,7 @@ import {
   findNavigationRoute,
   findStateNavigationRoute,
   navigationPointWalkable,
+  navigationSegmentWalkable,
 } from "../../src/game/navigation";
 import {
   buildSceneryLayout,
@@ -15,6 +16,7 @@ import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import {
   BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
   type ScenarioV1,
 } from "../../src/testkit/scenarios";
@@ -108,6 +110,40 @@ describe("deterministic navigation", () => {
     ).toBeLessThan(
       Math.hypot(from.x - collision.center.x, from.y - collision.center.y),
     );
+  });
+
+  it("rejects a near-tangent segment even when both endpoints are clear", () => {
+    const state = worldFromScenario(
+      createRunScenario("navigation-tangent-lantern", "vanguard"),
+    );
+    const collision = buildSceneryLayout(state.map).find(
+      ({ id }) => id === "architecture:opening:lantern:0",
+    )!.collision!;
+    const from = {
+      x: collision.center.x - 64,
+      y: collision.center.y + collision.halfHeight + state.player.radius - 1,
+    };
+    const to = { x: collision.center.x + 64, y: from.y };
+    const scenery = sceneryCollisions(state.map);
+
+    expect(
+      navigationPointWalkable(state.map, scenery, from, state.player.radius),
+    ).toBe(true);
+    expect(
+      navigationPointWalkable(state.map, scenery, to, state.player.radius),
+    ).toBe(true);
+    expect(
+      navigationSegmentWalkable(
+        state.map,
+        scenery,
+        from,
+        to,
+        state.player.radius,
+      ),
+    ).toBe(false);
+    expect(
+      findStateNavigationRoute(state, from, to, state.player.radius),
+    ).not.toEqual([to]);
   });
 
   it("routes around walls without cutting an actor-radius corner", () => {

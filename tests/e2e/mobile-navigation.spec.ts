@@ -9,6 +9,7 @@ import { tileCenter } from "../../src/game/dungeon";
 import {
   findStateNavigationRoute,
   navigationPointWalkable,
+  navigationSegmentWalkable,
 } from "../../src/game/navigation";
 import {
   buildSceneryLayout,
@@ -242,6 +243,19 @@ test("touch navigation routes around the compact v2 workshop and settles", async
       end.position.y - target.world.y,
     ),
   ).toBeLessThan(UNITS_PER_TILE);
+  let previousPosition = evidence.start;
+  for (const sample of evidence.samples) {
+    expect(
+      navigationSegmentWalkable(
+        state.map,
+        collisions,
+        previousPosition,
+        sample.position,
+        state.player.radius,
+      ),
+    ).toBe(true);
+    previousPosition = sample.position;
+  }
   expect(
     collisions.every(
       (collision) =>
@@ -273,6 +287,114 @@ test("touch navigation routes around the compact v2 workshop and settles", async
     longestWalkInPlace = Math.max(longestWalkInPlace, currentWalkInPlace);
   }
   expect(longestWalkInPlace).toBeLessThanOrEqual(12);
+});
+
+test("a real phone tap cannot cut a near-tangent chord through a lantern", async ({
+  page,
+}) => {
+  const state = generatedOpeningState("mobile-tangent-lantern");
+  state.monsters = [];
+  state.pendingAttacks = [];
+  state.settings.ai = false;
+  state.player.moveSpeed = 128;
+  const collisions = sceneryCollisions(state.map);
+  const lantern = buildSceneryLayout(state.map).find(
+    ({ id }) => id === "architecture:opening:lantern:0",
+  )!.collision!;
+  const start = {
+    x: lantern.center.x - 64,
+    y: lantern.center.y + lantern.halfHeight + state.player.radius - 1,
+  };
+  const target = { x: lantern.center.x + 64, y: start.y };
+  state.player.position = { ...start };
+  state.player.previousPosition = { ...start };
+  expect(
+    navigationPointWalkable(state.map, collisions, start, state.player.radius),
+  ).toBe(true);
+  expect(
+    navigationPointWalkable(state.map, collisions, target, state.player.radius),
+  ).toBe(true);
+  expect(
+    navigationSegmentWalkable(
+      state.map,
+      collisions,
+      start,
+      target,
+      state.player.radius,
+    ),
+  ).toBe(false);
+
+  await page.goto("/?testMode=1&scenario=animation-idle");
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  const clientTarget = await page.evaluate(
+    ({ injectedState, world, geometry }) => {
+      window.__GAME_TEST__!.loadState(injectedState);
+      const manifest = window.__GAME_TEST__!.renderManifest();
+      const canvas = document.querySelector("canvas")!.getBoundingClientRect();
+      const screen = {
+        x:
+          geometry.viewWidth / 2 +
+          ((world.x / geometry.unitsPerTile) * geometry.tilePixels -
+            manifest.camera.x) *
+            manifest.camera.zoom,
+        y:
+          geometry.viewHeight / 2 +
+          ((world.y / geometry.unitsPerTile) * geometry.tilePixels -
+            manifest.camera.y) *
+            manifest.camera.zoom,
+      };
+      return {
+        x: canvas.left + (screen.x / geometry.viewWidth) * canvas.width,
+        y: canvas.top + (screen.y / geometry.viewHeight) * canvas.height,
+      };
+    },
+    {
+      injectedState: state,
+      world: target,
+      geometry: {
+        unitsPerTile: UNITS_PER_TILE,
+        tilePixels: TILE_PIXELS,
+        viewWidth: VIEW_WIDTH,
+        viewHeight: VIEW_HEIGHT,
+      },
+    },
+  );
+  await page.touchscreen.tap(clientTarget.x, clientTarget.y);
+  const positions = await page.evaluate(() => {
+    const samples = [];
+    for (let tick = 0; tick < 180; tick += 1) {
+      const current = window.__GAME_TEST__!.step(1, {
+        render: true,
+        useBrowserInput: true,
+      });
+      samples.push({
+        position: current.player.position,
+        velocity: current.player.velocity,
+        clip: current.player.animation.clip,
+      });
+    }
+    return samples;
+  });
+
+  let previous = start;
+  for (const { position } of positions) {
+    expect(
+      navigationSegmentWalkable(
+        state.map,
+        collisions,
+        previous,
+        position,
+        state.player.radius,
+      ),
+    ).toBe(true);
+    previous = position;
+  }
+  const end = positions.at(-1)!;
+  expect(end.position).toEqual(start);
+  expect(positions.every(({ position }) => position.x === start.x)).toBe(true);
+  expect(positions.every(({ position }) => position.y === start.y)).toBe(true);
+  expect(end.velocity).toEqual({ x: 0, y: 0 });
+  expect(end.clip).toBe("idle");
 });
 
 test("mobile joystick reaches the real opening threshold without entering v2 scenery", async ({

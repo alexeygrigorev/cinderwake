@@ -636,8 +636,16 @@ export function sceneryCollisionContractViolations(
         ? []
         : [`${placement.id}:ground-decal-must-be-passable`];
     }
-    return placement.collisionMode === "solid" && placement.collision
+    if (placement.collisionMode !== "solid" || !placement.collision)
+      return [`${placement.id}:raised-object-must-be-solid`];
+    const { center, halfWidth, halfHeight } = placement.collision;
+    return Number.isFinite(center.x) &&
+      Number.isFinite(center.y) &&
+      Number.isFinite(halfWidth) &&
+      Number.isFinite(halfHeight) &&
+      halfWidth > 0 &&
+      halfHeight > 0
       ? []
-      : [`${placement.id}:raised-object-must-be-solid`];
+      : [`${placement.id}:solid-collision-footprint-invalid`];
   });
 }

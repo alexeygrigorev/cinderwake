@@ -1,5 +1,10 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
 import { isFloor } from "../game/dungeon";
+import { navigationSegmentWalkable } from "../game/navigation";
+import {
+  sceneryCollisions,
+  type SceneryCollisionFootprint,
+} from "../game/sceneryLayout";
 import type {
   AnimationClip,
   GameEventType,
@@ -126,6 +131,26 @@ function assertActorOnFloor(
     throw new Error(`${path} must be on a walkable tile`);
 }
 
+function assertActorPathWalkable(
+  state: GameState,
+  scenery: readonly SceneryCollisionFootprint[],
+  actor: Pick<GameState["player"], "position" | "previousPosition" | "radius">,
+  path: string,
+): void {
+  if (
+    !navigationSegmentWalkable(
+      state.map,
+      scenery,
+      actor.previousPosition,
+      actor.position,
+      actor.radius,
+    )
+  )
+    throw new Error(
+      `${path}.previousPosition→position must not cross a wall or solid object`,
+    );
+}
+
 /**
  * Validates and clones an exact authoritative snapshot. This is intentionally
  * separate from ScenarioV1: scenarios are ergonomic fixtures, while snapshots
@@ -157,7 +182,21 @@ export function stateFromSnapshot(input: unknown): GameState {
   });
   vector(map.spawn, "state.map.spawn");
   vector(map.exit, "state.map.exit");
-  array(map.rooms, "state.map.rooms");
+  for (const [index, roomValue] of array(
+    map.rooms,
+    "state.map.rooms",
+  ).entries()) {
+    const path = `state.map.rooms[${index}]`;
+    const room = record(roomValue, path);
+    const roomX = nonNegative(room.x, `${path}.x`);
+    const roomY = nonNegative(room.y, `${path}.y`);
+    const roomWidth = nonNegative(room.width, `${path}.width`);
+    const roomHeight = nonNegative(room.height, `${path}.height`);
+    if (roomWidth < 1 || roomHeight < 1)
+      throw new Error(`${path} dimensions must be positive`);
+    if (roomX + roomWidth > width || roomY + roomHeight > height)
+      throw new Error(`${path} must fit inside state.map`);
+  }
   string(map.digest, "state.map.digest");
 
   const rng = record(root.rng, "state.rng");
@@ -301,12 +340,14 @@ export function stateFromSnapshot(input: unknown): GameState {
   boolean(root.exitUnlocked, "state.exitUnlocked");
 
   const clone = structuredClone(input) as GameState;
-  assertActorOnFloor(clone, clone.player.position, "state.player.position");
+  const scenery = sceneryCollisions(clone.map);
+  assertActorPathWalkable(clone, scenery, clone.player, "state.player");
   clone.monsters.forEach((monster, index) =>
-    assertActorOnFloor(
+    assertActorPathWalkable(
       clone,
-      monster.position,
-      `state.monsters[${index}].position`,
+      scenery,
+      monster,
+      `state.monsters[${index}]`,
     ),
   );
   clone.loot.forEach((loot, index) =>

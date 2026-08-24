@@ -116,10 +116,32 @@ test("rejects malformed state injection without mutating the live world", async 
     } catch (error) {
       message = String(error);
     }
-    return { before, after: window.__GAME_TEST__!.stateHash(), message };
+    const solid = window
+      .__GAME_TEST__!.renderManifest()
+      .sceneSprites.find(
+        ({ collision }) => collision?.mode === "solid",
+      )!.collision!;
+    const impossible: any = window.__GAME_TEST__!.snapshot();
+    impossible.player.position = { ...solid.worldCenter };
+    impossible.player.previousPosition = { ...solid.worldCenter };
+    let collisionMessage = "";
+    try {
+      window.__GAME_TEST__!.loadState(impossible);
+    } catch (error) {
+      collisionMessage = String(error);
+    }
+    return {
+      before,
+      after: window.__GAME_TEST__!.stateHash(),
+      message,
+      collisionMessage,
+    };
   });
   expect(result.after).toBe(result.before);
   expect(result.message).toContain("state.rng");
+  expect(result.collisionMessage).toContain(
+    "state.player.previousPosition→position must not cross a wall or solid object",
+  );
 });
 
 test("keyboard and pointer adapter feed deterministic input sampling", async ({

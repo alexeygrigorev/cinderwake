@@ -3,9 +3,19 @@ import {
   explicitDungeon,
   generateDungeon,
   reachableFloorCount,
+  tileCenter,
   totalFloorCount,
 } from "../../src/game/dungeon";
+import {
+  navigationPointWalkable,
+  navigationSegmentWalkable,
+} from "../../src/game/navigation";
 import { createRngStreams, randomFloat } from "../../src/game/rng";
+import {
+  buildSceneryLayout,
+  overlapsScenery,
+  sceneryCollisions,
+} from "../../src/game/sceneryLayout";
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
@@ -17,6 +27,7 @@ import {
 import { playReplay, type ReplayTapeV1 } from "../../src/testkit/replay";
 import {
   BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 import { stateFromSnapshot } from "../../src/testkit/stateSnapshots";
@@ -58,6 +69,120 @@ describe("deterministic fixtures", () => {
     ) as unknown as Record<string, unknown>;
     delete snapshot.rng;
     expect(() => stateFromSnapshot(snapshot)).toThrow("state.rng");
+  });
+
+  it("rejects malformed rooms before deriving scenery collision", () => {
+    const original = worldFromScenario(
+      createRunScenario("snapshot-invalid-room", "vanguard"),
+    );
+    const zeroWidth = structuredClone(original);
+    zeroWidth.map.rooms[0]!.width = 0;
+    expect(() => stateFromSnapshot(zeroWidth)).toThrow(
+      "state.map.rooms[0] dimensions must be positive",
+    );
+
+    const offMap = structuredClone(original);
+    offMap.map.rooms[0]!.x = offMap.map.width;
+    expect(() => stateFromSnapshot(offMap)).toThrow(
+      "state.map.rooms[0] must fit inside state.map",
+    );
+
+    const nonFinite = structuredClone(original);
+    nonFinite.map.rooms[0]!.height = Number.NaN;
+    expect(() => stateFromSnapshot(nonFinite)).toThrow(
+      "state.map.rooms[0].height must be a safe integer",
+    );
+  });
+
+  it("rejects restored actors inside or interpolating through solid art", () => {
+    const original = worldFromScenario(
+      createRunScenario("snapshot-solid-path", "vanguard"),
+    );
+    const collision = buildSceneryLayout(original.map).find(
+      ({ id }) => id === "structure:0:forge",
+    )!.collision!;
+    const inside = structuredClone(original);
+    inside.player.position = { ...collision.center };
+    inside.player.previousPosition = { ...collision.center };
+    expect(() => stateFromSnapshot(inside)).toThrow(
+      "state.player.previousPosition→position must not cross a wall or solid object",
+    );
+
+    const scenery = sceneryCollisions(original.map);
+    const lantern = buildSceneryLayout(original.map).find(
+      ({ id }) => id === "architecture:opening:lantern:0",
+    )!.collision!;
+    const from = {
+      x: lantern.center.x - 64,
+      y: lantern.center.y + lantern.halfHeight + original.player.radius - 1,
+    };
+    const to = { x: lantern.center.x + 64, y: from.y };
+    expect(
+      navigationPointWalkable(
+        original.map,
+        scenery,
+        from,
+        original.player.radius,
+      ),
+    ).toBe(true);
+    expect(
+      navigationPointWalkable(
+        original.map,
+        scenery,
+        to,
+        original.player.radius,
+      ),
+    ).toBe(true);
+    expect(
+      navigationSegmentWalkable(
+        original.map,
+        scenery,
+        from,
+        to,
+        original.player.radius,
+      ),
+    ).toBe(false);
+    const crossing = structuredClone(original);
+    crossing.player.previousPosition = from;
+    crossing.player.position = to;
+    expect(() => stateFromSnapshot(crossing)).toThrow(
+      "state.player.previousPosition→position must not cross a wall or solid object",
+    );
+  });
+
+  it("rejects a scenario actor whose declared tile is inside solid art", () => {
+    const scenario = createRunScenario("scenario-solid-start", "vanguard");
+    const baseline = worldFromScenario(scenario);
+    const forge = buildSceneryLayout(baseline.map).find(
+      ({ id }) => id === "structure:0:forge",
+    )!;
+    const blockedTile = Array.from(
+      { length: baseline.map.width * baseline.map.height },
+      (_, index) => ({
+        x: index % baseline.map.width,
+        y: Math.floor(index / baseline.map.width),
+      }),
+    ).find((tile) => {
+      const center = tileCenter(tile);
+      return (
+        navigationPointWalkable(
+          baseline.map,
+          [],
+          center,
+          baseline.player.radius,
+        ) && overlapsScenery(center, baseline.player.radius, forge.collision!)
+      );
+    });
+    expect(blockedTile).toBeDefined();
+    scenario.player = {
+      ...scenario.player,
+      tile: [blockedTile!.x, blockedTile!.y],
+    };
+    scenario.monsters = [];
+
+    expect(() => worldFromScenario(scenario)).toThrow(
+      "Player previousPosition→position must not cross a wall or solid object",
+    );
   });
 
   it("constructs a complete mid-action state without playing through setup", () => {

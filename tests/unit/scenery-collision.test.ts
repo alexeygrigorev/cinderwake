@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { UNITS_PER_TILE } from "../../src/game/constants";
+import {
+  DIAGONAL_SCALE,
+  DIRECTION_SCALE,
+  UNITS_PER_TILE,
+} from "../../src/game/constants";
 import { generateDungeon, tileCenter } from "../../src/game/dungeon";
+import {
+  findNavigationRoute,
+  navigationPointWalkable,
+  navigationSegmentWalkable,
+} from "../../src/game/navigation";
 import {
   buildSceneryLayout,
   overlapsScenery,
@@ -166,6 +175,143 @@ describe("deterministic scenery collision", () => {
     );
   });
 
+  it.each(["vanguard", "ranger", "arcanist"] as const)(
+    "cannot tunnel a high-speed restored %s through a solid object",
+    (classId) => {
+      const state = worldFromScenario(
+        createRunScenario("collision-high-speed-player", classId),
+      );
+      state.monsters = [];
+      state.settings.ai = false;
+      const collision = buildSceneryLayout(state.map).find(
+        ({ kind, collision }) => kind === "structure" && collision,
+      )!.collision!;
+      const safeGap = 32;
+      state.player.position = {
+        x: collision.center.x,
+        y:
+          collision.center.y +
+          collision.halfHeight +
+          state.player.radius +
+          safeGap,
+      };
+      state.player.previousPosition = { ...state.player.position };
+      state.player.moveSpeed =
+        collision.halfHeight * 2 + state.player.radius * 2 + safeGap * 2;
+
+      const startingSide = Math.sign(
+        state.player.position.y - collision.center.y,
+      );
+      stepGame(state, { ...EMPTY_INPUT, moveY: -1 });
+
+      expect(
+        overlapsScenery(state.player.position, state.player.radius, collision),
+      ).toBe(false);
+      expect(Math.sign(state.player.position.y - collision.center.y)).toBe(
+        startingSide,
+      );
+      expect(state.player.position.y).toBeGreaterThan(
+        collision.center.y + collision.halfHeight + state.player.radius,
+      );
+    },
+  );
+
+  it("blocks a short near-tangent chord through a small solid prop", () => {
+    const state = worldFromScenario(
+      createRunScenario("collision-tangent-lantern", "vanguard"),
+    );
+    state.monsters = [];
+    state.settings.ai = false;
+    const collision = buildSceneryLayout(state.map).find(
+      ({ id }) => id === "architecture:opening:lantern:0",
+    )!.collision!;
+    state.player.moveSpeed = 128;
+    state.player.position = {
+      x: collision.center.x - 64,
+      y: collision.center.y + collision.halfHeight + state.player.radius - 1,
+    };
+    state.player.previousPosition = { ...state.player.position };
+    const attemptedEnd = {
+      x: state.player.position.x + state.player.moveSpeed,
+      y: state.player.position.y,
+    };
+
+    expect(
+      overlapsScenery(state.player.position, state.player.radius, collision),
+    ).toBe(false);
+    expect(overlapsScenery(attemptedEnd, state.player.radius, collision)).toBe(
+      false,
+    );
+    stepGame(state, { ...EMPTY_INPUT, moveX: 1 });
+
+    expect(state.player.position).toEqual(state.player.previousPosition);
+    expect(state.player.velocity).toEqual({ x: 0, y: 0 });
+  });
+
+  it.each(["vanguard", "ranger", "arcanist"] as const)(
+    "keeps the rendered %s diagonal tick chord outside solid scenery",
+    (classId) => {
+      const state = worldFromScenario(
+        createRunScenario("collision-diagonal-player", classId),
+      );
+      state.monsters = [];
+      state.settings.ai = false;
+      const collisions = buildSceneryLayout(state.map).flatMap(
+        ({ collision }) => (collision ? [collision] : []),
+      );
+      const collision = buildSceneryLayout(state.map).find(
+        ({ kind, collision }) => kind === "structure" && collision,
+      )!.collision!;
+      const offset =
+        Math.max(collision.halfWidth, collision.halfHeight) +
+        state.player.radius +
+        200;
+      const desiredComponent = offset * 2;
+      state.player.moveSpeed = Math.round(
+        (desiredComponent * DIRECTION_SCALE) / DIAGONAL_SCALE,
+      );
+      const component = Math.round(
+        (state.player.moveSpeed * DIAGONAL_SCALE) / DIRECTION_SCALE,
+      );
+      state.player.position = {
+        x: collision.center.x - Math.floor(component / 2),
+        y: collision.center.y + Math.floor(component / 2),
+      };
+      state.player.previousPosition = { ...state.player.position };
+      const start = { ...state.player.position };
+      const naiveDiagonalEnd = {
+        x: start.x + component,
+        y: start.y - component,
+      };
+
+      expect(
+        navigationSegmentWalkable(
+          state.map,
+          collisions,
+          start,
+          naiveDiagonalEnd,
+          state.player.radius,
+        ),
+      ).toBe(false);
+      stepGame(state, { ...EMPTY_INPUT, moveX: 1, moveY: -1 });
+
+      expect(state.player.position).not.toEqual(naiveDiagonalEnd);
+      expect(
+        navigationSegmentWalkable(
+          state.map,
+          collisions,
+          state.player.previousPosition,
+          state.player.position,
+          state.player.radius,
+        ),
+      ).toBe(true);
+      expect(
+        Number(state.player.position.x !== start.x) +
+          Number(state.player.position.y !== start.y),
+      ).toBe(1);
+    },
+  );
+
   it("blocks monsters at raised props and keeps every raised object solid", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
     const prop = buildSceneryLayout(state.map).find(
@@ -250,6 +396,155 @@ describe("deterministic scenery collision", () => {
     ).toEqual([]);
   });
 
+  it.each(["ashfang", "hexer", "stonekin"] as const)(
+    "keeps every %s pursuit segment outside solid scenery",
+    (kind) => {
+      const state = worldFromScenario(
+        createRunScenario("collision-all-monster-kinds", "vanguard"),
+      );
+      const monster = state.monsters.find(
+        (candidate) => candidate.kind === kind,
+      )!;
+      state.monsters = [monster];
+      state.player.health = 10_000;
+      state.player.maxHealth = 10_000;
+      state.settings.ai = true;
+      const collisions = buildSceneryLayout(state.map).flatMap(
+        ({ collision }) => (collision ? [collision] : []),
+      );
+      const collision = buildSceneryLayout(state.map).find(
+        ({ id }) => id === "structure:0:forge",
+      )!.collision!;
+      monster.position = {
+        x: collision.center.x,
+        y: collision.center.y + collision.halfHeight + monster.radius + 32,
+      };
+      monster.previousPosition = { ...monster.position };
+      monster.attackReadyTick = 10_000;
+      const target = Array.from(
+        { length: state.map.width * state.map.height },
+        (_, index) =>
+          tileCenter({
+            x: index % state.map.width,
+            y: Math.floor(index / state.map.width),
+          }),
+      )
+        .filter((point) => {
+          const distance = Math.hypot(
+            point.x - monster.position.x,
+            point.y - monster.position.y,
+          );
+          if (
+            distance <= monster.attackRange + UNITS_PER_TILE ||
+            distance >= 8 * UNITS_PER_TILE ||
+            !navigationPointWalkable(
+              state.map,
+              collisions,
+              point,
+              state.player.radius,
+            )
+          )
+            return false;
+          const route = findNavigationRoute(
+            state.map,
+            collisions,
+            monster.position,
+            point,
+            monster.radius,
+          );
+          return route.at(-1)?.x === point.x && route.at(-1)?.y === point.y;
+        })
+        .sort(
+          (first, second) =>
+            first.y - second.y ||
+            Math.abs(first.x - collision.center.x) -
+              Math.abs(second.x - collision.center.x),
+        )[0];
+      expect(target).toBeDefined();
+      state.player.position = { ...target! };
+      state.player.previousPosition = { ...state.player.position };
+      const start = { ...monster.position };
+      const startDistance = Math.hypot(
+        start.x - state.player.position.x,
+        start.y - state.player.position.y,
+      );
+      let minimumDistance = startDistance;
+
+      for (let tick = 0; tick < 120; tick += 1) {
+        stepGame(state, EMPTY_INPUT);
+        expect(
+          navigationSegmentWalkable(
+            state.map,
+            collisions,
+            monster.previousPosition,
+            monster.position,
+            monster.radius,
+          ),
+          `${kind} crossed solid scenery at tick ${tick}`,
+        ).toBe(true);
+        minimumDistance = Math.min(
+          minimumDistance,
+          Math.hypot(
+            monster.position.x - state.player.position.x,
+            monster.position.y - state.player.position.y,
+          ),
+        );
+      }
+
+      expect(
+        Math.hypot(monster.position.x - start.x, monster.position.y - start.y),
+      ).toBeGreaterThan(500);
+      expect(minimumDistance).toBeLessThan(startDistance - 500);
+    },
+  );
+
+  it("keeps the Hexer retreat branch outside solid scenery", () => {
+    const state = worldFromScenario(
+      createRunScenario("collision-hexer-retreat", "vanguard"),
+    );
+    const monster = state.monsters.find(({ kind }) => kind === "hexer")!;
+    state.monsters = [monster];
+    state.player.health = 10_000;
+    state.player.maxHealth = 10_000;
+    state.settings.ai = true;
+    const collisions = buildSceneryLayout(state.map).flatMap(({ collision }) =>
+      collision ? [collision] : [],
+    );
+    const collision = buildSceneryLayout(state.map).find(
+      ({ id }) => id === "structure:0:forge",
+    )!.collision!;
+    monster.position = {
+      x: collision.center.x,
+      y: collision.center.y + collision.halfHeight + monster.radius + 32,
+    };
+    monster.previousPosition = { ...monster.position };
+    monster.attackReadyTick = 10_000;
+    state.player.position = {
+      x: monster.position.x,
+      y: monster.position.y + 2 * UNITS_PER_TILE,
+    };
+    state.player.previousPosition = { ...state.player.position };
+    const start = { ...monster.position };
+
+    for (let tick = 0; tick < 90; tick += 1) {
+      stepGame(state, EMPTY_INPUT);
+      expect(
+        navigationSegmentWalkable(
+          state.map,
+          collisions,
+          monster.previousPosition,
+          monster.position,
+          monster.radius,
+        ),
+        `Hexer retreat crossed solid scenery at tick ${tick}`,
+      ).toBe(true);
+    }
+    expect(
+      Math.hypot(monster.position.x - start.x, monster.position.y - start.y),
+    ).toBeGreaterThan(500);
+    expect(monster.position.x).not.toBe(start.x);
+  });
+
   it("rejects a raised-object pass-through mutation while preserving flat decals", () => {
     const state = worldFromScenario(
       createRunScenario("collision-contract", "vanguard"),
@@ -277,6 +572,32 @@ describe("deterministic scenery collision", () => {
       };
       expect(sceneryCollisionContractViolations(raisedDecal)).toEqual([
         `${raisedDecal[decalIndex]!.id}:raised-decal-must-be-solid`,
+      ]);
+    }
+  });
+
+  it("rejects zero-sized and non-finite solid footprint mutations", () => {
+    const state = worldFromScenario(
+      createRunScenario("collision-footprint-mutations", "vanguard"),
+    );
+    const layout = buildSceneryLayout(state.map);
+    const raisedIndex = layout.findIndex(
+      ({ kind, collision }) => kind !== "decal" && collision,
+    );
+    const raised = layout[raisedIndex]!;
+
+    for (const collision of [
+      { ...raised.collision!, halfWidth: 0 },
+      { ...raised.collision!, halfHeight: 0 },
+      {
+        ...raised.collision!,
+        center: { ...raised.collision!.center, x: Number.NaN },
+      },
+    ]) {
+      const broken = structuredClone(layout);
+      broken[raisedIndex] = { ...raised, collision };
+      expect(sceneryCollisionContractViolations(broken)).toEqual([
+        `${raised.id}:solid-collision-footprint-invalid`,
       ]);
     }
   });

@@ -6,12 +6,16 @@ import {
   isFloor,
   tileCenter,
 } from "../game/dungeon";
-import { findNavigationRoute } from "../game/navigation";
+import {
+  findNavigationRoute,
+  navigationSegmentWalkable,
+} from "../game/navigation";
 import { createRngStreams, randomInt } from "../game/rng";
 import {
   buildSceneryLayout,
   overlapsScenery,
   sceneryCollisions,
+  type SceneryCollisionFootprint,
 } from "../game/sceneryLayout";
 import type {
   AnimationClip,
@@ -1002,6 +1006,26 @@ function assertOnFloor(state: GameState, position: Vec2, name: string): void {
   }
 }
 
+function assertActorPathWalkable(
+  state: GameState,
+  scenery: readonly SceneryCollisionFootprint[],
+  actor: Pick<GameState["player"], "position" | "previousPosition" | "radius">,
+  name: string,
+): void {
+  if (
+    !navigationSegmentWalkable(
+      state.map,
+      scenery,
+      actor.previousPosition,
+      actor.position,
+      actor.radius,
+    )
+  )
+    throw new Error(
+      `${name} previousPosition→position must not cross a wall or solid object`,
+    );
+}
+
 export function worldFromScenario(input: ScenarioV1): GameState {
   validateScenario(input);
   const map =
@@ -1154,9 +1178,10 @@ export function worldFromScenario(input: ScenarioV1): GameState {
       throw new Error(`Duplicate entity id: ${entity.id}`);
     constructedIds.add(entity.id);
   }
-  assertOnFloor(state, state.player.position, "Player");
+  const actorScenery = sceneryCollisions(state.map);
+  assertActorPathWalkable(state, actorScenery, state.player, "Player");
   state.monsters.forEach((monster) =>
-    assertOnFloor(state, monster.position, monster.id),
+    assertActorPathWalkable(state, actorScenery, monster, monster.id),
   );
   state.loot.forEach((loot) => assertOnFloor(state, loot.position, loot.id));
   state.nextEntityId =

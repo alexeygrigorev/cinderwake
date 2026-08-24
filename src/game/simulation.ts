@@ -6,10 +6,9 @@ import {
   UNITS_PER_TILE,
 } from "./constants";
 import { isFloor, tileCenter } from "./dungeon";
-import { navigationDirection } from "./navigation";
+import { navigationDirection, navigationSegmentWalkable } from "./navigation";
 import { createRng, randomFloat } from "./rng";
 import {
-  overlapsScenery,
   sceneryCollisions,
   type SceneryCollisionFootprint,
 } from "./sceneryLayout";
@@ -48,28 +47,14 @@ function normalized(from: Vec2, to: Vec2, scale = DIRECTION_SCALE): Vec2 {
   };
 }
 
-function pointWalkable(
+function actorPathWalkable(
   state: GameState,
-  point: Vec2,
+  scenery: readonly SceneryCollisionFootprint[],
+  from: Vec2,
+  to: Vec2,
   radius: number,
-  scenery: SceneryCollisionFootprint[],
 ): boolean {
-  const offsets = [
-    [-radius, -radius],
-    [radius, -radius],
-    [-radius, radius],
-    [radius, radius],
-  ] as const;
-  return (
-    offsets.every(([dx, dy]) =>
-      isFloor(
-        state.map,
-        Math.floor((point.x + dx) / UNITS_PER_TILE),
-        Math.floor((point.y + dy) / UNITS_PER_TILE),
-      ),
-    ) &&
-    scenery.every((collision) => !overlapsScenery(point, radius, collision))
-  );
+  return navigationSegmentWalkable(state.map, scenery, from, to, radius);
 }
 
 function moveActor(
@@ -81,10 +66,30 @@ function moveActor(
 ): Vec2 {
   const next = { ...position };
   const candidateX = { x: position.x + velocity.x, y: position.y };
-  if (pointWalkable(state, candidateX, radius, scenery)) next.x = candidateX.x;
+  if (actorPathWalkable(state, scenery, position, candidateX, radius))
+    next.x = candidateX.x;
   const candidateY = { x: next.x, y: position.y + velocity.y };
-  if (pointWalkable(state, candidateY, radius, scenery)) next.y = candidateY.y;
-  return next;
+  if (actorPathWalkable(state, scenery, next, candidateY, radius))
+    next.y = candidateY.y;
+  if (actorPathWalkable(state, scenery, position, next, radius)) return next;
+
+  // Rendering interpolates previousPosition→position as one straight segment.
+  // A very large diagonal input can make two safe axis legs whose visible
+  // diagonal chord crosses a solid. In that case retain only one safe axis;
+  // deterministic X priority preserves the existing slide convention.
+  const xOnly = { x: next.x, y: position.y };
+  if (
+    xOnly.x !== position.x &&
+    actorPathWalkable(state, scenery, position, xOnly, radius)
+  )
+    return xOnly;
+  const yOnly = { x: position.x, y: next.y };
+  if (
+    yOnly.y !== position.y &&
+    actorPathWalkable(state, scenery, position, yOnly, radius)
+  )
+    return yOnly;
+  return { ...position };
 }
 
 /**
@@ -150,6 +155,24 @@ function separateLivingMonsters(
     (monster.attackRange + MONSTER_PERSONAL_SPACE_PADDING) ** 2
       ? ENGAGED_MONSTER_PERSONAL_SPACE_PADDING
       : MONSTER_PERSONAL_SPACE_PADDING;
+  const correctionWalkable = (
+    monster: MonsterState,
+    candidate: Vec2,
+  ): boolean =>
+    actorPathWalkable(
+      state,
+      scenery,
+      monster.position,
+      candidate,
+      monster.radius,
+    ) &&
+    actorPathWalkable(
+      state,
+      scenery,
+      monster.previousPosition,
+      candidate,
+      monster.radius,
+    );
   for (let pass = 0; pass < MONSTER_SEPARATION_PASSES; pass += 1) {
     let adjusted = false;
     for (let firstIndex = 0; firstIndex < living.length; firstIndex += 1) {
@@ -189,18 +212,8 @@ function separateLivingMonsters(
           direction,
           secondDistance,
         );
-        const firstHalfWalkable = pointWalkable(
-          state,
-          firstHalf,
-          first.radius,
-          scenery,
-        );
-        const secondHalfWalkable = pointWalkable(
-          state,
-          secondHalf,
-          second.radius,
-          scenery,
-        );
+        const firstHalfWalkable = correctionWalkable(first, firstHalf);
+        const secondHalfWalkable = correctionWalkable(second, secondHalf);
         if (firstHalfWalkable && secondHalfWalkable) {
           first.position = firstHalf;
           second.position = secondHalf;
@@ -215,7 +228,7 @@ function separateLivingMonsters(
           direction,
           -penetration,
         );
-        if (pointWalkable(state, firstFull, first.radius, scenery)) {
+        if (correctionWalkable(first, firstFull)) {
           first.position = firstFull;
           adjusted = true;
           continue;
@@ -225,7 +238,7 @@ function separateLivingMonsters(
           direction,
           penetration,
         );
-        if (pointWalkable(state, secondFull, second.radius, scenery)) {
+        if (correctionWalkable(second, secondFull)) {
           second.position = secondFull;
           adjusted = true;
           continue;
