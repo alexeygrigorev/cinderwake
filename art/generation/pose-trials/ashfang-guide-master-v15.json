@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-sparse-guided-natural-east-idle-master-v15-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "sparse-guided-living-four-chain-east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-guide-master-v15.txt",
+  "candidateFile": "art/generation/candidates/ashfang-guide-master-v15.png",
+  "candidateSha256": "9d8b3f21f9e6be5f17f3eabe589c4fc97ea1f8051f24ee9c7f37882adb63c81c",
+  "referenceFiles": [
+    {
+      "file": "art/generation/guides/quadruped-pose-layout-v2.png",
+      "role": "reviewed sparse spatial coordinates only: elevated diagonal axis, four route centerlines, four paw positions, gaps, perspective rows, balanced near-paw baseline, envelope, and contact height; no contour, width, anatomy, or material authority",
+      "sha256": "ad58dca2bc784c6e59884703f4e9f430874ba4da8d477e5d31359bd3ec741478"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "accepted Cinderwake camera, broad matte rendering, light, palette, and native-runtime density only; no humanoid anatomy, equipment, pose, grid, or silhouette authority",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-2236852a-5e5e-4135-83bf-f8d41d7a6226.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "one isolated living alert Ashfang reads as a raised heavy predator rather than a prone corpse, scorch decal, attack, golem, or ground prop",
+      "the elevated head-right and tail-upper-left diagonal, broad rib cage, bent organic legs, open under-belly space, compact horned head, hooked raised tail, matte basalt planes, restrained ember accents, and absence of floor, shadow, effects, text, UI, or scenery follow the requested role",
+      "source and prepared images retain broad native-game detail and clean chroma separation"
+    ],
+    "failed": [
+      {
+        "code": "runtime-height-oversize",
+        "detail": "Prepared ink is 202x177 pixels and projects to 102x90 at native runtime; the unchanged maximum is 86 pixels high."
+      },
+      {
+        "code": "fourth-chain-missing",
+        "detail": "Independent exact-hash review finds only three complete traceable root-to-joint-to-lower-leg-to-paw chains. A small terminal under the chest has no separately readable far-fore root or route at prepared/runtime scale."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The source background is visually magenta but deterministic preparation, not the generator, establishes literal source-cell chroma compliance."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V15 is rejected and quarantined. It materially improves living Ashfang identity, elevated camera, and organic articulation, but the unchanged mechanical gate rejects its 90-pixel runtime height and independent review confirms only three complete readable body-to-paw chains."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-guide-master-v15.png --output art/generation/prepared/ashfang-guide-master-v15.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-guide-master-v15.png",
+    "sha256": "3f7f19b692ea8d27c798871b4fa12b47cc47dcee0c687147c3a26eed369a0034",
+    "status": "rejected",
+    "notes": "Preserve-framing preparation uses canonical 0.25 scale, producing 202x177 prepared ink with bottom support at y=231 and a centered 0.0267-pixel contact offset. The assessor projects 102x90 runtime ink and exact review rejects support ownership and the hidden fourth route."
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT",
+    "pixelReuseDecision": "DO_NOT_ATTACH_OR_REUSE_V15_PIXELS; TEXTUAL_LIVING_IDENTITY_AND_CAMERA_FINDINGS_ONLY",
+    "reviewer": "/root/ashfang_v15_exact_review",
+    "reviewedRawSha256": "9d8b3f21f9e6be5f17f3eabe589c4fc97ea1f8051f24ee9c7f37882adb63c81c",
+    "reviewedPreparedSha256": "3f7f19b692ea8d27c798871b4fa12b47cc47dcee0c687147c3a26eed369a0034",
+    "reviewedPoseEvidenceSha256": "50819c07268ac69645e67ce0430a51fd6ce20f69f999d4e60029f07c21f02104",
+    "reviewedRuntimeComparisonSha256": "b8f06e696b66c564936fccdae0c8729b007a7dd91dac04446cc8179278394c04",
+    "reviewedRuntimeDetailMapSha256": "7d8869904bbecafb26f6ca7aae2676462e4f3d7d01e93fecf9825e2665df922e",
+    "acceptedAxes": [
+      "unmistakably living alert volcanic hound rather than a prone corpse, scorch decal, attack, or ground prop",
+      "credible elevated approximately 55-degree three-quarter camera with head-right and tail-upper-left diagonal",
+      "one isolated safely framed creature without floor, shadow, effect, UI, text, or scenery",
+      "mostly organic bent and tapered animal articulation without v14 ball joints, rings, or pillar legs",
+      "strong runtime silhouette and Ashfang identity",
+      "surface detector passes at 0.339431 strong occupancy, 0.435349 readability, and 0.020325 isolated-extrema occupancy"
+    ],
+    "rejectedAxes": [
+      "exact four-chain topology: only three complete independently traceable body-to-paw chains survive at prepared and runtime scale",
+      "far-fore ownership because its possible small terminal is swallowed into the chest and belly mass without a readable root or route",
+      "balanced planted support because only the central near paw owns the lowest 13-pixel contact span and the other obvious paws sit materially higher",
+      "neutral grounded idle weight because the uneven terminals read as a suspended crouch or pounce",
+      "broad matte cast surface because repeated shingle armor, fine fissures, and high-frequency edges become dark and mushy at runtime",
+      "runtime scale at 102x90 pixels, above the accepted 72-86 height interval",
+      "diagonal support ownership, gait construction, pixel reuse, and animation-phase generation"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-height"]
+  },
+  "recommendation": "Retain v15 only as rejected evidence. Create one fresh isolated master from a revised sparse four-route guide plus Stonekin style reference only; do not attach v15 pixels. Require a continuous negative-space-separated far-fore shoulder-to-joint-to-three-claw-paw route, both near paws on one balanced support row, approximately 4-5 percent smaller authored occupancy, and broader simpler matte planes. Re-run unchanged gates and independent review before any phases."
+}
