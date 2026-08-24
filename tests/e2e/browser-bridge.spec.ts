@@ -357,14 +357,20 @@ test("measures actual transparent entity ink instead of declared bounds", async 
   expect(result.terminal.centroid.y).toBeCloseTo(result.idle.centroid.y, 1);
 });
 
-test("captures named paint-queue operations for depth evidence", async ({ page }) => {
+test("captures named paint-queue operations for depth evidence", async ({
+  page,
+}) => {
   const evidence = await page.evaluate(() => {
     window.__GAME_TEST__!.loadScenario("generated-run");
     window.__GAME_TEST__!.render();
     const manifest = window.__GAME_TEST__!.renderManifest();
     const scene = manifest.paintQueue.find((item) => item.kind === "scene")!;
     return {
-      queue: manifest.paintQueue.map(({ paintId, kind, zOrder }) => ({ paintId, kind, zOrder })),
+      queue: manifest.paintQueue.map(({ paintId, kind, zOrder }) => ({
+        paintId,
+        kind,
+        zOrder,
+      })),
       player: window.__GAME_TEST__!.capturePaintMask("body:player"),
       scene: window.__GAME_TEST__!.capturePaintMask(scene.paintId),
     };

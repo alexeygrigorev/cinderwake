@@ -362,7 +362,12 @@ export class CanvasRenderer {
       renderVisible: visible,
       width: VIEW_WIDTH,
       height: VIEW_HEIGHT,
-      inkBounds: { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 },
+      inkBounds: {
+        x: minX,
+        y: minY,
+        width: maxX - minX + 1,
+        height: maxY - minY + 1,
+      },
       centroid: {
         x: Math.round((weightedX / alphaWeight) * 1000) / 1000,
         y: Math.round((weightedY / alphaWeight) * 1000) / 1000,

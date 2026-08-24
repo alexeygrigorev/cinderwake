@@ -85,7 +85,8 @@ const trackedEntityId = option("track", "player");
 const stateFile = option("state-file", null);
 const commandsFile = option("commands-file", null);
 const paintMaskId = option("paint-mask", null);
-const allowAssessmentFailure = option("allow-assessment-failure", "false") === "true";
+const allowAssessmentFailure =
+  option("allow-assessment-failure", "false") === "true";
 const frameCount = Number(option("frames", "16"));
 const step = Number(option("step", "2"));
 const subframes = Number(option("subframes", "1"));
@@ -381,7 +382,12 @@ try {
           },
         };
       },
-      { entityId: trackedEntityId, interpolationAlpha, lastAnchor, paintMaskId },
+      {
+        entityId: trackedEntityId,
+        interpolationAlpha,
+        lastAnchor,
+        paintMaskId,
+      },
     );
     if (item.anchor) lastAnchor = item.anchor;
     const pageFrame = await page.locator(".game").screenshot({
@@ -599,7 +605,10 @@ try {
   const analysis = await fs
     .readFile(path.join(output, "animation-analysis.json"), "utf8")
     .then(JSON.parse)
-    .catch(() => ({ pass: false, checks: { "sequence-assessment-unavailable": false } }));
+    .catch(() => ({
+      pass: false,
+      checks: { "sequence-assessment-unavailable": false },
+    }));
 
   const figures = reportFrames
     .map((entry) => {

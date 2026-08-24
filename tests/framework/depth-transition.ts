@@ -14,7 +14,10 @@ export interface DepthTransitionAssessment {
   };
 }
 
-function intersects(first: DestinationRectV1, second: DestinationRectV1): boolean {
+function intersects(
+  first: DestinationRectV1,
+  second: DestinationRectV1,
+): boolean {
   return (
     first.x < second.x + second.width &&
     first.x + first.width > second.x &&
@@ -23,7 +26,9 @@ function intersects(first: DestinationRectV1, second: DestinationRectV1): boolea
   );
 }
 
-function indexByPaintId(queue: readonly PaintQueueItemV1[]): Map<string, number> {
+function indexByPaintId(
+  queue: readonly PaintQueueItemV1[],
+): Map<string, number> {
   return new Map(queue.map((item, index) => [item.paintId, index]));
 }
 
@@ -61,27 +66,37 @@ export function assessDepthTransition(
     const healthFill = indexes.get(`health-fill:${body.ownerId}`);
     if (healthFrame !== undefined && healthFrame <= bodyIndex)
       violations.push(`health-z-order-mismatch:${body.ownerId}`);
-    if (healthFrame !== undefined && healthFill !== undefined && healthFill <= healthFrame)
+    if (
+      healthFrame !== undefined &&
+      healthFill !== undefined &&
+      healthFill <= healthFrame
+    )
       violations.push(`health-fill-z-order-mismatch:${body.ownerId}`);
   }
   let actorPropIntersections = 0;
   for (const body of bodies) {
     for (const scene of scenes) {
-      if (!intersects(body.call.destinationRect, scene.scene.destinationRect)) continue;
+      if (!intersects(body.call.destinationRect, scene.scene.destinationRect))
+        continue;
       actorPropIntersections += 1;
       const bodyIndex = indexes.get(body.paintId)!;
       const sceneIndex = indexes.get(scene.paintId)!;
       const actorIsSouth = body.call.footAnchor.y >= scene.scene.screenAnchor.y;
-      const correct = actorIsSouth ? bodyIndex > sceneIndex : bodyIndex < sceneIndex;
+      const correct = actorIsSouth
+        ? bodyIndex > sceneIndex
+        : bodyIndex < sceneIndex;
       if (!correct)
-        violations.push(`depth-order-mismatch:${body.ownerId}:${scene.scene.objectId}`);
+        violations.push(
+          `depth-order-mismatch:${body.ownerId}:${scene.scene.objectId}`,
+        );
     }
   }
   let actorActorIntersections = 0;
   for (const first of bodies) {
     for (const second of bodies) {
       if (first.ownerId >= second.ownerId) continue;
-      if (!intersects(first.call.destinationRect, second.call.destinationRect)) continue;
+      if (!intersects(first.call.destinationRect, second.call.destinationRect))
+        continue;
       actorActorIntersections += 1;
       const firstIndex = indexes.get(first.paintId)!;
       const secondIndex = indexes.get(second.paintId)!;
@@ -93,12 +108,18 @@ export function assessDepthTransition(
             ? firstIndex < secondIndex
             : firstIndex > secondIndex;
       if (!correct)
-        violations.push(`actor-depth-inverted:${first.ownerId}:${second.ownerId}`);
+        violations.push(
+          `actor-depth-inverted:${first.ownerId}:${second.ownerId}`,
+        );
     }
   }
   return {
     verdict: violations.length === 0 ? "PASS" : "FAIL",
     violations: [...new Set(violations)],
-    evidence: { paintCount: queue.length, actorPropIntersections, actorActorIntersections },
+    evidence: {
+      paintCount: queue.length,
+      actorPropIntersections,
+      actorActorIntersections,
+    },
   };
 }

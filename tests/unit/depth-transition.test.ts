@@ -13,13 +13,23 @@ import { assessDepthTransition } from "../framework/depth-transition";
 
 function productionManifest() {
   const state = worldFromScenario(createRunScenario("cinder-041", "vanguard"));
-  const manifest = buildRenderManifest(state, { x: 22.5 * 48, y: 16.5 * 48, zoom: 0.9 });
+  const manifest = buildRenderManifest(state, {
+    x: 22.5 * 48,
+    y: 16.5 * 48,
+    zoom: 0.9,
+  });
   return manifest;
 }
 
 function overlappingActorsManifest() {
-  const state = worldFromScenario(BUILTIN_SCENARIOS["temporal-ashfang-attack"]!);
-  const manifest = buildRenderManifest(state, { x: 9 * 48, y: 7 * 48, zoom: 0.9 });
+  const state = worldFromScenario(
+    BUILTIN_SCENARIOS["temporal-ashfang-attack"]!,
+  );
+  const manifest = buildRenderManifest(state, {
+    x: 9 * 48,
+    y: 7 * 48,
+    zoom: 0.9,
+  });
   manifest.paintQueue = buildPaintQueue(manifest);
   return manifest;
 }
@@ -30,8 +40,14 @@ describe("PRES-DEPTH-019 paint queue", () => {
     const queue = manifest.paintQueue;
     expect(queue).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ paintId: "body:player", kind: "entity-body" }),
-        expect.objectContaining({ paintId: "shadow:player", kind: "actor-shadow" }),
+        expect.objectContaining({
+          paintId: "body:player",
+          kind: "entity-body",
+        }),
+        expect.objectContaining({
+          paintId: "shadow:player",
+          kind: "actor-shadow",
+        }),
         expect.objectContaining({ kind: "scene" }),
       ]),
     );
@@ -53,28 +69,42 @@ describe("PRES-DEPTH-019 paint queue", () => {
     const bodyIndex = manifest.paintQueue.indexOf(body);
     const sceneIndex = manifest.paintQueue.indexOf(scene);
     const actorPropSwapped = structuredClone(manifest);
-    [actorPropSwapped.paintQueue[bodyIndex], actorPropSwapped.paintQueue[sceneIndex]] = [
+    [
+      actorPropSwapped.paintQueue[bodyIndex],
+      actorPropSwapped.paintQueue[sceneIndex],
+    ] = [
       actorPropSwapped.paintQueue[sceneIndex]!,
       actorPropSwapped.paintQueue[bodyIndex]!,
     ];
     actorPropSwapped.paintQueue.forEach((item, index) => (item.zOrder = index));
     // Force a real overlap while retaining the swapped paint order.
-    const swappedBody = actorPropSwapped.paintQueue.find((item) => item.paintId === "body:player") as Extract<PaintQueueItemV1, { kind: "entity-body" }>;
+    const swappedBody = actorPropSwapped.paintQueue.find(
+      (item) => item.paintId === "body:player",
+    ) as Extract<PaintQueueItemV1, { kind: "entity-body" }>;
     const swappedScene = actorPropSwapped.paintQueue.find(
-      (item): item is Extract<PaintQueueItemV1, { kind: "scene" }> => item.kind === "scene" && item.scene.objectId === scene.scene.objectId,
+      (item): item is Extract<PaintQueueItemV1, { kind: "scene" }> =>
+        item.kind === "scene" && item.scene.objectId === scene.scene.objectId,
     )!;
-    swappedBody.call.destinationRect = { ...swappedScene.scene.destinationRect };
+    swappedBody.call.destinationRect = {
+      ...swappedScene.scene.destinationRect,
+    };
     const swappedBodyIndex = actorPropSwapped.paintQueue.indexOf(swappedBody);
     const swappedSceneIndex = actorPropSwapped.paintQueue.indexOf(swappedScene);
     swappedBody.call.footAnchor = {
       ...swappedScene.scene.screenAnchor,
-      y: swappedScene.scene.screenAnchor.y + (swappedBodyIndex > swappedSceneIndex ? -1 : 1),
+      y:
+        swappedScene.scene.screenAnchor.y +
+        (swappedBodyIndex > swappedSceneIndex ? -1 : 1),
     };
-    expect(assessDepthTransition(actorPropSwapped).violations.join(" ")).toContain("depth-order-mismatch");
+    expect(
+      assessDepthTransition(actorPropSwapped).violations.join(" "),
+    ).toContain("depth-order-mismatch");
 
     const duplicate = structuredClone(manifest);
     duplicate.paintQueue.push(structuredClone(body));
-    expect(assessDepthTransition(duplicate).violations.join(" ")).toContain("duplicate-owner-body:player");
+    expect(assessDepthTransition(duplicate).violations.join(" ")).toContain(
+      "duplicate-owner-body:player",
+    );
 
     const healthBehind = structuredClone(manifest);
     healthBehind.paintQueue.push({
@@ -86,17 +116,22 @@ describe("PRES-DEPTH-019 paint queue", () => {
     });
     healthBehind.paintQueue.unshift(healthBehind.paintQueue.pop()!);
     healthBehind.paintQueue.forEach((item, index) => (item.zOrder = index));
-    expect(assessDepthTransition(healthBehind).violations.join(" ")).toContain("health-z-order-mismatch:player");
+    expect(assessDepthTransition(healthBehind).violations.join(" ")).toContain(
+      "health-z-order-mismatch:player",
+    );
 
     const badZOrder = structuredClone(manifest);
     badZOrder.paintQueue[0]!.zOrder = 99;
-    expect(assessDepthTransition(badZOrder).violations.join(" ")).toContain("paint-z-order-mismatch");
+    expect(assessDepthTransition(badZOrder).violations.join(" ")).toContain(
+      "paint-z-order-mismatch",
+    );
   });
 
   it("keeps overlapping actors in foot order and rejects a rear actor covering front", () => {
     const manifest = overlappingActorsManifest();
     const bodies = manifest.paintQueue.filter(
-      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> => item.kind === "entity-body",
+      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> =>
+        item.kind === "entity-body",
     );
     expect(bodies).toHaveLength(2);
     expect(assessDepthTransition(manifest)).toMatchObject({
@@ -115,11 +150,14 @@ describe("PRES-DEPTH-019 paint queue", () => {
       swapped.paintQueue[firstIndex]!,
     ];
     swapped.paintQueue.forEach((item, index) => (item.zOrder = index));
-    expect(assessDepthTransition(swapped).violations.join(" ")).toContain("actor-depth-inverted");
+    expect(assessDepthTransition(swapped).violations.join(" ")).toContain(
+      "actor-depth-inverted",
+    );
 
     const tied = structuredClone(manifest);
     const tiedBodies = tied.paintQueue.filter(
-      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> => item.kind === "entity-body",
+      (item): item is Extract<PaintQueueItemV1, { kind: "entity-body" }> =>
+        item.kind === "entity-body",
     );
     tiedBodies[1]!.call.footAnchor.y = tiedBodies[0]!.call.footAnchor.y;
     expect(assessDepthTransition(tied).verdict).toBe("PASS");

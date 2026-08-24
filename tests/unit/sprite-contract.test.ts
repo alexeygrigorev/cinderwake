@@ -131,7 +131,13 @@ describe("sprite atlas quality contract", () => {
       sceneSprites: [],
       worldUi: [],
       paintQueue: [
-        { paintId: `body:${call.entityId}`, kind: "entity-body", zOrder: 0, ownerId: call.entityId, call },
+        {
+          paintId: `body:${call.entityId}`,
+          kind: "entity-body",
+          zOrder: 0,
+          ownerId: call.entityId,
+          call,
+        },
       ],
     };
     expect(() =>

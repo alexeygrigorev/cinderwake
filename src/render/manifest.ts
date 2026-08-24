@@ -277,7 +277,12 @@ export function buildPaintQueue(
   // Terrain is the base pass. Preserve authored scene order exactly.
   for (const scene of manifest.sceneSprites) {
     if (scene.layer === "terrain")
-      add({ paintId: `scene:${scene.objectId}`, kind: "scene", zOrder: 0, scene });
+      add({
+        paintId: `scene:${scene.objectId}`,
+        kind: "scene",
+        zOrder: 0,
+        scene,
+      });
   }
   const raised = [
     ...manifest.sceneSprites
@@ -329,7 +334,9 @@ export function buildPaintQueue(
       ownerId: call.entityId,
       call,
     });
-    const health = manifest.worldUi.find(({ ownerId }) => ownerId === call.entityId);
+    const health = manifest.worldUi.find(
+      ({ ownerId }) => ownerId === call.entityId,
+    );
     if (health) {
       add({
         paintId: `health-frame:${call.entityId}`,
