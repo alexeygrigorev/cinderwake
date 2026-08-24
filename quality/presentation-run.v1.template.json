@@ -1,0 +1,1119 @@
+{
+  "schemaVersion": 1,
+  "kind": "PresentationRunV1",
+  "contractPath": "quality/presentation-checklist.v1.json",
+  "runId": "replace-with-stable-run-id",
+  "adapterContract": "PresentationAdapterV1",
+  "environment": {
+    "commit": "replace-with-40-hex-commit",
+    "reproduce": "replace-with-one-exact-command"
+  },
+  "checks": [
+    {
+      "checkId": "PRES-LIVE-001",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "begin-listener-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "required-asset-stalled",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "atlas-load-aborted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-INPUT-002",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "ground-and-strike-bindings-swapped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-MOVE-003",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "render-projection-reversed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "walk-frame-frozen",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "facing-forced-opposite",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-SPRITE-004",
+      "result": "UNRUN",
+      "coverageAtRun": "automatic",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "stale-recovery",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "frame-displaced",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "cell-edge-clipped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "facing-scale-overflow",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "clip-transition-scale-pop",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-MOTION-005",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "frame-duplicated-or-frozen",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "frames-reordered",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "crop-offset",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "one-frame-scale-or-centroid-pop",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "stale-recovery",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "terminal-pose-skipped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-CRISP-006",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "legacy-960x540-backing",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "accepted-crop-blurred",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-ASPECT-007",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "actor-destination-widened",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "wall-stretched",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "unequal-camera-scaling",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-COLLIDE-008",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "collider-enlarged-or-offset",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "collision-without-visible-sprite",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "blocked-feedback-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "endpoint-only-collision",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-SPRITE-009",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "role-replaced-with-css-or-text",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": false,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-MOBILE-010",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "target-undersized-or-occluded",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "subject-cropped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "hud-detached",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "pressed-state-suppressed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "orientation-overlap",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-BLANK-011",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "cell-blanked",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "crop-out-of-bounds",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "asset-substituted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "decode-failed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": false,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-LEAK-012",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "cross-cell-shift",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "opaque-matte",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "colored-fringe",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "prior-frame-not-cleared",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "duplicate-body-draw",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-ANCHOR-013",
+      "result": "UNRUN",
+      "coverageAtRun": "automatic",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "frame-raised",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "anchor-moved",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "one-frame-scale",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "per-cell-normalizer-masks-error",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-DUP-014",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "authored-cell-duplicated",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "renderer-selection-frozen",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "semantic-frame-skipped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-FACING-015",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "opposite-bank-selected",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "west-reflection-missing",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "stale-bank-after-turn",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "unmirrored-attack-origin",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-CAMERA-016",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "camera-updated-twice",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "smooth-camera-snapped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "camera-overshot",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "zoom-clamp-wrong",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "axis-jitter",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-ZOOM-017",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "zoom-too-near",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "zoom-too-far",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "zoom-positions-only",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-TILE-018",
+      "result": "UNRUN",
+      "coverageAtRun": "automatic",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "collision-contrast-erased",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "seams-exaggerated",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "square-grid-injected",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "obvious-repeat-injected",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "fractional-zoom-gap",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-DEPTH-019",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "actor-prop-z-swapped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "health-behind-owner",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "effect-detached",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "actor-drawn-twice",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "rear-actor-covers-front",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-PROP-020",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "required-role-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "wrong-sprite-substituted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "focal-building-cropped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "secondary-props-deleted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "prop-cloned-repeatedly",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-STYLE-021",
+      "result": "UNRUN",
+      "coverageAtRun": "missing",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "glossy-cartoon-actor",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "flat-vector-prop",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "wrong-perspective-building",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "opposite-lit-object",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "foreign-ui-palette",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-DENSITY-022",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "secondary-scenery-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "repeated-prop-clutter",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "player-hidden-by-value",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "focal-actors-overlapped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "large-empty-ground",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-PROPORTION-023",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "actor-shrunk",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "weapon-or-limb-enlarged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "one-facing-scale-changed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "collider-support-mismatched",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-FLICKER-024",
+      "result": "UNRUN",
+      "coverageAtRun": "missing",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "canvas-clear-skipped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "offset-double-draw",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "presentation-frame-omitted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "despawned-effect-retained",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-CROSSDEVICE-025",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "landscape-only-crop",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "high-dpr-low-backing",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "safe-area-overlap",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "orientation-control-hidden",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-REVIEW-026",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "scenario": "",
+      "deviceProfile": "",
+      "gestureId": "",
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "reviewed-png-altered",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "contract-byte-altered",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "checklist-id-omitted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "rejected-candidate-published",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    }
+  ]
+}

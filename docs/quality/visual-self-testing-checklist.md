@@ -2,6 +2,8 @@
 
 This is the repeatable release checklist for presentation defects. It is deliberately **not** a gameplay-design checklist: quests, balance, NPC behavior, economy, and progression are out of scope. Run it for Cinderwake now and keep the IDs and evidence shapes when adapting the framework to another game.
 
+The [executable presentation-run contract](presentation-run-contract.md) locks this checklist’s 26 IDs, order, controls, evidence shape, and acceptance semantics. Use it rather than copying a partial handwritten result next time.
+
 For every item, mark exactly one result:
 
 - `[ ] PASS` — the valid candidate passes and its named negative control fails through the intended detector.

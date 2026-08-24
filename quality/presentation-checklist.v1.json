@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 1,
+  "kind": "PresentationChecklistContractV1",
+  "adapterContract": "PresentationAdapterV1",
+  "artifactRequirements": [
+    "environment-metadata",
+    "semantic-snapshot-timeline",
+    "gesture-or-command-tape",
+    "render-manifest-timeline",
+    "ordered-frame-sequence",
+    "negative-control-evidence"
+  ],
+  "checks": [
+    {
+      "id": "PRES-LIVE-001",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "production-control-route",
+        "recovery-frame-sequence"
+      ],
+      "negativeControlIds": [
+        "begin-listener-removed",
+        "required-asset-stalled",
+        "atlas-load-aborted"
+      ]
+    },
+    {
+      "id": "PRES-INPUT-002",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "mobile-gesture-log",
+        "intent-state-deltas",
+        "pressed-control-frames"
+      ],
+      "negativeControlIds": ["ground-and-strike-bindings-swapped"]
+    },
+    {
+      "id": "PRES-MOVE-003",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "cardinal-input-timeline",
+        "world-screen-camera-anchors",
+        "walk-mask-contact-sheet"
+      ],
+      "negativeControlIds": [
+        "render-projection-reversed",
+        "walk-frame-frozen",
+        "facing-forced-opposite"
+      ]
+    },
+    {
+      "id": "PRES-SPRITE-004",
+      "priority": "P0",
+      "coverage": "automatic",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "atlas-catalog-hashes",
+        "all-bank-cell-masks",
+        "atlas-audit-report"
+      ],
+      "negativeControlIds": [
+        "stale-recovery",
+        "frame-displaced",
+        "cell-edge-clipped",
+        "facing-scale-overflow",
+        "clip-transition-scale-pop"
+      ]
+    },
+    {
+      "id": "PRES-MOTION-005",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "all-clip-command-tapes",
+        "per-tick-animation-manifest",
+        "live-temporal-contact-sheet"
+      ],
+      "negativeControlIds": [
+        "frame-duplicated-or-frozen",
+        "frames-reordered",
+        "crop-offset",
+        "one-frame-scale-or-centroid-pop",
+        "stale-recovery",
+        "terminal-pose-skipped"
+      ]
+    },
+    {
+      "id": "PRES-CRISP-006",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "dpr-projection-metadata",
+        "full-resolution-motion-frames",
+        "original-resolution-crops"
+      ],
+      "negativeControlIds": ["legacy-960x540-backing", "accepted-crop-blurred"]
+    },
+    {
+      "id": "PRES-ASPECT-007",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "role-source-destination-inventory",
+        "zoom-timeline",
+        "role-crops"
+      ],
+      "negativeControlIds": [
+        "actor-destination-widened",
+        "wall-stretched",
+        "unequal-camera-scaling"
+      ]
+    },
+    {
+      "id": "PRES-COLLIDE-008",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "solid-contact-scenarios",
+        "support-and-collider-geometry",
+        "blocked-feedback-frames"
+      ],
+      "negativeControlIds": [
+        "collider-enlarged-or-offset",
+        "collision-without-visible-sprite",
+        "blocked-feedback-removed",
+        "endpoint-only-collision"
+      ]
+    },
+    {
+      "id": "PRES-SPRITE-009",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": false,
+      "evidenceRequirements": [
+        "visible-dom-inventory",
+        "manifest-draw-provenance",
+        "decoded-role-inventory"
+      ],
+      "negativeControlIds": ["role-replaced-with-css-or-text"]
+    },
+    {
+      "id": "PRES-MOBILE-010",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "mobile-profile-frames",
+        "hit-target-geometry",
+        "safe-area-and-device-projection"
+      ],
+      "negativeControlIds": [
+        "target-undersized-or-occluded",
+        "subject-cropped",
+        "hud-detached",
+        "pressed-state-suppressed",
+        "orientation-overlap"
+      ]
+    },
+    {
+      "id": "PRES-BLANK-011",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": false,
+      "evidenceRequirements": [
+        "asset-decode-log",
+        "alpha-mask-inventory",
+        "runtime-role-inventory"
+      ],
+      "negativeControlIds": [
+        "cell-blanked",
+        "crop-out-of-bounds",
+        "asset-substituted",
+        "decode-failed"
+      ]
+    },
+    {
+      "id": "PRES-LEAK-012",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "checkerboard-isolated-frames",
+        "crop-and-component-report",
+        "live-scene-temporal-frames"
+      ],
+      "negativeControlIds": [
+        "cross-cell-shift",
+        "opaque-matte",
+        "colored-fringe",
+        "prior-frame-not-cleared",
+        "duplicate-body-draw"
+      ]
+    },
+    {
+      "id": "PRES-ANCHOR-013",
+      "priority": "P1",
+      "coverage": "automatic",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "world-screen-foot-anchors",
+        "mask-bottom-centroid-dimensions",
+        "camera-contact-sheet"
+      ],
+      "negativeControlIds": [
+        "frame-raised",
+        "anchor-moved",
+        "one-frame-scale",
+        "per-cell-normalizer-masks-error"
+      ]
+    },
+    {
+      "id": "PRES-DUP-014",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "clip-frame-identities",
+        "mask-hashes",
+        "presentation-timestamps"
+      ],
+      "negativeControlIds": [
+        "authored-cell-duplicated",
+        "renderer-selection-frozen",
+        "semantic-frame-skipped"
+      ]
+    },
+    {
+      "id": "PRES-FACING-015",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "input-aim-and-facing-timeline",
+        "sprite-bank-and-flip-records",
+        "directional-contact-sheet"
+      ],
+      "negativeControlIds": [
+        "opposite-bank-selected",
+        "west-reflection-missing",
+        "stale-bank-after-turn",
+        "unmirrored-attack-origin"
+      ]
+    },
+    {
+      "id": "PRES-CAMERA-016",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "camera-target-timeline",
+        "scene-anchor-frames",
+        "edge-and-reversal-video"
+      ],
+      "negativeControlIds": [
+        "camera-updated-twice",
+        "smooth-camera-snapped",
+        "camera-overshot",
+        "zoom-clamp-wrong",
+        "axis-jitter"
+      ]
+    },
+    {
+      "id": "PRES-ZOOM-017",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "zoom-and-visible-extents",
+        "device-ink-bounds",
+        "profile-video"
+      ],
+      "negativeControlIds": [
+        "zoom-too-near",
+        "zoom-too-far",
+        "zoom-positions-only"
+      ]
+    },
+    {
+      "id": "PRES-TILE-018",
+      "priority": "P1",
+      "coverage": "automatic",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "tile-edge-manifest",
+        "seam-sample-metrics",
+        "moving-camera-seam-strip"
+      ],
+      "negativeControlIds": [
+        "collision-contrast-erased",
+        "seams-exaggerated",
+        "square-grid-injected",
+        "obvious-repeat-injected",
+        "fractional-zoom-gap"
+      ]
+    },
+    {
+      "id": "PRES-DEPTH-019",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "z-ordered-draw-calls",
+        "occlusion-masks",
+        "attachment-owner-records"
+      ],
+      "negativeControlIds": [
+        "actor-prop-z-swapped",
+        "health-behind-owner",
+        "effect-detached",
+        "actor-drawn-twice",
+        "rear-actor-covers-front"
+      ]
+    },
+    {
+      "id": "PRES-PROP-020",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "scene-role-inventory",
+        "sprite-provenance-and-visibility",
+        "scene-contact-sheet"
+      ],
+      "negativeControlIds": [
+        "required-role-removed",
+        "wrong-sprite-substituted",
+        "focal-building-cropped",
+        "secondary-props-deleted",
+        "prop-cloned-repeatedly"
+      ]
+    },
+    {
+      "id": "PRES-STYLE-021",
+      "priority": "P1",
+      "coverage": "missing",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "runtime-scale-role-sheet",
+        "asset-provenance",
+        "style-feature-report"
+      ],
+      "negativeControlIds": [
+        "glossy-cartoon-actor",
+        "flat-vector-prop",
+        "wrong-perspective-building",
+        "opposite-lit-object",
+        "foreign-ui-palette"
+      ]
+    },
+    {
+      "id": "PRES-DENSITY-022",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "role-occupancy-map",
+        "saliency-and-overlap-evidence",
+        "accepted-rejected-reference-hashes"
+      ],
+      "negativeControlIds": [
+        "secondary-scenery-removed",
+        "repeated-prop-clutter",
+        "player-hidden-by-value",
+        "focal-actors-overlapped",
+        "large-empty-ground"
+      ]
+    },
+    {
+      "id": "PRES-PROPORTION-023",
+      "priority": "P1",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "role-comparison-sheet",
+        "source-destination-and-ink-bounds",
+        "live-overlap-frames"
+      ],
+      "negativeControlIds": [
+        "actor-shrunk",
+        "weapon-or-limb-enlarged",
+        "one-facing-scale-changed",
+        "collider-support-mismatched"
+      ]
+    },
+    {
+      "id": "PRES-FLICKER-024",
+      "priority": "P1",
+      "coverage": "missing",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "presentation-cadence-frames",
+        "draw-signatures",
+        "normal-and-slow-video"
+      ],
+      "negativeControlIds": [
+        "canvas-clear-skipped",
+        "offset-double-draw",
+        "presentation-frame-omitted",
+        "despawned-effect-retained"
+      ]
+    },
+    {
+      "id": "PRES-CROSSDEVICE-025",
+      "priority": "P2",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "cross-profile-environment-metadata",
+        "same-state-profile-frames",
+        "physical-device-image"
+      ],
+      "negativeControlIds": [
+        "landscape-only-crop",
+        "high-dpr-low-backing",
+        "safe-area-overlap",
+        "orientation-control-hidden"
+      ]
+    },
+    {
+      "id": "PRES-REVIEW-026",
+      "priority": "P2",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "source-commit-and-patch",
+        "contract-hash",
+        "reviewer-verdict-and-reasons",
+        "reproduction-commands"
+      ],
+      "negativeControlIds": [
+        "reviewed-png-altered",
+        "contract-byte-altered",
+        "checklist-id-omitted",
+        "rejected-candidate-published"
+      ]
+    }
+  ]
+}

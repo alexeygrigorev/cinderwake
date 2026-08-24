@@ -20,6 +20,8 @@
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "report:screens": "node scripts/build-screen-report.mjs",
     "report:quality": "node scripts/build-quality-index.mjs",
+    "quality:presentation:lint": "node scripts/validate-presentation-checklist.mjs --mode lint",
+    "quality:presentation:accept": "node scripts/validate-presentation-checklist.mjs --mode accept",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",
