@@ -108,7 +108,7 @@ export interface RenderManifestV1 {
   simTick: number;
   presentationTick: number;
   interpolationAlpha: number;
-  viewport: { width: number; height: number; dpr: 1 };
+  viewport: { width: number; height: number; dpr: number };
   camera: CameraV1;
   cameraTarget: CameraV1;
   cameraMode: CameraMode;
@@ -666,6 +666,7 @@ export function buildRenderManifest(
     interpolationAlpha?: number;
     cameraTarget?: CameraV1;
     cameraMode?: CameraMode;
+    dpr?: number;
   } = {},
 ): RenderManifestV1 {
   const interpolationAlpha = Math.max(
@@ -897,7 +898,11 @@ export function buildRenderManifest(
     simTick: state.tick,
     presentationTick,
     interpolationAlpha,
-    viewport: { width: VIEW_WIDTH, height: VIEW_HEIGHT, dpr: 1 },
+    viewport: {
+      width: VIEW_WIDTH,
+      height: VIEW_HEIGHT,
+      dpr: options.dpr ?? 1,
+    },
     camera: { ...camera },
     cameraTarget: { ...(options.cameraTarget ?? camera) },
     cameraMode: options.cameraMode ?? "snap",

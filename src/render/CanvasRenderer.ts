@@ -37,6 +37,7 @@ export class CanvasRenderer {
     { top: number; bottom: number }
   >();
   private readonly drawFullContract: boolean;
+  private renderScale = 1;
 
   constructor(canvas: HTMLCanvasElement, drawFullContract = false) {
     this.canvas = canvas;
@@ -47,6 +48,33 @@ export class CanvasRenderer {
     context.imageSmoothingEnabled = true;
     this.context = context;
     this.drawFullContract = drawFullContract;
+  }
+
+  private syncBackingStore(): void {
+    const rect = this.canvas.getBoundingClientRect();
+    const cssScale = Math.max(
+      rect.width > 0 ? rect.width / VIEW_WIDTH : 1,
+      rect.height > 0 ? rect.height / VIEW_HEIGHT : 1,
+    );
+    // Two physical samples per CSS pixel retain painterly detail on modern
+    // phones without asking the 2D renderer to maintain an unbounded 4K+
+    // backing surface. The logical canvas remains exactly 960x540.
+    const targetCssDpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+    const targetScale = Math.min(3, Math.max(1, cssScale * targetCssDpr));
+    // Keeping the backing width divisible by 16 preserves exact 16:9 storage
+    // and one uniform transform on both axes.
+    const backingWidth = Math.ceil((VIEW_WIDTH * targetScale) / 16) * 16;
+    const backingHeight = (backingWidth * 9) / 16;
+    if (
+      this.canvas.width !== backingWidth ||
+      this.canvas.height !== backingHeight
+    ) {
+      this.canvas.width = backingWidth;
+      this.canvas.height = backingHeight;
+    }
+    this.renderScale = backingWidth / VIEW_WIDTH;
+    this.context.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+    this.context.imageSmoothingEnabled = true;
   }
 
   cameraTarget(state: GameState): CameraV1 {
@@ -132,6 +160,7 @@ export class CanvasRenderer {
     interpolationAlpha = 1,
     cameraMode: CameraMode = "smooth",
   ): RenderManifestV1 {
+    this.syncBackingStore();
     const alpha = Math.max(0, Math.min(1, interpolationAlpha));
     const camera = {
       x:
@@ -147,6 +176,7 @@ export class CanvasRenderer {
       interpolationAlpha: alpha,
       cameraTarget: this.cameraTarget(state),
       cameraMode,
+      dpr: this.renderScale,
     });
     manifest.worldUi = this.buildWorldUi(manifest, state);
     this.manifest = manifest;
