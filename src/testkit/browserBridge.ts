@@ -8,6 +8,7 @@ import type {
   CameraMode,
   CameraV1,
   EntityMaskV1,
+  PaintMaskV1,
   RenderManifestV1,
 } from "../render/manifest";
 import { canonicalState, stateHash } from "./canonical";
@@ -31,6 +32,7 @@ export interface TestHost {
   getCanvas(): HTMLCanvasElement | null;
   captureLogicalFrame?(): string;
   captureEntityMask(entityId: string): EntityMaskV1;
+  capturePaintMask(paintId: string): PaintMaskV1;
   setCamera(camera: CameraV1, mode?: CameraMode): void;
   setCameraMode(mode: CameraMode): void;
   getCamera(): CameraV1;
@@ -62,6 +64,7 @@ export interface GameTestBridge {
   drainEvents(): GameEvent[];
   captureFrame(): string;
   captureEntityMask(entityId: string): EntityMaskV1;
+  capturePaintMask(paintId: string): PaintMaskV1;
   captureSequence(
     ticks: number[],
     options?: { render?: boolean },
@@ -208,6 +211,7 @@ export function installGameTestBridge(
       return canvas.toDataURL("image/png");
     },
     captureEntityMask: (entityId) => host.captureEntityMask(entityId),
+    capturePaintMask: (paintId) => host.capturePaintMask(paintId),
     captureSequence(ticks, options = {}) {
       return ticks.map((targetTick) => {
         const remaining = targetTick - host.getState().tick;

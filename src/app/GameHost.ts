@@ -18,6 +18,7 @@ import type {
   CameraMode,
   CameraV1,
   EntityMaskV1,
+  PaintMaskV1,
   RenderManifestV1,
 } from "../render/manifest";
 import { worldForScreen } from "../render/manifest";
@@ -182,6 +183,9 @@ export class GameHost {
   }
   captureEntityMask(entityId: string): EntityMaskV1 {
     return this.renderer.captureEntityMask(this.state, entityId);
+  }
+  capturePaintMask(paintId: string): PaintMaskV1 {
+    return this.renderer.capturePaintMask(this.state, paintId);
   }
   render(interpolationAlpha = 1): RenderManifestV1 {
     const m = this.renderer.render(

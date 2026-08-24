@@ -8,12 +8,14 @@ import type { GameState } from "../game/types";
 import { openingRoomThreshold } from "../game/sceneryLayout";
 import {
   buildRenderManifest,
-  entityPaintPriority,
+  buildPaintQueue,
   type CameraMode,
   type CameraV1,
   type DestinationRectV1,
   type DrawCallV1,
   type EntityMaskV1,
+  type PaintMaskV1,
+  type PaintQueueItemV1,
   type RenderManifestV1,
   type SceneSpriteV2,
   type SpriteReferenceV2,
@@ -195,58 +197,13 @@ export class CanvasRenderer {
       dpr: this.renderScale,
     });
     manifest.worldUi = this.buildWorldUi(manifest, state);
+    manifest.paintQueue = buildPaintQueue(manifest);
     this.manifest = manifest;
     const context = this.context;
     context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
-    // Terrain is a base pass. Every raised world sprite then shares one
-    // bottom-anchor depth queue, so actors can pass behind roofs/props and in
-    // front of objects south of them. Test mode still draws offscreen records
-    // so the browser gate can prove manifest completeness.
-    for (const scene of manifest.sceneSprites.filter(
-      ({ layer }) => layer === "terrain",
-    )) {
-      if (this.drawFullContract || scene.visible)
-        this.drawSceneSprite(context, scene);
-    }
-    const raised = [
-      ...manifest.sceneSprites
-        .filter(({ layer }) => layer !== "terrain")
-        .map((sprite) => ({
-          kind: "scene" as const,
-          depth: sprite.screenAnchor.y,
-          priority: 0,
-          stableId: sprite.objectId,
-          sprite,
-        })),
-      ...manifest.drawCalls.map((call) => ({
-        kind: "entity" as const,
-        depth: call.screenAnchor.y,
-        priority: entityPaintPriority(call),
-        stableId: call.entityId,
-        call,
-      })),
-    ].sort(
-      (first, second) =>
-        first.depth - second.depth ||
-        first.priority - second.priority ||
-        first.stableId.localeCompare(second.stableId),
-    );
-    for (const item of raised) {
-      if (item.kind === "scene") {
-        if (this.drawFullContract || item.sprite.visible)
-          this.drawSceneSprite(context, item.sprite);
-      } else if (this.drawFullContract || item.call.visible) {
-        this.drawEntitySprite(
-          context,
-          item.call,
-          state,
-          manifest.worldUi.find(
-            ({ ownerId }) => ownerId === item.call.entityId,
-          ),
-        );
-      }
-    }
+    for (const item of manifest.paintQueue)
+      this.drawPaintItem(context, item, state);
     return manifest;
   }
 
@@ -350,6 +307,74 @@ export class CanvasRenderer {
   }
 
   /**
+   * Captures one named operation from the authoritative queue at logical
+   * screen coordinates.  Unlike entity masks this intentionally preserves
+   * actor/prop overlap, making it usable for occlusion intersection checks.
+   */
+  capturePaintMask(state: GameState, paintId: string): PaintMaskV1 {
+    const item = this.manifest?.paintQueue.find(
+      (entry) => entry.paintId === paintId,
+    );
+    if (!item) throw new Error(`Render paint ${paintId} is unavailable`);
+    const canvas = document.createElement("canvas");
+    canvas.width = VIEW_WIDTH;
+    canvas.height = VIEW_HEIGHT;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("Paint-mask Canvas 2D is unavailable");
+    this.drawPaintItem(context, item, state);
+    const pixels = context.getImageData(0, 0, VIEW_WIDTH, VIEW_HEIGHT).data;
+    let minX = VIEW_WIDTH;
+    let minY = VIEW_HEIGHT;
+    let maxX = -1;
+    let maxY = -1;
+    let alphaPixels = 0;
+    let weightedX = 0;
+    let weightedY = 0;
+    let alphaWeight = 0;
+    let maskInternalClipping = false;
+    let hash = 0x811c9dc5;
+    for (let y = 0; y < VIEW_HEIGHT; y += 1) {
+      for (let x = 0; x < VIEW_WIDTH; x += 1) {
+        const offset = (y * VIEW_WIDTH + x) * 4;
+        const pixelAlpha = pixels[offset + 3]!;
+        for (let channel = 0; channel < 4; channel += 1) {
+          hash ^= pixels[offset + channel]!;
+          hash = Math.imul(hash, 0x01000193);
+        }
+        if (pixelAlpha === 0) continue;
+        if (x === 0 || y === 0 || x === VIEW_WIDTH - 1 || y === VIEW_HEIGHT - 1)
+          maskInternalClipping = true;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        alphaPixels += 1;
+        alphaWeight += pixelAlpha;
+        weightedX += x * pixelAlpha;
+        weightedY += y * pixelAlpha;
+      }
+    }
+    if (alphaPixels === 0) throw new Error(`Render paint ${paintId} is blank`);
+    const visible = this.paintVisible(item);
+    return {
+      paintId,
+      mode: "isolated-paint-queue-item",
+      renderVisible: visible,
+      width: VIEW_WIDTH,
+      height: VIEW_HEIGHT,
+      inkBounds: { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 },
+      centroid: {
+        x: Math.round((weightedX / alphaWeight) * 1000) / 1000,
+        y: Math.round((weightedY / alphaWeight) * 1000) / 1000,
+      },
+      alphaPixels,
+      maskInternalClipping,
+      pixelHash: (hash >>> 0).toString(16).padStart(8, "0"),
+      image: canvas.toDataURL("image/png"),
+    };
+  }
+
+  /**
    * Return a deterministic logical-resolution frame for exact visual tests.
    * The live canvas backing store is deliberately responsive and may be larger
    * than 960x540 for crisp high-DPI presentation; snapshot dimensions must not
@@ -390,17 +415,19 @@ export class CanvasRenderer {
     );
   }
 
-  private drawEntitySprite(
+  private drawPaintItem(
     context: CanvasRenderingContext2D,
-    call: DrawCallV1,
+    item: PaintQueueItemV1,
     state: GameState,
-    worldUi: WorldUiCallV1 | undefined,
   ): void {
-    if (
-      call.type === "player" ||
-      call.type === "monster" ||
-      call.type === "npc"
-    ) {
+    const visible = this.paintVisible(item);
+    if (!this.drawFullContract && !visible) return;
+    if (item.kind === "scene") {
+      this.drawSceneSprite(context, item.scene);
+      return;
+    }
+    if (item.kind === "actor-shadow") {
+      const { call } = item;
       this.drawWorldSprite(
         context,
         "world-ui:shadow",
@@ -413,26 +440,35 @@ export class CanvasRenderer {
         },
         0.3,
       );
-    }
-    this.drawImageReference(
-      context,
-      call,
-      call.destinationRect,
-      call.flipX,
-      call.opacity,
-      this.rotationFor(call),
-    );
-    if (
-      call.type !== "player" &&
-      call.type !== "monster" &&
-      call.type !== "npc"
-    )
       return;
-    const actor = state.monsters.find(
-      (monster) => monster.id === call.entityId,
-    );
-    if (call.type === "monster" && actor && actor.health > 0 && worldUi)
-      this.drawHealthBar(context, worldUi);
+    }
+    if (item.kind === "entity-body") {
+      this.drawImageReference(
+        context,
+        item.call,
+        item.call.destinationRect,
+        item.call.flipX,
+        item.call.opacity,
+        this.rotationFor(item.call),
+      );
+      return;
+    }
+    if (item.kind !== "health-frame" && item.kind !== "health-fill") return;
+    const actor = state.monsters.find((monster) => monster.id === item.ownerId);
+    if (!actor || actor.health <= 0) return;
+    this.drawHealthPart(context, item.worldUi, item.kind);
+  }
+
+  private paintVisible(item: PaintQueueItemV1): boolean {
+    switch (item.kind) {
+      case "scene":
+        return item.scene.visible;
+      case "health-frame":
+      case "health-fill":
+        return item.worldUi.visible;
+      default:
+        return item.call.visible;
+    }
   }
 
   private alphaBounds(reference: ImageBackedReference): {
@@ -594,30 +630,18 @@ export class CanvasRenderer {
     );
   }
 
-  private drawHealthBar(
+  private drawHealthPart(
     context: CanvasRenderingContext2D,
     worldUi: WorldUiCallV1,
+    kind: "health-frame" | "health-fill",
   ): void {
+    const part = kind === "health-frame" ? worldUi.frame : worldUi.fill;
     this.drawImageReference(
       context,
-      {
-        assetId: worldUi.frame.assetId,
-        sourceRect: worldUi.frame.sourceRect,
-      },
-      worldUi.frame.destinationRect,
+      { assetId: part.assetId, sourceRect: part.sourceRect },
+      part.destinationRect,
       false,
-      0.8,
-      0,
-    );
-    this.drawImageReference(
-      context,
-      {
-        assetId: worldUi.fill.assetId,
-        sourceRect: worldUi.fill.sourceRect,
-      },
-      worldUi.fill.destinationRect,
-      false,
-      0.7,
+      kind === "health-frame" ? 0.8 : 0.7,
       0,
     );
   }

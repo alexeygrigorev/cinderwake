@@ -119,6 +119,40 @@ export interface WorldUiCallV1 {
   visible: boolean;
 }
 
+/**
+ * One actual image paint in the Canvas 2D scene.  This is deliberately more
+ * granular than `drawCalls`: an actor body, its shadow, and its health chrome
+ * are different paints and therefore can be checked independently.
+ */
+export type PaintQueueItemV1 =
+  | {
+      paintId: string;
+      kind: "scene";
+      zOrder: number;
+      scene: SceneSpriteV2;
+    }
+  | {
+      paintId: string;
+      kind: "actor-shadow";
+      zOrder: number;
+      ownerId: string;
+      call: DrawCallV1;
+    }
+  | {
+      paintId: string;
+      kind: "entity-body";
+      zOrder: number;
+      ownerId: string;
+      call: DrawCallV1;
+    }
+  | {
+      paintId: string;
+      kind: "health-frame" | "health-fill";
+      zOrder: number;
+      ownerId: string;
+      worldUi: WorldUiCallV1;
+    };
+
 export interface RenderManifestV1 {
   schemaVersion: 2;
   spriteCatalogRevision: string;
@@ -133,6 +167,8 @@ export interface RenderManifestV1 {
   sceneSprites: SceneSpriteV2[];
   drawCalls: DrawCallV1[];
   worldUi: WorldUiCallV1[];
+  /** Exact ordered canvas paints, including scenery and actor attachments. */
+  paintQueue: PaintQueueItemV1[];
 }
 
 export interface EntityMaskV1 {
@@ -146,6 +182,20 @@ export interface EntityMaskV1 {
   centroid: Vec2;
   alphaPixels: number;
   bottomOffset: number;
+  maskInternalClipping: boolean;
+  pixelHash: string;
+  image: string;
+}
+
+export interface PaintMaskV1 {
+  paintId: string;
+  mode: "isolated-paint-queue-item";
+  renderVisible: boolean;
+  width: number;
+  height: number;
+  inkBounds: { x: number; y: number; width: number; height: number };
+  centroid: Vec2;
+  alphaPixels: number;
   maskInternalClipping: boolean;
   pixelHash: string;
   image: string;
@@ -210,6 +260,94 @@ export function compareEntityPaintOrder(
     entityPaintPriority(first) - entityPaintPriority(second) ||
     first.entityId.localeCompare(second.entityId)
   );
+}
+
+/**
+ * Builds the single authoritative Canvas paint plan.  The renderer consumes
+ * this list directly, so a captured manifest is evidence of pixels rather
+ * than a parallel approximation of depth ordering.
+ */
+export function buildPaintQueue(
+  manifest: Pick<RenderManifestV1, "sceneSprites" | "drawCalls" | "worldUi">,
+): PaintQueueItemV1[] {
+  const queue: PaintQueueItemV1[] = [];
+  const add = (item: PaintQueueItemV1): void => {
+    queue.push({ ...item, zOrder: queue.length });
+  };
+  // Terrain is the base pass. Preserve authored scene order exactly.
+  for (const scene of manifest.sceneSprites) {
+    if (scene.layer === "terrain")
+      add({ paintId: `scene:${scene.objectId}`, kind: "scene", zOrder: 0, scene });
+  }
+  const raised = [
+    ...manifest.sceneSprites
+      .filter(({ layer }) => layer !== "terrain")
+      .map((scene) => ({
+        type: "scene" as const,
+        depth: scene.screenAnchor.y,
+        priority: 0,
+        stableId: scene.objectId,
+        scene,
+      })),
+    ...manifest.drawCalls.map((call) => ({
+      type: "entity" as const,
+      depth: call.screenAnchor.y,
+      priority: entityPaintPriority(call),
+      stableId: call.entityId,
+      call,
+    })),
+  ].sort(
+    (first, second) =>
+      first.depth - second.depth ||
+      first.priority - second.priority ||
+      first.stableId.localeCompare(second.stableId),
+  );
+  for (const item of raised) {
+    if (item.type === "scene") {
+      add({
+        paintId: `scene:${item.scene.objectId}`,
+        kind: "scene",
+        zOrder: 0,
+        scene: item.scene,
+      });
+      continue;
+    }
+    const { call } = item;
+    const isActor = ["player", "monster", "npc"].includes(call.type);
+    if (isActor)
+      add({
+        paintId: `shadow:${call.entityId}`,
+        kind: "actor-shadow",
+        zOrder: 0,
+        ownerId: call.entityId,
+        call,
+      });
+    add({
+      paintId: `body:${call.entityId}`,
+      kind: "entity-body",
+      zOrder: 0,
+      ownerId: call.entityId,
+      call,
+    });
+    const health = manifest.worldUi.find(({ ownerId }) => ownerId === call.entityId);
+    if (health) {
+      add({
+        paintId: `health-frame:${call.entityId}`,
+        kind: "health-frame",
+        zOrder: 0,
+        ownerId: call.entityId,
+        worldUi: health,
+      });
+      add({
+        paintId: `health-fill:${call.entityId}`,
+        kind: "health-fill",
+        zOrder: 0,
+        ownerId: call.entityId,
+        worldUi: health,
+      });
+    }
+  }
+  return queue;
 }
 
 /**
@@ -1105,5 +1243,6 @@ export function buildRenderManifest(
     sceneSprites: buildSceneSprites(state, camera),
     drawCalls: calls,
     worldUi: [],
+    paintQueue: [],
   };
 }

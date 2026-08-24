@@ -581,9 +581,12 @@ export function validateManifestSpriteContract(
     fail("manifest.sceneSprites must be an array");
   if (!Array.isArray(manifest.worldUi))
     fail("manifest.worldUi must be an array");
+  if (!Array.isArray(manifest.paintQueue))
+    fail("manifest.paintQueue must be an array of actual canvas paints");
   const drawCalls = manifest.drawCalls as unknown[];
   const sceneSprites = manifest.sceneSprites as unknown[];
   const worldUi = manifest.worldUi as unknown[];
+  const paintQueue = manifest.paintQueue as Array<Record<string, unknown>>;
   for (const [index, callValue] of drawCalls.entries()) {
     const pathName = `manifest.drawCalls[${index}]`;
     assertSpriteReference(callValue, catalog, pathName);
@@ -622,6 +625,26 @@ export function validateManifestSpriteContract(
     );
   for (const [index, worldUiValue] of worldUi.entries())
     assertWorldUiCall(worldUiValue, catalog, `manifest.worldUi[${index}]`);
+  const paintIds = new Set<string>();
+  for (const [index, paint] of paintQueue.entries()) {
+    if (typeof paint.paintId !== "string" || paint.paintId.length === 0)
+      fail(`manifest.paintQueue[${index}].paintId must be a non-empty string`);
+    if (paintIds.has(paint.paintId))
+      fail(`manifest.paintQueue has duplicate paintId ${paint.paintId}`);
+    paintIds.add(paint.paintId);
+    if (paint.zOrder !== index)
+      fail(`manifest.paintQueue[${index}].zOrder must equal its paint order`);
+  }
+  for (const call of drawCalls as Array<Record<string, unknown>>) {
+    if (typeof call.entityId !== "string") continue;
+    if (!paintIds.has(`body:${call.entityId}`))
+      fail(`manifest.paintQueue is missing body:${call.entityId}`);
+  }
+  for (const scene of sceneSprites as Array<Record<string, unknown>>) {
+    if (typeof scene.objectId !== "string") continue;
+    if (!paintIds.has(`scene:${scene.objectId}`))
+      fail(`manifest.paintQueue is missing scene:${scene.objectId}`);
+  }
   return manifest as unknown as RenderManifestV2Shape;
 }
 
