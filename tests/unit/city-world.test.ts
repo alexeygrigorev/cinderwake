@@ -63,6 +63,67 @@ describe("deterministic Embercross world", () => {
     expect(new Set(anchors).size).toBe(EMBERCROSS_CITY.npcs.length);
   });
 
+  it("binds the denser service districts to exact sprite and footprint roles", () => {
+    const placements = new Map(
+      buildEmbercrossScenery().map((placement) => [placement.id, placement]),
+    );
+    const expected = [
+      {
+        id: "building:embercross:smithy",
+        kind: "structure",
+        name: "forge-workshop",
+        tile: { x: 11, y: 20 },
+        collision: { halfWidth: 856, halfHeight: 320 },
+      },
+      {
+        id: "building:embercross:north-rowhouse",
+        kind: "structure",
+        name: "ruined-house",
+        tile: { x: 13, y: 9 },
+      },
+      {
+        id: "building:embercross:chapel",
+        kind: "structure",
+        name: "chapel",
+        tile: { x: 6, y: 13 },
+        collision: { halfWidth: 1520, halfHeight: 620 },
+      },
+      {
+        id: "building:embercross:watchtower",
+        kind: "structure",
+        name: "watchtower",
+        tile: { x: 28, y: 12 },
+        collision: { halfWidth: 1430, halfHeight: 620 },
+      },
+      {
+        id: "prop:embercross:smithy-weapon-rack",
+        kind: "prop",
+        name: "weapon-rack",
+        tile: { x: 9, y: 22 },
+      },
+      {
+        id: "prop:embercross:smithy-brazier",
+        kind: "prop",
+        name: "ember-brazier",
+        tile: { x: 12, y: 23 },
+      },
+      {
+        id: "prop:embercross:square-bench",
+        kind: "prop",
+        name: "raised-clutter-bench",
+        tile: { x: 18, y: 23 },
+      },
+      {
+        id: "decal:embercross:square-scorch",
+        kind: "decal",
+        name: "scorch-ring",
+        tile: { x: 12, y: 23 },
+      },
+    ];
+    for (const contract of expected)
+      expect(placements.get(contract.id), contract.id).toMatchObject(contract);
+  });
+
   it("keeps both gate piers solid while its visible center stays walkable", () => {
     const map = createEmbercrossMap();
     const gate = buildSceneryLayout(map).find(
@@ -105,6 +166,49 @@ describe("deterministic Embercross world", () => {
     expect(
       nearbyEmbercrossNpcId({ x: mara.x + radius + 1, y: mara.y }),
     ).toBeNull();
+  });
+
+  it("keeps a collision-aware route from the gate to every service district", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["temporal-city-entry"]!);
+    stepGame(state, EMPTY_INPUT);
+    expect(state.city.locationPhase).toBe("inside");
+    const spawn = { ...state.player.position };
+    const destinations = [
+      ...EMBERCROSS_CITY.npcs.map(({ id }) => ({
+        id,
+        point: cityNpcWorldAnchor(id),
+      })),
+      { id: "city-square-east", point: tileCenter({ x: 17, y: 20 }) },
+      { id: "south-gate", point: tileCenter(state.map.exit) },
+    ];
+
+    for (const destination of destinations) {
+      const outward = findStateNavigationRoute(
+        state,
+        spawn,
+        destination.point,
+        state.player.radius,
+      );
+      expect(outward.length, `${destination.id} outward route`).toBeGreaterThan(
+        0,
+      );
+      expect(outward.at(-1), `${destination.id} outward target`).toEqual(
+        destination.point,
+      );
+      const returning = findStateNavigationRoute(
+        state,
+        destination.point,
+        spawn,
+        state.player.radius,
+      );
+      expect(
+        returning.length,
+        `${destination.id} return route`,
+      ).toBeGreaterThan(0);
+      expect(returning.at(-1), `${destination.id} return target`).toEqual(
+        spawn,
+      );
+    }
   });
 
   it("derives a visible discovery cell on the guaranteed route before the gate", () => {

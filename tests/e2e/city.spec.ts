@@ -332,6 +332,16 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
   await expect(page.locator(".game")).toHaveScreenshot(
     "embercross-market-mobile.png",
   );
+  await loadCityAt(
+    page,
+    "npc:embercross:mara",
+    { gold: 60, health: 70, maxHealth: 100, tonics: 1 },
+    { x: -2_600, y: 1_500 },
+  );
+  await expect(page.locator("#city-services")).toBeHidden();
+  await expect(page.locator(".game")).toHaveScreenshot(
+    "embercross-market-mobile-closed.png",
+  );
 });
 
 test("landscape tavern composition remains readable and contained", async ({
@@ -372,5 +382,15 @@ test("landscape tavern composition remains readable and contained", async ({
   expect(layout.sheet.bottom).toBeLessThanOrEqual(390);
   await expect(page.locator(".game")).toHaveScreenshot(
     "embercross-tavern-landscape.png",
+  );
+  await loadCityAt(
+    page,
+    "npc:embercross:oren",
+    { gold: 60, health: 60, maxHealth: 100, hunger: 80 },
+    { x: 0, y: 2_500 },
+  );
+  await expect(page.locator("#city-services")).toBeHidden();
+  await expect(page.locator(".game")).toHaveScreenshot(
+    "embercross-tavern-landscape-closed.png",
   );
 });

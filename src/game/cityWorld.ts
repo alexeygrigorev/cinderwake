@@ -175,6 +175,42 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
   const gateAnchor = tileCenter(gateTile);
   return [
     solidPlacement(
+      "building:embercross:smithy",
+      "structure",
+      "forge-workshop",
+      { x: 11, y: 20 },
+      856,
+      320,
+      -320,
+    ),
+    solidPlacement(
+      "building:embercross:north-rowhouse",
+      "structure",
+      "ruined-house",
+      { x: 13, y: 9 },
+      1_000,
+      450,
+      -450,
+    ),
+    solidPlacement(
+      "building:embercross:chapel",
+      "structure",
+      "chapel",
+      { x: 6, y: 13 },
+      1_520,
+      620,
+      -220,
+    ),
+    solidPlacement(
+      "building:embercross:watchtower",
+      "structure",
+      "watchtower",
+      { x: 28, y: 12 },
+      1_430,
+      620,
+      -220,
+    ),
+    solidPlacement(
       market.id,
       "structure",
       "embercross-market",
@@ -269,6 +305,24 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       -300,
     ),
     solidPlacement(
+      "prop:embercross:smithy-weapon-rack",
+      "prop",
+      "weapon-rack",
+      { x: 9, y: 22 },
+      700,
+      360,
+      -200,
+    ),
+    solidPlacement(
+      "prop:embercross:smithy-brazier",
+      "prop",
+      "ember-brazier",
+      { x: 12, y: 23 },
+      650,
+      400,
+      -240,
+    ),
+    solidPlacement(
       "structure:embercross:market-wagon",
       "structure",
       "wagon",
@@ -290,7 +344,7 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       "prop:embercross:square-bench",
       "prop",
       "raised-clutter-bench",
-      { x: 15, y: 23 },
+      { x: 18, y: 23 },
       700,
       300,
       -300,
@@ -332,6 +386,15 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       -300,
     ),
     solidPlacement(
+      "prop:embercross:chapel-graves",
+      "prop",
+      "grave-markers",
+      { x: 28, y: 14 },
+      520,
+      300,
+      -300,
+    ),
+    solidPlacement(
       "prop:embercross:infirmary-lantern",
       "prop",
       "lantern-a",
@@ -358,16 +421,24 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       y: 22,
     }),
     passablePlacement("decal:embercross:square-scorch", "scorch-ring", {
-      x: 17,
-      y: 20,
+      x: 12,
+      y: 23,
     }),
-    passablePlacement("decal:embercross:tavern-boards", "banner-scrap", {
+    passablePlacement("decal:embercross:tavern-boards", "broken-boards", {
       x: 20,
       y: 16,
     }),
-    passablePlacement("decal:embercross:infirmary-flowers", "blood-smear", {
+    passablePlacement("decal:embercross:infirmary-flowers", "grave-flowers", {
       x: 25,
       y: 21,
+    }),
+    passablePlacement("decal:embercross:smithy-embers", "cracked-embers", {
+      x: 7,
+      y: 17,
+    }),
+    passablePlacement("decal:embercross:chapel-candles", "melted-candles", {
+      x: 27,
+      y: 12,
     }),
     passablePlacement("decal:embercross:south-tracks", "claw-tracks", {
       x: 15,
