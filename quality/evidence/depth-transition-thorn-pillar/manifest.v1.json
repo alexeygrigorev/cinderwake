@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "status": "REQUIRES_INDEPENDENT_REVIEW",
+  "sourceCommit": "c1620cd00000000000000000000000000000000",
+  "tapeSha256": "6a8a8426b4f79cf92badca29134289b5a449db6b59b2b4d134a98ef62f6c9022",
+  "viewports": {
+    "desktop": [
+      1440,
+      900
+    ],
+    "phone": [
+      390,
+      844
+    ]
+  },
+  "roles": [
+    "behind",
+    "boundary-before",
+    "boundary-after",
+    "front"
+  ],
+  "artifacts": [
+    {
+      "path": "desktop/0000-page.png",
+      "profile": "desktop",
+      "sample": "0000",
+      "kind": "page",
+      "bytes": 2013156,
+      "sha256": "169a1cc767d903c12c0805a395ea0cfc7c5ae8c5543b5ce2e9f8d1412cd58a5d"
+    },
+    {
+      "path": "desktop/0000-player.png",
+      "profile": "desktop",
+      "sample": "0000",
+      "kind": "player",
+      "bytes": 27501,
+      "sha256": "627240379fa75b734c5643f40a636953bb39f77fb6d5c2762de57504b835eb73"
+    },
+    {
+      "path": "desktop/0000-prop.png",
+      "profile": "desktop",
+      "sample": "0000",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "desktop/0013-page.png",
+      "profile": "desktop",
+      "sample": "0013",
+      "kind": "page",
+      "bytes": 2014644,
+      "sha256": "90c562d846f505ffb902e889c47f3e15147d8022bda9fb30c6c501b43c4f6bfd"
+    },
+    {
+      "path": "desktop/0013-player.png",
+      "profile": "desktop",
+      "sample": "0013",
+      "kind": "player",
+      "bytes": 26037,
+      "sha256": "37a27fcb3d797fc286e480bfe1652da423a3937106975ecf6b82af590bd553a0"
+    },
+    {
+      "path": "desktop/0013-prop.png",
+      "profile": "desktop",
+      "sample": "0013",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "desktop/0014-page.png",
+      "profile": "desktop",
+      "sample": "0014",
+      "kind": "page",
+      "bytes": 2014491,
+      "sha256": "46507f3d88624b0042f5ed0e04c5ef14b388f7cc29e3713ccde7364781398d6a"
+    },
+    {
+      "path": "desktop/0014-player.png",
+      "profile": "desktop",
+      "sample": "0014",
+      "kind": "player",
+      "bytes": 26041,
+      "sha256": "9ca0db9975a6b08b8b0c0141e29328faac1b65bd93c2ce173457ebcc8f295fa9"
+    },
+    {
+      "path": "desktop/0014-prop.png",
+      "profile": "desktop",
+      "sample": "0014",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "desktop/0027-page.png",
+      "profile": "desktop",
+      "sample": "0027",
+      "kind": "page",
+      "bytes": 2009640,
+      "sha256": "4574a02abddcd429c551acd6ed0107cbc888e2e3dea03afa78a74d89b9a2c7fe"
+    },
+    {
+      "path": "desktop/0027-player.png",
+      "profile": "desktop",
+      "sample": "0027",
+      "kind": "player",
+      "bytes": 24974,
+      "sha256": "60cecb1e57fac2922fe76891aaa1258a1487a1ae08fd52d4af74d329092f3ac7"
+    },
+    {
+      "path": "desktop/0027-prop.png",
+      "profile": "desktop",
+      "sample": "0027",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "desktop/contact-sheet.png",
+      "profile": "desktop",
+      "sample": "contact",
+      "kind": "sheet",
+      "bytes": 1323791,
+      "sha256": "8a0145c4cbcb76e5fd7ebcbfd87ee4b780c59220eaf446c4a0d20a8dcacba088"
+    },
+    {
+      "path": "phone/0000-page.png",
+      "profile": "phone",
+      "sample": "0000",
+      "kind": "page",
+      "bytes": 461812,
+      "sha256": "d5cda69a40e6f064e3931a7306bd30f8feb0b1aac31c993db495e21519f04965"
+    },
+    {
+      "path": "phone/0000-player.png",
+      "profile": "phone",
+      "sample": "0000",
+      "kind": "player",
+      "bytes": 14852,
+      "sha256": "234832077f783218bd83a2a4411fbb5b93ddec47b9d1f6b0576b094c4edc1997"
+    },
+    {
+      "path": "phone/0000-prop.png",
+      "profile": "phone",
+      "sample": "0000",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "phone/0001-page.png",
+      "profile": "phone",
+      "sample": "0001",
+      "kind": "page",
+      "bytes": 459368,
+      "sha256": "ca6a155b56d020108b9ba1370d3e12aa1ebafb9a04eb510939809d72623a7773"
+    },
+    {
+      "path": "phone/0001-player.png",
+      "profile": "phone",
+      "sample": "0001",
+      "kind": "player",
+      "bytes": 12528,
+      "sha256": "96f27f6015a839307a8c4d011fb2ead1d0f31eec1494f797fda6e20effd4cd99"
+    },
+    {
+      "path": "phone/0001-prop.png",
+      "profile": "phone",
+      "sample": "0001",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "phone/0013-page.png",
+      "profile": "phone",
+      "sample": "0013",
+      "kind": "page",
+      "bytes": 463405,
+      "sha256": "0530661512f8d7a9e7873acb808a65f46d5663a0d0b4dd224f709e41f1abd8a4"
+    },
+    {
+      "path": "phone/0013-player.png",
+      "profile": "phone",
+      "sample": "0013",
+      "kind": "player",
+      "bytes": 26037,
+      "sha256": "37a27fcb3d797fc286e480bfe1652da423a3937106975ecf6b82af590bd553a0"
+    },
+    {
+      "path": "phone/0013-prop.png",
+      "profile": "phone",
+      "sample": "0013",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "phone/0014-page.png",
+      "profile": "phone",
+      "sample": "0014",
+      "kind": "page",
+      "bytes": 463245,
+      "sha256": "05ddd470dcb1778f6950f0c67cfc7ff5774ed32c24205d97aa5ba9fa62d0871f"
+    },
+    {
+      "path": "phone/0014-player.png",
+      "profile": "phone",
+      "sample": "0014",
+      "kind": "player",
+      "bytes": 26041,
+      "sha256": "9ca0db9975a6b08b8b0c0141e29328faac1b65bd93c2ce173457ebcc8f295fa9"
+    },
+    {
+      "path": "phone/0014-prop.png",
+      "profile": "phone",
+      "sample": "0014",
+      "kind": "prop",
+      "bytes": 19968,
+      "sha256": "eea4735cf13fcebac8320f6d101e856d5517f512af69ff68c2c7dc203dc0c013"
+    },
+    {
+      "path": "phone/contact-sheet.png",
+      "profile": "phone",
+      "sample": "contact",
+      "kind": "sheet",
+      "bytes": 965902,
+      "sha256": "e7492c278081fb55b75198f1394defde849b5b2c9fe3f9329025858e39a8586e"
+    }
+  ]
+}
