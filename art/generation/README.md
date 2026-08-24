@@ -312,7 +312,9 @@ candidate foreground with a fixed Manhattan/tie order, preserves the reviewed
 source alpha mask, and reports all changed pixels. Resampling and color keying
 can still perturb the 256-cell contour, so the prepared-space option performs a
 second exact alpha-field lock after scale/contact placement and republishes
-final bounds and support evidence. A manifest records both exact files/hashes
+final bounds and support evidence. It encodes that effective alpha through an
+opaque literal-magenta prepared cell rather than leaving transparent margins.
+A manifest records both exact files/hashes
 under `preparation.topologyMask` and `preparation.preparedTopologyMask`; a
 separate `topologyLock` proves the committed output against the reviewed
 prepared reference. Enforcement establishes silhouette identity, not artistic

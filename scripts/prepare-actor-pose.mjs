@@ -85,6 +85,31 @@ function keyedAlpha(red, green, blue) {
   return 255;
 }
 
+function encodeOpaqueKeyedColor(red, green, blue, targetAlpha, referenceColor) {
+  if (targetAlpha === 0) return [magenta.r, magenta.g, magenta.b];
+  if (targetAlpha === 255 && keyedAlpha(red, green, blue) === 255)
+    return [red, green, blue];
+
+  // Most chroma-key antialias values are the exact 16-step dominance ramp.
+  // Retain the candidate's red/blue ordering and contrast while solving that
+  // ramp exactly; fall back to the reference pixel for other reachable values.
+  for (let dominance = 13; dominance < 28; dominance += 1) {
+    const encodedAlpha = Math.max(0, Math.round(((28 - dominance) / 16) * 255));
+    if (encodedAlpha !== targetAlpha) continue;
+    const balance = Math.min(110, Math.abs(red - blue));
+    const minimum = Math.max(dominance, Math.min(red, blue));
+    const maximum = Math.min(255, minimum + balance);
+    const encoded =
+      red >= blue
+        ? [maximum, minimum - dominance, minimum]
+        : [minimum, minimum - dominance, maximum];
+    if (keyedAlpha(...encoded) === targetAlpha) return encoded;
+  }
+  if (keyedAlpha(...referenceColor) !== targetAlpha)
+    throw new Error(`Cannot encode prepared topology alpha ${targetAlpha}`);
+  return referenceColor;
+}
+
 async function normalizedKeyedInput(inputPath) {
   const metadata = await sharp(inputPath).metadata();
   if (
@@ -220,7 +245,7 @@ async function removeBoundaryArtifacts(buffer) {
 async function enforceTopologyMask(
   candidateBuffer,
   topologyBuffer,
-  { preserveReferenceAlpha = false } = {},
+  { preserveReferenceAlpha = false, opaqueKeyedOutput = false } = {},
 ) {
   const [candidate, topology] = await Promise.all(
     [candidateBuffer, topologyBuffer].map((buffer) =>
@@ -351,17 +376,39 @@ async function enforceTopologyMask(
   for (let pixel = 0; pixel < pixelCount; pixel += 1) {
     const offset = pixel * 4;
     const maskAlpha = referenceAlpha[pixel];
-    if (maskAlpha > 0) {
+    if (maskAlpha === 0 && opaqueKeyedOutput) {
+      output[offset] = magenta.r;
+      output[offset + 1] = magenta.g;
+      output[offset + 2] = magenta.b;
+      output[offset + 3] = 255;
+    } else if (maskAlpha > 0) {
       let source = candidateVisible[pixel] ? pixel : nearestSource[pixel];
       if (preserveReferenceAlpha && candidateAlphaByPixel[source] < maskAlpha) {
         source = nearestOpaqueSource[pixel];
         alphaFallbackPixels += 1;
       }
       const sourceOffset = source * 4;
-      output[offset] = candidate.data[sourceOffset];
-      output[offset + 1] = candidate.data[sourceOffset + 1];
-      output[offset + 2] = candidate.data[sourceOffset + 2];
-      output[offset + 3] = maskAlpha;
+      const encodedColor = opaqueKeyedOutput
+        ? encodeOpaqueKeyedColor(
+            candidate.data[sourceOffset],
+            candidate.data[sourceOffset + 1],
+            candidate.data[sourceOffset + 2],
+            maskAlpha,
+            [
+              topology.data[offset],
+              topology.data[offset + 1],
+              topology.data[offset + 2],
+            ],
+          )
+        : [
+            candidate.data[sourceOffset],
+            candidate.data[sourceOffset + 1],
+            candidate.data[sourceOffset + 2],
+          ];
+      output[offset] = encodedColor[0];
+      output[offset + 1] = encodedColor[1];
+      output[offset + 2] = encodedColor[2];
+      output[offset + 3] = opaqueKeyedOutput ? 255 : maskAlpha;
     }
     const candidateAlpha = candidateAlphaByPixel[pixel];
     const colorChanged =
@@ -405,24 +452,43 @@ async function enforceTopologyMask(
   };
 }
 
-async function literalMagentaTransparentBackground(buffer) {
+async function opaquePreparedBackgroundEvidence(buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
+  let opaquePixels = 0;
+  let literalMagentaPixels = 0;
   for (let offset = 0; offset < data.length; offset += 4) {
-    if (data[offset + 3] !== 0) continue;
-    data[offset] = magenta.r;
-    data[offset + 1] = magenta.g;
-    data[offset + 2] = magenta.b;
+    if (data[offset + 3] === 255) opaquePixels += 1;
+    if (
+      data[offset] === magenta.r &&
+      data[offset + 1] === magenta.g &&
+      data[offset + 2] === magenta.b &&
+      data[offset + 3] === 255
+    )
+      literalMagentaPixels += 1;
   }
-  return (
-    sharp(data, { raw: info })
-      // Palette quantization canonicalizes every fully transparent entry to one
-      // arbitrary RGB value. Truecolor preserves literal magenta under alpha 0.
-      .png({ compressionLevel: 9 })
-      .toBuffer()
-  );
+  const literalMagentaAt = (x, y) => {
+    const offset = (y * info.width + x) * 4;
+    return (
+      data[offset] === magenta.r &&
+      data[offset + 1] === magenta.g &&
+      data[offset + 2] === magenta.b &&
+      data[offset + 3] === 255
+    );
+  };
+  return {
+    opaquePixels,
+    literalMagentaPixels,
+    literalMagentaRatio: literalMagentaPixels / (info.width * info.height),
+    cornersLiteralMagenta: [
+      literalMagentaAt(0, 0),
+      literalMagentaAt(info.width - 1, 0),
+      literalMagentaAt(0, info.height - 1),
+      literalMagentaAt(info.width - 1, info.height - 1),
+    ].every(Boolean),
+  };
 }
 
 async function visibleMaskMismatchPixels(firstBuffer, secondBuffer) {
@@ -699,13 +765,13 @@ async function run() {
     const enforced = await enforceTopologyMask(
       outputBuffer,
       preparedTopology.buffer,
-      { preserveReferenceAlpha: true },
+      { preserveReferenceAlpha: true, opaqueKeyedOutput: true },
     );
     if (!enforced.diagnostics.exactAlphaAfterEnforcement)
       throw new Error(
         "Prepared topology enforcement did not preserve reference alpha",
       );
-    outputBuffer = await literalMagentaTransparentBackground(enforced.buffer);
+    outputBuffer = enforced.buffer;
     const finalMaskMismatchPixels = await visibleMaskMismatchPixels(
       outputBuffer,
       preparedTopology.buffer,
@@ -721,6 +787,15 @@ async function run() {
     if (finalAlphaMismatchPixels !== 0)
       throw new Error(
         "Prepared topology enforcement did not preserve exact final alpha",
+      );
+    const background = await opaquePreparedBackgroundEvidence(outputBuffer);
+    if (
+      background.opaquePixels !== cellSize * cellSize ||
+      background.literalMagentaRatio < 0.2 ||
+      !background.cornersLiteralMagenta
+    )
+      throw new Error(
+        "Prepared topology output does not have an opaque literal-magenta background",
       );
     preparedInkBounds = await alphaBounds(
       outputBuffer,
@@ -744,6 +819,7 @@ async function run() {
       finalMaskMismatchPixels,
       finalAlphaMismatchPixels,
       exactFinalMask: finalMaskMismatchPixels === 0,
+      background,
       finalBounds: preparedInkBounds,
       finalContact: {
         ...preparedContact,

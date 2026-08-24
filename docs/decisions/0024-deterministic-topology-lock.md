@@ -37,7 +37,9 @@ Keep detection and transformation separate and opt-in:
    prepared mask. `--prepared-topology-mask` therefore takes one exact 256 × 256
    reviewed cell after ordinary placement, repeats deterministic clipping/fill,
    preserves the complete reference keyed-alpha field, and validates final safe
-   bounds, Y231 grounding, and centered support.
+   bounds, Y231 grounding, and centered support. The committed prepared cell is
+   fully opaque: reference background becomes literal `#ff00ff`, while
+   foreground and antialias colors re-key to the exact reviewed effective alpha.
 4. The preparation report publishes candidate/reference visible counts,
    missing, extra, changed, antialias, coordinate-space, distance/tie rules, and
    exact post-enforcement status for both stages. A manifest records both masks'

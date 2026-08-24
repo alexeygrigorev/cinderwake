@@ -74,6 +74,50 @@ async function assertMatchingVisibleMasks(expectedFile, actualFile) {
   return actual;
 }
 
+async function assertMatchingEffectiveAlpha(expectedFile, actualFile) {
+  const [expected, actual] = await Promise.all(
+    [expectedFile, actualFile].map((file) => rgba(file)),
+  );
+  let mismatches = 0;
+  for (
+    let pixel = 0;
+    pixel < expected.info.width * expected.info.height;
+    pixel += 1
+  )
+    if (effectiveAlphaAt(expected, pixel) !== effectiveAlphaAt(actual, pixel))
+      mismatches += 1;
+  assert(mismatches === 0, `${mismatches} prepared alpha pixels differ`);
+}
+
+async function assertOpaqueMagentaBackground(file, label) {
+  const image = await rgba(file);
+  let nonOpaquePixels = 0;
+  let literalMagentaPixels = 0;
+  for (let offset = 0; offset < image.data.length; offset += 4) {
+    if (image.data[offset + 3] !== 255) nonOpaquePixels += 1;
+    if (
+      image.data[offset] === 255 &&
+      image.data[offset + 1] === 0 &&
+      image.data[offset + 2] === 255 &&
+      image.data[offset + 3] === 255
+    )
+      literalMagentaPixels += 1;
+  }
+  const corners = [
+    pixelAt(image, 0, 0),
+    pixelAt(image, image.info.width - 1, 0),
+    pixelAt(image, 0, image.info.height - 1),
+    pixelAt(image, image.info.width - 1, image.info.height - 1),
+  ];
+  assert(
+    nonOpaquePixels === 0 &&
+      literalMagentaPixels / (image.info.width * image.info.height) >= 0.2 &&
+      corners.every((pixel) => pixel.join(",") === "255,0,255,255"),
+    `${label} is not an opaque literal-magenta prepared cell`,
+  );
+  return image;
+}
+
 async function expectFailure(arguments_, message, output) {
   let evidence = "";
   try {
@@ -256,6 +300,47 @@ try {
     "prepared-reference enforcement lost its literal-magenta background",
   );
 
+  const syntheticPreparedOutput = path.join(
+    temporaryRoot,
+    "synthetic-prepared-locked.png",
+  );
+  const syntheticPreparedExecution = await execute(
+    process.execPath,
+    [
+      preparer,
+      "--input",
+      candidate,
+      "--output",
+      syntheticPreparedOutput,
+      "--topology-mask",
+      reference,
+      "--prepared-topology-mask",
+      expected,
+    ],
+    { cwd: root },
+  );
+  const syntheticPreparedReport = JSON.parse(syntheticPreparedExecution.stdout);
+  assert(
+    syntheticPreparedReport.preparedTopology.exactFinalMask === true &&
+      syntheticPreparedReport.preparedTopology.finalMaskMismatchPixels === 0 &&
+      syntheticPreparedReport.preparedTopology.finalAlphaMismatchPixels === 0 &&
+      syntheticPreparedReport.preparedTopology.background.opaquePixels ===
+        65_536 &&
+      syntheticPreparedReport.preparedTopology.background.literalMagentaRatio >=
+        0.2 &&
+      syntheticPreparedReport.preparedTopology.background
+        .cornersLiteralMagenta === true,
+    "synthetic prepared topology did not enforce the opaque chroma-key contract",
+  );
+  await Promise.all([
+    assertMatchingVisibleMasks(expected, syntheticPreparedOutput),
+    assertMatchingEffectiveAlpha(expected, syntheticPreparedOutput),
+    assertOpaqueMagentaBackground(
+      syntheticPreparedOutput,
+      "synthetic prepared topology output",
+    ),
+  ]);
+
   const realisticCandidate = path.join(
     root,
     "art/generation/candidates/ashfang-idle-master-v8.png",
@@ -338,6 +423,10 @@ try {
       realisticReport.preparedTopology.finalMaskMismatchPixels === 0 &&
       realisticReport.preparedTopology.finalAlphaMismatchPixels === 0 &&
       realisticReport.preparedTopology.exactFinalMask === true &&
+      realisticReport.preparedTopology.background.opaquePixels === 65_536 &&
+      realisticReport.preparedTopology.background.literalMagentaRatio >= 0.2 &&
+      realisticReport.preparedTopology.background.cornersLiteralMagenta ===
+        true &&
       realisticReport.preparedBounds.left === 14 &&
       realisticReport.preparedBounds.top === 76 &&
       realisticReport.preparedBounds.width === 148 &&
@@ -400,15 +489,80 @@ try {
         realisticLockedImage,
         extraPixel % realisticLockedImage.info.width,
         Math.floor(extraPixel / realisticLockedImage.info.width),
-      )
-        .slice(0, 3)
-        .join(",") === "255,0,255",
+      ).join(",") === "255,0,255,255",
     "prepared topology did not clip a realistic extra contour pixel",
   );
-  await assertMatchingVisibleMasks(
-    realisticPreparedTopology,
-    realisticOutputs[0],
+  await Promise.all([
+    assertMatchingVisibleMasks(realisticPreparedTopology, realisticOutputs[0]),
+    assertMatchingEffectiveAlpha(
+      realisticPreparedTopology,
+      realisticOutputs[0],
+    ),
+    assertOpaqueMagentaBackground(
+      realisticOutputs[0],
+      "realistic prepared topology output",
+    ),
+  ]);
+
+  const v9Candidate = path.join(
+    root,
+    "art/generation/candidates/ashfang-idle-master-v9.png",
   );
+  const v9Outputs = ["v9-opaque-first.png", "v9-opaque-second.png"].map(
+    (file) => path.join(temporaryRoot, file),
+  );
+  let v9PreparedDiagnostics;
+  for (const output of v9Outputs) {
+    const execution = await execute(
+      process.execPath,
+      [
+        preparer,
+        "--input",
+        v9Candidate,
+        "--output",
+        output,
+        "--preserve-framing",
+        "--topology-mask",
+        realisticRawTopology,
+        "--prepared-topology-mask",
+        realisticPreparedTopology,
+      ],
+      { cwd: root },
+    );
+    const report = JSON.parse(execution.stdout);
+    if (v9PreparedDiagnostics)
+      assert(
+        JSON.stringify(report.preparedTopology) ===
+          JSON.stringify(v9PreparedDiagnostics),
+        "v9 prepared topology diagnostics are not deterministic",
+      );
+    v9PreparedDiagnostics = report.preparedTopology;
+  }
+  const [v9First, v9Second] = await Promise.all(
+    v9Outputs.map((file) => fs.readFile(file)),
+  );
+  assert(
+    v9First.equals(v9Second) &&
+      sha256(v9First) ===
+        "b131df47004ac0288ad76d546183bd5a9f84e1b743b26a3c54da1c2bf36c1b9f",
+    "v9 opaque two-stage preparation did not reproduce its exact hash",
+  );
+  assert(
+    v9PreparedDiagnostics.candidateMissingVisiblePixels === 178 &&
+      v9PreparedDiagnostics.candidateExtraVisiblePixels === 492 &&
+      v9PreparedDiagnostics.alphaFallbackPixels === 91 &&
+      v9PreparedDiagnostics.finalMaskMismatchPixels === 0 &&
+      v9PreparedDiagnostics.finalAlphaMismatchPixels === 0 &&
+      v9PreparedDiagnostics.background.opaquePixels === 65_536 &&
+      v9PreparedDiagnostics.background.literalMagentaPixels === 55_582 &&
+      v9PreparedDiagnostics.background.cornersLiteralMagenta === true,
+    "v9 did not reproduce its exact post-resample repair diagnostics",
+  );
+  await Promise.all([
+    assertMatchingVisibleMasks(realisticPreparedTopology, v9Outputs[0]),
+    assertMatchingEffectiveAlpha(realisticPreparedTopology, v9Outputs[0]),
+    assertOpaqueMagentaBackground(v9Outputs[0], "v9 prepared topology output"),
+  ]);
 
   const blank = path.join(temporaryRoot, "blank.png");
   await sharp({
@@ -499,5 +653,5 @@ try {
 }
 
 console.log(
-  "Actor topology stencil PASS: legacy hash unchanged; source and exact prepared masks enforced deterministically; realistic post-resample holes filled and extras clipped; diagnostics exact; blank, wrong-size, and stale inputs rejected without partial output.",
+  "Actor topology stencil PASS: legacy hash unchanged; source and exact prepared masks enforced deterministically; realistic v8/v9 post-resample holes filled and extras clipped; final alpha exact on an opaque literal-magenta background; diagnostics exact; blank, wrong-size, and stale inputs rejected without partial output.",
 );
