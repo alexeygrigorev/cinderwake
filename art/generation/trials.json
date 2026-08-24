@@ -552,6 +552,52 @@
           "fitness to seed later actor families"
         ]
       }
+    },
+    {
+      "id": "ashfang-primary-v8-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v8.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v8.png",
+      "candidateSha256": "552536deb5fe4448bc65915175c520d014d7c7d11ed6c92cd1fd55439e6eceb4",
+      "referenceFiles": [
+        {
+          "file": "art/generation/candidates/ashfang-primary-trial-v7.png",
+          "sha256": "9975ba5ca66e4f66ce22213bfcd8f86261a21937cf376667f03323bf93a70587"
+        },
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-ae44bbf1-8728-408b-b287-a2f6973c4470.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background contains a graded hot-pink field rather than the requested literal flat #ff00ff key, so raw source ingress remains rejected."
+          }
+        ],
+        "notes": "The v7-derived raw sheet is quarantined. Its row-two silhouettes show stronger forepaw alternation and torso transfer than v7, but deterministic preparation measures a 71-73 px walk bank against the 80.5 px idle median. The unchanged start/stop gate rejects the 9 px mismatch before visual review, so production and later-family generation remain prohibited."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v8.png --output art/generation/prepared/ashfang-primary-trial-v8.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v8.png",
+        "sha256": "4a5b1f82f6792b23470017e56d5f1d08763bfc4d5b490383eca472fb18c30849",
+        "status": "rejected",
+        "notes": "Preparation is reproducible, all four row-two cells remain grounded, their loop continuity and aspect limits pass, and all three fixture-bound mutations are caught. The 71.5 px walk median differs from the 80.5 px idle median by 9 px, exceeding the unchanged 8 px start/stop limit, so the candidate is rejected before visual review."
+      }
     }
   ]
 }
