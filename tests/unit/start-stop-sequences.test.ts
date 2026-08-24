@@ -22,6 +22,8 @@ const capture = fileURLToPath(
 interface CommandFixture {
   entries: Array<{ tick: number; input: Partial<InputState> }>;
   clipTransitionContract: {
+    facingBucket: string;
+    expectedDisposition?: "REJECT_CURRENT_CALIBRATION";
     phases: Array<{
       clip: string;
       clipStartedAtTick: number;
@@ -32,6 +34,14 @@ interface CommandFixture {
   };
 }
 
+type StartStopId =
+  | "ashfang-start-stop-east"
+  | "arcanist-start-stop-east"
+  | "vanguard-start-stop-east"
+  | "vanguard-start-stop-west"
+  | "vanguard-start-stop-north"
+  | "vanguard-start-stop-south";
+
 async function commandFixture(id: string): Promise<CommandFixture> {
   const file = fileURLToPath(
     new URL(`../fixtures/sequences/${id}.commands.json`, import.meta.url),
@@ -39,16 +49,15 @@ async function commandFixture(id: string): Promise<CommandFixture> {
   return JSON.parse(await fs.readFile(file, "utf8")) as CommandFixture;
 }
 
-function capturedPhases(
-  id: "ashfang-start-stop-east" | "arcanist-start-stop-east",
-  fixture: CommandFixture,
-) {
+function capturedPhases(id: StartStopId, fixture: CommandFixture) {
   const state = worldFromScenario(BUILTIN_SCENARIOS[id]!);
-  const generatedOpening = worldFromScenario(
-    BUILTIN_SCENARIOS["generated-run"]!,
-  );
-  expect(state.map).toEqual(generatedOpening.map);
-  expect(state.player.position).toEqual({ x: 23040, y: 16896 });
+  if (!id.startsWith("vanguard")) {
+    const generatedOpening = worldFromScenario(
+      BUILTIN_SCENARIOS["generated-run"]!,
+    );
+    expect(state.map).toEqual(generatedOpening.map);
+    expect(state.player.position).toEqual({ x: 23040, y: 16896 });
+  }
 
   const entityId = id.startsWith("ashfang")
     ? "monster:start-stop-ashfang"
@@ -119,6 +128,47 @@ describe("current-runtime start/stop sequence fixtures", () => {
       expect(samples.every(({ facingBucket }) => facingBucket === "east")).toBe(
         true,
       );
+      expect(phases).toHaveLength(3);
+      for (const [
+        index,
+        expected,
+      ] of fixture.clipTransitionContract.phases.entries()) {
+        const observed = phases[index]!;
+        expect(observed).toMatchObject({
+          clip: expected.clip,
+          clipStartedAtTick: expected.clipStartedAtTick,
+          firstObservedTick: expected.firstObservedTick,
+          lastObservedTick: expected.lastObservedTick,
+        });
+        expect(
+          expected.requiredFrameIndices.every((frameIndex) =>
+            observed.frameIndices.includes(frameIndex),
+          ),
+        ).toBe(true);
+      }
+    },
+  );
+
+  it.each([
+    "vanguard-start-stop-east",
+    "vanguard-start-stop-west",
+    "vanguard-start-stop-north",
+    "vanguard-start-stop-south",
+  ] as const)(
+    "%s reproduces its cardinal idle/walk/idle tape without claiming visual acceptance",
+    async (id) => {
+      const fixture = await commandFixture(id);
+      const { phases, samples } = capturedPhases(id, fixture);
+
+      expect(fixture.clipTransitionContract.expectedDisposition).toBe(
+        "REJECT_CURRENT_CALIBRATION",
+      );
+      expect(
+        samples.every(
+          ({ facingBucket }) =>
+            facingBucket === fixture.clipTransitionContract.facingBucket,
+        ),
+      ).toBe(true);
       expect(phases).toHaveLength(3);
       for (const [
         index,

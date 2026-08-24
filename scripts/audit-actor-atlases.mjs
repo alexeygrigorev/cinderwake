@@ -5,6 +5,11 @@ import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import sharp from "sharp";
+import {
+  assessLandmarkGaitBank,
+  fixtureAlphaReader,
+  mutateFixture,
+} from "./lib/actor-gait-contract.mjs";
 
 const executeFile = promisify(execFile);
 const ROOT = process.cwd();
@@ -25,6 +30,12 @@ const MONSTER_IDS = new Set(["ashfang", "hexer", "stonekin"]);
 const CLIPS = Object.keys(SPEC.clips);
 const CELL = SPEC.atlas.cellWidth;
 const CORE_HALF_WIDTH = 24;
+const VANGUARD_MOTION_CONTRACT = JSON.parse(
+  await fs.readFile(
+    path.join(ROOT, "quality", "vanguard-motion-contract.v1.json"),
+    "utf8",
+  ),
+);
 
 function parseArguments(arguments_) {
   const options = {
@@ -585,6 +596,302 @@ function transitionContractComparison(
   };
 }
 
+function sameHalfCycle(first, second) {
+  return (
+    first.length === second.length &&
+    first.every((frame, index) => frame.sha256 === second[index].sha256)
+  );
+}
+
+function atlasAlphaReader(frames) {
+  return (frameIndex, x, y) => {
+    if (!Number.isInteger(x) || !Number.isInteger(y)) return 0;
+    if (x < 0 || y < 0 || x >= CELL || y >= CELL) return 0;
+    return frames[frameIndex]?.rgba[(y * CELL + x) * 4 + 3] ?? 0;
+  };
+}
+
+async function readJsonIfPresent(file) {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+async function assessVanguardMotionCalibration(atlasSha256, framesByBank) {
+  const policy = VANGUARD_MOTION_CONTRACT.policy;
+  const calibration = VANGUARD_MOTION_CONTRACT.productionRejectedCalibration;
+  const transitionContract = {
+    clips: ["idle", "walk"],
+    facings: FACINGS,
+    anchor: "foot",
+    maximumAtlasMedianInkHeightDifference:
+      policy.maximumIdleWalkMedianHeightDifference,
+  };
+  const transitions = FACINGS.map((facing) =>
+    transitionContractComparison(
+      "vanguard",
+      "allFacingsIdleWalk",
+      transitionContract,
+      facing,
+      framesByBank,
+    ),
+  );
+  const failures = [];
+  const seamSamples = [];
+  for (const facing of FACINGS) {
+    const idle = framesByBank.get(`${facing}:idle`);
+    const walk = framesByBank.get(`${facing}:walk`);
+    for (let index = 0; index < walk.length; index += 1)
+      seamSamples.push({
+        facing,
+        ...transitionEvidence(
+          idle[index % idle.length],
+          walk[index],
+          "idle-walk-same-phase",
+          `idle:${index % idle.length}`,
+          `walk:${index}`,
+        ),
+      });
+  }
+  const failedTransitions = transitions.filter(({ pass }) => !pass);
+  if (failedTransitions.length > 0)
+    failures.push({
+      code: "idle-walk-crouch-seam",
+      detail: failedTransitions.map(
+        ({ facing, medianInkHeightDifference }) =>
+          `${facing}:${medianInkHeightDifference}`,
+      ),
+    });
+
+  const duplicateFacings = FACINGS.filter((facing) => {
+    const frames = framesByBank.get(`${facing}:walk`);
+    const half = frames.length / 2;
+    return sameHalfCycle(frames.slice(0, half), frames.slice(half));
+  });
+  if (duplicateFacings.length > 0)
+    failures.push({
+      code: "duplicate-half-cycle",
+      detail: duplicateFacings,
+    });
+
+  const lowArticulationFacings = FACINGS.filter((facing) => {
+    const frames = framesByBank.get(`${facing}:walk`);
+    const transitions = transitionsFor("walk", frames, frames[0]);
+    return (
+      maximum(transitions.map(({ centroidDistance }) => centroidDistance)) < 4
+    );
+  });
+  if (lowArticulationFacings.length > 0)
+    failures.push({
+      code: "insufficient-raster-articulation",
+      detail: lowArticulationFacings,
+    });
+
+  const sidecarFile = path.join(
+    ROOT,
+    VANGUARD_MOTION_CONTRACT.promotionSidecar,
+  );
+  const sidecar = await readJsonIfPresent(sidecarFile);
+  const promotionAssessments = [];
+  if (!sidecar) {
+    failures.push({
+      code: "missing-landmark-sidecar",
+      detail: VANGUARD_MOTION_CONTRACT.promotionSidecar,
+    });
+  } else {
+    for (const facing of FACINGS) {
+      const bank = sidecar.facings?.[facing];
+      const frames = framesByBank.get(`${facing}:walk`);
+      promotionAssessments.push({
+        facing,
+        ...assessLandmarkGaitBank(bank, policy, atlasAlphaReader(frames)),
+      });
+    }
+  }
+
+  const observedFailureCodes = failures.map(({ code }) => code).sort();
+  const expectedFailureCodes = [...calibration.expectedFailureCodes].sort();
+  const primarySourceSha256 = sha256(
+    await fs.readFile(
+      path.join(ROOT, "art", "source", "actors", "vanguard-source.png"),
+    ),
+  );
+  const directionsSourceSha256 = sha256(
+    await fs.readFile(
+      path.join(
+        ROOT,
+        "art",
+        "source",
+        "actors",
+        "vanguard-directions-source.png",
+      ),
+    ),
+  );
+  const exactRejectedCalibration =
+    atlasSha256 === calibration.atlasSha256 &&
+    primarySourceSha256 === calibration.primarySourceSha256 &&
+    directionsSourceSha256 === calibration.directionsSourceSha256 &&
+    JSON.stringify(observedFailureCodes) ===
+      JSON.stringify(expectedFailureCodes);
+  const candidatePromotionPass =
+    failedTransitions.length === 0 &&
+    duplicateFacings.length === 0 &&
+    lowArticulationFacings.length === 0 &&
+    sidecar !== null &&
+    promotionAssessments.length === FACINGS.length &&
+    promotionAssessments.every(({ pass }) => pass);
+
+  return {
+    disposition: exactRejectedCalibration
+      ? "KNOWN_REJECTED_CALIBRATION"
+      : candidatePromotionPass
+        ? "PROMOTION_ELIGIBLE"
+        : "REJECT",
+    gatePass: exactRejectedCalibration || candidatePromotionPass,
+    exactRejectedCalibration,
+    candidatePromotionPass,
+    atlasSha256,
+    expectedRejectedAtlasSha256: calibration.atlasSha256,
+    sourceSha256: {
+      primary: primarySourceSha256,
+      directions: directionsSourceSha256,
+    },
+    thresholds: policy,
+    transitions,
+    seamMeasurements: {
+      minimumMaskIou: Math.min(...seamSamples.map(({ maskIou }) => maskIou)),
+      maximumMaskIou: Math.max(...seamSamples.map(({ maskIou }) => maskIou)),
+      minimumHeightDifference: Math.min(
+        ...seamSamples.map(({ heightDifference }) => heightDifference),
+      ),
+      maximumHeightDifference: Math.max(
+        ...seamSamples.map(({ heightDifference }) => heightDifference),
+      ),
+    },
+    duplicateHalfCycleFacings: duplicateFacings,
+    lowArticulationFacings,
+    failures,
+    promotionSidecar: {
+      file: VANGUARD_MOTION_CONTRACT.promotionSidecar,
+      present: sidecar !== null,
+      assessments: promotionAssessments,
+    },
+  };
+}
+
+async function runVanguardGaitNegativeControls() {
+  const fixture = JSON.parse(
+    await fs.readFile(
+      path.join(
+        ROOT,
+        "tests",
+        "fixtures",
+        "actor-motion",
+        "vanguard-gait-accepted.v1.json",
+      ),
+      "utf8",
+    ),
+  );
+  const policy = VANGUARD_MOTION_CONTRACT.policy;
+  const mutations = [
+    {
+      id: "hash-distinct-same-support",
+      expectedFailure: "hash-distinct-same-support",
+      apply: (candidate) => {
+        for (const frame of candidate.frames) frame.support = "left";
+        return candidate;
+      },
+    },
+    {
+      id: "missing-alternating-support",
+      expectedFailure: "missing-alternating-support",
+      apply: (candidate) => {
+        for (const frame of candidate.frames) frame.support = "left";
+        return candidate;
+      },
+    },
+    {
+      id: "insufficient-articulation",
+      expectedFailure: "insufficient-articulation",
+      apply: (candidate) => {
+        for (const frame of candidate.frames) {
+          frame.landmarks.leftFoot.x = 5;
+          frame.landmarks.rightFoot.x = 11;
+          frame.landmarks.leftKnee.x = 6;
+          frame.landmarks.rightKnee.x = 10;
+          frame.opaquePixels.push("5,14", "11,13", "6,11", "10,10");
+        }
+        return candidate;
+      },
+    },
+    {
+      id: "invalid-landmark-alpha-binding",
+      expectedFailure: "invalid-landmark-alpha-binding",
+      apply: (candidate) => {
+        candidate.frames[2].landmarks.leftKnee = { x: 0, y: 0 };
+        return candidate;
+      },
+    },
+    {
+      id: "phase-reversal",
+      expectedFailure: "phase-reversal",
+      apply: (candidate) => {
+        [candidate.frames[2].phase, candidate.frames[3].phase] = [
+          candidate.frames[3].phase,
+          candidate.frames[2].phase,
+        ];
+        return candidate;
+      },
+    },
+    {
+      id: "anchor-shift",
+      expectedFailure: "anchor-shift",
+      apply: (candidate) => {
+        candidate.frames[4].anchorY += 2;
+        return candidate;
+      },
+    },
+    {
+      id: "vertical-stretch",
+      expectedFailure: "vertical-stretch",
+      apply: (candidate) => {
+        candidate.frames[3].landmarks.torso.y = 3;
+        candidate.frames[3].opaquePixels.push("8,3");
+        return candidate;
+      },
+    },
+  ];
+  const accepted = assessLandmarkGaitBank(
+    fixture,
+    policy,
+    fixtureAlphaReader(fixture),
+  );
+  return {
+    accepted,
+    controls: mutations.map((mutation) => {
+      const candidate = mutateFixture(fixture, mutation.apply);
+      const assessment = assessLandmarkGaitBank(
+        candidate,
+        policy,
+        fixtureAlphaReader(candidate),
+      );
+      return {
+        id: mutation.id,
+        expectedFailure: mutation.expectedFailure,
+        detected:
+          !assessment.pass &&
+          assessment.failures.some(
+            ({ code }) => code === mutation.expectedFailure,
+          ),
+        assessment,
+      };
+    }),
+  };
+}
+
 function runNegativeControls(framesByBank) {
   const idle = framesByBank.get("east:idle")[0];
   const hurt = framesByBank.get("east:hurt");
@@ -755,6 +1062,7 @@ function reportHtml(report) {
 </head>
 <body>
 <h1>Every runtime actor animation bank</h1><p class="summary"><strong>${report.pass ? "PASS" : "FAIL"}</strong> · ${report.summary.passingBanks}/${report.summary.totalBanks} runtime-facing banks pass; ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} authored-facing comparisons pass; ${report.summary.passingTransitionComparisons}/${report.summary.totalTransitionComparisons} declared clip-transition comparisons pass.</p>
+<p class="coverage"><strong>Vanguard promotion: ${htmlEscape(report.vanguardMotionCalibration.disposition)}</strong>. Detector health is not art approval. The exact current bytes retain ${report.vanguardMotionCalibration.failures.length} named rejection findings; changed bytes must clear the all-facing height and semantic landmark contract.</p>
 <p>This is an exhaustive byte-level and visual audit of all six actors, six clips, and four runtime facings. West strips are the exact horizontal reflection used by the renderer. A gold outline marks the loop-wrap frame or idle recovery frame. Metrics diagnose continuity; the strips retain visual-review authority.</p>
 <h2>Defects found before repair</h2><p>The same gate replayed against immutable atlas bytes from commit <code>${htmlEscape(report.repairBaseline.commit)}</code> passed only ${report.repairBaseline.summary.passingBanks}/${report.repairBaseline.summary.totalBanks} banks and ${report.repairBaseline.summary.passingFacingComparisons}/${report.repairBaseline.summary.totalFacingComparisons} authored-facing comparisons. Existing narrower tests had passed that art.</p><ul>${baselineDefects}</ul>
 <p class="coverage"><strong>Existing-test gap:</strong> ${htmlEscape(report.coverageGap)}</p><ul>${findings}</ul>
@@ -806,6 +1114,7 @@ const actorReports = [];
 const authoredFacingComparisons = [];
 const transitionComparisons = [];
 let negativeControls = [];
+let vanguardMotionCalibration;
 for (const actorId of ACTORS) {
   const atlasPath = path.join(ATLAS_DIRECTORY, `actor-${actorId}.png`);
   const { data, info } = await sharp(atlasPath)
@@ -834,8 +1143,13 @@ for (const actorId of ACTORS) {
       framesByBank.set(`${facing}:${clip}`, frames);
     }
   }
-  if (actorId === "vanguard")
+  if (actorId === "vanguard") {
     negativeControls = runNegativeControls(framesByBank);
+    vanguardMotionCalibration = await assessVanguardMotionCalibration(
+      sha256(await fs.readFile(atlasPath)),
+      framesByBank,
+    );
+  }
   for (const facing of FACINGS) {
     for (const clip of CLIPS) {
       const frames = framesByBank.get(`${facing}:${clip}`);
@@ -954,6 +1268,9 @@ const failedTransitionComparisons = transitionComparisons.filter(
 const failedNegativeControls = negativeControls.filter(
   ({ detected }) => !detected,
 );
+const vanguardGaitNegativeControls = await runVanguardGaitNegativeControls();
+const failedVanguardGaitNegativeControls =
+  vanguardGaitNegativeControls.controls.filter(({ detected }) => !detected);
 const hurtFailures = failedBanks.filter(
   ({ clip, checks }) => clip === "hurt" && !checks.recoverySeamExact,
 );
@@ -996,6 +1313,21 @@ const findings = [
         ? `${failedNegativeControls.length} injected defect controls escaped detection.`
         : `All ${negativeControls.length} injected recovery, displacement, clipping, facing-scale, and clip-transition defects were rejected.`,
   },
+  {
+    id: "vanguard-semantic-gait-promotion",
+    summary: vanguardMotionCalibration.exactRejectedCalibration
+      ? `The exact current Vanguard atlas remains a known rejected calibration: ${vanguardMotionCalibration.failures.map(({ code }) => code).join(", ")}. A changed bank cannot inherit this waiver and must provide alpha-bound foot, knee, torso, root, support, and phase landmarks for all four facings.`
+      : vanguardMotionCalibration.candidatePromotionPass
+        ? "The changed Vanguard bank clears every all-facing start/stop and semantic gait promotion contract."
+        : `The Vanguard bank is rejected for promotion: ${vanguardMotionCalibration.failures.map(({ code }) => code).join(", ")}.`,
+  },
+  {
+    id: "vanguard-gait-negative-controls",
+    summary:
+      failedVanguardGaitNegativeControls.length > 0
+        ? `${failedVanguardGaitNegativeControls.length} semantic gait mutations escaped detection.`
+        : `All ${vanguardGaitNegativeControls.controls.length} same-support, articulation, alpha-binding, phase-order, anchor, and stretch mutations were rejected.`,
+  },
 ];
 const report = {
   schemaVersion: 1,
@@ -1004,7 +1336,10 @@ const report = {
     failedBanks.length === 0 &&
     failedFacingComparisons.length === 0 &&
     failedTransitionComparisons.length === 0 &&
-    failedNegativeControls.length === 0,
+    failedNegativeControls.length === 0 &&
+    vanguardMotionCalibration.gatePass &&
+    vanguardGaitNegativeControls.accepted.pass &&
+    failedVanguardGaitNegativeControls.length === 0,
   command: "npm run art:animation:check",
   reportOnlyCommand: "npm run art:animation:audit",
   executedCommand: [process.execPath, ...process.argv.slice(1)].join(" "),
@@ -1029,11 +1364,18 @@ const report = {
     negativeControls: negativeControls.length,
     detectedNegativeControls:
       negativeControls.length - failedNegativeControls.length,
+    vanguardGaitNegativeControls: vanguardGaitNegativeControls.controls.length,
+    detectedVanguardGaitNegativeControls:
+      vanguardGaitNegativeControls.controls.length -
+      failedVanguardGaitNegativeControls.length,
+    vanguardDisposition: vanguardMotionCalibration.disposition,
   },
   coverageGap:
     "Before this exhaustive gate, the atlas validator required only nonblank grounded cells and two distinct hashes. The temporal matrix still has no hurt sequence, no monster ability sequence, and no same-tick authored-facing turn sequence, so those narrower reports could pass while discontinuities remained shipped. This gate closes that static-atlas coverage gap; browser sequences remain authoritative for rendered timing and camera behavior.",
   findings,
   negativeControls,
+  vanguardMotionCalibration,
+  vanguardGaitNegativeControls,
   failedBanks: failedBanks.map(({ actorId, facing, clip, checks }) => ({
     actorId,
     facing,

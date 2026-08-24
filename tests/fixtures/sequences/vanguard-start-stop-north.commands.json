@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "initialStateFile": "initial-state.json",
+  "entries": [
+    { "tick": 64, "input": { "moveX": 0, "moveY": -1 } },
+    { "tick": 104, "input": { "moveX": 0, "moveY": 0 } }
+  ],
+  "clipTransitionContract": {
+    "schemaVersion": 1,
+    "facingBucket": "north",
+    "expectedDisposition": "REJECT_CURRENT_CALIBRATION",
+    "phases": [
+      {
+        "id": "idle-lead-in",
+        "clip": "idle",
+        "clipStartedAtTick": 0,
+        "firstObservedTick": 0,
+        "lastObservedTick": 60,
+        "requiredFrameIndices": [0, 1, 2, 3, 4, 5]
+      },
+      {
+        "id": "walk-full-loop",
+        "clip": "walk",
+        "clipStartedAtTick": 64,
+        "firstObservedTick": 65,
+        "lastObservedTick": 100,
+        "requiredFrameIndices": [0, 1, 2, 3, 4, 5, 6, 7]
+      },
+      {
+        "id": "idle-recovery",
+        "clip": "idle",
+        "clipStartedAtTick": 104,
+        "firstObservedTick": 105,
+        "lastObservedTick": 180,
+        "requiredFrameIndices": [0, 1, 2, 3, 4, 5]
+      }
+    ],
+    "thresholds": {
+      "maximumFootAnchorRange": 0.25,
+      "maximumFootBottomRange": 1,
+      "maximumIdleWalkMedianVisibleHeightDifference": 8
+    }
+  }
+}

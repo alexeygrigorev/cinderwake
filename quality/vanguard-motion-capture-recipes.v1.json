@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeVanguardCardinalStartStopRecipesV1",
+  "status": "UNRUN_CURRENT_HEAD",
+  "acceptanceAuthority": "quality/vanguard-motion-contract.v1.json",
+  "warning": "These recipes reproduce current production motion. A successful capture process is not visual acceptance; the exact current bank remains REJECTED_CALIBRATION until its semantic gait and all-facing transition gates pass.",
+  "recipes": [
+    {
+      "id": "vanguard-start-stop-east",
+      "scenario": "vanguard-start-stop-east",
+      "facing": "east",
+      "commandsFile": "tests/fixtures/sequences/vanguard-start-stop-east.commands.json",
+      "expectedCurrentTransitionResult": "REJECT_HEIGHT_SEAM",
+      "command": "node scripts/capture-sequence.mjs --id vanguard-start-stop-east --scenario vanguard-start-stop-east --action idle --track player --profile start-stop --presence always --frames 37 --step 5 --subframes 1 --commands-file tests/fixtures/sequences/vanguard-start-stop-east.commands.json"
+    },
+    {
+      "id": "vanguard-start-stop-west",
+      "scenario": "vanguard-start-stop-west",
+      "facing": "west",
+      "commandsFile": "tests/fixtures/sequences/vanguard-start-stop-west.commands.json",
+      "expectedCurrentTransitionResult": "REJECT_HEIGHT_SEAM",
+      "command": "node scripts/capture-sequence.mjs --id vanguard-start-stop-west --scenario vanguard-start-stop-west --action idle --track player --profile start-stop --presence always --frames 37 --step 5 --subframes 1 --commands-file tests/fixtures/sequences/vanguard-start-stop-west.commands.json"
+    },
+    {
+      "id": "vanguard-start-stop-north",
+      "scenario": "vanguard-start-stop-north",
+      "facing": "north",
+      "commandsFile": "tests/fixtures/sequences/vanguard-start-stop-north.commands.json",
+      "expectedCurrentTransitionResult": "PASS_HEIGHT_ONLY_REJECT_GAIT",
+      "command": "node scripts/capture-sequence.mjs --id vanguard-start-stop-north --scenario vanguard-start-stop-north --action idle --track player --profile start-stop --presence always --frames 37 --step 5 --subframes 1 --commands-file tests/fixtures/sequences/vanguard-start-stop-north.commands.json"
+    },
+    {
+      "id": "vanguard-start-stop-south",
+      "scenario": "vanguard-start-stop-south",
+      "facing": "south",
+      "commandsFile": "tests/fixtures/sequences/vanguard-start-stop-south.commands.json",
+      "expectedCurrentTransitionResult": "PASS_HEIGHT_ONLY_REJECT_GAIT",
+      "command": "node scripts/capture-sequence.mjs --id vanguard-start-stop-south --scenario vanguard-start-stop-south --action idle --track player --profile start-stop --presence always --frames 37 --step 5 --subframes 1 --commands-file tests/fixtures/sequences/vanguard-start-stop-south.commands.json"
+    }
+  ]
+}

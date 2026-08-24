@@ -1588,6 +1588,37 @@ function openingStartStopScenario(subject: "ashfang" | "arcanist"): ScenarioV1 {
   };
 }
 
+function vanguardStartStopScenario(
+  direction: "east" | "west" | "north" | "south",
+): ScenarioV1 {
+  const facingByDirection: Record<
+    "east" | "west" | "north" | "south",
+    VecTuple
+  > = {
+    east: [1024, 0],
+    west: [-1024, 0],
+    north: [0, -1024],
+    south: [0, 1024],
+  };
+  return {
+    schemaVersion: 1,
+    id: `vanguard-start-stop-${direction}`,
+    seed: `quality-vanguard-start-stop-${direction}-01`,
+    classId: "vanguard",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    // A deliberately slow production input keeps the full 40-tick gait tape
+    // clear of authored scenery in every direction without moving the actor
+    // through a test-only collision path.
+    player: {
+      tile: [15, 7],
+      facing: facingByDirection[direction],
+      moveSpeed: 32,
+    },
+    monsters: [],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1609,6 +1640,10 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   },
   "ashfang-start-stop-east": openingStartStopScenario("ashfang"),
   "arcanist-start-stop-east": openingStartStopScenario("arcanist"),
+  "vanguard-start-stop-east": vanguardStartStopScenario("east"),
+  "vanguard-start-stop-west": vanguardStartStopScenario("west"),
+  "vanguard-start-stop-north": vanguardStartStopScenario("north"),
+  "vanguard-start-stop-south": vanguardStartStopScenario("south"),
   "combat-loot": {
     schemaVersion: 1,
     id: "combat-loot",

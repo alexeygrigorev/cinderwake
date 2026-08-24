@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "facing": "east",
+  "frames": [
+    {
+      "rasterHash": "accepted-0",
+      "phase": 0,
+      "support": "left",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 5, "y": 14 },
+        "rightFoot": { "x": 11, "y": 13 },
+        "leftKnee": { "x": 6, "y": 11 },
+        "rightKnee": { "x": 10, "y": 10 }
+      },
+      "opaquePixels": ["8,10", "8,5", "5,14", "11,13", "6,11", "10,10"]
+    },
+    {
+      "rasterHash": "accepted-1",
+      "phase": 1,
+      "support": "left",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 4, "y": 14 },
+        "rightFoot": { "x": 12, "y": 12 },
+        "leftKnee": { "x": 5, "y": 11 },
+        "rightKnee": { "x": 11, "y": 9 }
+      },
+      "opaquePixels": ["8,10", "8,5", "4,14", "12,12", "5,11", "11,9"]
+    },
+    {
+      "rasterHash": "accepted-2",
+      "phase": 2,
+      "support": "right",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 8, "y": 12 },
+        "rightFoot": { "x": 13, "y": 14 },
+        "leftKnee": { "x": 7, "y": 9 },
+        "rightKnee": { "x": 12, "y": 11 }
+      },
+      "opaquePixels": ["8,10", "8,5", "8,12", "13,14", "7,9", "12,11"]
+    },
+    {
+      "rasterHash": "accepted-3",
+      "phase": 3,
+      "support": "right",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 10, "y": 13 },
+        "rightFoot": { "x": 12, "y": 14 },
+        "leftKnee": { "x": 9, "y": 10 },
+        "rightKnee": { "x": 11, "y": 11 }
+      },
+      "opaquePixels": ["8,10", "8,5", "10,13", "12,14", "9,10", "11,11"]
+    },
+    {
+      "rasterHash": "accepted-4",
+      "phase": 0,
+      "support": "left",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 11, "y": 14 },
+        "rightFoot": { "x": 7, "y": 13 },
+        "leftKnee": { "x": 10, "y": 11 },
+        "rightKnee": { "x": 8, "y": 10 }
+      },
+      "opaquePixels": ["8,10", "8,5", "11,14", "7,13", "10,11", "8,10"]
+    },
+    {
+      "rasterHash": "accepted-5",
+      "phase": 1,
+      "support": "left",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 12, "y": 14 },
+        "rightFoot": { "x": 4, "y": 12 },
+        "leftKnee": { "x": 11, "y": 11 },
+        "rightKnee": { "x": 5, "y": 9 }
+      },
+      "opaquePixels": ["8,10", "8,5", "12,14", "4,12", "11,11", "5,9"]
+    },
+    {
+      "rasterHash": "accepted-6",
+      "phase": 2,
+      "support": "right",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 8, "y": 12 },
+        "rightFoot": { "x": 3, "y": 14 },
+        "leftKnee": { "x": 9, "y": 9 },
+        "rightKnee": { "x": 4, "y": 11 }
+      },
+      "opaquePixels": ["8,10", "8,5", "8,12", "3,14", "9,9", "4,11"]
+    },
+    {
+      "rasterHash": "accepted-7",
+      "phase": 3,
+      "support": "right",
+      "anchorY": 15,
+      "landmarks": {
+        "root": { "x": 8, "y": 10 },
+        "torso": { "x": 8, "y": 5 },
+        "leftFoot": { "x": 6, "y": 13 },
+        "rightFoot": { "x": 4, "y": 14 },
+        "leftKnee": { "x": 7, "y": 10 },
+        "rightKnee": { "x": 5, "y": 11 }
+      },
+      "opaquePixels": ["8,10", "8,5", "6,13", "4,14", "7,10", "5,11"]
+    }
+  ]
+}

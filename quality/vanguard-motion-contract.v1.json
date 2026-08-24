@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeVanguardMotionV1",
+  "policy": {
+    "expectedFrames": 8,
+    "maximumIdleWalkMedianHeightDifference": 8,
+    "minimumLandmarkAlpha": 192,
+    "minimumSupportSwitches": 3,
+    "maximumAnchorShift": 1,
+    "maximumVerticalScaleRatio": 1.08,
+    "minimumFootTravel": 4,
+    "minimumKneeTravel": 2,
+    "phaseSequence": [0, 1, 2, 3, 0, 1, 2, 3]
+  },
+  "requiredLandmarks": [
+    "root",
+    "torso",
+    "leftFoot",
+    "rightFoot",
+    "leftKnee",
+    "rightKnee"
+  ],
+  "promotionSidecar": "art/motion-landmarks/vanguard-walk-v1.json",
+  "productionRejectedCalibration": {
+    "atlasSha256": "5004facbf1b0400554b30c80fe1f83dd097786c7c61f8b235734c551f8d620a4",
+    "primarySourceSha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424",
+    "directionsSourceSha256": "16a99686ec59d9d11f28baac434f7805333612b025c7f825f372a113f8b35390",
+    "expectedFailureCodes": [
+      "idle-walk-crouch-seam",
+      "duplicate-half-cycle",
+      "insufficient-raster-articulation",
+      "missing-landmark-sidecar"
+    ],
+    "disposition": "REJECT",
+    "reason": "The exact current bank is retained only as a reproducible calibration target. It may ship temporarily, but it is not evidence that a future gait is acceptable."
+  }
+}
