@@ -24,6 +24,25 @@ async function gitValue(args, fallback) {
   }
 }
 
+async function evidencePublicationParent() {
+  const parent = await gitValue(["rev-parse", "HEAD^"], "");
+  if (!parent) return null;
+  const changedPaths = (
+    await gitValue(
+      ["diff-tree", "--no-commit-id", "--name-only", "-r", "HEAD"],
+      "",
+    )
+  )
+    .split("\n")
+    .filter(Boolean);
+  return changedPaths.length > 0 &&
+    changedPaths.every((name) =>
+      /^(quality-results\/(sequences|quality-index)\/)/.test(name),
+    )
+    ? parent
+    : null;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -59,11 +78,25 @@ const [
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
 const sourceStatus = await gitValue(["status", "--short"], "");
+const publicationParentCommit = await evidencePublicationParent();
 const sequenceProfiles = Array.isArray(sequences?.profiles)
   ? sequences.profiles
   : Array.isArray(sequences?.entries)
     ? sequences.entries
     : [];
+const sequenceBindingRule =
+  "Every retained sequence entry must record the current quality-index source commit (HEAD when this index is generated). The sole publication exception is HEAD's first parent when HEAD changes only quality-results/sequences/ or quality-results/quality-index/; this lets generated evidence and its index be committed together without requiring a report to contain its own future commit hash. The exception is one commit deep and ends after any non-evidence commit.";
+const acceptedSequenceCommits = new Set(
+  [sourceCommit, publicationParentCommit].filter(Boolean),
+);
+const staleSequenceProfiles = sequenceProfiles.filter(
+  ({ sourceCommit: entryCommit }) =>
+    !entryCommit || !acceptedSequenceCommits.has(entryCommit),
+);
+const sequenceMechanicsPass = sequenceProfiles.every(
+  (entry) => entry.pass !== false && entry.status !== "failed",
+);
+const sequenceEvidenceFresh = staleSequenceProfiles.length === 0;
 
 const reports = [
   {
@@ -91,13 +124,14 @@ const reports = [
     href: "sequences/",
     status:
       sequences && sequenceProfiles.length > 0
-        ? sequenceProfiles.every(
-            (entry) => entry.pass !== false && entry.status !== "failed",
-          )
+        ? sequenceMechanicsPass && sequenceEvidenceFresh
           ? "passed"
           : "failed"
         : "missing",
-    summary: `${sequenceProfiles.length} reproducible state, command, frame, mask, and manifest bundles.`,
+    summary:
+      staleSequenceProfiles.length > 0
+        ? `${sequenceProfiles.length} retained bundles; ${staleSequenceProfiles.length} cannot count as passing because their source commit is outside the current binding rule.`
+        : `${sequenceProfiles.length} reproducible state, command, frame, mask, and manifest bundles are bound to the current source.`,
   },
   {
     id: "actors",
@@ -162,7 +196,7 @@ const reports = [
 ];
 
 const report = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   project: "cinderwake",
   sourceCommit,
   sourceDirty: Boolean(sourceStatus),
@@ -172,6 +206,25 @@ const report = {
       ? "The exact responsive screen set is independently accepted; individual report limits still apply."
       : "No 10/10 or visual-completion claim: the current responsive screen set is not independently accepted."
   } Rejected isolated-pose evidence is diagnostic only and never production approval.`,
+  sequenceEvidence: {
+    bindingRule: sequenceBindingRule,
+    currentCommit: sourceCommit,
+    publicationParentCommit,
+    total: sequenceProfiles.length,
+    current: sequenceProfiles.filter(
+      ({ sourceCommit: entryCommit }) => entryCommit === sourceCommit,
+    ).length,
+    publicationParent: publicationParentCommit
+      ? sequenceProfiles.filter(
+          ({ sourceCommit: entryCommit }) =>
+            entryCommit === publicationParentCommit,
+        ).length
+      : 0,
+    stale: staleSequenceProfiles.map(({ id, sourceCommit: entryCommit }) => ({
+      id: id ?? "unnamed",
+      sourceCommit: entryCommit ?? null,
+    })),
+  },
   reports,
 };
 
@@ -222,6 +275,7 @@ const html = `<!doctype html>
   <body>
     <h1>Quality evidence</h1>
     <p class="lead">${escapeHtml(report.completionClaim)} Each card links to the inspectable report produced from commit <code>${escapeHtml(sourceCommit)}</code>${sourceStatus ? "; this local index was built from a dirty worktree" : ""}. Passing mechanics never overrides a hash-matched visual rejection.</p>
+    <p class="lead"><strong>Temporal evidence binding:</strong> ${escapeHtml(sequenceBindingRule)}</p>
     <main>${cards}</main>
     <footer><a href="../">Play Cinderwake</a> · <a href="index.json">Machine-readable index</a></footer>
   </body>

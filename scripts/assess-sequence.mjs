@@ -296,16 +296,32 @@ for (const point of points) {
     : expectedType === "projectile"
       ? "projectile"
       : "loot";
-  const monsterNativeWidths = {
-    ashfang: 118,
-    hexer: 102,
-    stonekin: 128,
+  const monsterDimensions = {
+    ashfang: { width: 128, height: 108 },
+    hexer: { width: 102, height: 112 },
+    stonekin: { width: 128, height: 128 },
   };
+  const expectedDimensions =
+    expectedType === "player"
+      ? { width: 118, height: 118 }
+      : expectedType === "monster"
+        ? {
+            width:
+              monsterDimensions[entity.kind].width * (entity.elite ? 1.16 : 1),
+            height:
+              monsterDimensions[entity.kind].height * (entity.elite ? 1.16 : 1),
+          }
+        : expectedType === "loot"
+          ? entity.rarity === "relic"
+            ? { width: 64, height: 64 }
+            : { width: 54, height: 54 }
+          : { width: 42, height: 42 };
   const expectedScale =
     expectedType === "player"
       ? 118 / 256
       : expectedType === "monster"
-        ? (monsterNativeWidths[entity.kind] / 256) * (entity.elite ? 1.16 : 1)
+        ? (monsterDimensions[entity.kind].width / 256) *
+          (entity.elite ? 1.16 : 1)
         : expectedType === "loot"
           ? entity.rarity === "relic"
             ? 0.25
@@ -317,6 +333,10 @@ for (const point of points) {
     actor.geometryId !== expectedGeometry ||
     actor.clip !== expectedClip ||
     !close(actor.scale, expectedScale) ||
+    actor.destinationRect?.width !== Math.round(expectedDimensions.width) ||
+    actor.destinationRect?.height !== Math.round(expectedDimensions.height) ||
+    actor.bounds?.width !== Math.round(expectedDimensions.width) ||
+    actor.bounds?.height !== Math.round(expectedDimensions.height) ||
     actor.tint !== expectedTint
   )
     manifestContractErrors += 1;
