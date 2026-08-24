@@ -304,6 +304,47 @@ describe("sprite atlas quality contract", () => {
     });
   });
 
+  it("binds service UI crops to the runtime atlas and truthful raw-source record", async () => {
+    const manifest = JSON.parse(
+      await fs.readFile("public/assets/sprites/build-manifest.json", "utf8"),
+    );
+    const record = JSON.parse(
+      await fs.readFile("art/generation/ui-service-components-v1.json", "utf8"),
+    );
+    const expected = {
+      "ui-service-panel.png": { x: 431, y: 534, width: 294, height: 198 },
+      "ui-service-button.png": { x: 583, y: 95, width: 197, height: 82 },
+    };
+    for (const [fileName, sourceRect] of Object.entries(expected)) {
+      expect(manifest.outputs[fileName]).toMatchObject({
+        source: "public/assets/sprites/ui.png",
+        sourceSha256:
+          "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+        sourceRect,
+        rawSource: "art/source/ui/ui-source.png",
+        rawSourceSha256:
+          "1a1048e75f359280efa9480a8f9c61c16f3350628113f85a054ccdb02fa1c282",
+        generationRecord: "art/generation/ui-service-components-v1.json",
+        reviewRecord: "art/generation/ui-service-components-v1.json",
+      });
+      expect(
+        record.components.find(
+          (component: { file: string }) =>
+            component.file === `public/assets/sprites/${fileName}`,
+        ),
+      ).toMatchObject({ sourceRect });
+    }
+    expect(record.generation).toMatchObject({
+      status: "historical-record-unavailable",
+      tool: null,
+      artifactId: null,
+      prompt: null,
+    });
+    expect(record.reviewedAtlas).toMatchObject({
+      visualReviewStatus: "candidate-requires-current-independent-review",
+    });
+  });
+
   it("registers the reviewed environment kit with tight aspect-preserving frames", async () => {
     const catalog = await loadProductionSpriteCatalog();
     const expectedFrames = {

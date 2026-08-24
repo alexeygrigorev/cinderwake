@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "cinderwake-ui-service-components-v1",
+  "status": "deterministic-runtime-extraction",
+  "rawSource": {
+    "file": "art/source/ui/ui-source.png",
+    "sha256": "1a1048e75f359280efa9480a8f9c61c16f3350628113f85a054ccdb02fa1c282",
+    "provenanceRegistry": "art/provenance.json"
+  },
+  "generation": {
+    "status": "historical-record-unavailable",
+    "tool": null,
+    "artifactId": null,
+    "prompt": null,
+    "claim": "The legacy UI source predates the recorded generation pipeline. This record does not invent retroactive AI-tool, prompt, artifact, or author provenance."
+  },
+  "reviewedAtlas": {
+    "file": "public/assets/sprites/ui.png",
+    "sha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+    "build": "node scripts/build-sprite-assets.mjs",
+    "mechanicalReview": "node scripts/validate-sprite-assets.mjs",
+    "visualReviewStatus": "candidate-requires-current-independent-review"
+  },
+  "components": [
+    {
+      "file": "public/assets/sprites/ui-service-panel.png",
+      "sha256": "99fb489628613834d05fba82355f26d4562e3c79726b6c4db27e404c99f50d79",
+      "sourceRect": { "x": 431, "y": 534, "width": 294, "height": 198 },
+      "rendering": "css-border-image-nine-slice"
+    },
+    {
+      "file": "public/assets/sprites/ui-service-button.png",
+      "sha256": "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
+      "sourceRect": { "x": 583, "y": 95, "width": 197, "height": 82 },
+      "rendering": "css-border-image-nine-slice"
+    }
+  ],
+  "decision": "Authorize only the exact declared atlas crops for the city-service panel and button. Pixel provenance, phone readability, pressed feedback, overlap, and service-state truthfulness remain executable promotion gates."
+}

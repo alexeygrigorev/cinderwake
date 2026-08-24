@@ -71,11 +71,33 @@
     },
     "ui-service-panel.png": {
       "sha256": "99fb489628613834d05fba82355f26d4562e3c79726b6c4db27e404c99f50d79",
-      "source": "public/assets/sprites/ui-service-panel.png"
+      "source": "public/assets/sprites/ui.png",
+      "sourceSha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+      "sourceRect": {
+        "x": 431,
+        "y": 534,
+        "width": 294,
+        "height": 198
+      },
+      "rawSource": "art/source/ui/ui-source.png",
+      "rawSourceSha256": "1a1048e75f359280efa9480a8f9c61c16f3350628113f85a054ccdb02fa1c282",
+      "generationRecord": "art/generation/ui-service-components-v1.json",
+      "reviewRecord": "art/generation/ui-service-components-v1.json"
     },
     "ui-service-button.png": {
       "sha256": "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
-      "source": "public/assets/sprites/ui-service-button.png"
+      "source": "public/assets/sprites/ui.png",
+      "sourceSha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+      "sourceRect": {
+        "x": 583,
+        "y": 95,
+        "width": 197,
+        "height": 82
+      },
+      "rawSource": "art/source/ui/ui-source.png",
+      "rawSourceSha256": "1a1048e75f359280efa9480a8f9c61c16f3350628113f85a054ccdb02fa1c282",
+      "generationRecord": "art/generation/ui-service-components-v1.json",
+      "reviewRecord": "art/generation/ui-service-components-v1.json"
     },
     "effects.png": {
       "sha256": "a841fc3f96c40398f3fbbfd41eb9b1a231a7f7716ad682c5d07c58107dc80061",

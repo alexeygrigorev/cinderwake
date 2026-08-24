@@ -679,37 +679,47 @@ button {
   filter: drop-shadow(0 2px 2px #000a);
 }
 
+.city-service-actions button:only-child {
+  grid-column: 1 / -1;
+}
+
 .city-service-actions button:active {
   transform: scale(0.97);
   filter: brightness(1.22) drop-shadow(0 1px 1px #000a);
 }
 
 .city-service-heading .sprite-text {
-  font-size: 14px;
+  font-size: 16px;
 }
 
-.city-service-heading .sprite-city-status {
+.city-service-heading .sprite-city-status,
+.city-service-heading .sprite-city-needs,
+.city-service-heading .sprite-city-stock {
   color: #e5bd78;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .city-service-actions .sprite-city-action {
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .city-service-actions .sprite-city-detail {
   margin-top: 3px;
   color: #e5bd78;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .city-service-feedback .sprite-text {
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .city-service-feedback {
   min-height: 15px;
   color: #b9d2a5;
+}
+
+.game.city-service-open .hud.bottom {
+  display: none;
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
@@ -718,7 +728,7 @@ button {
     right: max(96px, env(safe-area-inset-right));
     bottom: auto;
     left: auto;
-    width: min(300px, calc(100vw - 210px));
+    width: min(390px, calc(100vw - 230px));
     padding: 6px 9px 5px;
   }
 

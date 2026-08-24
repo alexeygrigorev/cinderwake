@@ -1,6 +1,11 @@
 import "./styles.css";
 import { ARCHETYPES } from "./game/content";
-import { EMBERCROSS_CITY, type CityServiceActionId } from "./game/city";
+import {
+  EMBERCROSS_CITY,
+  executeCityService,
+  type CityServiceActionId,
+  type CityServiceDeltasV1,
+} from "./game/city";
 import {
   cityNpcWorldAnchor,
   isEmbercrossMap,
@@ -28,6 +33,7 @@ let selected: CharacterClass = "vanguard",
   input: InputController | undefined,
   activeScenario: ScenarioV1 | undefined;
 let cityServiceFeedback = "";
+let cityServiceNpcId: string | null = null;
 
 const CITY_ACTION_LABELS: Record<CityServiceActionId, string> = {
   "merchant:buy-tonic": "Buy tonic",
@@ -44,27 +50,67 @@ function inventoryQuantity(state: GameState, itemId: "ashfang-pelt"): number {
   );
 }
 
+function signedDelta(value: number, label: string): string | null {
+  if (value === 0) return null;
+  return `${value > 0 ? "+" : ""}${value}${label}`;
+}
+
+function describeCityDeltas(deltas: CityServiceDeltasV1): string {
+  const inventory = deltas.inventory.map(({ itemId, quantity }) =>
+    signedDelta(quantity, ` ${itemId === "ashfang-pelt" ? "pelt" : itemId}`),
+  );
+  return [
+    signedDelta(deltas.gold, "G"),
+    signedDelta(deltas.health, " HP"),
+    signedDelta(
+      deltas.tonics,
+      ` tonic${Math.abs(deltas.tonics) === 1 ? "" : "s"}`,
+    ),
+    signedDelta(deltas.hunger, " hunger"),
+    signedDelta(deltas.fatigue, " fatigue"),
+    ...inventory,
+    signedDelta(deltas.merchantTonicStock, " stock"),
+    deltas.worldMinute ? `+${deltas.worldMinute} min to dawn` : null,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(" / ");
+}
+
 function cityActionPresentation(
   state: GameState,
   actionId: CityServiceActionId,
-): { label: string; detail: string } {
-  if (actionId === "merchant:buy-tonic")
-    return { label: "Buy tonic", detail: "18G / +1 tonic" };
-  if (actionId === "merchant:sell-ashfang-pelt")
-    return {
-      label: "Sell pelt",
-      detail: `+9G / ${inventoryQuantity(state, "ashfang-pelt")} held`,
-    };
-  if (actionId === "tavern:eat-stew")
-    return { label: "Eat stew", detail: "6G / +15 HP / -45 hunger" };
-  if (actionId === "inn:sleep-until-dawn")
-    return { label: "Sleep to dawn", detail: "20G / full HP and rest" };
-  const missingHealth =
-    state.city.traveler.maxHealth - state.city.traveler.health;
-  const price = Math.max(6, Math.ceil(missingHealth / 10) * 3);
+): {
+  label: string;
+  detail: string;
+  previewStatus: "ok" | "rejected";
+  previewDeltas: CityServiceDeltasV1 | null;
+  rejectionCode: string | null;
+} {
+  const npcId = state.city.nearbyNpcId;
+  if (!npcId) throw new Error("City action preview requires a nearby resident");
+  const previewState = {
+    ...state.city,
+    traveler: {
+      ...state.city.traveler,
+      gold: state.player.gold,
+      health: state.player.health,
+      maxHealth: state.player.maxHealth,
+      tonics: state.player.tonics,
+    },
+  };
+  const preview = executeCityService(previewState, {
+    tick: state.tick,
+    npcId,
+    actionId,
+  });
   return {
-    label: "Restore health",
-    detail: missingHealth ? `${price}G / +${missingHealth} HP` : "Full health",
+    label: CITY_ACTION_LABELS[actionId],
+    detail: preview.ok
+      ? describeCityDeltas(preview.receipt.deltas)
+      : `Unavailable: ${preview.message}`,
+    previewStatus: preview.ok ? "ok" : "rejected",
+    previewDeltas: preview.ok ? preview.receipt.deltas : null,
+    rejectionCode: preview.ok ? null : preview.code,
   };
 }
 const query = new URLSearchParams(location.search),
@@ -396,21 +442,33 @@ function updateCityServices(state: GameState): void {
   );
   if (!npc || state.city.locationPhase !== "inside") {
     sheet.classList.add("hidden");
+    sheet.closest(".game")?.classList.remove("city-service-open");
     sheet.replaceChildren();
     delete sheet.dataset.contentKey;
+    cityServiceFeedback = "";
+    cityServiceNpcId = null;
     return;
   }
   sheet.classList.remove("hidden");
+  sheet.closest(".game")?.classList.add("city-service-open");
+  if (cityServiceNpcId !== npc.id) cityServiceFeedback = "";
+  cityServiceNpcId = npc.id;
   const feedback = cityServiceFeedback || "Choose a service";
   const presentations = npc.actions.map((actionId) => ({
     actionId,
     ...cityActionPresentation(state, actionId),
   }));
-  const status = `${state.city.traveler.gold}G / HP ${state.city.traveler.health}/${state.city.traveler.maxHealth}`;
-  const contentKey = `${npc.id}:${feedback}:${status}:${presentations.map(({ detail }) => detail).join(":")}`;
+  const traveler = state.city.traveler;
+  const status = `${traveler.gold}G / HP ${traveler.health}/${traveler.maxHealth} / ${traveler.tonics} tonic${traveler.tonics === 1 ? "" : "s"}`;
+  const needs = `Hunger ${traveler.hunger} / Fatigue ${traveler.fatigue}`;
+  const stock =
+    npc.role === "merchant"
+      ? `${state.city.merchant.tonicStock} tonics in stock / ${inventoryQuantity(state, "ashfang-pelt")} pelts held`
+      : `${inventoryQuantity(state, "ashfang-pelt")} pelts held`;
+  const contentKey = `${npc.id}:${feedback}:${status}:${needs}:${stock}:${presentations.map(({ detail }) => detail).join(":")}`;
   if (sheet.dataset.contentKey === contentKey) return;
   sheet.dataset.contentKey = contentKey;
-  sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}${spriteText(status, "sprite-city-status")}</div><div class="city-service-actions">${presentations.map(({ actionId, label, detail }) => `<button data-city-action="${actionId}" aria-label="${escapeAttribute(`${label}. ${detail}`)}">${spriteText(label, "sprite-city-action")}${spriteText(detail, "sprite-city-detail")}</button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedback, "sprite-city-feedback")}</output>`;
+  sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}${spriteText(status, "sprite-city-status")}${spriteText(needs, "sprite-city-needs")}${spriteText(stock, "sprite-city-stock")}</div><div class="city-service-actions">${presentations.map(({ actionId, label, detail, previewStatus, previewDeltas, rejectionCode }) => `<button data-city-action="${actionId}" data-preview-status="${previewStatus}"${previewDeltas ? ` data-preview-deltas="${escapeAttribute(JSON.stringify(previewDeltas))}"` : ""}${rejectionCode ? ` data-preview-rejection="${escapeAttribute(rejectionCode)}"` : ""} aria-label="${escapeAttribute(`${label}. ${detail}`)}">${spriteText(label, "sprite-city-action")}${spriteText(detail, "sprite-city-detail")}</button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedback, "sprite-city-feedback")}</output>`;
 }
 function lab(): void {
   const existing = document.querySelector(".lab");

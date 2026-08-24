@@ -73,10 +73,28 @@ test("mobile city service actions synchronize loaded player state and report rej
 
   const buy = page.locator("[data-city-action='merchant:buy-tonic']");
   await expect(buy).toBeVisible();
-  await expect(buy).toHaveAttribute("aria-label", "Buy tonic. 18G / +1 tonic");
+  await expect(buy).toHaveAttribute(
+    "aria-label",
+    "Buy tonic. -18G / +1 tonic / -1 stock",
+  );
   await expect(
     page.locator("[data-city-action='merchant:sell-ashfang-pelt']"),
-  ).toHaveAttribute("aria-label", "Sell pelt. +9G / 0 held");
+  ).toHaveAttribute(
+    "aria-label",
+    "Sell pelt. Unavailable: The traveler does not have enough Ashfang pelts.",
+  );
+  await expect(page.locator(".sprite-city-status")).toHaveAttribute(
+    "aria-label",
+    "40G / HP 52/160 / 1 tonic",
+  );
+  await expect(page.locator(".sprite-city-needs")).toHaveAttribute(
+    "aria-label",
+    "Hunger 60 / Fatigue 55",
+  );
+  await expect(page.locator(".sprite-city-stock")).toHaveAttribute(
+    "aria-label",
+    "8 tonics in stock / 0 pelts held",
+  );
   const presentation = await page.evaluate(() => {
     const panel = document.querySelector<HTMLElement>("#city-services")!;
     const action = panel.querySelector<HTMLElement>("button")!;
@@ -98,8 +116,8 @@ test("mobile city service actions synchronize loaded player state and report rej
   expect(presentation).toMatchObject({
     panelBackground: "none",
     actionBackground: "none",
-    labelFontSize: 13,
-    detailFontSize: 10,
+    labelFontSize: 15,
+    detailFontSize: 13,
   });
   expect(presentation.panelBorderImage).toContain("ui-service-panel.png");
   expect(presentation.actionBorderImage).toContain("ui-service-button.png");

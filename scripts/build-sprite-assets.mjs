@@ -795,11 +795,11 @@ async function buildGlyphAtlas() {
 const UI_COMPONENTS = [
   {
     file: "ui-service-panel.png",
-    sourceRect: { left: 431, top: 534, width: 294, height: 198 },
+    sourceRect: { x: 431, y: 534, width: 294, height: 198 },
   },
   {
     file: "ui-service-button.png",
-    sourceRect: { left: 583, top: 95, width: 197, height: 82 },
+    sourceRect: { x: 583, y: 95, width: 197, height: 82 },
   },
 ];
 
@@ -808,7 +808,12 @@ async function buildUiComponents(uiPath) {
     UI_COMPONENTS.map(async ({ file, sourceRect }) => {
       const destination = outputPath(file);
       await sharp(uiPath)
-        .extract(sourceRect)
+        .extract({
+          left: sourceRect.x,
+          top: sourceRect.y,
+          width: sourceRect.width,
+          height: sourceRect.height,
+        })
         .png({ compressionLevel: 9, palette: true, quality: 100 })
         .toFile(destination);
       return destination;
@@ -924,6 +929,23 @@ const manifest = {
 for (const spec of [CITY_KIT_SPEC, RESIDENT_ATLAS_SPEC]) {
   if (!manifest.outputs[spec.atlas.file]) continue;
   manifest.outputs[spec.atlas.file].source = spec.provenance.preparedFile;
+}
+if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
+  const uiSource = inputPath("ui", "ui-source.png");
+  const uiAtlas = outputPath("ui.png");
+  const generationRecord = "art/generation/ui-service-components-v1.json";
+  for (const component of UI_COMPONENTS) {
+    manifest.outputs[component.file] = {
+      ...manifest.outputs[component.file],
+      source: path.relative(ROOT, uiAtlas),
+      sourceSha256: await sha256(uiAtlas),
+      sourceRect: component.sourceRect,
+      rawSource: path.relative(ROOT, uiSource),
+      rawSourceSha256: await sha256(uiSource),
+      generationRecord,
+      reviewRecord: generationRecord,
+    };
+  }
 }
 await fs.writeFile(
   outputPath("build-manifest.json"),

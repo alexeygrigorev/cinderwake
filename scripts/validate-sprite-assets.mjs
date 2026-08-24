@@ -176,10 +176,10 @@ for (const fileName of [
 
 const uiComponentContracts = {
   "ui-service-panel.png": {
-    sourceRect: { left: 431, top: 534, width: 294, height: 198 },
+    sourceRect: { x: 431, y: 534, width: 294, height: 198 },
   },
   "ui-service-button.png": {
-    sourceRect: { left: 583, top: 95, width: 197, height: 82 },
+    sourceRect: { x: 583, y: 95, width: 197, height: 82 },
   },
 };
 for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
@@ -195,7 +195,12 @@ for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
   const [componentPixels, sourcePixels] = await Promise.all([
     sharp(componentPath).ensureAlpha().raw().toBuffer(),
     sharp(path.join(atlasDirectory, "ui.png"))
-      .extract(sourceRect)
+      .extract({
+        left: sourceRect.x,
+        top: sourceRect.y,
+        width: sourceRect.width,
+        height: sourceRect.height,
+      })
       .ensureAlpha()
       .raw()
       .toBuffer(),
@@ -537,6 +542,51 @@ for (const [fileName, [width, height]] of Object.entries(fixedDimensions)) {
 const manifest = JSON.parse(
   await fs.readFile(path.join(atlasDirectory, "build-manifest.json"), "utf8"),
 );
+const uiGenerationRecordPath = path.join(
+  root,
+  "art",
+  "generation",
+  "ui-service-components-v1.json",
+);
+const uiGenerationRecord = JSON.parse(
+  await fs.readFile(uiGenerationRecordPath, "utf8"),
+);
+const uiAtlasSha256 = sha256(
+  await fs.readFile(path.join(atlasDirectory, "ui.png")),
+);
+const uiRawSourceSha256 = sha256(
+  await fs.readFile(path.join(root, "art", "source", "ui", "ui-source.png")),
+);
+if (
+  uiGenerationRecord.rawSource.sha256 !== uiRawSourceSha256 ||
+  uiGenerationRecord.reviewedAtlas.sha256 !== uiAtlasSha256 ||
+  uiGenerationRecord.generation.status !== "historical-record-unavailable" ||
+  uiGenerationRecord.reviewedAtlas.visualReviewStatus !==
+    "candidate-requires-current-independent-review"
+)
+  throw new Error("UI component raw-source generation/review record drifted");
+for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
+  const evidence = manifest.outputs[fileName];
+  if (
+    evidence?.source !== "public/assets/sprites/ui.png" ||
+    evidence?.sourceSha256 !== uiAtlasSha256 ||
+    JSON.stringify(evidence?.sourceRect) !== JSON.stringify(sourceRect) ||
+    evidence?.rawSource !== "art/source/ui/ui-source.png" ||
+    evidence?.rawSourceSha256 !== uiRawSourceSha256 ||
+    evidence?.generationRecord !==
+      "art/generation/ui-service-components-v1.json" ||
+    evidence?.reviewRecord !== "art/generation/ui-service-components-v1.json"
+  )
+    throw new Error(`${fileName} manifest provenance is incomplete or stale`);
+  const recordedComponent = uiGenerationRecord.components.find(
+    ({ file }) => file === `public/assets/sprites/${fileName}`,
+  );
+  if (
+    recordedComponent?.sha256 !== evidence.sha256 ||
+    JSON.stringify(recordedComponent?.sourceRect) !== JSON.stringify(sourceRect)
+  )
+    throw new Error(`${fileName} generation record differs from the manifest`);
+}
 if (manifest.pipeline !== spec.id)
   throw new Error("Build manifest pipeline differs from actor metadata");
 if (manifest.actorSpec.sha256 !== sha256(await fs.readFile(specPath)))
