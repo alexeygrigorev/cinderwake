@@ -41,9 +41,7 @@ test("ordinary production route advances in real time and opens on a visible enc
     const canvasRect = canvas.getBoundingClientRect();
     const controlsRect = controls.getBoundingClientRect();
     const openingRects = openingSample.visibleMonsters
-      .filter(({ entityId }) =>
-        ["monster:00", "monster:01", "monster:02"].includes(entityId),
-      )
+      .filter(({ entityId }) => ["monster:00", "monster:01"].includes(entityId))
       .map(({ entityId, destinationRect }) => ({
         id: entityId,
         left:
@@ -70,7 +68,7 @@ test("ordinary production route advances in real time and opens on a visible enc
         : [],
     );
     const openingHealth = openingSample.monsterHealth.filter(({ ownerId }) =>
-      ["monster:00", "monster:01", "monster:02"].includes(ownerId),
+      ["monster:00", "monster:01"].includes(ownerId),
     );
     const healthAnchorViolations = openingHealth.flatMap((health) => {
       const actor = openingSample.visibleMonsters.find(
@@ -135,12 +133,12 @@ test("ordinary production route advances in real time and opens on a visible enc
       rejectedCellTopGap,
     };
   });
-  expect(initial.visibleMonsters).toBe(3);
+  expect(initial.visibleMonsters).toBe(2);
   expect(initial.objectiveTarget).toMatch(/^monster:/);
   expect(initial.objectiveState).toBe("hunt");
-  expect(initial.openingCount).toBe(3);
+  expect(initial.openingCount).toBe(2);
   expect(initial.deviceSpaceViolations).toEqual([]);
-  expect(initial.openingHealthCount).toBe(3);
+  expect(initial.openingHealthCount).toBe(2);
   expect(initial.healthAnchorViolations).toEqual([]);
   expect(initial.rejectedCellTopGap).toBeGreaterThanOrEqual(15);
 

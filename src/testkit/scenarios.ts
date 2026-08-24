@@ -1,13 +1,18 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
-import { TILE_PIXELS } from "../game/constants";
+import { TILE_PIXELS, UNITS_PER_TILE } from "../game/constants";
 import {
   explicitDungeon,
   generateDungeon,
   isFloor,
   tileCenter,
 } from "../game/dungeon";
+import { findNavigationRoute } from "../game/navigation";
 import { createRngStreams, randomInt } from "../game/rng";
-import { overlapsScenery, sceneryCollisions } from "../game/sceneryLayout";
+import {
+  buildSceneryLayout,
+  overlapsScenery,
+  sceneryCollisions,
+} from "../game/sceneryLayout";
 import type {
   AnimationClip,
   AnimationState,
@@ -28,6 +33,7 @@ import type {
   Vec2,
 } from "../game/types";
 import type { CameraMode } from "../render/manifest";
+import { SPRITE_CATALOG } from "../render/sprites";
 
 type VecTuple = [number, number];
 
@@ -228,8 +234,17 @@ const OPENING_ACTOR_FOOTPRINTS: Record<
 // integer destination rounding and a moving camera cannot turn a boundary
 // placement into a visually stacked pair.
 const OPENING_MAX_VISUAL_OVERLAP = 0.18;
+const OPENING_PLAYER_MAX_VISUAL_OVERLAP: Record<MonsterKind, number> = {
+  // The Stonekin's square destination includes broad transparent shoulder
+  // corners, so a quarter-rect overlap still leaves both actual silhouettes
+  // readable. The narrower Ashfang and Hexer rectangles need more clearance.
+  stonekin: 0.25,
+  ashfang: 0.1,
+  hexer: 0.1,
+};
+const OPENING_SCENERY_MAX_VISUAL_OVERLAP = 0.2;
 
-type OpeningTiles = [Vec2, Vec2, Vec2];
+type OpeningTiles = [Vec2, Vec2];
 
 interface OpeningPlacement {
   tiles: OpeningTiles;
@@ -239,8 +254,8 @@ interface OpeningPlacement {
 function openingDestinationRect(kind: MonsterKind, tile: Vec2) {
   const { width, height } = OPENING_ACTOR_FOOTPRINTS[kind];
   const anchor = {
-    x: tile.x * TILE_PIXELS,
-    y: tile.y * TILE_PIXELS,
+    x: (tile.x + 0.5) * TILE_PIXELS,
+    y: (tile.y + 0.5) * TILE_PIXELS,
   };
   return {
     x: Math.round(anchor.x - width / 2),
@@ -250,14 +265,54 @@ function openingDestinationRect(kind: MonsterKind, tile: Vec2) {
   };
 }
 
-function openingVisualOverlapRatio(
-  firstKind: MonsterKind,
-  firstTile: Vec2,
-  secondKind: MonsterKind,
-  secondTile: Vec2,
+function openingPlayerDestinationRect(tile: Vec2) {
+  const size = 118;
+  const anchor = {
+    x: (tile.x + 0.5) * TILE_PIXELS,
+    y: (tile.y + 0.5) * TILE_PIXELS,
+  };
+  return {
+    x: Math.round(anchor.x - size / 2),
+    y: Math.round(anchor.y - (232 / 256) * size),
+    width: size,
+    height: size,
+  };
+}
+
+function openingRaisedSceneryRects(map: GameState["map"]) {
+  return buildSceneryLayout(map).flatMap((placement) => {
+    // The workshop roof is intentionally occlusive: actors may walk behind
+    // it and disappear naturally. The two compact right-side props are not;
+    // allowing a spawn there reads as a creature pasted onto the crates.
+    if (
+      placement.name !== "barricade-v2" &&
+      placement.name !== "raised-clutter-bench"
+    )
+      return [];
+    const sprite =
+      SPRITE_CATALOG.sprites[`scenery:${placement.kind}:${placement.name}`];
+    if (!sprite?.logicalSize || !sprite.anchor) return [];
+    const screenAnchor = {
+      x: (placement.worldAnchor.x / UNITS_PER_TILE) * TILE_PIXELS,
+      y: (placement.worldAnchor.y / UNITS_PER_TILE) * TILE_PIXELS,
+    };
+    return [
+      {
+        rect: {
+          x: screenAnchor.x - sprite.anchor.x,
+          y: screenAnchor.y - sprite.anchor.y,
+          width: sprite.logicalSize.width,
+          height: sprite.logicalSize.height,
+        },
+      },
+    ];
+  });
+}
+
+function openingRectOverlapRatio(
+  first: { x: number; y: number; width: number; height: number },
+  second: { x: number; y: number; width: number; height: number },
 ): number {
-  const first = openingDestinationRect(firstKind, firstTile);
-  const second = openingDestinationRect(secondKind, secondTile);
   const width = Math.max(
     0,
     Math.min(first.x + first.width, second.x + second.width) -
@@ -274,11 +329,31 @@ function openingVisualOverlapRatio(
   );
 }
 
+function openingVisualOverlapRatio(
+  firstKind: MonsterKind,
+  firstTile: Vec2,
+  secondKind: MonsterKind,
+  secondTile: Vec2,
+): number {
+  const first = openingDestinationRect(firstKind, firstTile);
+  const second = openingDestinationRect(secondKind, secondTile);
+  return openingRectOverlapRatio(first, second);
+}
+
 function openingTilesAreVisuallySeparated(
   tiles: OpeningTiles,
   kinds: MonsterKind[],
+  playerTile: Vec2,
 ): boolean {
+  const playerRect = openingPlayerDestinationRect(playerTile);
   for (let first = 0; first < tiles.length; first += 1) {
+    if (
+      openingRectOverlapRatio(
+        openingDestinationRect(kinds[first]!, tiles[first]!),
+        playerRect,
+      ) > OPENING_PLAYER_MAX_VISUAL_OVERLAP[kinds[first]!]
+    )
+      return false;
     for (let second = first + 1; second < tiles.length; second += 1) {
       if (
         openingVisualOverlapRatio(
@@ -312,42 +387,52 @@ function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
   const nearCandidates: Vec2[] = [];
   const distantCandidates: Vec2[] = [];
   const solidScenery = sceneryCollisions(state.map);
+  const raisedSceneryRects = openingRaisedSceneryRects(state.map);
   for (let y = 1; y < state.map.height - 1; y += 1) {
     for (let x = 1; x < state.map.width - 1; x += 1) {
-      const distance =
-        Math.abs(x - state.map.spawn.x) + Math.abs(y - state.map.spawn.y);
       const position = tileCenter({ x, y });
-      if (
-        !isFloor(state.map, x, y) ||
-        solidScenery.some((collision) =>
-          overlapsScenery(position, 420, collision),
-        )
-      )
-        continue;
+      if (!isFloor(state.map, x, y)) continue;
       // Keep the authored opening group inside the narrow center slice that a
       // portrait phone retains after cover-fitting the 16:9 canvas. Manhattan
-      // distance alone made enemies technically render-visible while their
-      // bodies were cropped beyond the device viewport.
+      // distance alone made enemies technically visible while their bodies
+      // were cropped beyond the device viewport.
+      const distance =
+        Math.abs(x - state.map.spawn.x) + Math.abs(y - state.map.spawn.y);
       if (
         distance >= 2 &&
-        distance <= 3 &&
-        Math.abs(x - state.map.spawn.x) <= 1
-      )
-        nearCandidates.push({ x, y });
+        distance <= 4 &&
+        Math.abs(x - state.map.spawn.x) <= 1 &&
+        !solidScenery.some((collision) =>
+          overlapsScenery(position, 420, collision),
+        )
+      ) {
+        const route = findNavigationRoute(
+          state.map,
+          solidScenery,
+          state.player.position,
+          position,
+          state.player.radius,
+        );
+        if (route.at(-1)?.x === position.x && route.at(-1)?.y === position.y)
+          nearCandidates.push({ x, y });
+      }
       // Keep the exploration population beyond the entire opening camera,
       // including a one-tile actor margin. A simple Manhattan threshold left
       // half-creatures and detached health bars clipped at the wide-screen
-      // edges even though the authored trio itself was device-safe.
-      else if (
+      // edges even though the authored pair itself was device-safe.
+      if (
         (Math.abs(x - state.map.spawn.x) >= 12 ||
           Math.abs(y - state.map.spawn.y) >= 9) &&
-        (x + y) % 3 === 0
+        (x + y) % 3 === 0 &&
+        !solidScenery.some((collision) =>
+          overlapsScenery(position, 420, collision),
+        )
       )
         distantCandidates.push({ x, y });
     }
   }
   const specs: ScenarioMonsterV1[] = [];
-  const openingKinds: MonsterKind[] = ["stonekin", "ashfang", "hexer"];
+  const openingKinds: MonsterKind[] = ["stonekin", "ashfang"];
   const distantKinds: MonsterKind[] = [
     "ashfang",
     "hexer",
@@ -362,26 +447,36 @@ function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
   const openingSlots = [
     { x: state.map.spawn.x - mirror, y: state.map.spawn.y + 1 },
     { x: state.map.spawn.x + mirror, y: state.map.spawn.y + 2 },
-    { x: state.map.spawn.x + mirror, y: state.map.spawn.y - 2 },
   ];
   const openingPlacements: OpeningPlacement[] = [];
   for (let stonekin = 0; stonekin < nearCandidates.length; stonekin += 1) {
     for (let ashfang = 0; ashfang < nearCandidates.length; ashfang += 1) {
       if (stonekin === ashfang) continue;
-      for (let hexer = 0; hexer < nearCandidates.length; hexer += 1) {
-        if (stonekin === hexer || ashfang === hexer) continue;
-        const tiles: OpeningTiles = [
-          nearCandidates[stonekin]!,
-          nearCandidates[ashfang]!,
-          nearCandidates[hexer]!,
-        ];
-        if (!openingTilesAreVisuallySeparated(tiles, openingKinds)) continue;
-        const score = tiles.reduce((total, tile, index) => {
-          const slot = openingSlots[index]!;
-          return total + (tile.x - slot.x) ** 2 + (tile.y - slot.y) ** 2;
-        }, 0);
-        openingPlacements.push({ tiles, score });
-      }
+      const tiles: OpeningTiles = [
+        nearCandidates[stonekin]!,
+        nearCandidates[ashfang]!,
+      ];
+      if (
+        !openingTilesAreVisuallySeparated(tiles, openingKinds, state.map.spawn)
+      )
+        continue;
+      if (
+        tiles.some((tile, index) =>
+          raisedSceneryRects.some(
+            ({ rect }) =>
+              openingRectOverlapRatio(
+                openingDestinationRect(openingKinds[index]!, tile),
+                rect,
+              ) > OPENING_SCENERY_MAX_VISUAL_OVERLAP,
+          ),
+        )
+      )
+        continue;
+      const score = tiles.reduce((total, tile, index) => {
+        const slot = openingSlots[index]!;
+        return total + (tile.x - slot.x) ** 2 + (tile.y - slot.y) ** 2;
+      }, 0);
+      openingPlacements.push({ tiles, score });
     }
   }
   const selectedOpening = openingPlacements.sort(compareOpeningPlacements)[0];

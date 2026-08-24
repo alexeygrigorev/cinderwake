@@ -70,7 +70,7 @@ function destinationOverlapRatio(
 }
 
 describe("generated opening encounter", () => {
-  it("starts every sampled seed with three visible, reachable threats", () => {
+  it("starts every sampled seed with two readable, reachable threats", () => {
     for (let index = 0; index < 80; index += 1) {
       const state = worldFromScenario(
         createRunScenario(`opening-encounter-${index}`, "vanguard"),
@@ -79,7 +79,7 @@ describe("generated opening encounter", () => {
         createRunScenario(`opening-encounter-${index}`, "vanguard"),
       );
       const collisions = sceneryCollisions(state.map);
-      const openingGroup = state.monsters.slice(0, 3);
+      const openingGroup = state.monsters.slice(0, 2);
 
       expect(state.monsters, `monster count for seed ${index}`).toHaveLength(
         14,
@@ -87,19 +87,17 @@ describe("generated opening encounter", () => {
       expect(openingGroup.map(({ id }) => id)).toEqual([
         "monster:00",
         "monster:01",
-        "monster:02",
       ]);
       expect(openingGroup.map(({ kind }) => kind)).toEqual([
         "stonekin",
         "ashfang",
-        "hexer",
       ]);
       expect(
         openingGroup.map(({ id, kind, position }) => ({ id, kind, position })),
-        `repeatable opening trio for seed ${index}`,
+        `repeatable opening pair for seed ${index}`,
       ).toEqual(
         repeated.monsters
-          .slice(0, 3)
+          .slice(0, 2)
           .map(({ id, kind, position }) => ({ id, kind, position })),
       );
       expect(
@@ -127,7 +125,7 @@ describe("generated opening encounter", () => {
           Math.abs(tile.x - state.map.spawn.x) +
           Math.abs(tile.y - state.map.spawn.y);
         expect(distance).toBeGreaterThanOrEqual(2);
-        expect(distance).toBeLessThanOrEqual(3);
+        expect(distance).toBeLessThanOrEqual(4);
         expect(Math.abs(tile.x - state.map.spawn.x)).toBeLessThanOrEqual(1);
         const route = findStateNavigationRoute(
           state,
@@ -148,10 +146,35 @@ describe("generated opening encounter", () => {
       const manifest = buildRenderManifest(state, openingCamera(state));
       const openingCalls = manifest.drawCalls.filter(
         ({ entityId }) =>
-          entityId === "monster:00" ||
-          entityId === "monster:01" ||
-          entityId === "monster:02",
+          entityId === "monster:00" || entityId === "monster:01",
       );
+      const playerCall = manifest.drawCalls.find(
+        ({ entityId }) => entityId === "player",
+      )!;
+      const compactProps = manifest.sceneSprites.filter(
+        ({ objectId }) =>
+          objectId === "prop:0:barricade-v2" ||
+          objectId === "prop:0:raised-clutter-bench",
+      );
+      for (const monsterCall of openingCalls)
+        expect(
+          destinationOverlapRatio(
+            playerCall.destinationRect,
+            monsterCall.destinationRect,
+          ),
+          `${monsterCall.entityId} visually covers the player for seed ${index}`,
+        ).toBeLessThanOrEqual(
+          monsterCall.entityId === "monster:00" ? 0.25 : 0.1,
+        );
+      for (const monsterCall of openingCalls)
+        for (const prop of compactProps)
+          expect(
+            destinationOverlapRatio(
+              monsterCall.destinationRect,
+              prop.destinationRect,
+            ),
+            `${monsterCall.entityId} visually overlaps ${prop.objectId} for seed ${index}`,
+          ).toBeLessThanOrEqual(0.2);
       for (let first = 0; first < openingCalls.length; first += 1) {
         for (let second = first + 1; second < openingCalls.length; second += 1)
           expect(
@@ -174,7 +197,7 @@ describe("generated opening encounter", () => {
         ).toBe(true);
       expect(
         [...visibleOpeningIds].sort(),
-        `only the authored opening trio intersects the camera for seed ${index}`,
+        `only the authored opening pair intersects the camera for seed ${index}`,
       ).toEqual(openingGroup.map(({ id }) => id));
     }
   });
@@ -201,6 +224,27 @@ describe("generated opening encounter", () => {
     expect(destinationOverlapRatio(stonekinRect, ashfangRect)).toBe(0.25);
     expect(destinationOverlapRatio(stonekinRect, ashfangRect)).toBeGreaterThan(
       0.2,
+    );
+  });
+
+  it("detects an opening monster placed over the player silhouette", () => {
+    const state = worldFromScenario(
+      createRunScenario("opening-player-overlap-negative-control", "vanguard"),
+    );
+    const monster = state.monsters[1]!;
+    monster.position = { ...state.player.position };
+    monster.previousPosition = { ...state.player.position };
+
+    const calls = buildRenderManifest(state, openingCamera(state)).drawCalls;
+    const playerRect = calls.find(
+      ({ entityId }) => entityId === "player",
+    )!.destinationRect;
+    const monsterRect = calls.find(
+      ({ entityId }) => entityId === monster.id,
+    )!.destinationRect;
+
+    expect(destinationOverlapRatio(playerRect, monsterRect)).toBeGreaterThan(
+      0.1,
     );
   });
 
