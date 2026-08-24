@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-idle-master-v8-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-topology-locked-identity-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v8.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v8.png",
+  "candidateSha256": "a16aa4f7065bc04a25ad07fcaad08e770861197c50e64b9cc79d8716bac620ac",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+      "role": "sole authority and immutable edit stencil for silhouette, topology, anatomy, camera, pose, support, framing, and scale",
+      "sha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5"
+    },
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "role": "Ashfang species identity and internal surface motifs only",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "cast rendering, value grouping, light direction, and runtime detail-density benchmark only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-c4ca05e1-e42c-438b-89ee-6c71b86704e7.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "v4's elevated camera, outer silhouette, body mass, four connected chains, four paw terminals, gaps, perspective order, diagonals, and support footprint remain visibly intact",
+      "Ashfang charcoal plate, ember-seam, armored-skull, eye, claw, and hooked-tail identity is painted inside the locked structure",
+      "the candidate contains one quiet living east-facing idle creature without a shadow, floor, effect, sheet, or second figure",
+      "runtime geometry, grounding, support centering, safe bounds, aspect, and absolute size remain inside the accepted mechanical envelope"
+    ],
+    "failed": [
+      {
+        "code": "topology-mask-drift",
+        "detail": "The keyed silhouette differs from v4 at 1,959 prepared pixels before alignment and 689 pixels after the best one-pixel correction; the near-fore footprint shortens while the tail and left contour shift."
+      },
+      {
+        "code": "runtime-mass-and-material-drift",
+        "detail": "At runtime the candidate reads as a tall narrow basalt canine, while dense stone grain, fine plate borders, silver-gray rims, and claw microdetail collapse into muddy noise instead of broad matte cast values."
+      },
+      {
+        "code": "isolated-master-not-production-atlas",
+        "detail": "Even an accepted identity master is one pose seed; locomotion, attack, ability, reactions, direction banks, assembly, temporal review, and atlas promotion remain outstanding."
+      },
+      {
+        "code": "nonliteral-source-chroma",
+        "detail": "The generator emitted a graded magenta source field, so deterministic keying and literal prepared output remain mandatory."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "The exact-hash visual review rejects v8 as both production art and a downstream identity-master seed despite its mechanically valid runtime envelope. No production source or runtime atlas changes in this trial."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v8.png --output art/generation/prepared/ashfang-idle-master-v8.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v8.png",
+    "sha256": "4f9aac8921d16c6cfc69d2810345f07399a335adbe9c96d6aa54809c52fcb5df",
+    "status": "rejected",
+    "notes": "Contact-aware safe fitting preserves v4's 0.231122 scale, producing 147x157 prepared ink with exact visible grounding and a contact centroid within half a source pixel. Exact review still rejects topology, mass, material, lighting, detail frequency, and downstream seed safety."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "identityMasterSeed": "REJECT",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "a16aa4f7065bc04a25ad07fcaad08e770861197c50e64b9cc79d8716bac620ac",
+    "reviewedPreparedSha256": "4f9aac8921d16c6cfc69d2810345f07399a335adbe9c96d6aa54809c52fcb5df",
+    "reviewedPoseEvidenceSha256": "6a462c4569c36aec3b6e778c2d2928397eb797f78232f60d0d57abed50b814e0",
+    "reviewedRuntimeComparisonSha256": "890d513717c991787b69d3b06f33929df9ad469414a6beac404269589ad7a75f",
+    "reviewedTopologyRawSha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5",
+    "acceptedAxes": [
+      "four independently traceable body-to-paw limb chains and four paw terminals remain readable at native 75x79 runtime scale",
+      "negative-space limb corridors remain open enough to preserve both diagonal gait-pair ownership",
+      "elevated east-facing camera, quiet living stance, depth ordering, and vertical contact baseline remain coherent",
+      "unchanged 0.231122 preparation scale, grounded support band, and mechanically valid runtime envelope",
+      "recognizable Ashfang identity through charcoal volcanic armor, ember seams, restrained eye, horns, claws, and hooked tail",
+      "one isolated creature with no floor, cast shadow, particles, attack effect, scenery, sheet, or second figure"
+    ],
+    "rejectedAxes": [
+      "exact topology and footprint lock against anatomy blockout v4",
+      "heavy Ashfang mass and production-cast parity at actual runtime scale",
+      "broad matte cast-compatible value design",
+      "soft warm upper-left lighting without metallic rim tracing",
+      "source detail frequency suitable for temporally stable generated animation",
+      "safety as the byte-exact common identity-camera-material seed for idle and walk phase generation"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Do not generate idle or walk phases from v8. Enforce v4's keyed silhouette deterministically instead of trusting a prompt-only topology lock, then make one more surface-only candidate with six to eight broad matte groups, no stone grain or silver rims, simplified seams, soft warm upper-left light, and no movement of any limb, paw, gap, contact, or camera feature."
+}

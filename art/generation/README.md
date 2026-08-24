@@ -283,6 +283,18 @@ Ashfang identity nor production material/value design. One identity/style edit
 may use v4 only with its camera, joints, paw positions, gaps, diagonals, and
 support row locked; the result starts unreviewed and must pass the full gates.
 
+Isolated identity master v8 uses v4 as the sole spatial authority and limits
+production Ashfang plus Stonekin to identity and cast-rendering roles. It keeps
+four runtime-readable chains, both diagonals, the elevated living stance, a
+75 × 79 mechanical envelope, centered support, and 5/5 controls. Exact-hash
+review still rejects it as a phase-generation seed. A keyed-mask comparison
+finds 1,959 changed prepared silhouette pixels before alignment and 689 after
+the best one-pixel correction; the near-fore footprint shortens while other
+contours shift. Dense stone grain, fine borders, silver rims, and claw detail
+also collapse into dark runtime noise that would vary across phases. A prompt
+claiming “immutable stencil” is not evidence. V4's keyed silhouette must become
+a deterministic gate or transformation before the next broad-matte repaint.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.
