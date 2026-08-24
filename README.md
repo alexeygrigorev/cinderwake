@@ -127,6 +127,7 @@ The public quality report catalogs 23 explicit sequences: locomotion in four dir
 - [Character generation and validation guide](art/generation/README.md)
 - [Sprite art pipeline](docs/art-pipeline.md)
 - [Screen test and review playbook](docs/screen-test-playbook.md)
+- [Reusable opening composition contract](docs/opening-composition-contract.md)
 - [AI-driven reusable game workflow research](docs/research/ai-driven-game-development-2026.md)
 - [Chronological development decisions](docs/development-log.md)
 - [Architecture decision records](docs/decisions/)
