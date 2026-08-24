@@ -7,7 +7,15 @@ export interface LivePresentationSampleV1 {
   tick: number;
   presentationTick: number;
   playerFrameIdentity: string | null;
+  playerFrameIndex: number | null;
+  playerClip: string | null;
+  playerFacingBucket: string | null;
+  playerWorldAnchor: { x: number; y: number } | null;
   playerScreenAnchor: { x: number; y: number } | null;
+  referenceScene: {
+    objectId: string;
+    screenAnchor: { x: number; y: number };
+  } | null;
   visibleMonsterIds: string[];
   visibleMonsters: Array<{
     entityId: string;
@@ -80,12 +88,25 @@ export function installPlayerObserver(
     const player = manifest.drawCalls.find(
       ({ entityId }) => entityId === "player",
     );
+    const referenceScene = manifest.sceneSprites.find(
+      ({ objectId, visible }) => objectId === "structure:0:forge" && visible,
+    );
     samples.push({
       observedAtMs: performance.now(),
       tick: manifest.tick,
       presentationTick: manifest.presentationTick,
       playerFrameIdentity: player?.frameIdentity ?? null,
+      playerFrameIndex: player?.frameIndex ?? null,
+      playerClip: player?.clip ?? null,
+      playerFacingBucket: player?.facingBucket ?? null,
+      playerWorldAnchor: player ? { ...player.worldAnchor } : null,
       playerScreenAnchor: player ? { ...player.screenAnchor } : null,
+      referenceScene: referenceScene
+        ? {
+            objectId: referenceScene.objectId,
+            screenAnchor: { ...referenceScene.screenAnchor },
+          }
+        : null,
       visibleMonsterIds: manifest.drawCalls
         .filter(({ type, visible }) => type === "monster" && visible)
         .map(({ entityId }) => entityId)

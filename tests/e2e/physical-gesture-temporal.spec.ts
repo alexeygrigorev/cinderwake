@@ -101,6 +101,9 @@ test("desktop keyboard movement, canvas strike, and Strike button advance the pr
     "desktop-01-opening",
   );
 
+  await page.evaluate(() =>
+    window.__GAME_OBSERVE__!.clearPresentationSamples(),
+  );
   await page.keyboard.down("d");
   await expect
     .poll(
@@ -111,7 +114,30 @@ test("desktop keyboard movement, canvas strike, and Strike button advance the pr
       { timeout: 1_500 },
     )
     .toBeGreaterThan(initial.player.position.x);
+  await page.waitForTimeout(450);
   await page.keyboard.up("d");
+  const movementSamples = await page.evaluate(() =>
+    window.__GAME_OBSERVE__!.presentationSamples(),
+  );
+  const walkingEast = movementSamples.filter(
+    ({ playerClip, playerFacingBucket }) =>
+      playerClip === "walk" && playerFacingBucket === "east",
+  );
+  expect(walkingEast.length).toBeGreaterThan(4);
+  expect(
+    new Set(walkingEast.map(({ playerFrameIdentity }) => playerFrameIdentity))
+      .size,
+  ).toBeGreaterThanOrEqual(2);
+  const playerScreenXs = walkingEast.flatMap(({ playerScreenAnchor }) =>
+    playerScreenAnchor ? [playerScreenAnchor.x] : [],
+  );
+  expect(
+    Math.max(...playerScreenXs) - Math.min(...playerScreenXs),
+  ).toBeGreaterThan(12);
+  const forgeSamples = walkingEast.flatMap(({ referenceScene }) =>
+    referenceScene ? [referenceScene.screenAnchor.x] : [],
+  );
+  expect(forgeSamples.at(-1)!).toBeLessThan(forgeSamples[0]!);
   const afterMovement = await page.evaluate(() =>
     window.__GAME_OBSERVE__!.snapshot(),
   );
