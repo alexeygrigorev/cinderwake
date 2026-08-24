@@ -12,6 +12,15 @@ const files = (await Promise.all(["desktop", "phone"].map(async (profile) =>
   })),
 ))).flat();
 const tape = await fs.readFile("tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json");
+const roleTicks = { "0000": "behind", "0013": "boundary-before", "0014": "boundary-after", "0027": "front" };
+for (const profile of ["desktop", "phone"]) {
+  const timelinePath = `quality-results/sequences/depth-thorn-${profile === "desktop" ? "desktop-body" : "phone-body"}/render-manifest-timeline.json`;
+  const timeline = JSON.parse(await fs.readFile(timelinePath, "utf8"));
+  for (const [sample, role] of Object.entries(roleTicks)) {
+    const frame = timeline.frames?.[Number(sample)] ?? timeline[Number(sample)];
+    await fs.writeFile(path.join(root, profile, `${sample}-evidence.json`), `${JSON.stringify({ schemaVersion: 1, profile, sample, role, tick: frame?.tick, snapshot: frame?.snapshot?.player?.position, camera: frame?.manifest?.camera, viewport: frame?.manifest?.viewport, reproduction: "npm run capture:sequence -- --scenario depth-transition-thorn-pillar --commands-file tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json" }, null, 2)}\n`);
+  }
+}
 const expected = { schemaVersion: 1, status: "REQUIRES_INDEPENDENT_REVIEW", sourceCommit: "c1620cd0e596905107d7bf5a7e39df3ed09a6448", tapeSha256: createHash("sha256").update(tape).digest("hex"), viewports: { desktop: [1440, 900], phone: [390, 844] }, roles: ["behind", "boundary-before", "boundary-after", "front"], artifacts: files.sort((a,b) => a.path.localeCompare(b.path)) };
 if (checking) {
   const actual = JSON.parse(await fs.readFile(path.join(root, "manifest.v1.json"), "utf8"));

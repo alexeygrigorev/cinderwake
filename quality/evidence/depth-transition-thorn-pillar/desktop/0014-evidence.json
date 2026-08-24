@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "profile": "desktop",
+  "sample": "0014",
+  "role": "boundary-after",
+  "tick": 28,
+  "snapshot": {
+    "x": 31232,
+    "y": 6724
+  },
+  "camera": {
+    "x": 1512,
+    "y": 312,
+    "zoom": 1
+  },
+  "viewport": {
+    "width": 960,
+    "height": 540,
+    "dpr": 1.6666666666666667
+  },
+  "reproduction": "npm run capture:sequence -- --scenario depth-transition-thorn-pillar --commands-file tests/fixtures/sequences/depth-transition-thorn-pillar.commands.json"
+}
