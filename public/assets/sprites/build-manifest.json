@@ -40,7 +40,7 @@
       "source": "public/assets/sprites/environment-ground.png"
     },
     "environment-floor.png": {
-      "sha256": "4c7d73cface64f15f20edacba98f1d0596def73dc21cb5e8f066065ac22390be",
+      "sha256": "dc55eeeb0764be61d3c960f0b38c05b35d93286f920f891fae68715850e3a112",
       "source": "public/assets/sprites/environment-floor.png"
     },
     "environment-structures.png": {

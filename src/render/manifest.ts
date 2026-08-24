@@ -302,7 +302,7 @@ function buildSceneSprites(
         }
       }
       const wallOpacity =
-        cardinalFloor > 0 ? 0.34 : diagonalFloor > 0 ? 0.48 : 0.62;
+        cardinalFloor > 0 ? 0.52 : diagonalFloor > 0 ? 0.62 : 0.72;
       scene.push({
         ...sceneReference("scenery:tile:wall", (y % 16) * 16 + (x % 16)),
         objectId: `wall-overlay:${x}:${y}`,
@@ -341,7 +341,7 @@ function buildSceneSprites(
           else diagonalFloor += 1;
         }
       }
-      const opacity = cardinalFloor > 0 ? 0.24 : diagonalFloor > 0 ? 0.11 : 0;
+      const opacity = cardinalFloor > 0 ? 0.08 : diagonalFloor > 0 ? 0.04 : 0;
       if (opacity === 0) continue;
       const worldAnchor = {
         x: x * UNITS_PER_TILE + UNITS_PER_TILE / 2,
@@ -417,7 +417,7 @@ function buildSceneSprites(
           layer: "terrain",
           zOrder: scene.length,
           visible: intersectsViewport(destinationRect),
-          opacity: 0.13,
+          opacity: 0.28,
           rotation: direction.rotation,
         });
       }

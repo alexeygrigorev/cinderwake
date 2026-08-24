@@ -496,6 +496,67 @@ async function buildGrid(sourcePath, destination, mode = undefined) {
   return destination;
 }
 
+async function buildContinuousFloor(sourcePath, destination) {
+  const source = await sharp(sourcePath)
+    .resize(SOURCE_SIZE, SOURCE_SIZE, {
+      fit: "fill",
+      kernel: "lanczos3",
+    })
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const broadLighting = await sharp(sourcePath)
+    .resize(SOURCE_SIZE, SOURCE_SIZE, {
+      fit: "fill",
+      kernel: "lanczos3",
+    })
+    .blur(80)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const pixels = Buffer.alloc(source.data.length);
+  const clamp = (value, minimum, maximum) =>
+    Math.max(minimum, Math.min(maximum, value));
+  for (let offset = 0; offset < pixels.length; offset += 3) {
+    const sourceLuma =
+      source.data[offset] * 0.2126 +
+      source.data[offset + 1] * 0.7152 +
+      source.data[offset + 2] * 0.0722;
+    const broadLuma =
+      broadLighting.data[offset] * 0.2126 +
+      broadLighting.data[offset + 1] * 0.7152 +
+      broadLighting.data[offset + 2] * 0.0722;
+    // Preserve cracks, roots, grit, and irregular stone from the continuous
+    // source while removing its baked orange/cyan spotlight. A brighter
+    // neutral midpoint leaves collision overlays readable without restoring
+    // the rejected atlas of square cobblestone slabs.
+    const localLuma = clamp(46 + (sourceLuma - broadLuma) * 0.88, 14, 88);
+    pixels[offset] = Math.round(
+      clamp(localLuma + 2 + (source.data[offset] - sourceLuma) * 0.06, 0, 255),
+    );
+    pixels[offset + 1] = Math.round(
+      clamp(localLuma + (source.data[offset + 1] - sourceLuma) * 0.06, 0, 255),
+    );
+    pixels[offset + 2] = Math.round(
+      clamp(
+        localLuma - 4 + (source.data[offset + 2] - sourceLuma) * 0.06,
+        0,
+        255,
+      ),
+    );
+  }
+  await sharp(pixels, {
+    raw: {
+      width: source.info.width,
+      height: source.info.height,
+      channels: 3,
+    },
+  })
+    .png({ compressionLevel: 9, palette: true, quality: 100 })
+    .toFile(destination);
+  return destination;
+}
+
 async function buildDecalAtlas(sourcePath, destination) {
   const normalized = await normalizeDecalSource(sourcePath);
   const cells = await extractActorCells(normalized);
@@ -688,8 +749,8 @@ if (!OPTIONS.actorsOnly) {
     inputPath("environment", "ground-source.png"),
     outputPath("environment-ground.png"),
   );
-  const floorPath = await buildGrid(
-    inputPath("environment", "floor-source.png"),
+  const floorPath = await buildContinuousFloor(
+    inputPath("environment", "ground-source.png"),
     outputPath("environment-floor.png"),
   );
   const structuresPath = await buildGrid(
