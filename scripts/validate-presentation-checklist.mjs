@@ -49,6 +49,14 @@ const CONTROL_STATUSES = new Set(["UNRUN", "DETECTED", "NOT_DETECTED"]);
 const REVIEW_VERDICTS = new Set(["NOT_RUN", "ACCEPT", "REJECT", "UNCERTAIN"]);
 const SHA256 = /^[a-f0-9]{64}$/;
 const COMMIT = /^[a-f0-9]{40}$/;
+const ACCEPTANCE_POLICY = {
+  allPublishedChecksApplicable: true,
+  requiredResult: "PASS",
+  requiredContractCoverage: "automatic",
+  requiredRecipeCoverage: "implemented",
+  requiredNegativeControlStatus: "DETECTED",
+  requiredMandatoryReviewVerdict: "ACCEPT",
+};
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -246,6 +254,16 @@ function validateContract(contract) {
       "contract-recipes-path-invalid",
       "contract.recipesPath",
       `Expected ${RECIPES_PATH}.`,
+    );
+  if (
+    JSON.stringify(contract.acceptancePolicy) !==
+    JSON.stringify(ACCEPTANCE_POLICY)
+  )
+    addIssue(
+      issues,
+      "acceptance-policy-invalid",
+      "contract.acceptancePolicy",
+      "Every published check must be applicable and require PASS, automatic contract coverage, implemented recipe coverage, detected controls, and ACCEPT for mandatory review.",
     );
   validateIdList(
     contract.artifactRequirements,
@@ -797,6 +815,13 @@ function validateRun(contract, recipes, run, options) {
         "recipe-not-acceptance-ready",
         location,
         "PASS is prohibited while any recipe matrix or evaluator is partial, missing, or calibration-required.",
+      );
+    if (entry.result === "PASS" && contractCheck.coverage !== "automatic")
+      addIssue(
+        issues,
+        "contract-coverage-not-acceptance-ready",
+        location,
+        "PASS is prohibited while the versioned contract coverage is partial or missing.",
       );
     const artifacts = validateArtifactList(
       entry.artifacts,

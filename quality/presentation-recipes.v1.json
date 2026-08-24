@@ -8,7 +8,11 @@
       "checkId": "PRES-LIVE-001",
       "scenarioSet": {
         "coverage": "partial",
-        "requiredIds": ["ordinary-production-launch", "asset-load-recovery"]
+        "requiredIds": [
+          "ordinary-production-launch",
+          "asset-load-recovery",
+          "visible-control-census"
+        ]
       },
       "deviceProfileSet": {
         "coverage": "implemented",
@@ -29,7 +33,9 @@
         "requiredSignalIds": [
           "launch-and-controls-live",
           "failure-route-recovers",
-          "control-intents-registered"
+          "control-intents-registered",
+          "visible-controls-bijective",
+          "transition-deadlines-bound"
         ]
       },
       "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts tests/e2e/mobile.spec.ts tests/e2e/ui-text-contract.spec.ts",
@@ -43,6 +49,10 @@
         {
           "id": "atlas-load-aborted",
           "expectedSignal": "asset-recovery-visible"
+        },
+        {
+          "id": "visible-control-unregistered",
+          "expectedSignal": "visible-control-missing-intent"
         }
       ]
     },
@@ -123,8 +133,11 @@
       "id": "recipe:pres-sprite-004",
       "checkId": "PRES-SPRITE-004",
       "scenarioSet": {
-        "coverage": "implemented",
-        "requiredIds": ["all-registered-actor-banks"]
+        "coverage": "partial",
+        "requiredIds": [
+          "all-registered-actor-banks",
+          "canonical-character-layout-map"
+        ]
       },
       "deviceProfileSet": {
         "coverage": "implemented",
@@ -136,10 +149,12 @@
       },
       "evaluator": {
         "id": "actor-atlas-audit-v1",
-        "coverage": "implemented",
+        "coverage": "partial",
         "requiredSignalIds": [
           "all-banks-pass",
-          "all-authored-facing-comparisons-pass"
+          "all-authored-facing-comparisons-pass",
+          "character-layout-schema-complete",
+          "clip-facing-cell-map-exact"
         ]
       },
       "reproduce": "npm run art:animation:check",
@@ -160,6 +175,18 @@
         {
           "id": "clip-transition-scale-pop",
           "expectedSignal": "transition-scale-pop-detected"
+        },
+        {
+          "id": "registered-bank-omitted",
+          "expectedSignal": "registered-bank-missing"
+        },
+        {
+          "id": "clip-facing-map-swapped",
+          "expectedSignal": "clip-facing-cell-map-mismatch"
+        },
+        {
+          "id": "playable-layout-schema-diverged",
+          "expectedSignal": "character-layout-schema-mismatch"
         }
       ]
     },
@@ -346,7 +373,8 @@
           "public-selection",
           "ordinary-production-launch",
           "outcome-win",
-          "outcome-loss"
+          "outcome-loss",
+          "embercross-services"
         ]
       },
       "deviceProfileSet": {
@@ -362,7 +390,9 @@
         "coverage": "partial",
         "requiredSignalIds": [
           "visible-roles-use-decoded-sprites",
-          "text-only-titles"
+          "text-only-titles",
+          "title-roles-exactly-allowlisted",
+          "all-visible-draws-have-sprite-provenance"
         ]
       },
       "reproduce": "npx playwright test tests/e2e/ui-text-contract.spec.ts tests/e2e/sprite-contract.spec.ts",
@@ -370,6 +400,14 @@
         {
           "id": "role-replaced-with-css-or-text",
           "expectedSignal": "non-sprite-visible-role"
+        },
+        {
+          "id": "non-title-marked-as-title",
+          "expectedSignal": "title-role-not-allowlisted"
+        },
+        {
+          "id": "css-decoration-added-beside-sprite",
+          "expectedSignal": "visible-draw-without-sprite-provenance"
         }
       ]
     },
@@ -404,7 +442,8 @@
         "requiredSignalIds": [
           "targets-contained",
           "subject-contained",
-          "hud-and-controls-contained"
+          "hud-and-controls-contained",
+          "phone-text-legible"
         ]
       },
       "reproduce": "npx playwright test tests/e2e/mobile.spec.ts tests/e2e/screen-contract.spec.ts tests/e2e/city.spec.ts",
@@ -425,6 +464,22 @@
         {
           "id": "orientation-overlap",
           "expectedSignal": "orientation-overlap-detected"
+        },
+        {
+          "id": "status-text-too-small",
+          "expectedSignal": "phone-text-size-below-contract"
+        },
+        {
+          "id": "copy-low-contrast",
+          "expectedSignal": "phone-text-contrast-below-contract"
+        },
+        {
+          "id": "copy-over-ornament",
+          "expectedSignal": "copy-quiet-field-violated"
+        },
+        {
+          "id": "label-wrap-orphan",
+          "expectedSignal": "phone-copy-wrap-invalid"
         }
       ]
     },
@@ -807,7 +862,8 @@
         "coverage": "partial",
         "requiredSignalIds": [
           "z-order-follows-foot-boundary",
-          "attachments-follow-owner"
+          "attachments-follow-owner",
+          "health-effect-occlusion-in-range"
         ]
       },
       "reproduce": "npx playwright test tests/e2e/depth-transition-thorn-pillar.spec.ts tests/e2e/live-player-journey.spec.ts",
@@ -825,6 +881,14 @@
         {
           "id": "rear-actor-covers-front",
           "expectedSignal": "actor-depth-inverted"
+        },
+        {
+          "id": "health-enlarged-or-opaque",
+          "expectedSignal": "health-occlusion-ratio-exceeded"
+        },
+        {
+          "id": "effect-covers-owner",
+          "expectedSignal": "effect-owner-occlusion-ratio-exceeded"
         }
       ]
     },
@@ -941,6 +1005,9 @@
           "opening-room",
           "combat-loot",
           "embercross-overview",
+          "public-selection",
+          "loading-and-outcomes",
+          "embercross-service-surfaces",
           "accepted-density-corpus"
         ]
       },
@@ -962,7 +1029,8 @@
         "requiredSignalIds": [
           "occupancy-and-spread-in-range",
           "actor-overlap-readable",
-          "hierarchy-reference-distance-in-range"
+          "hierarchy-reference-distance-in-range",
+          "public-ui-composition-readable"
         ]
       },
       "reproduce": "npx vitest run tests/unit/opening-composition.test.ts tests/unit/city-composition.test.ts",
@@ -986,6 +1054,14 @@
         {
           "id": "large-empty-ground",
           "expectedSignal": "large-empty-ground-band"
+        },
+        {
+          "id": "selection-secondary-art-removed",
+          "expectedSignal": "selection-composition-too-sparse"
+        },
+        {
+          "id": "service-copy-over-decoration",
+          "expectedSignal": "service-copy-field-occluded"
         }
       ]
     },

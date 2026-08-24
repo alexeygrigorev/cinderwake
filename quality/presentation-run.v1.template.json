@@ -47,6 +47,12 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "visible-control-unregistered",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {
@@ -134,7 +140,7 @@
       "checkId": "PRES-SPRITE-004",
       "executionRecipeId": "recipe:pres-sprite-004",
       "result": "UNRUN",
-      "coverageAtRun": "automatic",
+      "coverageAtRun": "partial",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],
@@ -170,6 +176,24 @@
         },
         {
           "id": "clip-transition-scale-pop",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "registered-bank-omitted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "clip-facing-map-swapped",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "playable-layout-schema-diverged",
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
@@ -389,6 +413,18 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "non-title-marked-as-title",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "css-decoration-added-beside-sprite",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {
@@ -440,6 +476,30 @@
         },
         {
           "id": "orientation-overlap",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "status-text-too-small",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "copy-low-contrast",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "copy-over-ornament",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "label-wrap-orphan",
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
@@ -887,6 +947,18 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "health-enlarged-or-opaque",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "effect-covers-owner",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {
@@ -1046,6 +1118,18 @@
         },
         {
           "id": "large-empty-ground",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "selection-secondary-art-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "service-copy-over-decoration",
           "status": "UNRUN",
           "signal": "",
           "artifacts": []

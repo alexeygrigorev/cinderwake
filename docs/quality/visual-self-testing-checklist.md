@@ -2,6 +2,8 @@
 
 This is the repeatable release checklist for presentation defects. It is deliberately **not** a gameplay-design checklist: quests, balance, NPC behavior, economy, and progression are out of scope. Run it for Cinderwake now and keep the IDs and evidence shapes when adapting the framework to another game.
 
+Procedural-map variability and the causal monster-death → loot-drop → pickup → inventory/economy chain are gameplay acceptance, not presentation acceptance. Route them through the game/domain and production-journey test suites. Their visible map, loot, inventory, and merchant surfaces still enter the applicable `PRES-*` rows, but a presentation `PASS` must never be cited as proof that generation varies or that loot causality works.
+
 The [executable presentation-run contract](presentation-run-contract.md), [ordered recipe catalog](../../quality/presentation-recipes.v1.json), and [exact blank run template](../../quality/presentation-run.v1.template.json) lock this checklist’s 28 IDs, order, matrices, controls, evidence shape, and acceptance semantics. Use those files rather than copying a partial handwritten result next time.
 
 For every item, mark exactly one result:
@@ -20,10 +22,10 @@ For every item, mark exactly one result:
 
 This is the short entry checklist for the concrete failures found during Cinderwake playtesting. A future self-testing agent must go through every box on every release candidate. The box is satisfied only when all linked `PRES-*` rows have executable evidence in the same hash-bound presentation run; checking the prose box by inspection is not sufficient.
 
-- [ ] The ordinary production page starts, character selection works, Begin works, and every visible button produces its declared state change. (`PRES-LIVE-001`, `PRES-BLANK-011`)
+- [ ] The ordinary production page starts, character selection works, Begin works, and a complete visible-control census maps every enabled button bijectively to one live intent and state change within its frozen deadline. (`PRES-LIVE-001`, `PRES-BLANK-011`)
 - [ ] On mobile, tapping reachable ground walks without striking; Strike attacks without creating a movement route; the four pad directions work. (`PRES-INPUT-002`, `PRES-MOBILE-010`)
 - [ ] Every playable character's world position, on-screen glyph, facing, and walk animation agree with each commanded direction. (`PRES-MOVE-003`, `PRES-FACING-015`)
-- [ ] Every actor and monster atlas is cut correctly: no clipped cells, blank cells, stale recovery poses, scale pops, displaced anchors, or malformed facing banks. (`PRES-SPRITE-004`, `PRES-ANCHOR-013`)
+- [ ] Every actor and monster atlas follows its canonical family layout and exact clip/facing cell map and is cut correctly: no omitted banks, swapped maps, clipped cells, blank cells, stale recovery poses, scale pops, displaced anchors, or malformed facing banks. (`PRES-SPRITE-004`, `PRES-ANCHOR-013`)
 - [ ] Idle, walk, turn, attack, ability, hurt, recovery, and death sequences look natural in order and do not jump, crouch/pop between clips, freeze, duplicate, skip, flicker, or retain stale pixels; walking alternates visible left/right support rather than changing pixels without a readable gait. (`PRES-MOTION-005`, `PRES-ANCHOR-013`, `PRES-DUP-014`, `PRES-FLICKER-024`)
 - [ ] The player, enemies, buildings, props, and UI sprites remain crisp at the original captured resolution on high-DPR phones and desktops. (`PRES-CRISP-006`, `PRES-CROSSDEVICE-025`)
 - [ ] Nothing is stretched: source and destination aspect ratios, X/Y camera scale, role proportions, and facing-to-facing scale remain consistent. (`PRES-ASPECT-007`, `PRES-PROPORTION-023`)
@@ -31,13 +33,13 @@ This is the short entry checklist for the concrete failures found during Cinderw
 - [ ] The camera follows starts, stops, turns, reversals, and map edges smoothly without jitter, lurch, overshoot, or a one-frame discontinuity. (`PRES-CAMERA-016`, `PRES-MOTION-005`)
 - [ ] Characters cannot walk through solid scenery, but every collision is explained by a visible footprint, names the blocking object, gives immediate feedback, and still permits a route around it. (`PRES-COLLIDE-008`)
 - [ ] There are no invisible fences, oversized roof colliders, unexplained blocked directions, or collision geometry left behind after its sprite disappears. (`PRES-COLLIDE-008`, `PRES-LEAK-012`)
-- [ ] All player-facing world imagery is sprite-backed except permitted title text; no CSS placeholder, emoji, glyph, gradient panel, or debug shape substitutes for game art. (`PRES-SPRITE-009`)
-- [ ] Wilderness and Embercross visibly contain coherent sprite-backed buildings, landmarks, props, objects, ground detail, and service locations rather than empty scattered tiles. (`PRES-PROP-020`, `PRES-DENSITY-022`, `PRES-TILE-018`)
+- [ ] All player-facing imagery is sprite-backed except exact allowlisted semantic title roles; no mislabeled ordinary text, CSS/pseudo-element placeholder, emoji, gradient, border, shadow, canvas vector, or debug shape substitutes for game art. (`PRES-SPRITE-009`)
+- [ ] Selection, loading, outcomes, service surfaces, wilderness, and Embercross have coherent hierarchy and density; world scenes contain sprite-backed buildings, landmarks, props, objects, ground detail, and service locations rather than empty scattered tiles. (`PRES-PROP-020`, `PRES-DENSITY-022`, `PRES-TILE-018`)
 - [ ] Actors, monsters, scenery, loot, effects, city residents, service surfaces, and selection art share one Cinderwake perspective, lighting, palette, edge treatment, and detail density. (`PRES-STYLE-021`, `PRES-PROPORTION-023`)
 - [ ] Wide desktop and landscape views do not expose repetitive topology, large low-information ground fields, checkerboard seams, or cloned-prop patterns. (`PRES-TILE-018`, `PRES-DENSITY-022`)
 - [ ] Actors and monsters read as living intentional poses at play scale; none looks like a prone corpse, malformed cutout, floating body, or unrelated ground prop. (`PRES-SPRITE-004`, `PRES-MOTION-005`, `PRES-PROPORTION-023`)
-- [ ] Combat remains legible: actors do not collapse into accidental overlaps, depth order is logical, effects stay attached, and health indicators do not obscure the sprites. (`PRES-DEPTH-019`, `PRES-DENSITY-022`)
-- [ ] Phone portrait and landscape layouts keep the player, destination, city services, status text, and controls readable, unobscured, safe-area aware, and comfortably tappable. (`PRES-MOBILE-010`, `PRES-CROSSDEVICE-025`)
+- [ ] Combat remains legible: actors do not collapse into accidental overlaps, depth order is logical, effects stay attached, and calibrated health/effect size, opacity, offset, and body-overlap ratios do not obscure the sprites. (`PRES-DEPTH-019`, `PRES-DENSITY-022`)
+- [ ] Phone portrait and landscape layouts keep the player, destination, city services, status text, and controls readable, unobscured, safe-area aware, comfortably tappable, high-contrast, correctly wrapped, and inside quiet sprite fields. (`PRES-MOBILE-010`, `PRES-CROSSDEVICE-025`)
 - [ ] Embercross can be found from the wilderness, entered through a visible gate, and its merchant, tavern, and healer controls are visibly identifiable and live through physical input. (`PRES-CITY-027`, supported by `PRES-LIVE-001`, `PRES-PROP-020`, and `PRES-MOBILE-010`)
 - [ ] Every reproduction starts from a declared production route or serialized state, records the exact gesture/command tape, and captures synchronized snapshots, manifests, ordered frames, final state, environment, and hashes. (`PRES-STATE-028`, `PRES-REVIEW-026`, and every applicable recipe)
 - [ ] An independent visual agent reviews the ordered frames at actual play scale and normal speed; a machine pass cannot override its specific rejection. (`PRES-REVIEW-026` and every row marked mandatory review)
@@ -53,7 +55,7 @@ If any box cannot be backed by its linked rows, leave it unchecked and record th
 5. Run the four screen profiles and at least one real high-DPR phone profile. Retain ordered frames, not only final screenshots.
 6. Run every named negative control through the same evaluator used on the candidate.
 7. Give the immutable, hash-bound artifacts to an independent visual agent at actual play scale.
-8. Publish one result record keyed by the IDs below. Any `FAIL`, unrun P0, missing negative control, or mandatory review without `ACCEPT` blocks visual acceptance.
+8. Publish one result record keyed by the IDs below. Every published row is applicable to Cinderwake: any result other than `PASS`, contract coverage other than `automatic`, recipe coverage other than `implemented`, any required control other than `DETECTED`, or any mandatory review other than `ACCEPT` blocks visual acceptance. Priority orders the work; it never makes P1/P2 optional.
 
 ## Reusable adapter and evidence contract
 
@@ -80,11 +82,11 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
 - Scenario/precondition: cold ordinary `/` route, every selectable character in turn, assets uncached; separately abort and stall one required atlas.
 - Production gesture: select character, activate Begin, then activate every visible game/modal control using its real mouse or touch event.
-- Ordered artifacts: page frame before gesture; browser-event log; the declared control-to-intent registry; observer readiness and presentation samples; frame/state after each control; console/page errors; failure, Retry, and Back frames; standard metadata/hashes.
-- Machine signal and threshold: each declared intent must reach its semantic postcondition within the deadline already owned by that route; presentation ticks must remain live; failure must reach a recoverable screen. Do not add a universal timing number—calibrate per transition from green CI and a slow reference phone, then freeze it in screen metadata.
-- Required negative control: separately remove the Begin listener and one visible action listener; stall one asset; abort one atlas. Each must fail as `launch-inert`, `control-inert`, or reach the intended recovery contract, never pass merely because the element was clickable.
+- Ordered artifacts: page frame before gesture; browser-event log; complete visible enabled-control census; a bijective census-to-intent/postcondition map; frozen per-transition deadline contract; observer readiness and presentation samples; frame/state after each control; console/page errors; failure, Retry, and Back frames; standard metadata/hashes.
+- Machine signal and threshold: every visible enabled control has exactly one declared intent/postcondition and every applicable declared intent has exactly one visible control; each reaches its semantic postcondition within its frozen route/device deadline; presentation ticks remain live; failure reaches a recoverable screen. Do not add a universal timing number—calibrate each transition from green CI and a slow reference phone, then freeze it in the retained deadline contract.
+- Required negative control: separately remove the Begin listener and one visible action listener; stall one asset; abort one atlas; add one visible enabled control without registering an intent. Each must fail as `launch-inert`, `control-inert`, `visible-control-missing-intent`, or reach the intended recovery contract, never pass merely because the element was clickable.
 - Current evidence: `tests/e2e/live-player-journey.spec.ts` test “ordinary production route advances…”; `tests/e2e/physical-gesture-temporal.spec.ts`; `tests/e2e/mobile.spec.ts` test “real mobile selection path…”; loading abort/stall tests in `tests/e2e/ui-text-contract.spec.ts`; criteria in `docs/screen-test-playbook.md` lines 60–75.
-- Missing automation/next implementation: the two listener-removal mutations and per-control intent registry are contractually required but not yet wired into one evaluator; ordinary-route coverage is still a curated subset.
+- Missing automation/next implementation: the listener-removal and unregistered-visible-control mutations, census bijection, and frozen transition deadlines are contractually required but not yet wired into one evaluator; ordinary-route coverage is still a curated subset.
 - Independent visual-agent review mandatory: **yes**, for visible pressed/loading/recovery feedback; liveness itself is machine-authoritative.
 
 ### PRES-INPUT-002 — touch movement is not strike
@@ -113,14 +115,14 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-SPRITE-004 — complete, correctly cut sprite cells
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic**.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for existing crop/continuity checks, **Partial** for canonical layout/map integrity.
 - Scenario/precondition: every registered actor × clip × runtime facing, including unreachable registered banks, decoded directly from the production atlas.
 - Production gesture: none; launch production once to prove decoded assets, then audit the atlas offline in runtime order.
-- Ordered artifacts: catalog/atlas hashes; per-bank ordered source cells; alpha masks and measurements; 144 strips and six overviews; report JSON/HTML; production decode evidence.
-- Machine signal and threshold: nonblank alpha, source bounds, safe crop, common foot anchor, continuity envelopes, pose diversity, loop wrap, and recovery use the frozen values in `docs/quality-model.md` lines 99–115 and the actor contract—never silently widen them for a failing actor.
-- Required negative control: stale recovery, displaced frame, cell-edge clipping, facing-scale overflow, and declared clip-transition scale pop.
+- Ordered artifacts: catalog/atlas hashes; canonical per-family character layout contract; exact clip/facing→cell map; registry completeness report; per-bank ordered source cells; alpha masks and measurements; 144 strips and six overviews; report JSON/HTML; production decode evidence.
+- Machine signal and threshold: every registered playable family implements one complete canonical cell-size, clip, facing, and anchor schema; every runtime crop resolves through its exact declared clip/facing→cell map; no registered bank is omitted. Nonblank alpha, source bounds, safe crop, common foot anchor, continuity envelopes, pose diversity, loop wrap, and recovery use the frozen values in `docs/quality-model.md` lines 99–115 and the actor contract—never silently widen them for a failing actor.
+- Required negative control: stale recovery, displaced frame, cell-edge clipping, facing-scale overflow, declared clip-transition scale pop, omitted registered bank, swapped clip/facing cell map, and a playable family diverging from its canonical layout schema.
 - Current evidence: `npm run art:animation:check`; `scripts/audit-actor-atlases.mjs`; `docs/decisions/0015-exhaustive-actor-atlas-audit.md` lines 17–25; decode test in `tests/e2e/sprite-contract.spec.ts`.
-- Missing automation/next implementation: none for structural/cut coverage; add any newly registered sprite family to the exhaustive registry rather than sampling it in one scene.
+- Missing automation/next implementation: add the canonical layout/map completeness controls to the existing exhaustive audit; any newly registered sprite family must enter that registry rather than being sampled in one scene.
 - Independent visual-agent review mandatory: **yes**, for anatomy, support ownership, and whether the cuts form natural motion.
 
 ### PRES-MOTION-005 — no jumpy, frozen, skipped, or reordered animation
@@ -176,11 +178,11 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
 - Scenario/precondition: selection, loading, gameplay HUD, all actions/effects/loot, Test Lab, failure/retry, win/loss, and any newly added city/interior screen.
 - Production gesture: traverse each screen and activate every stateful surface so hidden/conditional visuals become visible.
-- Ordered artifacts: visible DOM text/element inventory per state; computed background images; manifest draw-call inventory; decoded asset dimensions; screenshots and accessibility labels.
-- Machine signal and threshold: visible non-title text offender count is exactly zero; every declared visual role resolves to a decoded local raster sprite/draw; only the explicit title allowlist may render as text.
-- Required negative control: replace one glyph/button/health/frame/scenery role with CSS shape or plain text; the inventory must name that role.
+- Ordered artifacts: visible DOM text/element inventory per state; exact semantic title-role allowlist and hash; computed styles for elements and pseudo-elements; canvas operation inventory; manifest draw-call inventory; decoded asset dimensions; screenshots and accessibility labels.
+- Machine signal and threshold: visible non-title text offender count is exactly zero; every visible element, pseudo-element, CSS decoration, and canvas draw resolves to decoded local raster provenance; only a frozen semantic title role on the exact allowlist may render as text. Marking arbitrary copy with a title attribute does not create a title role.
+- Required negative control: replace one glyph/button/health/frame/scenery role with CSS shape or plain text; mark ordinary copy as a title; add a CSS gradient/border/shadow decoration beside an otherwise sprite-backed element. The complete draw inventory must name each offender.
 - Current evidence: `tests/e2e/ui-text-contract.spec.ts` lines 6–76 and its selection/gameplay states; `tests/e2e/sprite-contract.spec.ts` test “real canvas uses atlas image draws…”.
-- Missing automation/next implementation: current DOM selector lists and manifest role registry are curated; add a complete visible-element/draw provenance inventory and a CSS-shape mutation.
+- Missing automation/next implementation: current DOM selector lists, title list, and manifest role registry are curated; bind the semantic title allowlist and inventory all elements, pseudo-elements, CSS decorations, and canvas operations through the same provenance evaluator.
 - Independent visual-agent review mandatory: **no** for provenance; **yes** under style/composition rows.
 
 ### PRES-MOBILE-010 — mobile crop, overlap, readability, and tap feedback
@@ -188,11 +190,11 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
 - Scenario/precondition: phone portrait and landscape, safe-area inset variants, DPR 1 and real-device DPR, selection/loading/gameplay/modal states, central actor near each control region.
 - Production gesture: select/Begin, touch route, pad drag/release, every action tap, orientation change, Retry/Back.
-- Ordered artifacts: composed-page screenshots before/pressed/after each gesture; element rectangles and center hit tests; safe areas; canvas device projection/crop; manifest actors/objectives; state/intent deltas.
-- Machine signal and threshold: no page overflow; required regions contained; targets meet each profile’s frozen minimum (44 CSS px on touch); stage/control coverage and world-UI overlap obey `quality/screen-contract.v1.json`; pressed gesture must yield both immediate visual state and semantic outcome.
-- Required negative control: undersize/occlude/offscreen a target, crop a subject landmark, detach HUD, suppress pressed state, and rotate into overlap.
+- Ordered artifacts: composed-page screenshots before/pressed/after each gesture; element rectangles and center hit tests; safe areas; canvas device projection/crop; manifest actors/objectives; state/intent deltas; phone-scale text/glyph size, contrast, line-wrap, orphan-token, and quiet-field measurements.
+- Machine signal and threshold: no page overflow; required regions contained; targets meet each profile’s frozen minimum (44 CSS px on touch); stage/control coverage and world-UI overlap obey `quality/screen-contract.v1.json`; pressed gesture yields both immediate visual state and semantic outcome. Status and action copy meets frozen phone-size/contrast bounds, stays within its opaque quiet sprite field, and obeys the accepted wrap/orphan contract.
+- Required negative control: undersize/occlude/offscreen a target, crop a subject landmark, detach HUD, suppress pressed state, rotate into overlap, shrink status text, lower copy contrast, place copy over ornament, and force an orphan-token wrap.
 - Current evidence: profile contract at `quality/screen-contract.v1.json` lines 4–36; `tests/e2e/screen-contract.spec.ts` including target/crop/HUD mutations; `tests/e2e/mobile.spec.ts` layout and real controls.
-- Missing automation/next implementation: add safe-area inset emulation, pressed-state image/oracle, orientation transition capture, and real-device artifact ingestion.
+- Missing automation/next implementation: add safe-area inset emulation, pressed-state image/oracle, orientation transition capture, real-device artifact ingestion, and the four phone-copy legibility mutations to the unified evaluator.
 - Independent visual-agent review mandatory: **yes**, for native readability, hand occlusion, and perceived response.
 
 ## P1 — visual continuity, composition, and coherence
@@ -298,11 +300,11 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P1**; current coverage **Partial**.
 - Scenario/precondition: actor passes in front of and behind each tall prop/building, actors overlap, projectile/effect crosses them, health UI follows owner.
 - Production gesture: approach, circle, and cross each occluder; strike on both sides.
-- Ordered artifacts: ordered draw calls with Z/layer and world/screen foot anchors; per-frame masks; overlap geometry; full frames/contact sheet; owner IDs for attached UI/effects.
-- Machine signal and threshold: stable unique draw order; depth relation changes only at the declared ground/foot ordering boundary; attached UI/effects retain owner and calibrated offset; no duplicate owner body.
-- Required negative control: swap actor/prop Z, render health behind owner, detach effect, duplicate actor draw, and let a rear actor cover a front actor.
+- Ordered artifacts: ordered draw calls with Z/layer and world/screen foot anchors; per-frame actor, health, and effect masks; device-space actor/health/effect overlap ratios, opacity, dimensions, and owner-relative offsets; full frames/contact sheet; owner IDs for attached UI/effects.
+- Machine signal and threshold: stable unique draw order; depth relation changes only at the declared ground/foot ordering boundary; attached UI/effects retain owner and calibrated offset; health and effect device-space size, opacity, and actor-occlusion ratios stay inside their accepted contracts; no duplicate owner body.
+- Required negative control: swap actor/prop Z, render health behind owner, detach effect, duplicate actor draw, let a rear actor cover a front actor, enlarge/make opaque a health indicator, and expand an effect across its owner.
 - Current evidence: `RenderManifestV1.paintQueue` is the Canvas renderer's exact scene/shadow/body/health paint plan; `tests/unit/depth-transition.test.ts` rejects actor/prop swaps, health-behind-owner, duplicate bodies, invalid queue indices, and rear-actor coverage. The `depth-transition-thorn-pillar` production route and its command tape reproduce the audited `cinder-041` behind→front crossing on desktop and 390×844. Eight ordered role records bind nonzero isolated actor/prop alpha intersections, the exact boundary order flip, start/final positions, no blocked movement, physical page frames, logical masks, capture sources, and reproduction commands across 34 retained artifacts. `/root/thorn_depth_exact_review` independently accepted only that exact journey at commit `be36b4acb9c3db2c1932de09092aaabd0087ec74` and manifest hash `d37065d8eccfe652dc0ed48657f9b1e9d7b7f8196ca210abcebf7fe4d9145622`; the validator reconstructs the reviewed manifest projection so any corpus change invalidates the acceptance. Effect detachment remains owned by the combat-specific `assessCombatReadability` control because only combat effects have an owner semantic.
-- Missing automation/next implementation: repeat the ordered crossing for every other tall occluder; record attacks on both sides; bind attached health and effect evidence; and exercise a richer actor matrix. `PRES-DEPTH-019` explicitly remains **Partial** despite the accepted thorn-pillar journey.
+- Missing automation/next implementation: repeat the ordered crossing for every other tall occluder; record attacks on both sides; bind attached health/effect masks and occlusion-ratio controls; and exercise a richer actor matrix. `PRES-DEPTH-019` explicitly remains **Partial** despite the accepted thorn-pillar journey.
 - Independent visual-agent review mandatory: **yes**, because artistically correct partial occlusion depends on silhouette.
 
 ### PRES-PROP-020 — buildings, props, objects, and complex scenery are visibly present
@@ -332,13 +334,13 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 ### PRES-DENSITY-022 — coherent density, hierarchy, and readable scene at play scale
 
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P1**; current coverage **Partial**.
-- Scenario/precondition: opening, combat, sparse/dense generated rooms, map threshold, and future city/interior on all device profiles.
+- Scenario/precondition: selection, loading, outcomes, service sheets, opening, combat, sparse/dense generated rooms, map threshold, and future city/interior on all device profiles.
 - Production gesture: launch, move through each composition, enter combat, stop beside major structure.
-- Ordered artifacts: role/occupancy map; saliency/contrast and overlap evidence; device-space actor/object bounds; ordered gameplay frames/video; accepted/rejected reference hashes.
-- Machine signal and threshold: existing focal occupancy, crop, safe encounter, overlap, and HUD occlusion gates are prerequisites. Global density/hierarchy has **calibration required** from accepted scenes and deliberately empty, cluttered, repetitive, and low-contrast mutations.
-- Required negative control: remove secondary scenery, fill frame with repeated props, hide player among same-value objects, overlap focal actors, and create large empty ground field.
+- Ordered artifacts: world role/occupancy map; public-UI composition matrix; saliency/contrast, quiet-field, and overlap evidence; device-space actor/object/copy bounds; ordered gameplay and UI-state frames/video; accepted/rejected reference hashes.
+- Machine signal and threshold: existing focal occupancy, crop, safe encounter, overlap, HUD occlusion, selection hierarchy, and service-copy quiet-field gates are prerequisites. Global density/hierarchy has **calibration required** from accepted scenes/UI states and deliberately empty, cluttered, repetitive, and low-contrast mutations.
+- Required negative control: remove secondary scenery, fill frame with repeated props, hide player among same-value objects, overlap focal actors, create a large empty ground field, remove selection secondary art, and place service copy over decoration.
 - Current evidence: `tests/framework/opening-composition.ts` occupancy/crop limits; `tests/e2e/screen-contract.spec.ts`; current screen review explicitly identifies empty ground/under-staging in `quality/screen-review.v1.json`.
-- Missing automation/next implementation: promote those qualitative rejection reasons into candidate-vs-reference measurements and negative controls; current geometry can pass a scene that still looks bad.
+- Missing automation/next implementation: promote those qualitative rejection reasons into candidate-vs-reference measurements and negative controls across both world scenes and every public UI state; current geometry can pass a scene or selection/service surface that still looks bad.
 - Independent visual-agent review mandatory: **yes**, always.
 
 ### PRES-PROPORTION-023 — consistent actor/object scale and natural proportions

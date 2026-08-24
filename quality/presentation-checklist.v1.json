@@ -3,6 +3,14 @@
   "kind": "PresentationChecklistContractV1",
   "adapterContract": "PresentationAdapterV1",
   "recipesPath": "quality/presentation-recipes.v1.json",
+  "acceptancePolicy": {
+    "allPublishedChecksApplicable": true,
+    "requiredResult": "PASS",
+    "requiredContractCoverage": "automatic",
+    "requiredRecipeCoverage": "implemented",
+    "requiredNegativeControlStatus": "DETECTED",
+    "requiredMandatoryReviewVerdict": "ACCEPT"
+  },
   "artifactRequirements": [
     "environment-metadata",
     "semantic-snapshot-timeline",
@@ -21,13 +29,16 @@
       "evidenceRequirements": [
         "production-control-route",
         "recovery-frame-sequence",
-        "control-intent-registry"
+        "control-intent-registry",
+        "visible-control-census-to-intent-map",
+        "transition-deadline-contract"
       ],
       "negativeControlIds": [
         "begin-listener-removed",
         "action-listener-removed",
         "required-asset-stalled",
-        "atlas-load-aborted"
+        "atlas-load-aborted",
+        "visible-control-unregistered"
       ]
     },
     {
@@ -64,19 +75,24 @@
       "id": "PRES-SPRITE-004",
       "executionRecipeId": "recipe:pres-sprite-004",
       "priority": "P0",
-      "coverage": "automatic",
+      "coverage": "partial",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "atlas-catalog-hashes",
         "all-bank-cell-masks",
-        "atlas-audit-report"
+        "atlas-audit-report",
+        "canonical-character-layout-contract",
+        "clip-facing-cell-map"
       ],
       "negativeControlIds": [
         "stale-recovery",
         "frame-displaced",
         "cell-edge-clipped",
         "facing-scale-overflow",
-        "clip-transition-scale-pop"
+        "clip-transition-scale-pop",
+        "registered-bank-omitted",
+        "clip-facing-map-swapped",
+        "playable-layout-schema-diverged"
       ]
     },
     {
@@ -156,9 +172,15 @@
       "evidenceRequirements": [
         "visible-dom-inventory",
         "manifest-draw-provenance",
-        "decoded-role-inventory"
+        "decoded-role-inventory",
+        "semantic-title-role-allowlist",
+        "complete-visible-draw-provenance"
       ],
-      "negativeControlIds": ["role-replaced-with-css-or-text"]
+      "negativeControlIds": [
+        "role-replaced-with-css-or-text",
+        "non-title-marked-as-title",
+        "css-decoration-added-beside-sprite"
+      ]
     },
     {
       "id": "PRES-MOBILE-010",
@@ -169,14 +191,19 @@
       "evidenceRequirements": [
         "mobile-profile-frames",
         "hit-target-geometry",
-        "safe-area-and-device-projection"
+        "safe-area-and-device-projection",
+        "phone-text-legibility-metrics"
       ],
       "negativeControlIds": [
         "target-undersized-or-occluded",
         "subject-cropped",
         "hud-detached",
         "pressed-state-suppressed",
-        "orientation-overlap"
+        "orientation-overlap",
+        "status-text-too-small",
+        "copy-low-contrast",
+        "copy-over-ornament",
+        "label-wrap-orphan"
       ]
     },
     {
@@ -333,14 +360,17 @@
       "evidenceRequirements": [
         "z-ordered-draw-calls",
         "occlusion-masks",
-        "attachment-owner-records"
+        "attachment-owner-records",
+        "body-health-effect-mask-ratios"
       ],
       "negativeControlIds": [
         "actor-prop-z-swapped",
         "health-behind-owner",
         "effect-detached",
         "actor-drawn-twice",
-        "rear-actor-covers-front"
+        "rear-actor-covers-front",
+        "health-enlarged-or-opaque",
+        "effect-covers-owner"
       ]
     },
     {
@@ -390,14 +420,17 @@
       "evidenceRequirements": [
         "role-occupancy-map",
         "saliency-and-overlap-evidence",
-        "accepted-rejected-reference-hashes"
+        "accepted-rejected-reference-hashes",
+        "public-ui-composition-matrix"
       ],
       "negativeControlIds": [
         "secondary-scenery-removed",
         "repeated-prop-clutter",
         "player-hidden-by-value",
         "focal-actors-overlapped",
-        "large-empty-ground"
+        "large-empty-ground",
+        "selection-secondary-art-removed",
+        "service-copy-over-decoration"
       ]
     },
     {

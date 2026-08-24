@@ -54,6 +54,12 @@ async function fixtureWithReadyPass(): Promise<Fixture> {
   const check = value.contract.checks[index];
   const recipe = value.recipes.recipes[index];
   const entry = value.run.checks[index];
+  check.coverage = "automatic";
+  entry.coverageAtRun = "automatic";
+  recipe.scenarioSet.coverage = "implemented";
+  recipe.deviceProfileSet.coverage = "implemented";
+  recipe.gestureSet.coverage = "implemented";
+  recipe.evaluator.coverage = "implemented";
   const sha256 = crypto
     .createHash("sha256")
     .update(await fs.readFile(packagePath))
@@ -130,6 +136,14 @@ describe("presentation checklist contract", () => {
 
   it("binds every ordered contract row to one recipe and one run entry", async () => {
     const { contract, recipes, run } = await fixture();
+    expect(contract.acceptancePolicy).toEqual({
+      allPublishedChecksApplicable: true,
+      requiredResult: "PASS",
+      requiredContractCoverage: "automatic",
+      requiredRecipeCoverage: "implemented",
+      requiredNegativeControlStatus: "DETECTED",
+      requiredMandatoryReviewVerdict: "ACCEPT",
+    });
     expect(
       contract.checks.map(
         ({
@@ -213,15 +227,22 @@ describe("presentation checklist contract", () => {
     }
   });
 
-  it("adds liveness intent-registry evidence and both listener controls", async () => {
+  it("binds every visible control bijectively to an intent and deadline", async () => {
     const { contract, recipes, run } = await fixture();
     const check = contract.checks[0];
     expect(check.evidenceRequirements).toContain("control-intent-registry");
+    expect(check.evidenceRequirements).toContain(
+      "visible-control-census-to-intent-map",
+    );
+    expect(check.evidenceRequirements).toContain(
+      "transition-deadline-contract",
+    );
     expect(check.negativeControlIds).toEqual([
       "begin-listener-removed",
       "action-listener-removed",
       "required-asset-stalled",
       "atlas-load-aborted",
+      "visible-control-unregistered",
     ]);
     expect(
       recipes.recipes[0].negativeControls.map(({ id }: { id: string }) => id),
@@ -229,6 +250,88 @@ describe("presentation checklist contract", () => {
     expect(
       run.checks[0].negativeControls.map(({ id }: { id: string }) => id),
     ).toEqual(check.negativeControlIds);
+  });
+
+  it("binds the six hardened presentation risks to evidence and mutations", async () => {
+    const { contract, recipes, run } = await fixture();
+    const expected = {
+      "PRES-SPRITE-004": {
+        evidence: [
+          "canonical-character-layout-contract",
+          "clip-facing-cell-map",
+        ],
+        controls: [
+          "registered-bank-omitted",
+          "clip-facing-map-swapped",
+          "playable-layout-schema-diverged",
+        ],
+      },
+      "PRES-SPRITE-009": {
+        evidence: [
+          "semantic-title-role-allowlist",
+          "complete-visible-draw-provenance",
+        ],
+        controls: [
+          "non-title-marked-as-title",
+          "css-decoration-added-beside-sprite",
+        ],
+      },
+      "PRES-MOBILE-010": {
+        evidence: ["phone-text-legibility-metrics"],
+        controls: [
+          "status-text-too-small",
+          "copy-low-contrast",
+          "copy-over-ornament",
+          "label-wrap-orphan",
+        ],
+      },
+      "PRES-DEPTH-019": {
+        evidence: ["body-health-effect-mask-ratios"],
+        controls: ["health-enlarged-or-opaque", "effect-covers-owner"],
+      },
+      "PRES-DENSITY-022": {
+        evidence: ["public-ui-composition-matrix"],
+        controls: [
+          "selection-secondary-art-removed",
+          "service-copy-over-decoration",
+        ],
+      },
+    } as const;
+    for (const [id, requirements] of Object.entries(expected)) {
+      const index = contract.checks.findIndex(
+        ({ id: checkId }: { id: string }) => checkId === id,
+      );
+      expect(index).toBeGreaterThanOrEqual(0);
+      for (const evidence of requirements.evidence)
+        expect(contract.checks[index].evidenceRequirements).toContain(evidence);
+      for (const control of requirements.controls)
+        expect(contract.checks[index].negativeControlIds).toContain(control);
+      expect(
+        recipes.recipes[index].negativeControls.map(
+          ({ id: controlId }: { id: string }) => controlId,
+        ),
+      ).toEqual(contract.checks[index].negativeControlIds);
+      expect(
+        run.checks[index].negativeControls.map(
+          ({ id: controlId }: { id: string }) => controlId,
+        ),
+      ).toEqual(contract.checks[index].negativeControlIds);
+    }
+  });
+
+  it("rejects a weakened all-applicable acceptance policy", async () => {
+    const value = await fixture();
+    value.contract.acceptancePolicy.allPublishedChecksApplicable = false;
+    expect(issueCodes(validate(value))).toContain("acceptance-policy-invalid");
+  });
+
+  it("prohibits PASS while versioned contract coverage remains partial", async () => {
+    const value = await fixtureWithReadyPass();
+    value.contract.checks[3].coverage = "partial";
+    value.run.checks[3].coverageAtRun = "partial";
+    expect(issueCodes(validate(value))).toContain(
+      "contract-coverage-not-acceptance-ready",
+    );
   });
 
   it("accepts a completely populated acceptance-ready row while the overall run remains blocked", async () => {
