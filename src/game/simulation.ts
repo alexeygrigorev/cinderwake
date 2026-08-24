@@ -4,6 +4,7 @@ import {
   CITY_GATE_ID,
   transitionCityProgression,
   updateCityInteractionContext,
+  withCityInventoryDelta,
 } from "./city";
 import {
   CITY_DISCOVERY_INTERACTION_RADIUS,
@@ -472,6 +473,31 @@ function applyDamageToMonster(
 }
 
 function spawnLoot(state: GameState, monster: MonsterState): void {
+  // Ashfang pelts are a distinct, guaranteed trophy. Their keyed cosmetic
+  // stream is separate from the existing general reward stream, preserving
+  // every historical gold/tonic/weapon roll and its bob phase.
+  if (monster.kind === "ashfang") {
+    const peltRng = createRng(`${state.seed}:loot:${monster.id}:ashfang-pelt`);
+    const pelt: LootState = {
+      id: `loot:${monster.id}:ashfang-pelt`,
+      kind: "ashfang-pelt",
+      rarity: "common",
+      position: { ...monster.position },
+      amount: 1,
+      sourceId: monster.id,
+      bobOffset: Math.floor(randomFloat(peltRng) * 72),
+    };
+    state.nextEntityId += 1;
+    state.loot.push(pelt);
+    emit(state, {
+      type: "loot_dropped",
+      sourceId: monster.id,
+      targetId: pelt.id,
+      amount: 1,
+      detail: "common ashfang-pelt",
+    });
+  }
+
   const rng = createRng(`${state.seed}:loot:${monster.id}`);
   const shouldDrop = monster.guaranteedLoot || randomFloat(rng) < 0.7;
   if (!shouldDrop) return;
@@ -1174,7 +1200,13 @@ function collectLoot(state: GameState): void {
     }
     if (loot.kind === "gold") state.player.gold += loot.amount;
     else if (loot.kind === "tonic") state.player.tonics += loot.amount;
-    else state.player.power += loot.amount;
+    else if (loot.kind === "weapon") state.player.power += loot.amount;
+    else
+      state.city.traveler.inventory = withCityInventoryDelta(
+        state.city.traveler.inventory,
+        "ashfang-pelt",
+        loot.amount,
+      );
     state.metrics.lootCollected += 1;
     emit(state, {
       type: "loot_picked",

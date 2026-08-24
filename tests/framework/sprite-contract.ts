@@ -126,8 +126,9 @@ export const RESIDENT_SPRITES = [
   "resident:embercross:tess",
   "resident:embercross:ileya",
 ] as const;
-const LOOT_SPRITES = ["gold", "tonic", "weapon"].flatMap((kind) =>
-  ["common", "tempered", "relic"].map((rarity) => `loot:${kind}:${rarity}`),
+const LOOT_SPRITES = ["gold", "tonic", "weapon", "ashfang-pelt"].flatMap(
+  (kind) =>
+    ["common", "tempered", "relic"].map((rarity) => `loot:${kind}:${rarity}`),
 );
 export const ENVIRONMENT_KIT_SPRITE_GEOMETRY = {
   "scenery:architecture:north-wall-solid": { width: 187, height: 172 },

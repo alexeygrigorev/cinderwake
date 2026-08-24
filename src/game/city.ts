@@ -327,7 +327,12 @@ function inventoryQuantity(
   return inventory.find((entry) => entry.itemId === itemId)?.quantity ?? 0;
 }
 
-function withInventoryDelta(
+/**
+ * Return the canonical, stable-order inventory after applying one item delta.
+ * Runtime pickups and city services share this function so wilderness rewards
+ * cannot drift from the inventory Mara reads.
+ */
+export function withCityInventoryDelta(
   inventory: readonly CityInventoryEntryV1[],
   itemId: CityItemId,
   delta: number,
@@ -611,7 +616,7 @@ function completeService(
   next.merchant.gold += deltas.merchantGold;
   next.merchant.tonicStock += deltas.merchantTonicStock;
   for (const entry of deltas.inventory) {
-    next.traveler.inventory = withInventoryDelta(
+    next.traveler.inventory = withCityInventoryDelta(
       next.traveler.inventory,
       entry.itemId,
       entry.quantity,

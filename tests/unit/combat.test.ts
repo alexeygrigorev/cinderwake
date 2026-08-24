@@ -159,7 +159,22 @@ describe("combat and lifecycle contracts", () => {
     });
     expect(state.monsters[0]!.health).toBeLessThanOrEqual(0);
     expect(state.metrics.kills).toBe(1);
-    expect(state.loot).toHaveLength(1);
+    expect(state.loot).toEqual([
+      expect.objectContaining({
+        id: "loot:monster:target:ashfang-pelt",
+        kind: "ashfang-pelt",
+        rarity: "common",
+        amount: 1,
+        bobOffset: 32,
+      }),
+      expect.objectContaining({
+        id: "loot:monster:target:0",
+        kind: "gold",
+        rarity: "common",
+        amount: 6,
+        bobOffset: 25,
+      }),
+    ]);
 
     while (state.tick < 8 + CLIP_DURATIONS.death) stepGame(state, EMPTY_INPUT);
     const terminal = buildRenderManifest(state, {
@@ -174,7 +189,7 @@ describe("combat and lifecycle contracts", () => {
     stepGame(state, EMPTY_INPUT);
     expect(state.monsters).toHaveLength(0);
     expect(state.metrics.kills).toBe(1);
-    expect(state.loot).toHaveLength(1);
+    expect(state.loot).toHaveLength(2);
     expect(
       state.eventLog.filter((event) => event.type === "monster_died"),
     ).toHaveLength(1);
@@ -277,6 +292,12 @@ describe("combat and lifecycle contracts", () => {
             tile: [9, 7],
             amount: 3,
           },
+          {
+            id: "loot:ashfang-pelt",
+            kind: "ashfang-pelt",
+            tile: [9, 7],
+            amount: 1,
+          },
         ],
         settings: { ai: false, autoPickup: true, cameraFollow: true },
       }),
@@ -284,7 +305,10 @@ describe("combat and lifecycle contracts", () => {
     stepGame(pickup, EMPTY_INPUT);
     expect(pickup.loot).toHaveLength(0);
     expect(pickup.player).toMatchObject({ gold: 6, tonics: 1, power: 3 });
-    expect(pickup.metrics.lootCollected).toBe(3);
+    expect(pickup.city.traveler.inventory).toEqual([
+      { itemId: "ashfang-pelt", quantity: 1 },
+    ]);
+    expect(pickup.metrics.lootCollected).toBe(4);
 
     const loss = worldFromScenario(
       scenario("hostile-lethal", "arcanist", {

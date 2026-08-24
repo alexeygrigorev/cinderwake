@@ -463,6 +463,41 @@ lootIds.forEach((id, itemIndex) => {
   });
 });
 
+// The loot atlas does not yet contain an authored hide. Keep the runtime role
+// explicit and sprite-backed by borrowing the corresponding weapon cells as a
+// catalog fallback. This is deliberately visible technical debt rather than a
+// CSS or vector substitute; replacing these source rectangles with a reviewed
+// pelt row will not require a gameplay/state migration.
+["common", "tempered", "relic"].forEach((rarity, rarityIndex) => {
+  const id = `loot:ashfang-pelt:${rarity}`;
+  const itemIndex = 6 + rarityIndex;
+  const frameIdentities = Array.from(
+    { length: 4 },
+    (_, frameIndex) => `${id}:loot:${frameIndex}`,
+  );
+  register({
+    id,
+    assetId: "atlas:loot",
+    frames: Object.fromEntries(
+      frameIdentities.map((frameIdentity, frameIndex) => {
+        const cell = itemIndex * 4 + frameIndex;
+        return [
+          frameIdentity,
+          {
+            x: (cell % 8) * GRID_CELL,
+            y: Math.floor(cell / 8) * GRID_CELL,
+            width: GRID_CELL,
+            height: GRID_CELL,
+          },
+        ];
+      }),
+    ),
+    clips: {
+      loot: { frameIdentities, durationTicks: 48, looping: true },
+    },
+  });
+});
+
 register(
   singleFrameSprite("projectile:friendly", "atlas:effects", 0, 0, "projectile"),
 );

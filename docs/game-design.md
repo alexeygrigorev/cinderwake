@@ -74,7 +74,9 @@ Projectiles share the movement world's collision truth. A shot stops at the firs
 
 ## Loot and outcomes
 
-Each monster has an entity-keyed loot stream derived from `run seed + monster ID`. Killing an unrelated monster first therefore cannot change another monster's drop. A drop is gold, a tonic, or a weapon in common, tempered, or relic rarity. The pickup radius is deterministic and pickup emits a typed event.
+Each monster has an entity-keyed loot stream derived from `run seed + monster ID`. Killing an unrelated monster first therefore cannot change another monster's drop. The general drop remains gold, a tonic, or a weapon in common, tempered, or relic rarity. Every Ashfang additionally drops one common pelt from a separate keyed stream, so adding the trophy does not perturb the historical general-reward roll or bob phase. The deterministic physical pickup writes pelts directly into the versioned city traveler inventory that Mara reads; gold, tonic, and weapon pickup behavior is unchanged.
+
+The pelt has a stable `loot:ashfang-pelt:<rarity>` sprite role and four-frame loot cadence. The current atlas has no semantically correct hide art, so that role deliberately reuses the matching weapon cells as a visible catalog fallback. It must be replaced by reviewed raster pelt cells; the fallback proves the product/state path but is not visual acceptance of the item.
 
 When the final monster dies, the route to Embercross unlocks once and emits
 `exit_unlocked`. Reaching the landmark discovers the city; reaching the open

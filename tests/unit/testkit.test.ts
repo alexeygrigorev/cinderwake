@@ -367,7 +367,12 @@ describe("deterministic fixtures", () => {
     expect(state.pendingAttacks).toHaveLength(1);
     for (let index = 0; index < 8; index += 1) stepGame(state, EMPTY_INPUT);
     expect(state.metrics.kills).toBe(1);
-    expect(state.loot).toHaveLength(1);
+    expect(state.loot).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ kind: "ashfang-pelt", amount: 1 }),
+        expect.objectContaining({ kind: "gold", amount: 6 }),
+      ]),
+    );
     expect(state.eventLog.map((event) => event.type)).toContain("loot_dropped");
   });
 

@@ -38,7 +38,12 @@ const EVENT_TYPES = new Set<GameEventType>([
   "exit_unlocked",
   "run_won",
 ]);
-const LOOT_KINDS = new Set<LootKind>(["gold", "tonic", "weapon"]);
+const LOOT_KINDS = new Set<LootKind>([
+  "gold",
+  "tonic",
+  "weapon",
+  "ashfang-pelt",
+]);
 const RARITIES = new Set<Rarity>(["common", "tempered", "relic"]);
 const RNG_STREAMS = ["map", "combat", "loot", "ai", "cosmetic"] as const;
 

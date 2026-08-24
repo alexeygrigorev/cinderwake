@@ -2,7 +2,7 @@ import type { CityStateV1 } from "./city";
 
 export type CharacterClass = "vanguard" | "ranger" | "arcanist";
 export type MonsterKind = "ashfang" | "hexer" | "stonekin";
-export type LootKind = "gold" | "tonic" | "weapon";
+export type LootKind = "gold" | "tonic" | "weapon" | "ashfang-pelt";
 export type Rarity = "common" | "tempered" | "relic";
 export type GamePhase = "playing" | "won" | "lost";
 export type AnimationClip =

@@ -864,7 +864,11 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       ["id", "kind", "rarity", "tile", "amount", "sourceId", "bobOffset"],
       path,
     );
-    if (!(["gold", "tonic", "weapon"] as unknown[]).includes(loot.kind))
+    if (
+      !(["gold", "tonic", "weapon", "ashfang-pelt"] as unknown[]).includes(
+        loot.kind,
+      )
+    )
       throw new Error(`${path}.kind is invalid`);
     if (
       loot.rarity !== undefined &&

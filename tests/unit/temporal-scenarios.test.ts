@@ -293,10 +293,13 @@ describe("public temporal scenario catalog", () => {
       ),
     ).toHaveLength(1);
     expect(
-      state.eventLog.filter(
-        (event) => event.type === "loot_dropped" && event.sourceId === dead.id,
-      ),
-    ).toHaveLength(1);
+      state.eventLog
+        .filter(
+          (event) =>
+            event.type === "loot_dropped" && event.sourceId === dead.id,
+        )
+        .map((event) => event.detail),
+    ).toEqual(["common ashfang-pelt", "tempered gold"]);
   });
 
   it("keeps the friendly projectile observable over a long motion interval", () => {
