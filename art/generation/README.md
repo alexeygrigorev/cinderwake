@@ -238,6 +238,16 @@ limb chain or diagonal support pair. V8 therefore separates anatomy topology
 from identity styling instead of allowing a side-view species reference to
 override both in one generation step.
 
+The first anatomy blockout proves that structural success can still fail raster
+ingress. Independent raw-pixel review accepts its elevated camera, broad raised
+body, four complete limb chains, separation gaps, diagonal ownership, and safe
+framing only as an internal edit reference. The model illuminated the neutral
+mannequin entirely inside the magenta-key family, so deterministic preparation
+reproduces `isolated pose is blank` and leaves no partial output. The exact raw,
+prompt, references, generation artifact, internal-only review, and error are
+committed; v2 may recolor those pixels but may not claim v1 was a usable atlas
+source.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

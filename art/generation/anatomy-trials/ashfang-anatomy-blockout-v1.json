@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeAnatomyBlockoutIngressV1",
+  "id": "ashfang-anatomy-blockout-v1-2026-08-24",
+  "actorId": "ashfang",
+  "promptFile": "art/generation/prompts/ashfang-anatomy-blockout-v1.txt",
+  "candidateFile": "art/generation/candidates/ashfang-anatomy-blockout-v1.png",
+  "candidateSha256": "6f7672c7ae8f9247401f511ff90d9d8264d6c7cb2e64600b16c7d7e8cb55ddc6",
+  "referenceFiles": [
+    {
+      "file": "art/generation/guides/quadruped-pose-layout.png",
+      "role": "reviewed elevated topology, limb corridors, framing, and baseline",
+      "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated camera, broad matte planes, runtime density, light, and world scale only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-ffd987cb-fa78-4a8c-a40a-baf37cce6915.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "evaluation": {
+    "status": "rejected",
+    "intendedUse": "internal recolor/edit reference only",
+    "notes": "Raw topology is useful, but the magenta-lit foreground is indistinguishable from the chroma family and deterministic preparation correctly rejects the candidate as blank."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-anatomy-blockout-v1.png --output <temporary-output> --preserve-framing",
+    "expectedStatus": "rejected",
+    "expectedError": "isolated pose is blank"
+  },
+  "visualReview": {
+    "verdict": "ACCEPT-INTERNAL-REFERENCE-ONLY",
+    "reviewer": "/root/review_anatomy_blockout_v1",
+    "reviewedRawSha256": "6f7672c7ae8f9247401f511ff90d9d8264d6c7cb2e64600b16c7d7e8cb55ddc6",
+    "acceptedAxes": [
+      "elevated three-quarter camera and visible dorsal plane",
+      "compact broad raised torso",
+      "exactly four readable body-to-paw chains",
+      "coherent near/far ordering and negative-space gaps",
+      "unambiguous diagonal ownership",
+      "safe unclipped framing and coherent depth rows"
+    ],
+    "rejectedAxes": [
+      "foreground/background chroma independence",
+      "organic limb and joint anatomy",
+      "natural paw shapes",
+      "grounding evidence",
+      "production art or atlas suitability"
+    ]
+  }
+}
