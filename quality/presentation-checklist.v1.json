@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "kind": "PresentationChecklistContractV1",
   "adapterContract": "PresentationAdapterV1",
+  "recipesPath": "quality/presentation-recipes.v1.json",
   "artifactRequirements": [
     "environment-metadata",
     "semantic-snapshot-timeline",
@@ -13,21 +14,25 @@
   "checks": [
     {
       "id": "PRES-LIVE-001",
+      "executionRecipeId": "recipe:pres-live-001",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "production-control-route",
-        "recovery-frame-sequence"
+        "recovery-frame-sequence",
+        "control-intent-registry"
       ],
       "negativeControlIds": [
         "begin-listener-removed",
+        "action-listener-removed",
         "required-asset-stalled",
         "atlas-load-aborted"
       ]
     },
     {
       "id": "PRES-INPUT-002",
+      "executionRecipeId": "recipe:pres-input-002",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -40,6 +45,7 @@
     },
     {
       "id": "PRES-MOVE-003",
+      "executionRecipeId": "recipe:pres-move-003",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -56,6 +62,7 @@
     },
     {
       "id": "PRES-SPRITE-004",
+      "executionRecipeId": "recipe:pres-sprite-004",
       "priority": "P0",
       "coverage": "automatic",
       "mandatoryReview": true,
@@ -74,6 +81,7 @@
     },
     {
       "id": "PRES-MOTION-005",
+      "executionRecipeId": "recipe:pres-motion-005",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -93,6 +101,7 @@
     },
     {
       "id": "PRES-CRISP-006",
+      "executionRecipeId": "recipe:pres-crisp-006",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -105,6 +114,7 @@
     },
     {
       "id": "PRES-ASPECT-007",
+      "executionRecipeId": "recipe:pres-aspect-007",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -121,6 +131,7 @@
     },
     {
       "id": "PRES-COLLIDE-008",
+      "executionRecipeId": "recipe:pres-collide-008",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -138,6 +149,7 @@
     },
     {
       "id": "PRES-SPRITE-009",
+      "executionRecipeId": "recipe:pres-sprite-009",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": false,
@@ -150,6 +162,7 @@
     },
     {
       "id": "PRES-MOBILE-010",
+      "executionRecipeId": "recipe:pres-mobile-010",
       "priority": "P0",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -168,6 +181,7 @@
     },
     {
       "id": "PRES-BLANK-011",
+      "executionRecipeId": "recipe:pres-blank-011",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": false,
@@ -185,6 +199,7 @@
     },
     {
       "id": "PRES-LEAK-012",
+      "executionRecipeId": "recipe:pres-leak-012",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -203,6 +218,7 @@
     },
     {
       "id": "PRES-ANCHOR-013",
+      "executionRecipeId": "recipe:pres-anchor-013",
       "priority": "P1",
       "coverage": "automatic",
       "mandatoryReview": true,
@@ -220,6 +236,7 @@
     },
     {
       "id": "PRES-DUP-014",
+      "executionRecipeId": "recipe:pres-dup-014",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -236,6 +253,7 @@
     },
     {
       "id": "PRES-FACING-015",
+      "executionRecipeId": "recipe:pres-facing-015",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -253,6 +271,7 @@
     },
     {
       "id": "PRES-CAMERA-016",
+      "executionRecipeId": "recipe:pres-camera-016",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -271,6 +290,7 @@
     },
     {
       "id": "PRES-ZOOM-017",
+      "executionRecipeId": "recipe:pres-zoom-017",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -287,6 +307,7 @@
     },
     {
       "id": "PRES-TILE-018",
+      "executionRecipeId": "recipe:pres-tile-018",
       "priority": "P1",
       "coverage": "automatic",
       "mandatoryReview": true,
@@ -305,6 +326,7 @@
     },
     {
       "id": "PRES-DEPTH-019",
+      "executionRecipeId": "recipe:pres-depth-019",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -323,6 +345,7 @@
     },
     {
       "id": "PRES-PROP-020",
+      "executionRecipeId": "recipe:pres-prop-020",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -341,6 +364,7 @@
     },
     {
       "id": "PRES-STYLE-021",
+      "executionRecipeId": "recipe:pres-style-021",
       "priority": "P1",
       "coverage": "missing",
       "mandatoryReview": true,
@@ -359,6 +383,7 @@
     },
     {
       "id": "PRES-DENSITY-022",
+      "executionRecipeId": "recipe:pres-density-022",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -377,6 +402,7 @@
     },
     {
       "id": "PRES-PROPORTION-023",
+      "executionRecipeId": "recipe:pres-proportion-023",
       "priority": "P1",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -394,6 +420,7 @@
     },
     {
       "id": "PRES-FLICKER-024",
+      "executionRecipeId": "recipe:pres-flicker-024",
       "priority": "P1",
       "coverage": "missing",
       "mandatoryReview": true,
@@ -411,6 +438,7 @@
     },
     {
       "id": "PRES-CROSSDEVICE-025",
+      "executionRecipeId": "recipe:pres-crossdevice-025",
       "priority": "P2",
       "coverage": "partial",
       "mandatoryReview": true,
@@ -428,6 +456,7 @@
     },
     {
       "id": "PRES-REVIEW-026",
+      "executionRecipeId": "recipe:pres-review-026",
       "priority": "P2",
       "coverage": "partial",
       "mandatoryReview": true,

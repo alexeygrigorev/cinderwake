@@ -1,0 +1,1182 @@
+{
+  "schemaVersion": 1,
+  "kind": "PresentationRecipeCatalogV1",
+  "contractPath": "quality/presentation-checklist.v1.json",
+  "recipes": [
+    {
+      "id": "recipe:pres-live-001",
+      "checkId": "PRES-LIVE-001",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["ordinary-production-launch", "asset-load-recovery"]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "mouse-select-begin",
+          "touch-select-begin",
+          "activate-every-visible-control",
+          "retry-and-back"
+        ]
+      },
+      "evaluator": {
+        "id": "production-control-liveness-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "launch-and-controls-live",
+          "failure-route-recovers",
+          "control-intents-registered"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts tests/e2e/mobile.spec.ts tests/e2e/ui-text-contract.spec.ts",
+      "negativeControls": [
+        { "id": "begin-listener-removed", "expectedSignal": "launch-inert" },
+        { "id": "action-listener-removed", "expectedSignal": "control-inert" },
+        {
+          "id": "required-asset-stalled",
+          "expectedSignal": "asset-recovery-visible"
+        },
+        {
+          "id": "atlas-load-aborted",
+          "expectedSignal": "asset-recovery-visible"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-input-002",
+      "checkId": "PRES-INPUT-002",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["animation-idle-open-floor"]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["phone-portrait", "phone-landscape"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "tap-open-ground",
+          "joystick-north",
+          "joystick-east",
+          "joystick-south",
+          "joystick-west",
+          "tap-strike"
+        ]
+      },
+      "evaluator": {
+        "id": "gesture-intent-separation-v1",
+        "coverage": "partial",
+        "requiredSignalIds": ["movement-without-attack", "strike-without-route"]
+      },
+      "reproduce": "npx playwright test tests/e2e/mobile.spec.ts tests/e2e/physical-gesture-temporal.spec.ts",
+      "negativeControls": [
+        {
+          "id": "ground-and-strike-bindings-swapped",
+          "expectedSignal": "gesture-intent-mismatch"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-move-003",
+      "checkId": "PRES-MOVE-003",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "animation-walk",
+          "fixed-camera-open-floor",
+          "follow-camera-open-floor"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["move-north", "move-east", "move-south", "move-west"]
+      },
+      "evaluator": {
+        "id": "directional-motion-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "world-direction-matches",
+          "screen-direction-matches",
+          "facing-and-walk-match"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/directional-motion.test.ts && npx playwright test tests/e2e/physical-gesture-temporal.spec.ts",
+      "negativeControls": [
+        {
+          "id": "render-projection-reversed",
+          "expectedSignal": "screen-direction"
+        },
+        { "id": "walk-frame-frozen", "expectedSignal": "walk-frozen" },
+        { "id": "facing-forced-opposite", "expectedSignal": "facing-mismatch" }
+      ]
+    },
+    {
+      "id": "recipe:pres-sprite-004",
+      "checkId": "PRES-SPRITE-004",
+      "scenarioSet": {
+        "coverage": "implemented",
+        "requiredIds": ["all-registered-actor-banks"]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["runtime-atlas-native-resolution"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["decode-production-atlases"]
+      },
+      "evaluator": {
+        "id": "actor-atlas-audit-v1",
+        "coverage": "implemented",
+        "requiredSignalIds": [
+          "all-banks-pass",
+          "all-authored-facing-comparisons-pass"
+        ]
+      },
+      "reproduce": "npm run art:animation:check",
+      "negativeControls": [
+        { "id": "stale-recovery", "expectedSignal": "stale-recovery-detected" },
+        {
+          "id": "frame-displaced",
+          "expectedSignal": "frame-displacement-detected"
+        },
+        {
+          "id": "cell-edge-clipped",
+          "expectedSignal": "cell-edge-contact-detected"
+        },
+        {
+          "id": "facing-scale-overflow",
+          "expectedSignal": "facing-scale-overflow-detected"
+        },
+        {
+          "id": "clip-transition-scale-pop",
+          "expectedSignal": "transition-scale-pop-detected"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-motion-005",
+      "checkId": "PRES-MOTION-005",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "animation-walk",
+          "all-temporal-hero-actions",
+          "all-temporal-enemy-actions",
+          "temporal-enemy-death"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["capture-matrix-command-tapes"]
+      },
+      "evaluator": {
+        "id": "temporal-sequence-assessor-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "cadence-continuity",
+          "transition-continuity",
+          "terminal-pose-retained"
+        ]
+      },
+      "reproduce": "npm run capture:matrix",
+      "negativeControls": [
+        {
+          "id": "frame-duplicated-or-frozen",
+          "expectedSignal": "frame-diversity-failed"
+        },
+        { "id": "frames-reordered", "expectedSignal": "frame-order-failed" },
+        { "id": "crop-offset", "expectedSignal": "crop-continuity-failed" },
+        {
+          "id": "one-frame-scale-or-centroid-pop",
+          "expectedSignal": "transform-continuity-failed"
+        },
+        {
+          "id": "stale-recovery",
+          "expectedSignal": "recovery-continuity-failed"
+        },
+        {
+          "id": "terminal-pose-skipped",
+          "expectedSignal": "terminal-pose-failed"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-crisp-006",
+      "checkId": "PRES-CRISP-006",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["ordinary-production-launch", "animation-walk"]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop-dpr1", "phone-portrait-high-dpr"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["begin", "move-east"]
+      },
+      "evaluator": {
+        "id": "render-resolution-contract-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "backing-matches-dpr",
+          "original-crop-retains-detail"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/render-resolution.spec.ts",
+      "negativeControls": [
+        {
+          "id": "legacy-960x540-backing",
+          "expectedSignal": "backing-resolution-mismatch"
+        },
+        {
+          "id": "accepted-crop-blurred",
+          "expectedSignal": "sharpness-regression"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-aspect-007",
+      "checkId": "PRES-ASPECT-007",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["animation-walk", "opening-room", "embercross-overview"]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["move-east", "camera-follow"]
+      },
+      "evaluator": {
+        "id": "uniform-projection-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "source-destination-aspect-stable",
+          "uniform-camera-scale"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/camera-projection.test.ts tests/unit/sprite-contract.test.ts",
+      "negativeControls": [
+        {
+          "id": "actor-destination-widened",
+          "expectedSignal": "actor-aspect-mismatch"
+        },
+        { "id": "wall-stretched", "expectedSignal": "wall-aspect-mismatch" },
+        {
+          "id": "unequal-camera-scaling",
+          "expectedSignal": "camera-scale-nonuniform"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-collide-008",
+      "checkId": "PRES-COLLIDE-008",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "scenery-contact",
+          "projectile-scenery-contact",
+          "embercross-solid-objects"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "walk-into-solid",
+          "tap-route-into-solid",
+          "fire-through-solid"
+        ]
+      },
+      "evaluator": {
+        "id": "visible-solid-contact-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "solid-support-blocks",
+          "blocked-object-visible",
+          "swept-contact-holds"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/scenery-collision.test.ts tests/unit/projectile-scenery-collision.test.ts && npx playwright test tests/e2e/scenery-collision.spec.ts tests/e2e/projectile-scenery-collision.spec.ts",
+      "negativeControls": [
+        {
+          "id": "collider-enlarged-or-offset",
+          "expectedSignal": "collider-support-mismatch"
+        },
+        {
+          "id": "collision-without-visible-sprite",
+          "expectedSignal": "invisible-collision"
+        },
+        {
+          "id": "blocked-feedback-removed",
+          "expectedSignal": "blocked-feedback-missing"
+        },
+        {
+          "id": "endpoint-only-collision",
+          "expectedSignal": "swept-contact-missed"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-sprite-009",
+      "checkId": "PRES-SPRITE-009",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "public-selection",
+          "ordinary-production-launch",
+          "outcome-win",
+          "outcome-loss"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["select", "begin", "trigger-outcome"]
+      },
+      "evaluator": {
+        "id": "visible-dom-sprite-provenance-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "visible-roles-use-decoded-sprites",
+          "text-only-titles"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/ui-text-contract.spec.ts tests/e2e/sprite-contract.spec.ts",
+      "negativeControls": [
+        {
+          "id": "role-replaced-with-css-or-text",
+          "expectedSignal": "non-sprite-visible-role"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-mobile-010",
+      "checkId": "PRES-MOBILE-010",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "public-selection",
+          "ordinary-production-launch",
+          "embercross-services"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["phone-portrait", "phone-landscape"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "touch-select-begin",
+          "touch-move",
+          "touch-strike",
+          "rotate",
+          "open-city-service"
+        ]
+      },
+      "evaluator": {
+        "id": "mobile-screen-contract-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "targets-contained",
+          "subject-contained",
+          "hud-and-controls-contained"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/mobile.spec.ts tests/e2e/screen-contract.spec.ts tests/e2e/city.spec.ts",
+      "negativeControls": [
+        {
+          "id": "target-undersized-or-occluded",
+          "expectedSignal": "touch-target-invalid"
+        },
+        {
+          "id": "subject-cropped",
+          "expectedSignal": "subject-containment-failed"
+        },
+        { "id": "hud-detached", "expectedSignal": "hud-containment-failed" },
+        {
+          "id": "pressed-state-suppressed",
+          "expectedSignal": "pressed-feedback-missing"
+        },
+        {
+          "id": "orientation-overlap",
+          "expectedSignal": "orientation-overlap-detected"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-blank-011",
+      "checkId": "PRES-BLANK-011",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["all-runtime-sprite-roles"]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["runtime-atlas-native-resolution", "desktop"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["decode-production-atlases", "capture-role-masks"]
+      },
+      "evaluator": {
+        "id": "decoded-role-alpha-inventory-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "every-role-decodes",
+          "every-required-cell-has-ink"
+        ]
+      },
+      "reproduce": "npm run art:animation:check && npx playwright test tests/e2e/sprite-contract.spec.ts",
+      "negativeControls": [
+        { "id": "cell-blanked", "expectedSignal": "blank-cell-detected" },
+        { "id": "crop-out-of-bounds", "expectedSignal": "crop-bounds-invalid" },
+        {
+          "id": "asset-substituted",
+          "expectedSignal": "asset-provenance-mismatch"
+        },
+        { "id": "decode-failed", "expectedSignal": "asset-decode-failed" }
+      ]
+    },
+    {
+      "id": "recipe:pres-leak-012",
+      "checkId": "PRES-LEAK-012",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "all-runtime-actor-banks",
+          "animation-walk",
+          "combat-loot"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["checkerboard-isolation", "desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["capture-isolated-masks", "move-east", "attack"]
+      },
+      "evaluator": {
+        "id": "sprite-leak-and-ghost-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "no-cross-cell-ink",
+          "no-matte-or-fringe",
+          "no-stale-or-duplicate-body"
+        ]
+      },
+      "reproduce": "npm run art:animation:check && npx playwright test tests/visual/animation.spec.ts",
+      "negativeControls": [
+        {
+          "id": "cross-cell-shift",
+          "expectedSignal": "cross-cell-ink-detected"
+        },
+        { "id": "opaque-matte", "expectedSignal": "opaque-matte-detected" },
+        { "id": "colored-fringe", "expectedSignal": "colored-fringe-detected" },
+        {
+          "id": "prior-frame-not-cleared",
+          "expectedSignal": "stale-pixels-detected"
+        },
+        {
+          "id": "duplicate-body-draw",
+          "expectedSignal": "duplicate-body-detected"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-anchor-013",
+      "checkId": "PRES-ANCHOR-013",
+      "scenarioSet": {
+        "coverage": "implemented",
+        "requiredIds": ["all-registered-actor-banks", "camera-smooth-follow"]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["runtime-atlas-native-resolution", "desktop"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["capture-all-bank-masks", "camera-follow"]
+      },
+      "evaluator": {
+        "id": "actor-anchor-audit-v1",
+        "coverage": "implemented",
+        "requiredSignalIds": [
+          "foot-baseline-stable",
+          "centroid-and-scale-continuous"
+        ]
+      },
+      "reproduce": "npm run art:animation:check",
+      "negativeControls": [
+        { "id": "frame-raised", "expectedSignal": "foot-baseline-moved" },
+        { "id": "anchor-moved", "expectedSignal": "anchor-contract-mismatch" },
+        { "id": "one-frame-scale", "expectedSignal": "frame-scale-pop" },
+        {
+          "id": "per-cell-normalizer-masks-error",
+          "expectedSignal": "normalization-error-exposed"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-dup-014",
+      "checkId": "PRES-DUP-014",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "all-registered-actor-banks",
+          "animation-walk",
+          "all-temporal-actions"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["runtime-atlas-native-resolution", "desktop"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": ["capture-bank-cycles", "capture-matrix-command-tapes"]
+      },
+      "evaluator": {
+        "id": "frame-identity-diversity-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "authored-identities-distinct",
+          "runtime-cadence-complete"
+        ]
+      },
+      "reproduce": "npm run art:animation:check && npm run capture:matrix",
+      "negativeControls": [
+        {
+          "id": "authored-cell-duplicated",
+          "expectedSignal": "authored-duplicate-detected"
+        },
+        {
+          "id": "renderer-selection-frozen",
+          "expectedSignal": "runtime-frame-frozen"
+        },
+        {
+          "id": "semantic-frame-skipped",
+          "expectedSignal": "runtime-frame-skipped"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-facing-015",
+      "checkId": "PRES-FACING-015",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "animation-walk",
+          "temporal-ranger-primary-north",
+          "temporal-arcanist-ability-south"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "move-north",
+          "move-east",
+          "move-south",
+          "move-west",
+          "attack-each-facing"
+        ]
+      },
+      "evaluator": {
+        "id": "directional-bank-selection-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "facing-follows-intent",
+          "bank-and-reflection-match",
+          "action-origin-mirrors"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/directional-motion.test.ts tests/unit/sprite-contract.test.ts && npm run capture:matrix",
+      "negativeControls": [
+        {
+          "id": "opposite-bank-selected",
+          "expectedSignal": "sprite-bank-mismatch"
+        },
+        {
+          "id": "west-reflection-missing",
+          "expectedSignal": "west-reflection-missing"
+        },
+        {
+          "id": "stale-bank-after-turn",
+          "expectedSignal": "stale-facing-bank"
+        },
+        {
+          "id": "unmirrored-attack-origin",
+          "expectedSignal": "attack-origin-not-mirrored"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-camera-016",
+      "checkId": "PRES-CAMERA-016",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["temporal-camera-track", "map-edge-reversal"]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "sustained-move-east",
+          "reverse-west",
+          "approach-map-edge"
+        ]
+      },
+      "evaluator": {
+        "id": "camera-motion-continuity-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "camera-converges",
+          "camera-clamps",
+          "camera-delta-continuous"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/camera-projection.test.ts && npm run capture:matrix",
+      "negativeControls": [
+        {
+          "id": "camera-updated-twice",
+          "expectedSignal": "camera-speed-doubled"
+        },
+        {
+          "id": "smooth-camera-snapped",
+          "expectedSignal": "camera-snap-detected"
+        },
+        {
+          "id": "camera-overshot",
+          "expectedSignal": "camera-overshoot-detected"
+        },
+        { "id": "zoom-clamp-wrong", "expectedSignal": "camera-clamp-mismatch" },
+        { "id": "axis-jitter", "expectedSignal": "camera-axis-jitter" }
+      ]
+    },
+    {
+      "id": "recipe:pres-zoom-017",
+      "checkId": "PRES-ZOOM-017",
+      "scenarioSet": {
+        "coverage": "calibration-required",
+        "requiredIds": ["opening-room", "combat-loot", "embercross-market"]
+      },
+      "deviceProfileSet": {
+        "coverage": "calibration-required",
+        "requiredIds": [
+          "desktop",
+          "phone-portrait",
+          "phone-landscape",
+          "narrow-desktop"
+        ]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["launch", "move-through-focal-scene"]
+      },
+      "evaluator": {
+        "id": "play-scale-readability-v1",
+        "coverage": "calibration-required",
+        "requiredSignalIds": [
+          "uniform-invertible-zoom",
+          "focal-occupancy-readable"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/camera-projection.test.ts tests/unit/opening-composition.test.ts && npx playwright test tests/e2e/screen-contract.spec.ts",
+      "negativeControls": [
+        {
+          "id": "zoom-too-near",
+          "expectedSignal": "near-zoom-readability-failed"
+        },
+        {
+          "id": "zoom-too-far",
+          "expectedSignal": "far-zoom-readability-failed"
+        },
+        {
+          "id": "zoom-positions-only",
+          "expectedSignal": "nonuniform-zoom-detected"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-tile-018",
+      "checkId": "PRES-TILE-018",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "environment-floor-fixtures",
+          "opening-room",
+          "moving-camera-floor"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": [
+          "desktop",
+          "phone-portrait",
+          "phone-landscape",
+          "narrow-desktop"
+        ]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["static-floor-capture", "move-across-tile-joins"]
+      },
+      "evaluator": {
+        "id": "environment-composition-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "tile-joins-contiguous",
+          "seam-periodicity-below-contract",
+          "material-repeat-below-contract"
+        ]
+      },
+      "reproduce": "npm run quality:environment:check && npx vitest run tests/unit/camera-projection.test.ts",
+      "negativeControls": [
+        {
+          "id": "collision-contrast-erased",
+          "expectedSignal": "collision-boundary-contrast-failed"
+        },
+        { "id": "seams-exaggerated", "expectedSignal": "seam-salience-failed" },
+        {
+          "id": "square-grid-injected",
+          "expectedSignal": "square-grid-periodicity"
+        },
+        {
+          "id": "obvious-repeat-injected",
+          "expectedSignal": "obvious-repeated-floor-tiles"
+        },
+        {
+          "id": "fractional-zoom-gap",
+          "expectedSignal": "tile-edge-gap-detected"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-depth-019",
+      "checkId": "PRES-DEPTH-019",
+      "scenarioSet": {
+        "coverage": "missing",
+        "requiredIds": [
+          "actor-circles-each-tall-occluder",
+          "attached-health-and-effects"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait"]
+      },
+      "gestureSet": {
+        "coverage": "missing",
+        "requiredIds": ["pass-in-front", "pass-behind", "attack-on-both-sides"]
+      },
+      "evaluator": {
+        "id": "depth-transition-oracle-v1",
+        "coverage": "missing",
+        "requiredSignalIds": [
+          "z-order-follows-foot-boundary",
+          "attachments-follow-owner"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts",
+      "negativeControls": [
+        {
+          "id": "actor-prop-z-swapped",
+          "expectedSignal": "depth-order-mismatch"
+        },
+        {
+          "id": "health-behind-owner",
+          "expectedSignal": "health-z-order-mismatch"
+        },
+        { "id": "effect-detached", "expectedSignal": "effect-owner-detached" },
+        { "id": "actor-drawn-twice", "expectedSignal": "duplicate-owner-body" },
+        {
+          "id": "rear-actor-covers-front",
+          "expectedSignal": "actor-depth-inverted"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-prop-020",
+      "checkId": "PRES-PROP-020",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "opening-room",
+          "embercross-overview",
+          "representative-generated-rooms"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait", "phone-landscape"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["launch", "traverse-to-each-scene-role"]
+      },
+      "evaluator": {
+        "id": "scene-role-composition-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "required-roles-visible",
+          "focal-occupancy-in-range",
+          "sprite-diversity-present"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/opening-composition.test.ts tests/unit/city-composition.test.ts",
+      "negativeControls": [
+        {
+          "id": "required-role-removed",
+          "expectedSignal": "required-scene-role-not-visible"
+        },
+        {
+          "id": "wrong-sprite-substituted",
+          "expectedSignal": "scene-role-sprite-mismatch"
+        },
+        {
+          "id": "focal-building-cropped",
+          "expectedSignal": "focal-structure-cropped"
+        },
+        {
+          "id": "secondary-props-deleted",
+          "expectedSignal": "secondary-scenery-too-sparse"
+        },
+        {
+          "id": "prop-cloned-repeatedly",
+          "expectedSignal": "duplicate-prop-concentration-too-high"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-style-021",
+      "checkId": "PRES-STYLE-021",
+      "scenarioSet": {
+        "coverage": "calibration-required",
+        "requiredIds": [
+          "all-runtime-visual-roles",
+          "accepted-style-corpus",
+          "foreign-style-mutation-corpus"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "calibration-required",
+        "requiredIds": [
+          "normalized-runtime-role-sheet",
+          "desktop",
+          "phone-portrait"
+        ]
+      },
+      "gestureSet": {
+        "coverage": "missing",
+        "requiredIds": ["trigger-every-conditional-visual-role"]
+      },
+      "evaluator": {
+        "id": "cross-role-style-outlier-v1",
+        "coverage": "calibration-required",
+        "requiredSignalIds": [
+          "palette-value-edge-features-in-family",
+          "perspective-and-light-in-family"
+        ]
+      },
+      "reproduce": "npm run report:screens",
+      "negativeControls": [
+        {
+          "id": "glossy-cartoon-actor",
+          "expectedSignal": "foreign-render-style-outlier"
+        },
+        {
+          "id": "flat-vector-prop",
+          "expectedSignal": "foreign-edge-density-outlier"
+        },
+        {
+          "id": "wrong-perspective-building",
+          "expectedSignal": "perspective-outlier"
+        },
+        {
+          "id": "opposite-lit-object",
+          "expectedSignal": "light-direction-outlier"
+        },
+        { "id": "foreign-ui-palette", "expectedSignal": "palette-outlier" }
+      ]
+    },
+    {
+      "id": "recipe:pres-density-022",
+      "checkId": "PRES-DENSITY-022",
+      "scenarioSet": {
+        "coverage": "calibration-required",
+        "requiredIds": [
+          "opening-room",
+          "combat-loot",
+          "embercross-overview",
+          "accepted-density-corpus"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait", "phone-landscape"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "launch",
+          "move-through-focal-scene",
+          "stop-beside-major-structure"
+        ]
+      },
+      "evaluator": {
+        "id": "scene-density-hierarchy-v1",
+        "coverage": "calibration-required",
+        "requiredSignalIds": [
+          "occupancy-and-spread-in-range",
+          "actor-overlap-readable",
+          "hierarchy-reference-distance-in-range"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/opening-composition.test.ts tests/unit/city-composition.test.ts",
+      "negativeControls": [
+        {
+          "id": "secondary-scenery-removed",
+          "expectedSignal": "secondary-scenery-too-sparse"
+        },
+        {
+          "id": "repeated-prop-clutter",
+          "expectedSignal": "duplicate-prop-concentration-too-high"
+        },
+        {
+          "id": "player-hidden-by-value",
+          "expectedSignal": "focal-player-low-contrast"
+        },
+        {
+          "id": "focal-actors-overlapped",
+          "expectedSignal": "focal-actors-overlapped"
+        },
+        {
+          "id": "large-empty-ground",
+          "expectedSignal": "large-empty-ground-band"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-proportion-023",
+      "checkId": "PRES-PROPORTION-023",
+      "scenarioSet": {
+        "coverage": "calibration-required",
+        "requiredIds": [
+          "all-actor-and-environment-roles-on-common-ground-line",
+          "live-role-overlaps"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["normalized-runtime-role-sheet", "desktop"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["idle", "walk", "attack", "hurt"]
+      },
+      "evaluator": {
+        "id": "cross-role-proportion-v1",
+        "coverage": "calibration-required",
+        "requiredSignalIds": [
+          "source-destination-aspect-valid",
+          "role-scale-in-accepted-range",
+          "collider-support-scale-matches"
+        ]
+      },
+      "reproduce": "npm run art:animation:check && npm run art:presentation:audit",
+      "negativeControls": [
+        { "id": "actor-shrunk", "expectedSignal": "actor-scale-outlier" },
+        {
+          "id": "weapon-or-limb-enlarged",
+          "expectedSignal": "anatomy-proportion-outlier"
+        },
+        {
+          "id": "one-facing-scale-changed",
+          "expectedSignal": "directional-scale-mismatch"
+        },
+        {
+          "id": "collider-support-mismatched",
+          "expectedSignal": "collider-support-scale-mismatch"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-flicker-024",
+      "checkId": "PRES-FLICKER-024",
+      "scenarioSet": {
+        "coverage": "missing",
+        "requiredIds": [
+          "ordinary-live-idle-move-turn-attack",
+          "effect-despawn",
+          "asset-state-transition"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "missing",
+        "requiredIds": ["desktop-60hz", "high-refresh-phone"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["sustained-movement", "repeated-attacks"]
+      },
+      "evaluator": {
+        "id": "live-compositor-flicker-v1",
+        "coverage": "missing",
+        "requiredSignalIds": [
+          "one-current-body-per-owner",
+          "no-unexplained-absence",
+          "no-stale-pixels"
+        ]
+      },
+      "reproduce": "npm run capture:matrix",
+      "negativeControls": [
+        {
+          "id": "canvas-clear-skipped",
+          "expectedSignal": "stale-pixels-detected"
+        },
+        {
+          "id": "offset-double-draw",
+          "expectedSignal": "duplicate-owner-body"
+        },
+        {
+          "id": "presentation-frame-omitted",
+          "expectedSignal": "expected-frame-absent"
+        },
+        {
+          "id": "despawned-effect-retained",
+          "expectedSignal": "stale-effect-retained"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-crossdevice-025",
+      "checkId": "PRES-CROSSDEVICE-025",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "public-selection",
+          "ordinary-production-launch",
+          "animation-walk"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "desktop",
+          "narrow-desktop",
+          "phone-portrait",
+          "phone-landscape",
+          "physical-high-dpr-phone"
+        ]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["same-launch-move-strike-route", "rotate-once"]
+      },
+      "evaluator": {
+        "id": "cross-device-screen-contract-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "semantic-roles-agree",
+          "profile-containment-passes",
+          "physical-phone-bound"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/screen-contract.spec.ts tests/e2e/mobile.spec.ts tests/e2e/render-resolution.spec.ts",
+      "negativeControls": [
+        {
+          "id": "landscape-only-crop",
+          "expectedSignal": "landscape-subject-cropped"
+        },
+        {
+          "id": "high-dpr-low-backing",
+          "expectedSignal": "backing-resolution-mismatch"
+        },
+        {
+          "id": "safe-area-overlap",
+          "expectedSignal": "safe-area-overlap-detected"
+        },
+        {
+          "id": "orientation-control-hidden",
+          "expectedSignal": "orientation-control-missing"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-review-026",
+      "checkId": "PRES-REVIEW-026",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": ["complete-presentation-run-bundle"]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["all-profile-artifacts-claimed-by-run"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": ["replay-all-row-gesture-sets"]
+      },
+      "evaluator": {
+        "id": "presentation-run-validator-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "contract-recipe-run-bound",
+          "artifacts-byte-verified",
+          "independent-review-bound"
+        ]
+      },
+      "reproduce": "npm run quality:presentation:accept",
+      "negativeControls": [
+        {
+          "id": "reviewed-png-altered",
+          "expectedSignal": "artifact-hash-mismatch"
+        },
+        {
+          "id": "contract-byte-altered",
+          "expectedSignal": "contract-recipe-run-mismatch"
+        },
+        {
+          "id": "checklist-id-omitted",
+          "expectedSignal": "run-checks-not-canonical"
+        },
+        {
+          "id": "rejected-candidate-published",
+          "expectedSignal": "mandatory-review-incomplete"
+        }
+      ]
+    }
+  ]
+}

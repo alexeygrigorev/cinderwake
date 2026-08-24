@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:residents:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:topology:check && npm run art:detail:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run quality:presentation:lint && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:residents:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:topology:check && npm run art:detail:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",

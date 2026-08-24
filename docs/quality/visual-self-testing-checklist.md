@@ -2,7 +2,7 @@
 
 This is the repeatable release checklist for presentation defects. It is deliberately **not** a gameplay-design checklist: quests, balance, NPC behavior, economy, and progression are out of scope. Run it for Cinderwake now and keep the IDs and evidence shapes when adapting the framework to another game.
 
-The [executable presentation-run contract](presentation-run-contract.md) locks this checklist’s 26 IDs, order, controls, evidence shape, and acceptance semantics. Use it rather than copying a partial handwritten result next time.
+The [executable presentation-run contract](presentation-run-contract.md), [ordered recipe catalog](../../quality/presentation-recipes.v1.json), and [exact blank run template](../../quality/presentation-run.v1.template.json) lock this checklist’s 26 IDs, order, matrices, controls, evidence shape, and acceptance semantics. Use those files rather than copying a partial handwritten result next time.
 
 For every item, mark exactly one result:
 
@@ -52,11 +52,11 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
 - Scenario/precondition: cold ordinary `/` route, every selectable character in turn, assets uncached; separately abort and stall one required atlas.
 - Production gesture: select character, activate Begin, then activate every visible game/modal control using its real mouse or touch event.
-- Ordered artifacts: page frame before gesture; browser-event log; observer readiness and presentation samples; frame/state after each control; console/page errors; failure, Retry, and Back frames; standard metadata/hashes.
+- Ordered artifacts: page frame before gesture; browser-event log; the declared control-to-intent registry; observer readiness and presentation samples; frame/state after each control; console/page errors; failure, Retry, and Back frames; standard metadata/hashes.
 - Machine signal and threshold: each declared intent must reach its semantic postcondition within the deadline already owned by that route; presentation ticks must remain live; failure must reach a recoverable screen. Do not add a universal timing number—calibrate per transition from green CI and a slow reference phone, then freeze it in screen metadata.
-- Required negative control: remove one Begin/action listener; stall one asset; abort one atlas. Each must fail as `launch-inert`, `control-inert`, or reach the intended recovery contract, never pass merely because the element was clickable.
+- Required negative control: separately remove the Begin listener and one visible action listener; stall one asset; abort one atlas. Each must fail as `launch-inert`, `control-inert`, or reach the intended recovery contract, never pass merely because the element was clickable.
 - Current evidence: `tests/e2e/live-player-journey.spec.ts` test “ordinary production route advances…”; `tests/e2e/physical-gesture-temporal.spec.ts`; `tests/e2e/mobile.spec.ts` test “real mobile selection path…”; loading abort/stall tests in `tests/e2e/ui-text-contract.spec.ts`; criteria in `docs/screen-test-playbook.md` lines 60–75.
-- Missing automation/next implementation: listener-removal mutation and a single per-control intent registry are not wired into one evaluator; ordinary-route coverage is still a curated subset.
+- Missing automation/next implementation: the two listener-removal mutations and per-control intent registry are contractually required but not yet wired into one evaluator; ordinary-route coverage is still a curated subset.
 - Independent visual-agent review mandatory: **yes**, for visible pressed/loading/recovery feedback; liveness itself is machine-authoritative.
 
 ### PRES-INPUT-002 — touch movement is not strike
@@ -367,28 +367,6 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 Store one entry per applicable ID so a future self-testing agent can compare runs without interpreting prose:
 
-```json
-{
-  "checkId": "PRES-MOVE-003",
-  "result": "PASS | FAIL | NEEDS_VISUAL_REVIEW",
-  "coverageAtRun": "automatic | partial | missing",
-  "commit": "<40-hex>",
-  "scenario": "<scenario-or-route>",
-  "deviceProfile": "<profile-id>",
-  "gestureId": "<physical-gesture-or-command-tape-id>",
-  "firstFailingTick": null,
-  "signals": [{ "id": "<named-signal>", "actual": {}, "contract": {} }],
-  "artifacts": [{ "path": "<relative-path>", "sha256": "<64-hex>" }],
-  "negativeControls": [
-    { "id": "<mutation-id>", "detected": true, "signal": "<named-signal>" }
-  ],
-  "visualReview": {
-    "mandatory": true,
-    "verdict": "ACCEPT | REJECT | UNCERTAIN | NOT_RUN",
-    "reviewedArtifactHashes": []
-  },
-  "reproduce": "<single exact command>"
-}
-```
+Do not recreate this shape from prose. Copy the linked blank run template. Each row has `checkId`, `executionRecipeId`, `result`, `coverageAtRun`, structured `observed.scenarioIds`, `observed.deviceProfileIds`, and `observed.gestureIds`, `firstFailingTick`, structured evaluator `signals`, requirement-bound `artifacts`, ordered controls using `status`, `signal`, and `artifacts`, a review with `mandatory`, `verdict`, `reviewerId`, `reasons`, and row-bound `reviewedArtifactHashes`, plus the recipe's exact `reproduce` command. Commit belongs once in the run's top-level `environment`, not in each row.
 
 The result record is evidence, not a replacement for the artifacts. A later framework extraction should keep this vocabulary and let each game adapter map its own classes, clip names, scene roles, selectors, and semantic events onto it.

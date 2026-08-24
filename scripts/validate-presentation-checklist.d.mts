@@ -16,7 +16,14 @@ export interface PresentationChecklistValidation {
   acceptanceBlockers: PresentationAcceptanceBlocker[];
 }
 
+export interface PresentationChecklistValidationOptions {
+  mode?: "lint" | "accept";
+  repoRoot?: string;
+}
+
 export function validatePresentationChecklist(
   contract: unknown,
+  recipes: unknown,
   run: unknown,
+  options?: PresentationChecklistValidationOptions,
 ): PresentationChecklistValidation;

@@ -29,6 +29,8 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run build
+      - name: Validate presentation contract, recipes, and blank run template
+        run: npm run quality:presentation:lint
       - run: npm run art:check
       - name: Inspect environment composition and negative controls
         run: npm run quality:environment:check

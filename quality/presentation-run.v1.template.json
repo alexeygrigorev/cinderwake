@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "kind": "PresentationRunV1",
   "contractPath": "quality/presentation-checklist.v1.json",
+  "recipesPath": "quality/presentation-recipes.v1.json",
   "runId": "replace-with-stable-run-id",
   "adapterContract": "PresentationAdapterV1",
   "environment": {
@@ -11,17 +12,26 @@
   "checks": [
     {
       "checkId": "PRES-LIVE-001",
+      "executionRecipeId": "recipe:pres-live-001",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
       "negativeControls": [
         {
           "id": "begin-listener-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "action-listener-removed",
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
@@ -42,17 +52,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-INPUT-002",
+      "executionRecipeId": "recipe:pres-input-002",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -67,17 +82,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-MOVE-003",
+      "executionRecipeId": "recipe:pres-move-003",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -104,17 +124,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-SPRITE-004",
+      "executionRecipeId": "recipe:pres-sprite-004",
       "result": "UNRUN",
       "coverageAtRun": "automatic",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -153,17 +178,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-MOTION-005",
+      "executionRecipeId": "recipe:pres-motion-005",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -208,17 +238,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-CRISP-006",
+      "executionRecipeId": "recipe:pres-crisp-006",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -239,17 +274,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-ASPECT-007",
+      "executionRecipeId": "recipe:pres-aspect-007",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -276,17 +316,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-COLLIDE-008",
+      "executionRecipeId": "recipe:pres-collide-008",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -319,17 +364,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-SPRITE-009",
+      "executionRecipeId": "recipe:pres-sprite-009",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -344,17 +394,22 @@
       "visualReview": {
         "mandatory": false,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-MOBILE-010",
+      "executionRecipeId": "recipe:pres-mobile-010",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -393,17 +448,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-BLANK-011",
+      "executionRecipeId": "recipe:pres-blank-011",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -436,17 +496,22 @@
       "visualReview": {
         "mandatory": false,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-LEAK-012",
+      "executionRecipeId": "recipe:pres-leak-012",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -485,17 +550,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-ANCHOR-013",
+      "executionRecipeId": "recipe:pres-anchor-013",
       "result": "UNRUN",
       "coverageAtRun": "automatic",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -528,17 +598,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-DUP-014",
+      "executionRecipeId": "recipe:pres-dup-014",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -565,17 +640,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-FACING-015",
+      "executionRecipeId": "recipe:pres-facing-015",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -608,17 +688,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-CAMERA-016",
+      "executionRecipeId": "recipe:pres-camera-016",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -657,17 +742,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-ZOOM-017",
+      "executionRecipeId": "recipe:pres-zoom-017",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -694,17 +784,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-TILE-018",
+      "executionRecipeId": "recipe:pres-tile-018",
       "result": "UNRUN",
       "coverageAtRun": "automatic",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -743,17 +838,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-DEPTH-019",
+      "executionRecipeId": "recipe:pres-depth-019",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -792,17 +892,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-PROP-020",
+      "executionRecipeId": "recipe:pres-prop-020",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -841,17 +946,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-STYLE-021",
+      "executionRecipeId": "recipe:pres-style-021",
       "result": "UNRUN",
       "coverageAtRun": "missing",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -890,17 +1000,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-DENSITY-022",
+      "executionRecipeId": "recipe:pres-density-022",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -939,17 +1054,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-PROPORTION-023",
+      "executionRecipeId": "recipe:pres-proportion-023",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -982,17 +1102,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-FLICKER-024",
+      "executionRecipeId": "recipe:pres-flicker-024",
       "result": "UNRUN",
       "coverageAtRun": "missing",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -1025,17 +1150,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-CROSSDEVICE-025",
+      "executionRecipeId": "recipe:pres-crossdevice-025",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -1068,17 +1198,22 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
     },
     {
       "checkId": "PRES-REVIEW-026",
+      "executionRecipeId": "recipe:pres-review-026",
       "result": "UNRUN",
       "coverageAtRun": "partial",
-      "scenario": "",
-      "deviceProfile": "",
-      "gestureId": "",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
       "firstFailingTick": null,
       "signals": [],
       "artifacts": [],
@@ -1111,6 +1246,8 @@
       "visualReview": {
         "mandatory": true,
         "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
