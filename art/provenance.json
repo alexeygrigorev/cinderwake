@@ -247,6 +247,16 @@
       "generationRecord": "art/generation/environment-decals-v1.json"
     },
     {
+      "file": "art/source/environment/environment-kit-v2-source.png",
+      "kind": "environment-kit-source",
+      "grid": "3x2 at 512px per cell",
+      "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
+      "productionContract": "art/environment-kit-v2.json",
+      "generationRecord": "art/generation/environment-kit-v2.json",
+      "reviewEvidence": "art/generation/environment-kit/evidence/environment-kit-v2/report.json",
+      "auditCommit": "7b4b55725c2726042aa57fd9d570d5a60655e850"
+    },
+    {
       "file": "art/source/ui/ui-source.png",
       "kind": "ui-source",
       "grid": "4x4"

@@ -31,6 +31,8 @@ export interface SpriteDefinitionV1 {
   assetId: string;
   frames: Record<string, SourceRectV1>;
   clips: Record<string, SpriteClipV1>;
+  logicalSize?: { width: number; height: number };
+  anchor?: { x: number; y: number };
 }
 
 export interface SpriteCatalogV1 {
@@ -97,6 +99,14 @@ const ACTOR_SPRITES = [
 const LOOT_SPRITES = ["gold", "tonic", "weapon"].flatMap((kind) =>
   ["common", "tempered", "relic"].map((rarity) => `loot:${kind}:${rarity}`),
 );
+export const ENVIRONMENT_KIT_SPRITE_GEOMETRY = {
+  "scenery:architecture:north-wall-solid": { width: 187, height: 172 },
+  "scenery:structure:forge-workshop": { width: 220, height: 195 },
+  "scenery:prop:lantern-a": { width: 53, height: 118 },
+  "scenery:prop:lantern-b": { width: 53, height: 118 },
+  "scenery:prop:barricade-v2": { width: 107, height: 88 },
+  "scenery:prop:raised-clutter-bench": { width: 124, height: 103 },
+} as const;
 
 export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   ...Object.fromEntries(
@@ -116,6 +126,9 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   "scenery:boundary:wall-front": ["static"],
   "scenery:exit:locked": ["static"],
   "scenery:exit:open": ["static"],
+  ...Object.fromEntries(
+    Object.keys(ENVIRONMENT_KIT_SPRITE_GEOMETRY).map((id) => [id, ["static"]]),
+  ),
 };
 
 export const EXPECTED_CLIP_CADENCE: Record<
@@ -157,6 +170,12 @@ function integer(value: unknown, pathName: string, minimum = 0): number {
 
 function boolean(value: unknown, pathName: string): boolean {
   if (typeof value !== "boolean") fail(`${pathName} must be boolean`);
+  return value;
+}
+
+function finiteNumber(value: unknown, pathName: string, minimum = 0): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < minimum)
+    fail(`${pathName} must be a finite number >= ${minimum}`);
   return value;
 }
 
@@ -232,6 +251,33 @@ export function validateSpriteCatalog(input: unknown): SpriteCatalogV1 {
     const clipsInput = object(item.clips, `catalog.sprites.${key}.clips`);
     const frames: SpriteDefinitionV1["frames"] = {};
     const clips: SpriteDefinitionV1["clips"] = {};
+    let logicalSize: SpriteDefinitionV1["logicalSize"];
+    let anchor: SpriteDefinitionV1["anchor"];
+    if (item.logicalSize !== undefined || item.anchor !== undefined) {
+      const logicalSizeInput = object(
+        item.logicalSize,
+        `catalog.sprites.${key}.logicalSize`,
+      );
+      const anchorInput = object(item.anchor, `catalog.sprites.${key}.anchor`);
+      logicalSize = {
+        width: integer(
+          logicalSizeInput.width,
+          `catalog.sprites.${key}.logicalSize.width`,
+          1,
+        ),
+        height: integer(
+          logicalSizeInput.height,
+          `catalog.sprites.${key}.logicalSize.height`,
+          1,
+        ),
+      };
+      anchor = {
+        x: finiteNumber(anchorInput.x, `catalog.sprites.${key}.anchor.x`),
+        y: finiteNumber(anchorInput.y, `catalog.sprites.${key}.anchor.y`),
+      };
+      if (anchor.x > logicalSize.width || anchor.y > logicalSize.height)
+        fail(`catalog.sprites.${key}.anchor exceeds its logical dimensions`);
+    }
     for (const [frameIdentity, rectValue] of Object.entries(framesInput)) {
       const rect = sourceRect(
         rectValue,
@@ -291,7 +337,13 @@ export function validateSpriteCatalog(input: unknown): SpriteCatalogV1 {
         ),
       };
     }
-    sprites[key] = { id, assetId, frames, clips };
+    sprites[key] = {
+      id,
+      assetId,
+      frames,
+      clips,
+      ...(logicalSize && anchor ? { logicalSize, anchor } : {}),
+    };
   }
 
   const catalog = { schemaVersion: 1 as const, revision, assets, sprites };
@@ -317,6 +369,33 @@ export function assertRequiredSpriteRegistrations(
       )
         fail(`required sprite ${spriteId} clip ${clip} has invalid cadence`);
     }
+  }
+  for (const [spriteId, expected] of Object.entries(
+    ENVIRONMENT_KIT_SPRITE_GEOMETRY,
+  )) {
+    const sprite = catalog.sprites[spriteId]!;
+    if (
+      sprite.logicalSize?.width !== expected.width ||
+      sprite.logicalSize.height !== expected.height
+    )
+      fail(
+        `required environment-kit sprite ${spriteId} has invalid logical size`,
+      );
+    if (
+      sprite.anchor?.x !== expected.width / 2 ||
+      sprite.anchor.y !== expected.height
+    )
+      fail(
+        `required environment-kit sprite ${spriteId} is not bottom-center anchored`,
+      );
+    const frameIdentity = sprite.clips.static!.frameIdentities[0]!;
+    const frame = sprite.frames[frameIdentity]!;
+    const sourceAspect = frame.width / frame.height;
+    const logicalAspect = expected.width / expected.height;
+    if (Math.abs(sourceAspect - logicalAspect) > 0.01)
+      fail(
+        `required environment-kit sprite ${spriteId} square-stretches its tight source ink`,
+      );
   }
 }
 

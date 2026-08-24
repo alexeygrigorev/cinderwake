@@ -1,6 +1,7 @@
 import { CLIP_DURATIONS, CLIP_FRAMES } from "../game/constants";
 import type { AnimationClip } from "../game/types";
 import actorAtlasSpecJson from "../../art/actor-atlas-v1.json" with { type: "json" };
+import environmentKitSpecJson from "../../art/environment-kit-v2.json" with { type: "json" };
 
 export interface SourceRectV1 {
   x: number;
@@ -29,6 +30,8 @@ export interface SpriteDefinitionV1 {
   assetId: string;
   frames: Record<string, SourceRectV1>;
   clips: Record<string, SpriteClipV1>;
+  logicalSize?: { width: number; height: number };
+  anchor?: { x: number; y: number };
 }
 
 export interface SpriteCatalogV1 {
@@ -53,8 +56,25 @@ interface ActorAtlasSpec {
   directionalClips: Record<DirectionalClipKey, { atlasRow: number }>;
 }
 
+interface EnvironmentKitAtlasSpec {
+  atlas: {
+    file: string;
+    pixelWidth: number;
+    pixelHeight: number;
+  };
+  cells: Array<{
+    id: string;
+    cell: { x: number; y: number; width: number; height: number };
+    ink: { x: number; y: number; width: number; height: number };
+    logicalSize: { width: number; height: number };
+    anchor: { mode: "bottom-center"; x: number; y: number };
+  }>;
+}
+
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
-export const SPRITE_CATALOG_REVISION = "cinder-node-v1-2026-08-24";
+const ENVIRONMENT_KIT_SPEC = environmentKitSpecJson as EnvironmentKitAtlasSpec;
+export const SPRITE_CATALOG_REVISION =
+  "cinder-node-v2-environment-kit-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
 
@@ -127,6 +147,12 @@ const assets: Record<string, SpriteAssetV1> = {
   ),
   "atlas:props": asset("atlas:props", "environment-props.png", 1024, 1024),
   "atlas:decals": asset("atlas:decals", "environment-decals.png", 1024, 1024),
+  "atlas:environment-kit-v2": asset(
+    "atlas:environment-kit-v2",
+    ENVIRONMENT_KIT_SPEC.atlas.file,
+    ENVIRONMENT_KIT_SPEC.atlas.pixelWidth,
+    ENVIRONMENT_KIT_SPEC.atlas.pixelHeight,
+  ),
   "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
   "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
   "atlas:ui": asset("atlas:ui", "ui.png", 1024, 1024),
@@ -263,6 +289,33 @@ function fullFrameSprite(
   };
 }
 
+function environmentKitSprite(
+  definition: EnvironmentKitAtlasSpec["cells"][number],
+): SpriteDefinitionV1 {
+  const frameIdentity = `${definition.id}:static:0`;
+  return {
+    id: definition.id,
+    assetId: "atlas:environment-kit-v2",
+    frames: {
+      [frameIdentity]: {
+        x: definition.cell.x + definition.ink.x,
+        y: definition.cell.y + definition.ink.y,
+        width: definition.ink.width,
+        height: definition.ink.height,
+      },
+    },
+    clips: {
+      static: {
+        frameIdentities: [frameIdentity],
+        durationTicks: 1,
+        looping: true,
+      },
+    },
+    logicalSize: { ...definition.logicalSize },
+    anchor: { x: definition.anchor.x, y: definition.anchor.y },
+  };
+}
+
 const sprites: Record<string, SpriteDefinitionV1> = {};
 function register(definition: SpriteDefinitionV1): void {
   sprites[definition.id] = definition;
@@ -383,6 +436,9 @@ register(singleFrameSprite("scenery:exit:locked", "atlas:structures", 3, 1));
 register(singleFrameSprite("scenery:exit:open", "atlas:structures", 3, 3));
 register(singleFrameSprite("scenery:backdrop", "atlas:terrain", 0, 3));
 register(fullFrameSprite("scenery:ground", "atlas:ground", 1024, 1024));
+ENVIRONMENT_KIT_SPEC.cells.forEach((definition) =>
+  register(environmentKitSprite(definition)),
+);
 
 const structureNames = [
   "gatehouse",

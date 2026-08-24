@@ -7,6 +7,14 @@ import sharp from "sharp";
 const ROOT = process.cwd();
 const ACTOR_SPEC_PATH = path.join(ROOT, "art", "actor-atlas-v1.json");
 const ACTOR_SPEC = JSON.parse(await fs.readFile(ACTOR_SPEC_PATH, "utf8"));
+const ENVIRONMENT_KIT_SPEC_PATH = path.join(
+  ROOT,
+  "art",
+  "environment-kit-v2.json",
+);
+const ENVIRONMENT_KIT_SPEC = JSON.parse(
+  await fs.readFile(ENVIRONMENT_KIT_SPEC_PATH, "utf8"),
+);
 const ACTOR_CELL = ACTOR_SPEC.atlas.cellWidth;
 const SOURCE_CELL = ACTOR_SPEC.source.cellWidth;
 const GRID_CELL = ACTOR_SPEC.source.cellWidth;
@@ -32,6 +40,8 @@ Options:
   --source-dir <path>  Actor source directory (default: art/source/actors)
   --output-dir <path>  Output directory (default: public/assets/sprites)
   --actors-only        Build actor atlases and their manifest only
+  --environment-kit-only
+                       Build only the approved environment-kit atlas
   --help               Show this help`);
 }
 
@@ -40,6 +50,7 @@ function parseArguments(args) {
   let actorSourceDirectory = path.join(ROOT, "art", "source", "actors");
   let outputDirectory = path.join(ROOT, "public", "assets", "sprites");
   let actorsOnly = false;
+  let environmentKitOnly = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--help") {
@@ -48,6 +59,10 @@ function parseArguments(args) {
     }
     if (argument === "--actors-only") {
       actorsOnly = true;
+      continue;
+    }
+    if (argument === "--environment-kit-only") {
+      environmentKitOnly = true;
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
@@ -74,7 +89,17 @@ function parseArguments(args) {
       outputDirectory = path.resolve(ROOT, value);
     }
   }
-  return { actors, actorsOnly, actorSourceDirectory, outputDirectory };
+  if (actorsOnly && environmentKitOnly)
+    throw new Error(
+      "--actors-only and --environment-kit-only cannot be combined",
+    );
+  return {
+    actors,
+    actorsOnly,
+    actorSourceDirectory,
+    environmentKitOnly,
+    outputDirectory,
+  };
 }
 
 const OPTIONS = parseArguments(process.argv.slice(2));
@@ -696,6 +721,30 @@ async function sha256(filePath) {
   return crypto.createHash("sha256").update(data).digest("hex");
 }
 
+async function buildEnvironmentKit() {
+  const sourcePath = path.join(ROOT, ENVIRONMENT_KIT_SPEC.source.file);
+  const source = await fs.readFile(sourcePath);
+  const sourceHash = crypto.createHash("sha256").update(source).digest("hex");
+  if (sourceHash !== ENVIRONMENT_KIT_SPEC.source.sha256)
+    throw new Error(
+      `Environment-kit production source hash drifted: ${sourceHash}`,
+    );
+  const metadata = await sharp(source).metadata();
+  if (
+    metadata.width !== ENVIRONMENT_KIT_SPEC.source.pixelWidth ||
+    metadata.height !== ENVIRONMENT_KIT_SPEC.source.pixelHeight
+  )
+    throw new Error(
+      `Environment-kit production source must be ${ENVIRONMENT_KIT_SPEC.source.pixelWidth}x${ENVIRONMENT_KIT_SPEC.source.pixelHeight}`,
+    );
+  const destination = outputPath(ENVIRONMENT_KIT_SPEC.atlas.file);
+  // The independently approved prepared PNG is already ingress-clean. Keep
+  // its production atlas byte-for-byte identical instead of recompressing,
+  // resampling, or applying any further subjective image operation.
+  await fs.writeFile(destination, source);
+  return destination;
+}
+
 function xmlEscape(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -739,8 +788,9 @@ async function buildGlyphAtlas() {
 
 await fs.mkdir(outputPath("."), { recursive: true });
 const outputs = [];
-for (const actorId of OPTIONS.actors) outputs.push(await buildActor(actorId));
-if (!OPTIONS.actorsOnly) {
+if (!OPTIONS.environmentKitOnly)
+  for (const actorId of OPTIONS.actors) outputs.push(await buildActor(actorId));
+if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
   const terrainPath = await buildTerrainAtlas(
     inputPath("environment", "terrain-source.png"),
     outputPath("environment-terrain.png"),
@@ -790,14 +840,29 @@ if (!OPTIONS.actorsOnly) {
     await buildGlyphAtlas(),
   );
 }
+if (!OPTIONS.actorsOnly) outputs.push(await buildEnvironmentKit());
 
 const manifest = {
   schemaVersion: 1,
-  pipeline: ACTOR_SPEC.id,
+  pipeline: OPTIONS.environmentKitOnly
+    ? ENVIRONMENT_KIT_SPEC.id
+    : ACTOR_SPEC.id,
   actorSpec: {
     source: path.relative(ROOT, ACTOR_SPEC_PATH),
     sha256: await sha256(ACTOR_SPEC_PATH),
   },
+  ...(!OPTIONS.actorsOnly && {
+    environmentKitSpec: {
+      source: path.relative(ROOT, ENVIRONMENT_KIT_SPEC_PATH),
+      sha256: await sha256(ENVIRONMENT_KIT_SPEC_PATH),
+      productionSource: {
+        file: ENVIRONMENT_KIT_SPEC.source.file,
+        sha256: ENVIRONMENT_KIT_SPEC.source.sha256,
+      },
+      preparedSource: ENVIRONMENT_KIT_SPEC.provenance.preparedFile,
+      auditCommit: ENVIRONMENT_KIT_SPEC.provenance.auditCommit,
+    },
+  }),
   builtAt: "deterministic-from-committed-source",
   outputs: Object.fromEntries(
     await Promise.all(

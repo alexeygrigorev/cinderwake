@@ -9,6 +9,7 @@ import {
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 import {
+  ENVIRONMENT_KIT_SPRITE_GEOMETRY,
   EXPECTED_CLIP_CADENCE,
   REQUIRED_SPRITE_CLIPS,
   assertDeterministicScenePlacement,
@@ -27,6 +28,12 @@ function completeCatalog(
   const assetId = "atlas:test";
   const sprites: Record<string, unknown> = {};
   for (const [spriteId, clipNames] of Object.entries(REQUIRED_SPRITE_CLIPS)) {
+    const logicalSize = (
+      ENVIRONMENT_KIT_SPRITE_GEOMETRY as Record<
+        string,
+        { width: number; height: number } | undefined
+      >
+    )[spriteId];
     const frames: Record<
       string,
       { x: number; y: number; width: number; height: number }
@@ -43,8 +50,8 @@ function completeCatalog(
         frames[frameIdentity] = {
           x: (nextFrame % 64) * 8,
           y: Math.floor(nextFrame / 64) * 8,
-          width: 8,
-          height: 8,
+          width: logicalSize?.width ?? 8,
+          height: logicalSize?.height ?? 8,
         };
         nextFrame += 1;
       }
@@ -54,7 +61,21 @@ function completeCatalog(
         looping: cadence.looping,
       };
     }
-    sprites[spriteId] = { id: spriteId, assetId, frames, clips };
+    sprites[spriteId] = {
+      id: spriteId,
+      assetId,
+      frames,
+      clips,
+      ...(logicalSize
+        ? {
+            logicalSize,
+            anchor: {
+              x: logicalSize.width / 2,
+              y: logicalSize.height,
+            },
+          }
+        : {}),
+    };
   }
   return validateSpriteCatalog({
     schemaVersion: 1,
@@ -152,6 +173,85 @@ describe("sprite atlas quality contract", () => {
       expect.arrayContaining(Object.keys(REQUIRED_SPRITE_CLIPS)),
     );
     await expect(assertRegisteredAssetFiles(catalog)).resolves.toBeUndefined();
+  });
+
+  it("registers the reviewed environment kit with tight aspect-preserving frames", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const expectedFrames = {
+      "scenery:architecture:north-wall-solid": {
+        x: 65,
+        y: 96,
+        width: 382,
+        height: 351,
+      },
+      "scenery:structure:forge-workshop": {
+        x: 577,
+        y: 107,
+        width: 383,
+        height: 340,
+      },
+      "scenery:prop:lantern-a": {
+        x: 1193,
+        y: 65,
+        width: 171,
+        height: 383,
+      },
+      "scenery:prop:lantern-b": {
+        x: 170,
+        y: 577,
+        width: 173,
+        height: 382,
+      },
+      "scenery:prop:barricade-v2": {
+        x: 577,
+        y: 643,
+        width: 385,
+        height: 318,
+      },
+      "scenery:prop:raised-clutter-bench": {
+        x: 1087,
+        y: 640,
+        width: 384,
+        height: 318,
+      },
+    } as const;
+    expect(catalog.assets["atlas:environment-kit-v2"]).toMatchObject({
+      url: "/assets/sprites/environment-kit-v2.png",
+      pixelWidth: 1536,
+      pixelHeight: 1024,
+    });
+    for (const [spriteId, logicalSize] of Object.entries(
+      ENVIRONMENT_KIT_SPRITE_GEOMETRY,
+    )) {
+      const sprite = catalog.sprites[spriteId]!;
+      const frameIdentity = sprite.clips.static!.frameIdentities[0]!;
+      expect(sprite.assetId).toBe("atlas:environment-kit-v2");
+      expect(sprite.frames[frameIdentity]).toEqual(
+        expectedFrames[spriteId as keyof typeof expectedFrames],
+      );
+      expect(sprite.logicalSize).toEqual(logicalSize);
+      expect(sprite.anchor).toEqual({
+        x: logicalSize.width / 2,
+        y: logicalSize.height,
+      });
+      expect(
+        Math.abs(
+          sprite.frames[frameIdentity]!.width /
+            sprite.frames[frameIdentity]!.height -
+            logicalSize.width / logicalSize.height,
+        ),
+      ).toBeLessThan(0.01);
+    }
+    expect(
+      new Set(
+        Object.keys(ENVIRONMENT_KIT_SPRITE_GEOMETRY).map((spriteId) => {
+          const sprite = catalog.sprites[spriteId]!;
+          return JSON.stringify(
+            sprite.frames[sprite.clips.static!.frameIdentities[0]!],
+          );
+        }),
+      ).size,
+    ).toBe(6);
   });
 
   it("emits sprite references and registered frame identities for every gameplay type", async () => {

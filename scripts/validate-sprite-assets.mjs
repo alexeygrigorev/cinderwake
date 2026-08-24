@@ -1,13 +1,42 @@
 import crypto from "node:crypto";
+import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { promisify } from "node:util";
 import sharp from "sharp";
 
 const root = process.cwd();
 const atlasDirectory = path.join(root, "public", "assets", "sprites");
 const specPath = path.join(root, "art", "actor-atlas-v1.json");
 const spec = JSON.parse(await fs.readFile(specPath, "utf8"));
+const environmentKitSpecPath = path.join(
+  root,
+  "art",
+  "environment-kit-v2.json",
+);
+const environmentKitSpec = JSON.parse(
+  await fs.readFile(environmentKitSpecPath, "utf8"),
+);
+const executeFile = promisify(execFile);
+const expectedEnvironmentKit = {
+  sha256: "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
+  auditCommit: "7b4b55725c2726042aa57fd9d570d5a60655e850",
+  width: 1536,
+  height: 1024,
+  cellSize: 512,
+  ids: [
+    "scenery:architecture:north-wall-solid",
+    "scenery:structure:forge-workshop",
+    "scenery:prop:lantern-a",
+    "scenery:prop:lantern-b",
+    "scenery:prop:barricade-v2",
+    "scenery:prop:raised-clutter-bench",
+  ],
+  logicalHeights: [172, 195, 118, 118, 88, 103],
+  bottomContacts: [446, 446, 447, 446, 448, 445],
+};
 const actorIds = [
   "vanguard",
   "ranger",
@@ -183,6 +212,163 @@ for (let cellIndex = 0; cellIndex < 16; cellIndex += 1) {
     );
 }
 
+async function validateEnvironmentKitRaster(filePath, label) {
+  const file = await fs.readFile(filePath);
+  const fileHash = sha256(file);
+  if (fileHash !== expectedEnvironmentKit.sha256)
+    throw new Error(
+      `${label} hash ${fileHash} differs from the independently approved bytes`,
+    );
+  const { data, info } = await sharp(file)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (
+    info.width !== expectedEnvironmentKit.width ||
+    info.height !== expectedEnvironmentKit.height ||
+    info.channels !== 4
+  )
+    throw new Error(
+      `${label} must decode exactly as ${expectedEnvironmentKit.width}x${expectedEnvironmentKit.height} RGBA`,
+    );
+
+  const hashes = [];
+  for (const [index, definition] of environmentKitSpec.cells.entries()) {
+    if (definition.index !== index)
+      throw new Error(`Environment-kit cell ${index} has an unstable index`);
+    if (definition.id !== expectedEnvironmentKit.ids[index])
+      throw new Error(`Environment-kit cell ${index} semantic ID drifted`);
+    if (
+      definition.cell.x !==
+        (index % environmentKitSpec.source.columns) *
+          expectedEnvironmentKit.cellSize ||
+      definition.cell.y !==
+        Math.floor(index / environmentKitSpec.source.columns) *
+          expectedEnvironmentKit.cellSize ||
+      definition.cell.width !== expectedEnvironmentKit.cellSize ||
+      definition.cell.height !== expectedEnvironmentKit.cellSize
+    )
+      throw new Error(
+        `Environment-kit cell ${index} is not a fixed 512px cell`,
+      );
+
+    const cell = Buffer.alloc(
+      expectedEnvironmentKit.cellSize * expectedEnvironmentKit.cellSize * 4,
+    );
+    let ink = 0;
+    let minX = expectedEnvironmentKit.cellSize;
+    let minY = expectedEnvironmentKit.cellSize;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < expectedEnvironmentKit.cellSize; y += 1) {
+      const sourceOffset =
+        ((definition.cell.y + y) * info.width + definition.cell.x) * 4;
+      data.copy(
+        cell,
+        y * expectedEnvironmentKit.cellSize * 4,
+        sourceOffset,
+        sourceOffset + expectedEnvironmentKit.cellSize * 4,
+      );
+      for (let x = 0; x < expectedEnvironmentKit.cellSize; x += 1) {
+        const offset = sourceOffset + x * 4;
+        const alpha = data[offset + 3];
+        const inBorder =
+          x < 62 ||
+          y < 62 ||
+          x >= expectedEnvironmentKit.cellSize - 62 ||
+          y >= expectedEnvironmentKit.cellSize - 62;
+        if (inBorder && alpha !== 0)
+          throw new Error(
+            `${label} cell ${index} has nontransparent safe-border pixels`,
+          );
+        if (
+          alpha === 0 &&
+          (data[offset] || data[offset + 1] || data[offset + 2])
+        )
+          throw new Error(
+            `${label} cell ${index} retains RGB contamination under transparency`,
+          );
+        if (alpha < 8) continue;
+        ink += 1;
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+    if (ink < 1_200) throw new Error(`${label} cell ${index} is blank`);
+    const measuredInk = {
+      x: minX,
+      y: minY,
+      width: maxX - minX + 1,
+      height: maxY - minY + 1,
+    };
+    if (JSON.stringify(measuredInk) !== JSON.stringify(definition.ink))
+      throw new Error(`${label} cell ${index} tight ink bounds drifted`);
+    if (maxY !== expectedEnvironmentKit.bottomContacts[index])
+      throw new Error(`${label} cell ${index} bottom anchor drifted`);
+    if (
+      definition.logicalSize.height !==
+      expectedEnvironmentKit.logicalHeights[index]
+    )
+      throw new Error(`Environment-kit cell ${index} logical height drifted`);
+    const aspectWidth = Math.round(
+      (definition.ink.width / definition.ink.height) *
+        definition.logicalSize.height,
+    );
+    if (definition.logicalSize.width !== aspectWidth)
+      throw new Error(
+        `Environment-kit cell ${index} logical dimensions square-stretch its tight ink`,
+      );
+    if (
+      definition.anchor.mode !== "bottom-center" ||
+      definition.anchor.x !== definition.logicalSize.width / 2 ||
+      definition.anchor.y !== definition.logicalSize.height
+    )
+      throw new Error(
+        `Environment-kit cell ${index} does not use a bottom-center logical anchor`,
+      );
+    hashes.push(sha256(cell));
+  }
+  if (hashes.length !== 6 || new Set(hashes).size !== 6)
+    throw new Error(`${label} must contain six nonblank unique source cells`);
+  return file;
+}
+
+if (
+  environmentKitSpec.source.sha256 !== expectedEnvironmentKit.sha256 ||
+  environmentKitSpec.source.pixelWidth !== expectedEnvironmentKit.width ||
+  environmentKitSpec.source.pixelHeight !== expectedEnvironmentKit.height ||
+  environmentKitSpec.source.cellWidth !== expectedEnvironmentKit.cellSize ||
+  environmentKitSpec.source.cellHeight !== expectedEnvironmentKit.cellSize ||
+  environmentKitSpec.source.columns !== 3 ||
+  environmentKitSpec.source.rows !== 2 ||
+  environmentKitSpec.provenance.auditCommit !==
+    expectedEnvironmentKit.auditCommit ||
+  environmentKitSpec.cells.length !== 6
+)
+  throw new Error("Environment-kit production contract differs from its audit");
+
+const productionEnvironmentKit = await validateEnvironmentKitRaster(
+  path.join(root, environmentKitSpec.source.file),
+  "environment-kit-v2 production source",
+);
+const preparedEnvironmentKit = await validateEnvironmentKitRaster(
+  path.join(root, environmentKitSpec.provenance.preparedFile),
+  "environment-kit-v2 approved prepared source",
+);
+const publicEnvironmentKit = await validateEnvironmentKitRaster(
+  path.join(atlasDirectory, environmentKitSpec.atlas.file),
+  "environment-kit-v2 public atlas",
+);
+if (
+  !productionEnvironmentKit.equals(preparedEnvironmentKit) ||
+  !productionEnvironmentKit.equals(publicEnvironmentKit)
+)
+  throw new Error(
+    "Environment-kit production source, prepared ingress, and public atlas are not byte-identical",
+  );
+
 function terrainMaterialEvidence(data, width, height) {
   const cellMeans = [];
   for (let cellY = 0; cellY < 4; cellY += 1) {
@@ -325,12 +511,70 @@ if (manifest.pipeline !== spec.id)
   throw new Error("Build manifest pipeline differs from actor metadata");
 if (manifest.actorSpec.sha256 !== sha256(await fs.readFile(specPath)))
   throw new Error("Build manifest actor metadata hash is stale");
+if (
+  manifest.environmentKitSpec?.sha256 !==
+  sha256(await fs.readFile(environmentKitSpecPath))
+)
+  throw new Error("Build manifest environment-kit metadata hash is stale");
+if (
+  manifest.environmentKitSpec.productionSource.file !==
+    environmentKitSpec.source.file ||
+  manifest.environmentKitSpec.productionSource.sha256 !==
+    expectedEnvironmentKit.sha256 ||
+  manifest.environmentKitSpec.preparedSource !==
+    environmentKitSpec.provenance.preparedFile ||
+  manifest.environmentKitSpec.auditCommit !== expectedEnvironmentKit.auditCommit
+)
+  throw new Error("Build manifest environment-kit provenance drifted");
+if (!manifest.outputs[environmentKitSpec.atlas.file])
+  throw new Error("Build manifest omits environment-kit-v2.png");
 for (const [fileName, evidence] of Object.entries(manifest.outputs)) {
   const file = await fs.readFile(path.join(atlasDirectory, fileName));
   if (evidence.sha256 !== sha256(file))
     throw new Error(`Build manifest hash is stale for ${fileName}`);
 }
 
+const deterministicBuildDirectory = await fs.mkdtemp(
+  path.join(os.tmpdir(), "cinderwake-environment-kit-build-"),
+);
+try {
+  const buildArguments = [
+    path.join(root, "scripts", "build-sprite-assets.mjs"),
+    "--environment-kit-only",
+    "--output-dir",
+    deterministicBuildDirectory,
+  ];
+  const buildOnce = async () => {
+    const { stderr } = await executeFile(process.execPath, buildArguments, {
+      cwd: root,
+      maxBuffer: 10 * 1024 * 1024,
+    });
+    if (stderr.trim())
+      throw new Error(`Environment-kit isolated build wrote stderr: ${stderr}`);
+    return {
+      atlas: await fs.readFile(
+        path.join(deterministicBuildDirectory, environmentKitSpec.atlas.file),
+      ),
+      manifest: await fs.readFile(
+        path.join(deterministicBuildDirectory, "build-manifest.json"),
+      ),
+    };
+  };
+  const first = await buildOnce();
+  const second = await buildOnce();
+  if (
+    !first.atlas.equals(second.atlas) ||
+    !first.manifest.equals(second.manifest)
+  )
+    throw new Error("Environment-kit isolated rebuild is nondeterministic");
+  if (!first.atlas.equals(publicEnvironmentKit))
+    throw new Error(
+      "Environment-kit isolated rebuild differs from the committed public atlas",
+    );
+} finally {
+  await fs.rm(deterministicBuildDirectory, { recursive: true, force: true });
+}
+
 console.log(
-  `${spec.id} source sheets, runtime cadence, cells, anchors, safe bounds, dimensions, and hashes are valid.`,
+  `${spec.id} and environment-kit-v2 source sheets, runtime cadence, cells, anchors, safe bounds, dimensions, hashes, provenance, and deterministic rebuilds are valid.`,
 );
