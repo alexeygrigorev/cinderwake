@@ -330,6 +330,17 @@ internal-rim mutations prove both collapse and overload codes. The metric
 cannot approve material, lighting, anatomy, or style, so exact-hash visual
 review remains required.
 
+Identity master v9 demonstrates why exact topology and reduced noise are still
+insufficient. Two-stage preparation restores v4's exact final alpha field,
+148 × 156 prepared envelope, grounding, and contact; its 74 × 79 runtime pose
+has four readable chains and zero topology differences. The surface metric
+rejects strong occupancy `0.106996` and readability `0.268595`. Independent
+exact-hash review agrees: a single tan dorsal fill, flat dark cylinders, and
+orange joint bracelets read as an unfinished generic blockout rather than a
+heavy Ashfang. V9 is accepted only as the input for one internal-value edit:
+three or four broad dorsal plates, one cool flank plane, a few filled ember
+vents, and no bracelets, grain, rim network, new contour, or motion phase.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

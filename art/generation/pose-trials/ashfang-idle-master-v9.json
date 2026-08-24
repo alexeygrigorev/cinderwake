@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-idle-master-v9-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-broad-matte-topology-locked-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v9.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v9.png",
+  "candidateSha256": "16b3c5b3dabb05acd0155f381a9e35ae74b93e02d5b8d2c14ee2beea6907f25b",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+      "role": "sole raw-space authority for anatomy, silhouette, topology, camera, pose, support, framing, and scale",
+      "sha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5"
+    },
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v8.png",
+      "role": "rejected identity-mark placement reference only; grain, rims, material, lighting, contour, and proportions are forbidden",
+      "sha256": "a16aa4f7065bc04a25ad07fcaad08e770861197c50e64b9cc79d8716bac620ac"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "cast rendering, broad value grouping, warm light, and runtime detail-density target only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-84e1e321-1a78-4617-a324-d7f5f74cf915.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "the generator replaces v8's stone grain, fine border network, silver rims, and claw microdetail with a small set of broad matte value masses",
+      "four body-connected chains, four paw terminals, open gaps, elevated camera, perspective order, both diagonals, and the support footprint remain readable",
+      "two-stage deterministic preparation reproduces the reviewed v4 final keyed-alpha field exactly after resampling and contact placement",
+      "one quiet east-facing creature appears without floor, shadow, effect, sheet, scenery, or second figure"
+    ],
+    "failed": [
+      {
+        "code": "runtime-detail-collapse",
+        "detail": "The exact keyed 128-pixel projection measures strong occupancy 0.106996 and readability 0.268595, below the frozen 0.30 and 0.38 finished-surface minima."
+      },
+      {
+        "code": "identity-and-value-design-rejected",
+        "detail": "Exact review finds a generic low-poly horned quadruped: the uninterrupted tan dorsal field reads as placeholder fill, flat cylinders retain stilt anatomy, thin orange joint bracelets dominate, and the cast's mid-scale plane hierarchy is missing."
+      },
+      {
+        "code": "isolated-master-not-production-atlas",
+        "detail": "This single rejected idle source cannot replace any production sheet or authorize motion phases."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V9 proves exact two-stage topology enforcement, but both the frozen native-runtime detail envelope and independent exact-hash review reject it as an identity master or phase-generation seed."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v9.png --output art/generation/prepared/ashfang-idle-master-v9.png --preserve-framing --topology-mask art/generation/candidates/ashfang-anatomy-blockout-v4.png --prepared-topology-mask art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+    "preserveFraming": true,
+    "topologyMask": {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+      "sha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5"
+    },
+    "preparedTopologyMask": {
+      "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+      "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc"
+    },
+    "file": "art/generation/prepared/ashfang-idle-master-v9.png",
+    "sha256": "b131df47004ac0288ad76d546183bd5a9f84e1b743b26a3c54da1c2bf36c1b9f",
+    "status": "rejected",
+    "notes": "Source-space enforcement repairs 4,901 visible mask differences. Prepared-space enforcement repairs 670 visible differences with 91 alpha fallbacks, then reproduces v4's 148x156 final bounds, full effective keyed-alpha field, grounding, and -0.448901 source-contact offset with zero final mask or alpha mismatches. The output is fully opaque with 84.8114% literal magenta and exact literal-magenta corners."
+  },
+  "topologyLock": {
+    "reference": {
+      "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+      "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc"
+    },
+    "alphaThreshold": 24,
+    "maximumChangedPixels": 0
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-detail-collapse"]
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "identityMasterSeed": "REJECT",
+    "narrowMaterialValueEditSeed": "ACCEPT",
+    "phaseGenerationAuthorization": "REJECT",
+    "reviewer": "/root/review_anatomy_blockout_v3",
+    "reviewedRawSha256": "16b3c5b3dabb05acd0155f381a9e35ae74b93e02d5b8d2c14ee2beea6907f25b",
+    "reviewedPreparedSha256": "b131df47004ac0288ad76d546183bd5a9f84e1b743b26a3c54da1c2bf36c1b9f",
+    "reviewedPoseEvidenceSha256": "7580df8cf626caf79ab603f14bc9e19dbd3949b1170b1f6e1567f9c7b52c89f2",
+    "reviewedRuntimeComparisonSha256": "3308bff3c793d849eb2bf149142dbb82c07b085ccf7df38f13311a72be395071",
+    "reviewedTopologyDiffSha256": "5b5e3b8b01dc0b3d25d27aea65b008586aebf23c130e856e2139f3e293e2018e",
+    "reviewedRuntimeDetailMapSha256": "06f984bd8f8e3c6ed087f78aa210b8b6be7a6361941b6e53be02467ac4d5c41c",
+    "acceptedAxes": [
+      "exact v4 prepared topology is preserved with four complete body-to-paw chains and four terminals",
+      "all four chains, negative-space gaps, near/far ordering, and both diagonal gait pairs remain identifiable at runtime",
+      "elevated three-quarter camera, support footprint, grounding, and common runtime dimensions remain intact",
+      "prepared topology enforcement introduces no visually evident contour drift, magenta pinholes, halo, or fallback smear at the reviewed scales",
+      "broad charcoal, warm earthen dorsal mass, and restrained ember accents provide a usable palette direction for one narrow value-design edit",
+      "v8-style grain, silver rim networks, and claw microfacets are absent"
+    ],
+    "rejectedAxes": [
+      "finished native-runtime surface readability because the measured detail collapse agrees with the visibly empty internal fields",
+      "Ashfang identity and heavy armored predator mass because the runtime figure reads as a generic low-poly horned quadruped or unfinished mannequin",
+      "cast-compatible broad matte rendering because broad shapes lack the stable mid-scale plane hierarchy visible in the production cast",
+      "dorsal value balance because the large uninterrupted tan top plane dominates like a placeholder fill or saddle",
+      "warm and cool lighting hierarchy because warm tan and orange lack a useful cool separating plane",
+      "joint treatment because thin orange bracelets become disproportionately prominent against flat surrounding surfaces",
+      "organic weight and finished anatomy because straight limbs and uniform dark cylinders preserve a stilt/blockout reading",
+      "production use and motion-phase generation"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Do not generate motion phases. Make exactly one topology-locked internal value edit: replace the tan dorsal field with three or four broad overlapping basalt/ochre plate masses, add one broad cool-slate flank/shoulder plane and two or three filled ember vents around chest/head, and remove orange joint bracelets. Do not add grain, contour rims, micro-cracks, extra spikes, or change any topology, camera, anatomy, paws, gaps, support, or scale."
+}

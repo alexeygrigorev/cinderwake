@@ -81,6 +81,13 @@ const trials = [
     expectedSurfaceViolations: ["runtime-detail-collapse"],
     requiresReview: true,
   },
+  {
+    id: "ashfang-idle-master-v9",
+    manifest: "art/generation/pose-trials/ashfang-idle-master-v9.json",
+    expectedViolations: [],
+    expectedSurfaceViolations: ["runtime-detail-collapse"],
+    requiresReview: true,
+  },
 ];
 
 function assert(condition, message) {
