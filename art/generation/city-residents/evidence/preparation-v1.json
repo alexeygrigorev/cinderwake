@@ -1,0 +1,611 @@
+{
+  "schemaVersion": 1,
+  "operation": "exact floor-derived 4x4 cuts; border-connected light-neutral flood removal; dominant-plus-nearby component isolation; uniform fit; centered common foot baseline; zero transparent RGB",
+  "constants": {
+    "rows": 4,
+    "columns": 4,
+    "outputCell": 256,
+    "safeInset": 24,
+    "footBaseline": 227,
+    "alphaThreshold": 24,
+    "rawXBoundaries": [0, 313, 627, 940, 1254],
+    "rawYBoundaries": [0, 313, 627, 940, 1254]
+  },
+  "input": {
+    "file": "art/generation/city-residents/raw/embercross-residents-idle-v1.png",
+    "sha256": "23b6ab6438d9c1b20d6965ee80cb15605d525e5bc886a2d637db430289e3266c",
+    "width": 1254,
+    "height": 1254
+  },
+  "output": {
+    "file": "art/generation/city-residents/prepared/embercross-residents-idle-v1.png",
+    "sha256": "0c5e7fc390603b5958a8b5389ded0da55cc67390e2ceea475aab764b4b620f80",
+    "width": 1024,
+    "height": 1024
+  },
+  "rows": [
+    "npc:embercross:mara",
+    "npc:embercross:oren",
+    "npc:embercross:tess",
+    "npc:embercross:ileya"
+  ],
+  "poses": ["neutral", "inhale", "weight-shift", "return"],
+  "frames": [
+    {
+      "index": 0,
+      "row": 0,
+      "column": 0,
+      "residentId": "npc:embercross:mara",
+      "poseId": "neutral",
+      "rawCell": { "left": 0, "top": 0, "width": 313, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 76213,
+        "disconnectedLightNeutralPixels": 63,
+        "retainedLightNeutralPixels": 63
+      },
+      "subjectIsolation": {
+        "primaryArea": 21717,
+        "retainedComponents": 6,
+        "retainedPixels": 21744,
+        "excludedComponents": 9,
+        "excludedPixels": 12,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 109, "minY": 27, "maxX": 223, "maxY": 304 }
+      },
+      "sourceCrop": { "left": 109, "top": 27, "width": 115, "height": 278 },
+      "uniformScale": 0.7338129496402878,
+      "resize": { "width": 84, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 83,
+        "maxY": 203
+      },
+      "destination": { "left": 86, "top": 24, "width": 84, "height": 204 },
+      "aspectScaleDelta": 0.0033781670315921053
+    },
+    {
+      "index": 1,
+      "row": 0,
+      "column": 1,
+      "residentId": "npc:embercross:mara",
+      "poseId": "inhale",
+      "rawCell": { "left": 313, "top": 0, "width": 314, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 76161,
+        "disconnectedLightNeutralPixels": 44,
+        "retainedLightNeutralPixels": 44
+      },
+      "subjectIsolation": {
+        "primaryArea": 22065,
+        "retainedComponents": 7,
+        "retainedPixels": 22103,
+        "excludedComponents": 11,
+        "excludedPixels": 18,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 106, "minY": 26, "maxX": 222, "maxY": 304 }
+      },
+      "sourceCrop": { "left": 106, "top": 26, "width": 117, "height": 279 },
+      "uniformScale": 0.7311827956989247,
+      "resize": { "width": 86, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 85,
+        "maxY": 203
+      },
+      "destination": { "left": 85, "top": 24, "width": 86, "height": 204 },
+      "aspectScaleDelta": 0.003859939343810348
+    },
+    {
+      "index": 2,
+      "row": 0,
+      "column": 2,
+      "residentId": "npc:embercross:mara",
+      "poseId": "weight-shift",
+      "rawCell": { "left": 627, "top": 0, "width": 313, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 75770,
+        "disconnectedLightNeutralPixels": 43,
+        "retainedLightNeutralPixels": 43
+      },
+      "subjectIsolation": {
+        "primaryArea": 22142,
+        "retainedComponents": 5,
+        "retainedPixels": 22167,
+        "excludedComponents": 20,
+        "excludedPixels": 32,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 97, "minY": 23, "maxX": 211, "maxY": 301 }
+      },
+      "sourceCrop": { "left": 97, "top": 23, "width": 115, "height": 279 },
+      "uniformScale": 0.7311827956989247,
+      "resize": { "width": 84, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 83,
+        "maxY": 203
+      },
+      "destination": { "left": 86, "top": 24, "width": 84, "height": 204 },
+      "aspectScaleDelta": 0.0007480130902290938
+    },
+    {
+      "index": 3,
+      "row": 0,
+      "column": 3,
+      "residentId": "npc:embercross:mara",
+      "poseId": "return",
+      "rawCell": { "left": 940, "top": 0, "width": 314, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 76833,
+        "disconnectedLightNeutralPixels": 36,
+        "retainedLightNeutralPixels": 36
+      },
+      "subjectIsolation": {
+        "primaryArea": 21400,
+        "retainedComponents": 7,
+        "retainedPixels": 21430,
+        "excludedComponents": 12,
+        "excludedPixels": 19,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 93, "minY": 26, "maxX": 204, "maxY": 301 }
+      },
+      "sourceCrop": { "left": 93, "top": 26, "width": 112, "height": 276 },
+      "uniformScale": 0.7391304347826086,
+      "resize": { "width": 83, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 82,
+        "maxY": 203
+      },
+      "destination": { "left": 87, "top": 24, "width": 83, "height": 204 },
+      "aspectScaleDelta": 0.0019409937888199558
+    },
+    {
+      "index": 4,
+      "row": 1,
+      "column": 0,
+      "residentId": "npc:embercross:oren",
+      "poseId": "neutral",
+      "rawCell": { "left": 0, "top": 313, "width": 313, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 69221,
+        "disconnectedLightNeutralPixels": 184,
+        "retainedLightNeutralPixels": 184
+      },
+      "subjectIsolation": {
+        "primaryArea": 29024,
+        "retainedComponents": 5,
+        "retainedPixels": 29049,
+        "excludedComponents": 8,
+        "excludedPixels": 12,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 84, "minY": 9, "maxX": 247, "maxY": 297 }
+      },
+      "sourceCrop": { "left": 84, "top": 9, "width": 164, "height": 289 },
+      "uniformScale": 0.7058823529411765,
+      "resize": { "width": 116, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 115,
+        "maxY": 203
+      },
+      "destination": { "left": 70, "top": 24, "width": 116, "height": 204 },
+      "aspectScaleDelta": 0.001434720229555153
+    },
+    {
+      "index": 5,
+      "row": 1,
+      "column": 1,
+      "residentId": "npc:embercross:oren",
+      "poseId": "inhale",
+      "rawCell": { "left": 313, "top": 313, "width": 314, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 69111,
+        "disconnectedLightNeutralPixels": 168,
+        "retainedLightNeutralPixels": 168
+      },
+      "subjectIsolation": {
+        "primaryArea": 29441,
+        "retainedComponents": 5,
+        "retainedPixels": 29459,
+        "excludedComponents": 18,
+        "excludedPixels": 26,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 77, "minY": 8, "maxX": 241, "maxY": 297 }
+      },
+      "sourceCrop": { "left": 77, "top": 8, "width": 165, "height": 290 },
+      "uniformScale": 0.7034482758620689,
+      "resize": { "width": 116, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 115,
+        "maxY": 203
+      },
+      "destination": { "left": 70, "top": 24, "width": 116, "height": 204 },
+      "aspectScaleDelta": 0.0004179728317659226
+    },
+    {
+      "index": 6,
+      "row": 1,
+      "column": 2,
+      "residentId": "npc:embercross:oren",
+      "poseId": "weight-shift",
+      "rawCell": { "left": 627, "top": 313, "width": 313, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 69446,
+        "disconnectedLightNeutralPixels": 145,
+        "retainedLightNeutralPixels": 145
+      },
+      "subjectIsolation": {
+        "primaryArea": 28802,
+        "retainedComponents": 3,
+        "retainedPixels": 28817,
+        "excludedComponents": 14,
+        "excludedPixels": 19,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 75, "minY": 5, "maxX": 234, "maxY": 297 }
+      },
+      "sourceCrop": { "left": 75, "top": 5, "width": 160, "height": 293 },
+      "uniformScale": 0.6962457337883959,
+      "resize": { "width": 111, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 110,
+        "maxY": 203
+      },
+      "destination": { "left": 73, "top": 24, "width": 111, "height": 204 },
+      "aspectScaleDelta": 0.0024957337883959596
+    },
+    {
+      "index": 7,
+      "row": 1,
+      "column": 3,
+      "residentId": "npc:embercross:oren",
+      "poseId": "return",
+      "rawCell": { "left": 940, "top": 313, "width": 314, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 69213,
+        "disconnectedLightNeutralPixels": 169,
+        "retainedLightNeutralPixels": 169
+      },
+      "subjectIsolation": {
+        "primaryArea": 29346,
+        "retainedComponents": 2,
+        "retainedPixels": 29351,
+        "excludedComponents": 20,
+        "excludedPixels": 32,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 62, "minY": 6, "maxX": 224, "maxY": 297 }
+      },
+      "sourceCrop": { "left": 62, "top": 6, "width": 163, "height": 292 },
+      "uniformScale": 0.6986301369863014,
+      "resize": { "width": 114, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 113,
+        "maxY": 203
+      },
+      "destination": { "left": 71, "top": 24, "width": 114, "height": 204 },
+      "aspectScaleDelta": 0.0007563660811832351
+    },
+    {
+      "index": 8,
+      "row": 2,
+      "column": 0,
+      "residentId": "npc:embercross:tess",
+      "poseId": "neutral",
+      "rawCell": { "left": 0, "top": 627, "width": 313, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74807,
+        "disconnectedLightNeutralPixels": 20,
+        "retainedLightNeutralPixels": 20
+      },
+      "subjectIsolation": {
+        "primaryArea": 23097,
+        "retainedComponents": 5,
+        "retainedPixels": 23119,
+        "excludedComponents": 15,
+        "excludedPixels": 43,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 107, "minY": 8, "maxX": 221, "maxY": 294 }
+      },
+      "sourceCrop": { "left": 107, "top": 8, "width": 115, "height": 287 },
+      "uniformScale": 0.710801393728223,
+      "resize": { "width": 82, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 81,
+        "maxY": 203
+      },
+      "destination": { "left": 87, "top": 24, "width": 82, "height": 204 },
+      "aspectScaleDelta": 0.0022420845326465155
+    },
+    {
+      "index": 9,
+      "row": 2,
+      "column": 1,
+      "residentId": "npc:embercross:tess",
+      "poseId": "inhale",
+      "rawCell": { "left": 313, "top": 627, "width": 314, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74468,
+        "disconnectedLightNeutralPixels": 11,
+        "retainedLightNeutralPixels": 11
+      },
+      "subjectIsolation": {
+        "primaryArea": 23753,
+        "retainedComponents": 5,
+        "retainedPixels": 23775,
+        "excludedComponents": 12,
+        "excludedPixels": 39,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 100, "minY": 7, "maxX": 213, "maxY": 294 }
+      },
+      "sourceCrop": { "left": 100, "top": 7, "width": 114, "height": 288 },
+      "uniformScale": 0.7083333333333334,
+      "resize": { "width": 81, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 80,
+        "maxY": 203
+      },
+      "destination": { "left": 88, "top": 24, "width": 81, "height": 204 },
+      "aspectScaleDelta": 0.002192982456140302
+    },
+    {
+      "index": 10,
+      "row": 2,
+      "column": 2,
+      "residentId": "npc:embercross:tess",
+      "poseId": "weight-shift",
+      "rawCell": { "left": 627, "top": 627, "width": 313, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74625,
+        "disconnectedLightNeutralPixels": 15,
+        "retainedLightNeutralPixels": 15
+      },
+      "subjectIsolation": {
+        "primaryArea": 23276,
+        "retainedComponents": 4,
+        "retainedPixels": 23294,
+        "excludedComponents": 17,
+        "excludedPixels": 50,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 88, "minY": 8, "maxX": 200, "maxY": 292 }
+      },
+      "sourceCrop": { "left": 88, "top": 8, "width": 113, "height": 285 },
+      "uniformScale": 0.7157894736842105,
+      "resize": { "width": 81, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 80,
+        "maxY": 203
+      },
+      "destination": { "left": 88, "top": 24, "width": 81, "height": 204 },
+      "aspectScaleDelta": 0.0010246856078248712
+    },
+    {
+      "index": 11,
+      "row": 2,
+      "column": 3,
+      "residentId": "npc:embercross:tess",
+      "poseId": "return",
+      "rawCell": { "left": 940, "top": 627, "width": 314, "height": 313 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 75308,
+        "disconnectedLightNeutralPixels": 21,
+        "retainedLightNeutralPixels": 21
+      },
+      "subjectIsolation": {
+        "primaryArea": 22933,
+        "retainedComponents": 2,
+        "retainedPixels": 22937,
+        "excludedComponents": 13,
+        "excludedPixels": 37,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 83, "minY": 7, "maxX": 194, "maxY": 292 }
+      },
+      "sourceCrop": { "left": 83, "top": 7, "width": 112, "height": 286 },
+      "uniformScale": 0.7132867132867133,
+      "resize": { "width": 80, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 79,
+        "maxY": 203
+      },
+      "destination": { "left": 88, "top": 24, "width": 80, "height": 204 },
+      "aspectScaleDelta": 0.0009990009990009652
+    },
+    {
+      "index": 12,
+      "row": 3,
+      "column": 0,
+      "residentId": "npc:embercross:ileya",
+      "poseId": "neutral",
+      "rawCell": { "left": 0, "top": 940, "width": 313, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74113,
+        "disconnectedLightNeutralPixels": 97,
+        "retainedLightNeutralPixels": 97
+      },
+      "subjectIsolation": {
+        "primaryArea": 24140,
+        "retainedComponents": 4,
+        "retainedPixels": 24155,
+        "excludedComponents": 10,
+        "excludedPixels": 14,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 103, "minY": 0, "maxX": 225, "maxY": 282 }
+      },
+      "sourceCrop": { "left": 103, "top": 0, "width": 123, "height": 283 },
+      "uniformScale": 0.7208480565371025,
+      "resize": { "width": 89, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 88,
+        "maxY": 203
+      },
+      "destination": { "left": 84, "top": 24, "width": 89, "height": 204 },
+      "aspectScaleDelta": 0.0027291792352552857
+    },
+    {
+      "index": 13,
+      "row": 3,
+      "column": 1,
+      "residentId": "npc:embercross:ileya",
+      "poseId": "inhale",
+      "rawCell": { "left": 313, "top": 940, "width": 314, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74277,
+        "disconnectedLightNeutralPixels": 122,
+        "retainedLightNeutralPixels": 122
+      },
+      "subjectIsolation": {
+        "primaryArea": 24260,
+        "retainedComponents": 6,
+        "retainedPixels": 24300,
+        "excludedComponents": 12,
+        "excludedPixels": 19,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 90, "minY": 0, "maxX": 213, "maxY": 284 }
+      },
+      "sourceCrop": { "left": 90, "top": 0, "width": 124, "height": 285 },
+      "uniformScale": 0.7157894736842105,
+      "resize": { "width": 89, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 88,
+        "maxY": 203
+      },
+      "destination": { "left": 84, "top": 24, "width": 89, "height": 204 },
+      "aspectScaleDelta": 0.0019524617996604654
+    },
+    {
+      "index": 14,
+      "row": 3,
+      "column": 2,
+      "residentId": "npc:embercross:ileya",
+      "poseId": "weight-shift",
+      "rawCell": { "left": 627, "top": 940, "width": 313, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74459,
+        "disconnectedLightNeutralPixels": 124,
+        "retainedLightNeutralPixels": 124
+      },
+      "subjectIsolation": {
+        "primaryArea": 23799,
+        "retainedComponents": 3,
+        "retainedPixels": 23807,
+        "excludedComponents": 10,
+        "excludedPixels": 16,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 80, "minY": 0, "maxX": 200, "maxY": 286 }
+      },
+      "sourceCrop": { "left": 80, "top": 0, "width": 121, "height": 287 },
+      "uniformScale": 0.710801393728223,
+      "resize": { "width": 86, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 85,
+        "maxY": 203
+      },
+      "destination": { "left": 85, "top": 24, "width": 86, "height": 204 },
+      "aspectScaleDelta": 0.0000575920753305148
+    },
+    {
+      "index": 15,
+      "row": 3,
+      "column": 3,
+      "residentId": "npc:embercross:ileya",
+      "poseId": "return",
+      "rawCell": { "left": 940, "top": 940, "width": 314, "height": 314 },
+      "backgroundExtraction": {
+        "method": "four-connected flood from cell border over light-neutral pixels only",
+        "lightNeutralMinimumChannel": 232,
+        "maximumChannelSpread": 10,
+        "removedPixels": 74962,
+        "disconnectedLightNeutralPixels": 114,
+        "retainedLightNeutralPixels": 114
+      },
+      "subjectIsolation": {
+        "primaryArea": 23623,
+        "retainedComponents": 2,
+        "retainedPixels": 23628,
+        "excludedComponents": 4,
+        "excludedPixels": 6,
+        "nearbyComponentMaximumDistance": 12,
+        "bounds": { "minX": 75, "minY": 0, "maxX": 195, "maxY": 284 }
+      },
+      "sourceCrop": { "left": 75, "top": 0, "width": 121, "height": 285 },
+      "uniformScale": 0.7157894736842105,
+      "resize": { "width": 87, "height": 204 },
+      "transparentTrimAfterResize": {
+        "minX": 0,
+        "minY": 0,
+        "maxX": 86,
+        "maxY": 203
+      },
+      "destination": { "left": 85, "top": 24, "width": 87, "height": 204 },
+      "aspectScaleDelta": 0.003218790778599434
+    }
+  ]
+}
