@@ -1,0 +1,570 @@
+{
+  "schemaVersion": 1,
+  "verdict": "REJECT",
+  "scope": "deterministic prepared ingress only; semantic and production acceptance remain visual decisions",
+  "strictRaw": {
+    "literalMagentaRatio": 0.0000012715657552083333,
+    "keyableBackgroundRatio": 0.6565869649251302,
+    "literalMattePass": false
+  },
+  "hashes": {
+    "prompt": "f2779b5739ed54f166d6f1aa5643047b24aab820c6964bb56c9265f948ab4a88",
+    "references": [
+      "b8954bf785d6da2057744c11b1c8e47084140f9458229c4cc739fe6576f2a47e"
+    ],
+    "raw": "da0b608eb0d516df1b38aad14b3d18ca1b48dff5b69b0ecb44d5123cddbfcaed",
+    "prepared": "25af4de34ce1efa24237d679067526d3f7a5a16c41115ae93f08755d3cb7ccdf"
+  },
+  "checks": {
+    "promptHash": true,
+    "referenceHashes": true,
+    "rawHash": true,
+    "preparedHash": true,
+    "recordedPreparationHash": true,
+    "exactDimensions": true,
+    "deterministicRepeat": true,
+    "sixFixedCells": true,
+    "allCellsMechanicallySafe": false
+  },
+  "cells": [
+    {
+      "index": 0,
+      "id": "market-stall",
+      "runtimeHeight": 128,
+      "bounds": {
+        "minX": 62,
+        "minY": 94,
+        "maxX": 449,
+        "maxY": 446,
+        "width": 388,
+        "height": 353,
+        "area": 92104,
+        "margins": {
+          "left": 62,
+          "top": 94,
+          "right": 62,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 0,
+        "id": "market-stall",
+        "sourceInkBounds": {
+          "minX": 72,
+          "minY": 110,
+          "maxX": 460,
+          "maxY": 463,
+          "pixels": 92096
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 72,
+            "minY": 110,
+            "maxX": 465,
+            "maxY": 465,
+            "pixels": 92165
+          },
+          "touchesCellEdge": false,
+          "bounds": {
+            "minX": 72,
+            "minY": 110,
+            "maxX": 460,
+            "maxY": 463,
+            "pixels": 92096
+          },
+          "primaryArea": 92096,
+          "retainedComponents": 1,
+          "excludedComponents": 34,
+          "excludedPixels": 69
+        },
+        "sourceCrop": {
+          "left": 72,
+          "top": 110,
+          "width": 389,
+          "height": 354
+        },
+        "uniformScale": 0.9974293059125964,
+        "destination": {
+          "left": 62,
+          "top": 94,
+          "width": 388,
+          "height": 353
+        },
+        "aspectScaleDelta": 0.000254164669658552,
+        "upscaled": false
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": true
+      },
+      "pass": true,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/00-market-stall.png",
+        "sha256": "bfa623e2f7c1c1092f7f3f5889fbb36bccce47383fb573134ddeca297501ab07",
+        "sourceRect": {
+          "x": 0,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        }
+      }
+    },
+    {
+      "index": 1,
+      "id": "tavern",
+      "runtimeHeight": 220,
+      "bounds": {
+        "minX": 62,
+        "minY": 80,
+        "maxX": 449,
+        "maxY": 446,
+        "width": 388,
+        "height": 367,
+        "area": 95356,
+        "margins": {
+          "left": 62,
+          "top": 80,
+          "right": 62,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 1,
+        "id": "tavern",
+        "sourceInkBounds": {
+          "minX": 15,
+          "minY": 35,
+          "maxX": 493,
+          "maxY": 487,
+          "pixels": 144084
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 10,
+            "minY": 35,
+            "maxX": 494,
+            "maxY": 487,
+            "pixels": 144176
+          },
+          "touchesCellEdge": false,
+          "bounds": {
+            "minX": 15,
+            "minY": 35,
+            "maxX": 493,
+            "maxY": 487,
+            "pixels": 144084
+          },
+          "primaryArea": 142860,
+          "retainedComponents": 3,
+          "excludedComponents": 35,
+          "excludedPixels": 92
+        },
+        "sourceCrop": {
+          "left": 15,
+          "top": 35,
+          "width": 479,
+          "height": 453
+        },
+        "uniformScale": 0.8100208768267223,
+        "destination": {
+          "left": 62,
+          "top": 80,
+          "width": 388,
+          "height": 367
+        },
+        "aspectScaleDelta": 0.00013364855959119293,
+        "upscaled": false
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": true
+      },
+      "pass": true,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/01-tavern.png",
+        "sha256": "211f335cccfea1d62f4b62e529d705db87c808e199f5ba4acb18008c289f2002",
+        "sourceRect": {
+          "x": 512,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        }
+      }
+    },
+    {
+      "index": 2,
+      "id": "infirmary",
+      "runtimeHeight": 196,
+      "bounds": {
+        "minX": 86,
+        "minY": 62,
+        "maxX": 425,
+        "maxY": 446,
+        "width": 340,
+        "height": 385,
+        "area": 87719,
+        "margins": {
+          "left": 86,
+          "top": 62,
+          "right": 86,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 2,
+        "id": "infirmary",
+        "sourceInkBounds": {
+          "minX": 63,
+          "minY": 87,
+          "maxX": 415,
+          "maxY": 486,
+          "pixels": 93693
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 57,
+            "minY": 87,
+            "maxX": 420,
+            "maxY": 486,
+            "pixels": 93770
+          },
+          "touchesCellEdge": false,
+          "bounds": {
+            "minX": 63,
+            "minY": 87,
+            "maxX": 415,
+            "maxY": 486,
+            "pixels": 93693
+          },
+          "primaryArea": 93366,
+          "retainedComponents": 2,
+          "excludedComponents": 39,
+          "excludedPixels": 77
+        },
+        "sourceCrop": {
+          "left": 63,
+          "top": 87,
+          "width": 353,
+          "height": 400
+        },
+        "uniformScale": 0.9625,
+        "destination": {
+          "left": 86,
+          "top": 62,
+          "width": 340,
+          "height": 385
+        },
+        "aspectScaleDelta": 0.0006728045325778975,
+        "upscaled": false
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": true
+      },
+      "pass": true,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/02-infirmary.png",
+        "sha256": "13d0a2d36d5b3c8c24f842ca697ae4b593e54455b1b9ca5df6e9905c75058f13",
+        "sourceRect": {
+          "x": 1024,
+          "y": 0,
+          "width": 512,
+          "height": 512
+        }
+      }
+    },
+    {
+      "index": 3,
+      "id": "city-gate",
+      "runtimeHeight": 210,
+      "bounds": {
+        "minX": 62,
+        "minY": 127,
+        "maxX": 449,
+        "maxY": 446,
+        "width": 388,
+        "height": 320,
+        "area": 71301,
+        "margins": {
+          "left": 62,
+          "top": 127,
+          "right": 62,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 3,
+        "id": "city-gate",
+        "sourceInkBounds": {
+          "minX": 83,
+          "minY": 47,
+          "maxX": 511,
+          "maxY": 400,
+          "pixels": 86271
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 74,
+            "minY": 47,
+            "maxX": 511,
+            "maxY": 400,
+            "pixels": 86320
+          },
+          "touchesCellEdge": true,
+          "bounds": {
+            "minX": 83,
+            "minY": 47,
+            "maxX": 511,
+            "maxY": 400,
+            "pixels": 86271
+          },
+          "primaryArea": 86271,
+          "retainedComponents": 1,
+          "excludedComponents": 28,
+          "excludedPixels": 49
+        },
+        "sourceCrop": {
+          "left": 83,
+          "top": 47,
+          "width": 429,
+          "height": 354
+        },
+        "uniformScale": 0.9044289044289044,
+        "destination": {
+          "left": 62,
+          "top": 127,
+          "width": 388,
+          "height": 320
+        },
+        "aspectScaleDelta": 0.00047410216901744295,
+        "upscaled": false
+      },
+      "aperture": {
+        "transparentRatio": 1,
+        "sample": [236, 265, 276, 420]
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": false,
+        "openWalkableAperture": true
+      },
+      "pass": false,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/03-city-gate.png",
+        "sha256": "10dce1525c14ad3e391cdce5216aab09bf514ac75c039cf19fb17ed7daf68497",
+        "sourceRect": {
+          "x": 0,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        }
+      }
+    },
+    {
+      "index": 4,
+      "id": "road-sign",
+      "runtimeHeight": 86,
+      "bounds": {
+        "minX": 170,
+        "minY": 122,
+        "maxX": 342,
+        "maxY": 446,
+        "width": 173,
+        "height": 325,
+        "area": 29887,
+        "margins": {
+          "left": 170,
+          "top": 122,
+          "right": 169,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 4,
+        "id": "road-sign",
+        "sourceInkBounds": {
+          "minX": 160,
+          "minY": 82,
+          "maxX": 332,
+          "maxY": 406,
+          "pixels": 29848
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 0,
+            "minY": 82,
+            "maxX": 511,
+            "maxY": 406,
+            "pixels": 33347
+          },
+          "touchesCellEdge": true,
+          "bounds": {
+            "minX": 160,
+            "minY": 82,
+            "maxX": 332,
+            "maxY": 406,
+            "pixels": 29848
+          },
+          "primaryArea": 29848,
+          "retainedComponents": 1,
+          "excludedComponents": 28,
+          "excludedPixels": 3499
+        },
+        "sourceCrop": {
+          "left": 160,
+          "top": 82,
+          "width": 173,
+          "height": 325
+        },
+        "uniformScale": 1,
+        "destination": {
+          "left": 170,
+          "top": 122,
+          "width": 173,
+          "height": 325
+        },
+        "aspectScaleDelta": 0,
+        "upscaled": false
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": true
+      },
+      "pass": true,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/04-road-sign.png",
+        "sha256": "06062adcc6706cb692759116dc877ad04d84b3ed8ff918649bf8a15617d85e3b",
+        "sourceRect": {
+          "x": 512,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        }
+      }
+    },
+    {
+      "index": 5,
+      "id": "bed-food-service",
+      "runtimeHeight": 96,
+      "bounds": {
+        "minX": 62,
+        "minY": 166,
+        "maxX": 449,
+        "maxY": 446,
+        "width": 388,
+        "height": 281,
+        "area": 72789,
+        "margins": {
+          "left": 62,
+          "top": 166,
+          "right": 62,
+          "bottom": 65
+        },
+        "contaminatedTransparentPixels": 0
+      },
+      "preparation": {
+        "index": 5,
+        "id": "bed-food-service",
+        "sourceInkBounds": {
+          "minX": 0,
+          "minY": 90,
+          "maxX": 433,
+          "maxY": 403,
+          "pixels": 90277
+        },
+        "rawCell": {
+          "allInkBounds": {
+            "minX": 0,
+            "minY": 90,
+            "maxX": 438,
+            "maxY": 405,
+            "pixels": 90364
+          },
+          "touchesCellEdge": true,
+          "bounds": {
+            "minX": 0,
+            "minY": 90,
+            "maxX": 433,
+            "maxY": 403,
+            "pixels": 90277
+          },
+          "primaryArea": 90277,
+          "retainedComponents": 1,
+          "excludedComponents": 35,
+          "excludedPixels": 87
+        },
+        "sourceCrop": {
+          "left": 0,
+          "top": 90,
+          "width": 434,
+          "height": 314
+        },
+        "uniformScale": 0.8940092165898618,
+        "destination": {
+          "left": 62,
+          "top": 166,
+          "width": 388,
+          "height": 281
+        },
+        "aspectScaleDelta": 0.000895242008864372,
+        "upscaled": false
+      },
+      "checks": {
+        "nonblank": true,
+        "safeBorders": true,
+        "commonBaseline": true,
+        "noTransparentRgb": true,
+        "noUpscaling": true,
+        "aspectPreserved": true,
+        "horizontallyAnchored": true,
+        "sourceSubjectIsolated": false
+      },
+      "pass": false,
+      "atlasCell": {
+        "file": "art/generation/city-kit/evidence/cuts-v1/05-bed-food-service.png",
+        "sha256": "34fe339aafdab10ee6a78c5466805692e06c689aa7dfd06ca4305f436d0f501b",
+        "sourceRect": {
+          "x": 1024,
+          "y": 512,
+          "width": 512,
+          "height": 512
+        }
+      }
+    }
+  ]
+}

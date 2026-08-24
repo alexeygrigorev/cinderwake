@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "embercross-city-kit-v3",
+  "status": "prepared-ingress-pass-controlled-integration-only",
+  "created": "2026-08-24",
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-c7b7c409-b0bb-4adf-9f6a-f081d9a54f29",
+    "generationDirectoryId": "01a03322-6ec7-7190-adcf-b0c0a046a04a",
+    "calls": 1,
+    "prompt": {
+      "file": "art/generation/city-kit/prompt-v3.txt",
+      "sha256": "5970a02aa26d375b0e25063d15bf219be8de614992808bba6f71d82e423032f6"
+    },
+    "references": [
+      {
+        "file": "art/generation/city-kit/raw/embercross-city-kit-v2.png",
+        "role": "edit target; preserve cells 0 through 4; uniformly shrink and translate only cell 5",
+        "sha256": "7fcc11e5463835039b0debdf1efca4be0b6a965a8ae1d1c58bff4f0507354bf3"
+      }
+    ],
+    "raw": {
+      "file": "art/generation/city-kit/raw/embercross-city-kit-v3.png",
+      "sha256": "c243a7d7d031b703864e9a2607a20bd8004702b8b5e9a96144b0986cad92fedd",
+      "width": 1536,
+      "height": 1024,
+      "channels": "srgb"
+    },
+    "requestedEditInvariant": {
+      "unchangedReferenceCellIndices": [0, 1, 2, 3, 4],
+      "note": "This is measured and reported separately from prepared ingress; a full-sheet regeneration may still be reviewed as a new candidate."
+    }
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 2,
+    "cellWidth": 512,
+    "cellHeight": 512,
+    "safeInset": 62,
+    "footBaseline": 446,
+    "cells": [
+      { "index": 0, "id": "market-stall", "runtimeHeight": 128 },
+      { "index": 1, "id": "tavern", "runtimeHeight": 220 },
+      { "index": 2, "id": "infirmary", "runtimeHeight": 196 },
+      { "index": 3, "id": "city-gate", "runtimeHeight": 210 },
+      { "index": 4, "id": "road-sign", "runtimeHeight": 86 },
+      { "index": 5, "id": "bed-food-service", "runtimeHeight": 96 }
+    ]
+  },
+  "preparation": {
+    "command": "node art/generation/city-kit/prepare.mjs --input art/generation/city-kit/raw/embercross-city-kit-v3.png --output art/generation/city-kit/prepared/embercross-city-kit-v3.png --report art/generation/city-kit/evidence/preparation-v3.json",
+    "file": "art/generation/city-kit/prepared/embercross-city-kit-v3.png",
+    "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85",
+    "report": "art/generation/city-kit/evidence/preparation-v3.json"
+  },
+  "review": {
+    "evaluation": "pass-for-controlled-runtime-integration",
+    "productionApproved": false,
+    "rating": 8.5,
+    "scope": "prepared six-cell kit at declared runtime heights; finished city scene, NPC interactions, collisions, mobile readability, and gameplay screenshots remain unreviewed",
+    "reviewedEvidence": {
+      "file": "art/generation/city-kit/evidence/runtime-scale-contact-sheet-v3.png",
+      "sha256": "edb5e70328cd48f0e7ed4ae14f6aa37840e51f9659ccbe20977ce652beaee3b0"
+    },
+    "cellVerdicts": {
+      "market-stall": "pass-controlled-integration",
+      "tavern": "pass-controlled-integration",
+      "infirmary": "pass-controlled-integration",
+      "city-gate": "pass-controlled-integration",
+      "road-sign": "pass-controlled-integration",
+      "bed-food-service": "pass-controlled-integration"
+    },
+    "strengths": [
+      "All six requested semantic roles are immediately readable at the declared runtime scale and share one elevated camera, weathered ember-gothic material family, restrained amber lighting, and crisp silhouette treatment.",
+      "The gate has an unmistakable open passage and two visually solid piers, allowing runtime collision to explain why the player can pass through the center but not the sides.",
+      "The tavern, infirmary, and merchant stall form a coherent city service set; the isolated sign establishes the wilderness-to-city wayfinding beat; the bed, stew, bread, and mug remain legible as one tavern service cluster."
+    ],
+    "warnings": [
+      "The raw generator backdrop is tolerant near-magenta, not literal #ff00ff; only the exact prepared hash is authorized.",
+      "The v3 tool call did not preserve cells 0 through 4 byte-for-byte as requested: 99.44% to 99.88% of their RGB pixels changed, including a regenerated near-magenta matte. V3 is reviewed as a new standalone full-sheet candidate, not as a pixel-preserving edit.",
+      "The infirmary's large iron healing emblem is readable but should be reviewed in the finished city composition so it does not feel more modern or visually dominant than the setting.",
+      "The declared runtime heights are initial calibrated values. Mobile portrait captures must still prove the road sign and bed/food details remain readable without making the buildings dominate navigation space."
+    ],
+    "decision": "Authorize only prepared atlas hash 1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85 for a controlled runtime integration trial using uniform destination scaling and the declared source rectangles. Do not promote raw bytes. Finished-scene production acceptance requires gameplay-scale portrait and landscape screenshots, walkable-gate collision evidence, building footprint alignment, NPC placement, interaction affordances, and mobile readability review."
+  }
+}

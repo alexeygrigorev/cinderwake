@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "operation": "fixed semantic cell order; tolerant chroma key; magenta decontamination; per-cell crop; one aspect-preserving no-upscale fit; horizontal centering; common bottom baseline",
+  "constants": {
+    "columns": 3,
+    "rows": 2,
+    "cell": 512,
+    "safeInset": 62,
+    "baseline": 446,
+    "alphaThreshold": 24
+  },
+  "input": {
+    "sha256": "da0b608eb0d516df1b38aad14b3d18ca1b48dff5b69b0ecb44d5123cddbfcaed",
+    "width": 1536,
+    "height": 1024
+  },
+  "output": {
+    "sha256": "25af4de34ce1efa24237d679067526d3f7a5a16c41115ae93f08755d3cb7ccdf",
+    "width": 1536,
+    "height": 1024
+  },
+  "cells": [
+    {
+      "index": 0,
+      "id": "market-stall",
+      "sourceInkBounds": {
+        "minX": 72,
+        "minY": 110,
+        "maxX": 460,
+        "maxY": 463,
+        "pixels": 92096
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 72,
+          "minY": 110,
+          "maxX": 465,
+          "maxY": 465,
+          "pixels": 92165
+        },
+        "touchesCellEdge": false,
+        "bounds": {
+          "minX": 72,
+          "minY": 110,
+          "maxX": 460,
+          "maxY": 463,
+          "pixels": 92096
+        },
+        "primaryArea": 92096,
+        "retainedComponents": 1,
+        "excludedComponents": 34,
+        "excludedPixels": 69
+      },
+      "sourceCrop": {
+        "left": 72,
+        "top": 110,
+        "width": 389,
+        "height": 354
+      },
+      "uniformScale": 0.9974293059125964,
+      "destination": {
+        "left": 62,
+        "top": 94,
+        "width": 388,
+        "height": 353
+      },
+      "aspectScaleDelta": 0.000254164669658552,
+      "upscaled": false
+    },
+    {
+      "index": 1,
+      "id": "tavern",
+      "sourceInkBounds": {
+        "minX": 15,
+        "minY": 35,
+        "maxX": 493,
+        "maxY": 487,
+        "pixels": 144084
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 10,
+          "minY": 35,
+          "maxX": 494,
+          "maxY": 487,
+          "pixels": 144176
+        },
+        "touchesCellEdge": false,
+        "bounds": {
+          "minX": 15,
+          "minY": 35,
+          "maxX": 493,
+          "maxY": 487,
+          "pixels": 144084
+        },
+        "primaryArea": 142860,
+        "retainedComponents": 3,
+        "excludedComponents": 35,
+        "excludedPixels": 92
+      },
+      "sourceCrop": {
+        "left": 15,
+        "top": 35,
+        "width": 479,
+        "height": 453
+      },
+      "uniformScale": 0.8100208768267223,
+      "destination": {
+        "left": 62,
+        "top": 80,
+        "width": 388,
+        "height": 367
+      },
+      "aspectScaleDelta": 0.00013364855959119293,
+      "upscaled": false
+    },
+    {
+      "index": 2,
+      "id": "infirmary",
+      "sourceInkBounds": {
+        "minX": 63,
+        "minY": 87,
+        "maxX": 415,
+        "maxY": 486,
+        "pixels": 93693
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 57,
+          "minY": 87,
+          "maxX": 420,
+          "maxY": 486,
+          "pixels": 93770
+        },
+        "touchesCellEdge": false,
+        "bounds": {
+          "minX": 63,
+          "minY": 87,
+          "maxX": 415,
+          "maxY": 486,
+          "pixels": 93693
+        },
+        "primaryArea": 93366,
+        "retainedComponents": 2,
+        "excludedComponents": 39,
+        "excludedPixels": 77
+      },
+      "sourceCrop": {
+        "left": 63,
+        "top": 87,
+        "width": 353,
+        "height": 400
+      },
+      "uniformScale": 0.9625,
+      "destination": {
+        "left": 86,
+        "top": 62,
+        "width": 340,
+        "height": 385
+      },
+      "aspectScaleDelta": 0.0006728045325778975,
+      "upscaled": false
+    },
+    {
+      "index": 3,
+      "id": "city-gate",
+      "sourceInkBounds": {
+        "minX": 83,
+        "minY": 47,
+        "maxX": 511,
+        "maxY": 400,
+        "pixels": 86271
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 74,
+          "minY": 47,
+          "maxX": 511,
+          "maxY": 400,
+          "pixels": 86320
+        },
+        "touchesCellEdge": true,
+        "bounds": {
+          "minX": 83,
+          "minY": 47,
+          "maxX": 511,
+          "maxY": 400,
+          "pixels": 86271
+        },
+        "primaryArea": 86271,
+        "retainedComponents": 1,
+        "excludedComponents": 28,
+        "excludedPixels": 49
+      },
+      "sourceCrop": {
+        "left": 83,
+        "top": 47,
+        "width": 429,
+        "height": 354
+      },
+      "uniformScale": 0.9044289044289044,
+      "destination": {
+        "left": 62,
+        "top": 127,
+        "width": 388,
+        "height": 320
+      },
+      "aspectScaleDelta": 0.00047410216901744295,
+      "upscaled": false
+    },
+    {
+      "index": 4,
+      "id": "road-sign",
+      "sourceInkBounds": {
+        "minX": 160,
+        "minY": 82,
+        "maxX": 332,
+        "maxY": 406,
+        "pixels": 29848
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 0,
+          "minY": 82,
+          "maxX": 511,
+          "maxY": 406,
+          "pixels": 33347
+        },
+        "touchesCellEdge": true,
+        "bounds": {
+          "minX": 160,
+          "minY": 82,
+          "maxX": 332,
+          "maxY": 406,
+          "pixels": 29848
+        },
+        "primaryArea": 29848,
+        "retainedComponents": 1,
+        "excludedComponents": 28,
+        "excludedPixels": 3499
+      },
+      "sourceCrop": {
+        "left": 160,
+        "top": 82,
+        "width": 173,
+        "height": 325
+      },
+      "uniformScale": 1,
+      "destination": {
+        "left": 170,
+        "top": 122,
+        "width": 173,
+        "height": 325
+      },
+      "aspectScaleDelta": 0,
+      "upscaled": false
+    },
+    {
+      "index": 5,
+      "id": "bed-food-service",
+      "sourceInkBounds": {
+        "minX": 0,
+        "minY": 90,
+        "maxX": 433,
+        "maxY": 403,
+        "pixels": 90277
+      },
+      "rawCell": {
+        "allInkBounds": {
+          "minX": 0,
+          "minY": 90,
+          "maxX": 438,
+          "maxY": 405,
+          "pixels": 90364
+        },
+        "touchesCellEdge": true,
+        "bounds": {
+          "minX": 0,
+          "minY": 90,
+          "maxX": 433,
+          "maxY": 403,
+          "pixels": 90277
+        },
+        "primaryArea": 90277,
+        "retainedComponents": 1,
+        "excludedComponents": 35,
+        "excludedPixels": 87
+      },
+      "sourceCrop": {
+        "left": 0,
+        "top": 90,
+        "width": 434,
+        "height": 314
+      },
+      "uniformScale": 0.8940092165898618,
+      "destination": {
+        "left": 62,
+        "top": 166,
+        "width": 388,
+        "height": 281
+      },
+      "aspectScaleDelta": 0.000895242008864372,
+      "upscaled": false
+    }
+  ]
+}

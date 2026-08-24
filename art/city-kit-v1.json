@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "id": "cinderwake-embercross-city-kit-v1",
+  "status": "controlled-runtime-integration-approved",
+  "atlas": {
+    "file": "embercross-city-kit-v1.png",
+    "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85",
+    "pixelWidth": 1536,
+    "pixelHeight": 1024
+  },
+  "provenance": {
+    "preparedFile": "art/generation/city-kit/prepared/embercross-city-kit-v3.png",
+    "rawFile": "art/generation/city-kit/raw/embercross-city-kit-v3.png",
+    "rawSha256": "c243a7d7d031b703864e9a2607a20bd8004702b8b5e9a96144b0986cad92fedd",
+    "audit": "art/generation/city-kit/evidence/audit-v3.json",
+    "runtimeReview": "art/generation/city-kit/evidence/runtime-scale-contact-sheet-v3.png",
+    "scope": "Only the exact deterministic prepared V3 bytes passed the six-cell ingress and visual review."
+  },
+  "cells": [
+    {
+      "index": 0,
+      "id": "scenery:structure:embercross-market",
+      "cell": { "x": 0, "y": 0, "width": 512, "height": 512 },
+      "ink": { "x": 75, "y": 115, "width": 362, "height": 332 },
+      "logicalSize": { "width": 140, "height": 128 },
+      "anchor": { "mode": "bottom-center", "x": 70, "y": 128 },
+      "cutSha256": "0eafc07e7123f17dfa54278a8102f1c6f813b9276f7c5ace726118110cd13975"
+    },
+    {
+      "index": 1,
+      "id": "scenery:structure:embercross-tavern",
+      "cell": { "x": 512, "y": 0, "width": 512, "height": 512 },
+      "ink": { "x": 62, "y": 81, "width": 388, "height": 366 },
+      "logicalSize": { "width": 233, "height": 220 },
+      "anchor": { "mode": "bottom-center", "x": 116.5, "y": 220 },
+      "cutSha256": "ba9abf86b5eca19258618985ce731f12096de3be3060ea70a4fda2aa73a0f561"
+    },
+    {
+      "index": 2,
+      "id": "scenery:structure:embercross-infirmary",
+      "cell": { "x": 1024, "y": 0, "width": 512, "height": 512 },
+      "ink": { "x": 98, "y": 73, "width": 317, "height": 374 },
+      "logicalSize": { "width": 166, "height": 196 },
+      "anchor": { "mode": "bottom-center", "x": 83, "y": 196 },
+      "cutSha256": "a712c294bfff7dd5fea5c61185c5980fbd601d22e12bc596dfd3b77c54c829c6"
+    },
+    {
+      "index": 3,
+      "id": "scenery:structure:embercross-city-gate",
+      "cell": { "x": 0, "y": 512, "width": 512, "height": 512 },
+      "ink": { "x": 64, "y": 116, "width": 385, "height": 331 },
+      "logicalSize": { "width": 244, "height": 210 },
+      "anchor": { "mode": "bottom-center", "x": 122, "y": 210 },
+      "cutSha256": "4e51720074e482d5b3b9b2b7b521bef710bf1d9815ce90d8315d9f0f96b7a029"
+    },
+    {
+      "index": 4,
+      "id": "scenery:prop:embercross-road-sign",
+      "cell": { "x": 512, "y": 512, "width": 512, "height": 512 },
+      "ink": { "x": 176, "y": 130, "width": 161, "height": 317 },
+      "logicalSize": { "width": 44, "height": 86 },
+      "anchor": { "mode": "bottom-center", "x": 22, "y": 86 },
+      "cutSha256": "3ffdcddf3ecf30009ad6dd86610589d80c3d54cbd7014bb90ef29c1c65e8e548"
+    },
+    {
+      "index": 5,
+      "id": "scenery:prop:embercross-bed-service",
+      "cell": { "x": 1024, "y": 512, "width": 512, "height": 512 },
+      "ink": { "x": 93, "y": 227, "width": 326, "height": 220 },
+      "logicalSize": { "width": 142, "height": 96 },
+      "anchor": { "mode": "bottom-center", "x": 71, "y": 96 },
+      "cutSha256": "2b68c22fbdd0aba7bf5ad8f45adb197b1ea9c346bd114035baa0edcba5c709f0"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "embercross-city-kit-v1",
+  "status": "mechanical-reject-4-of-6",
+  "created": "2026-08-24",
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-b40446e0-53aa-41b1-aa0c-3a865a38a697",
+    "generationDirectoryId": "01a03322-6ec7-7190-adcf-b0c0a046a04a",
+    "calls": 1,
+    "prompt": {
+      "file": "art/generation/city-kit/prompt.txt",
+      "sha256": "f2779b5739ed54f166d6f1aa5643047b24aab820c6964bb56c9265f948ab4a88"
+    },
+    "references": [
+      {
+        "file": "art/generation/environment-kit/candidates/environment-kit-v2.png",
+        "role": "camera, materials, palette, lighting, and world-scale reference only; objects, composition, and pixels forbidden",
+        "sha256": "b8954bf785d6da2057744c11b1c8e47084140f9458229c4cc739fe6576f2a47e"
+      }
+    ],
+    "raw": {
+      "file": "art/generation/city-kit/raw/embercross-city-kit-v1.png",
+      "sha256": "da0b608eb0d516df1b38aad14b3d18ca1b48dff5b69b0ecb44d5123cddbfcaed",
+      "width": 1536,
+      "height": 1024,
+      "channels": "srgb"
+    }
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 2,
+    "cellWidth": 512,
+    "cellHeight": 512,
+    "safeInset": 62,
+    "footBaseline": 446,
+    "cells": [
+      { "index": 0, "id": "market-stall", "runtimeHeight": 128 },
+      { "index": 1, "id": "tavern", "runtimeHeight": 220 },
+      { "index": 2, "id": "infirmary", "runtimeHeight": 196 },
+      { "index": 3, "id": "city-gate", "runtimeHeight": 210 },
+      { "index": 4, "id": "road-sign", "runtimeHeight": 86 },
+      { "index": 5, "id": "bed-food-service", "runtimeHeight": 96 }
+    ]
+  },
+  "preparation": {
+    "command": "node art/generation/city-kit/prepare.mjs",
+    "file": "art/generation/city-kit/prepared/embercross-city-kit-v1.png",
+    "sha256": "25af4de34ce1efa24237d679067526d3f7a5a16c41115ae93f08755d3cb7ccdf",
+    "report": "art/generation/city-kit/evidence/preparation.json"
+  },
+  "review": {
+    "productionApproved": false,
+    "cellVerdicts": {
+      "market-stall": "pass-prepared-ingress",
+      "tavern": "pass-prepared-ingress",
+      "infirmary": "pass-prepared-ingress",
+      "city-gate": "reject-source-subject-crosses-cell-edge",
+      "road-sign": "pass-prepared-ingress",
+      "bed-food-service": "reject-source-subject-crosses-cell-edge"
+    },
+    "decision": "Preserve as rejected iteration evidence. Four cells may be compared visually, but this atlas may not be integrated as a six-cell kit."
+  }
+}
