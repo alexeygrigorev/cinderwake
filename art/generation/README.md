@@ -341,6 +341,17 @@ heavy Ashfang. V9 is accepted only as the input for one internal-value edit:
 three or four broad dorsal plates, one cool flank plane, a few filled ember
 vents, and no bracelets, grain, rim network, new contour, or motion phase.
 
+Identity master v10 proves that the blockout-derived silhouette itself is the
+remaining ceiling. It removes bracelets and adds a cool flank, dorsal split,
+and filled chest vent, but native-runtime strong occupancy falls further to
+`0.090535` and readability to `0.185497`. Exact review rejects every v10 value
+axis and retires v4–v10 as a visual lineage: exact topology also freezes
+cylindrical segments, ring joints, paddle tail, block horns, shell torso, and
+stilt proportions. Preserve those pixels only as non-rendered test evidence.
+The next natural master may use a new silhouette, but it must still satisfy the
+quantified camera, runtime size, grounding, gap, paw-order, diagonal, detail,
+and exact-hash review contracts before motion generation.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-idle-master-v10-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-mid-scale-value-topology-locked-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v10.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v10.png",
+  "candidateSha256": "b79fbd89dfc3a3e8194bb79134e9b211340060703c5f889f28d367e2a0921338",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v9.png",
+      "role": "sole editable surface source and exact pose, identity-placement, palette, and framing authority",
+      "sha256": "16b3c5b3dabb05acd0155f381a9e35ae74b93e02d5b8d2c14ee2beea6907f25b"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "cast mid-scale value hierarchy, warm light, cool separation, and runtime readability only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    },
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+      "role": "protected raw topology, camera, gaps, paw order, support, and framing verification only",
+      "sha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-48af4cc6-3784-47d6-92d4-945c8c71c618.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "orange joint bracelets are removed and continuous charcoal limb values return",
+      "a large cool-slate flank plane, split dorsal values, and a filled chest vent replace v9's single tan saddle and thin joint accents",
+      "four body-connected chains, four paw terminals, open gaps, elevated camera, perspective order, diagonals, and support remain legible",
+      "two-stage preparation reproduces the reviewed opaque v4 prepared alpha field exactly"
+    ],
+    "failed": [
+      {
+        "code": "runtime-detail-collapse",
+        "detail": "The exact keyed runtime projection measures strong occupancy 0.090535 and readability 0.185497, below the frozen 0.30 and 0.38 minima and worse than v9."
+      },
+      {
+        "code": "soft-plane-contrast-loss",
+        "detail": "The added flank and dorsal shapes use soft gradients and weak value steps that increase weak variation without producing durable native-runtime internal structure."
+      },
+      {
+        "code": "blockout-lineage-visual-ceiling",
+        "detail": "Exact review rejects every v10 value-layout axis and the v4-v10 silhouette lineage: cylindrical segments, ring joints, paddle tail, block horns, shell torso, and stilt proportions remain guaranteed by the immutable stencil."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V10 remains quarantined: exact topology and literal-matte preparation pass, while the surface contract, exact visual review, value-layout seed, and phase authorization all reject it. The blockout lineage is retired as a visual seed."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v10.png --output art/generation/prepared/ashfang-idle-master-v10.png --preserve-framing --topology-mask art/generation/candidates/ashfang-anatomy-blockout-v4.png --prepared-topology-mask art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+    "preserveFraming": true,
+    "topologyMask": {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+      "sha256": "bb610d0629de7fc26417dbb7a1adbe9f0917c5507463ab2a661b85cca58a59e5"
+    },
+    "preparedTopologyMask": {
+      "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+      "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc"
+    },
+    "file": "art/generation/prepared/ashfang-idle-master-v10.png",
+    "sha256": "ace40333987b81fbf5bcd842dfa06b4d522eb105913d0752bc9a4b03494d65c3",
+    "status": "rejected",
+    "notes": "Source enforcement repairs 4,567 visible differences; prepared enforcement repairs 663 with 74 alpha fallbacks. Final mask/alpha mismatches are zero, bounds are 148x156, contact offset is -0.448901, all pixels are opaque, and 84.8114% are literal magenta."
+  },
+  "topologyLock": {
+    "reference": {
+      "file": "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+      "sha256": "df015f25c0b64b737204e907e7462aabc81b133438dd4b0fb02b71bcd305bdbc"
+    },
+    "alphaThreshold": 24,
+    "maximumChangedPixels": 0
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-detail-collapse"]
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT",
+    "valueLayoutSeed": "REJECT",
+    "lineageDecision": "ABANDON_BLOCKOUT_LINEAGE_AS_VISUAL_SEED",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "b79fbd89dfc3a3e8194bb79134e9b211340060703c5f889f28d367e2a0921338",
+    "reviewedPreparedSha256": "ace40333987b81fbf5bcd842dfa06b4d522eb105913d0752bc9a4b03494d65c3",
+    "reviewedPoseEvidenceSha256": "cafc1eb063935217cd733f12f7d7f95b27ce654ab3721e432665f48364fd814d",
+    "reviewedRuntimeComparisonSha256": "9ce4fc1f8fa8d285019c59055efa090a5c4c31c18b5b32c94d35bbca2ebb0f04",
+    "reviewedTopologyDiffSha256": "5b5e3b8b01dc0b3d25d27aea65b008586aebf23c130e856e2139f3e293e2018e",
+    "reviewedRuntimeDetailMapSha256": "d34cccca55c8f3271208f871a65da655c8af853bb9e649a6ebda0921296bf602",
+    "acceptedAxes": [
+      "exact prepared alpha topology with zero final mismatch against the protected v4 mask",
+      "four complete body-to-paw chains and four three-claw terminals remain independently traceable at native 74x79 runtime scale",
+      "both diagonal pairs, open limb gaps, elevated east-facing camera, paw depth rows, support footprint, and contact baseline remain legible",
+      "opaque literal-matte preparation without floor, cast shadow, detached effect, grain, gloss, or rim network",
+      "orange joint-bracelet coloration is removed"
+    ],
+    "rejectedAxes": [
+      "v10 cool-flank, dorsal-split, and chest-vent value layout as a seed for another edit",
+      "native-runtime internal value hierarchy and surface readability",
+      "organic joint continuity after bracelet removal",
+      "living heavy Ashfang anatomy, mass, and species silhouette",
+      "Cinderwake cast parity in shape language, material hierarchy, and runtime presence",
+      "continued visual development inside the blockout-derived immutable stencil",
+      "idle or walk phase generation from v10"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Retire v4-v10 as a visual lineage. Preserve the blockout only as a non-rendered topology/test oracle, not as a generation reference, alpha stencil, or production silhouette. Create a fresh natural Ashfang master with a low heavy torso, shorter tapered weight-bearing limbs, organic uninterrupted joints, four separated chains, and broad cast-readable values. Allow a new silhouette while retaining quantified camera, size, grounding, gap, paw-order, and diagonal contracts."
+}
