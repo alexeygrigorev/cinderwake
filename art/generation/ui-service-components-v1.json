@@ -19,7 +19,7 @@
     "sha256": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
     "build": "node scripts/build-sprite-assets.mjs",
     "mechanicalReview": "node scripts/validate-sprite-assets.mjs",
-    "visualReviewStatus": "candidate-requires-current-independent-review"
+    "visualReviewStatus": "accepted-exact-hash-set"
   },
   "components": [
     {
@@ -41,5 +41,41 @@
       "rendering": "opaque-tiled-reading-field"
     }
   ],
-  "decision": "Authorize only the exact declared atlas crops for the city-service panel and button. Pixel provenance, phone readability, pressed feedback, overlap, and service-state truthfulness remain executable promotion gates."
+  "independentVisualReview": {
+    "status": "ACCEPT",
+    "reviewer": "/root/city_ui_exact_review",
+    "reviewedAt": "2026-08-24",
+    "sourceCommit": "0c391469ff63e27213ce69efd94d52d04f19b0b9",
+    "scope": "all 32 original-resolution resident, orientation, and interaction-state crops",
+    "acceptedAssets": {
+      "atlas": "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+      "panel": "99fb489628613834d05fba82355f26d4562e3c79726b6c4db27e404c99f50d79",
+      "button": "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
+      "field": "797f591cb94ed2107d00851c47be85dc48fca8e9a5955055d1fb33e8e727a22c"
+    },
+    "snapshotHashSet": {
+      "count": 32,
+      "sha256": "c31e10f70f50a424a45b17ece9b2868be3cd3052accdada3d54775508d29059c",
+      "derivation": "sha256sum tests/e2e/city-service-presentation.spec.ts-snapshots/*.png | sort -k2 | sha256sum"
+    },
+    "tessReferenceHashes": {
+      "portraitBefore": "1ce752f843c2fa1cdc7d53bebec65a5e99681ab3d0db921eae64b141fd3fe3df",
+      "portraitPointerDown": "e5aec4b9634760d1f1828334f5dea5241ac2df13c2a0708e308f762fa8597d35",
+      "landscapeBefore": "5fce335c7cd028c58f1c8634e695f5c301cfbbe1989c1f918d83180cc98f61da",
+      "landscapePointerDown": "59cc87c77d79c2ed448cfafe453acf05dc0b88daf7b1dfb8d7439e2570dbae6f"
+    },
+    "pointerDownNormalizedRmse": {
+      "minimum": 0.0531,
+      "maximum": 0.0801
+    },
+    "reasons": [
+      "The opaque sprite-backed reading field keeps every service preview and result clear of the bright skull and crossbar ornament.",
+      "Tess's longest preview stays compact and readable instead of wrapping into three laborious lines.",
+      "Reduced letter spacing prevents Mara's stock copy from orphaning 'held' and keeps rejection feedback from becoming a wall of text.",
+      "All resident sheets remain readable and contained at original phone resolution in portrait and landscape, including success and rejection states.",
+      "Pointer-down feedback is visibly distinct in every reviewed profile, with normalized image RMSE ranging from 0.0531 to 0.0801."
+    ],
+    "invalidation": "Any change to the source commit, accepted asset hashes, or 32-crop snapshot hash set invalidates this ACCEPT and restores candidate review status."
+  },
+  "decision": "Authorize only the exact declared atlas crops for the city-service panel, button, and quiet reading field. Pixel provenance, phone readability, pressed feedback, overlap, and service-state truthfulness remain executable promotion gates."
 }

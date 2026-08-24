@@ -48,7 +48,39 @@ npx playwright test tests/e2e/city-service-presentation.spec.ts
 npx playwright test tests/e2e/city-service-presentation.spec.ts --update-snapshots
 ```
 
-Passing these machine checks does not grant visual acceptance. Review the
-ordered crops at their original size and keep the generation record's
-`visualReviewStatus` as `candidate-requires-current-independent-review` until a
-current independent reviewer accepts the exact hashes.
+Passing these machine checks does not grant visual acceptance. Independent
+reviewer `/root/city_ui_exact_review` inspected all 32 ordered crops at their
+original resolution and recorded **ACCEPT** for exact implementation commit
+`0c391469ff63e27213ce69efd94d52d04f19b0b9`. The accepted filename-ordered
+snapshot set has SHA-256
+`c31e10f70f50a424a45b17ece9b2868be3cd3052accdada3d54775508d29059c`;
+reproduce it with:
+
+```sh
+sha256sum tests/e2e/city-service-presentation.spec.ts-snapshots/*.png \
+  | sort -k2 \
+  | sha256sum
+```
+
+The reviewer found that the opaque sprite-backed reading field keeps copy off
+the bright skull/crossbar ornament; Tess's longest preview is compact rather
+than a laborious three-line wrap; reduced letter spacing avoids Mara's orphaned
+`held` and wall-like rejection copy; and all resident success/rejection sheets
+remain readable and contained at original portrait and landscape phone scale.
+Pointer-down feedback was visibly distinct throughout the matrix, with
+normalized before-to-down RMSE from `0.0531` to `0.0801`.
+
+The exact Tess reference hashes are:
+
+| Profile/state | SHA-256 |
+| --- | --- |
+| Portrait before | `1ce752f843c2fa1cdc7d53bebec65a5e99681ab3d0db921eae64b141fd3fe3df` |
+| Portrait pointer-down | `e5aec4b9634760d1f1828334f5dea5241ac2df13c2a0708e308f762fa8597d35` |
+| Landscape before | `5fce335c7cd028c58f1c8634e695f5c301cfbbe1989c1f918d83180cc98f61da` |
+| Landscape pointer-down | `59cc87c77d79c2ed448cfafe453acf05dc0b88daf7b1dfb8d7439e2570dbae6f` |
+
+This acceptance is hash-bound to the atlas, three extracted components, and
+the complete 32-crop set recorded in
+`art/generation/ui-service-components-v1.json`. A change to the implementation
+commit or any accepted asset/evidence hash invalidates the acceptance and
+requires a new original-resolution independent review.
