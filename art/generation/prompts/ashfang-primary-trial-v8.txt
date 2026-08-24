@@ -1,0 +1,15 @@
+Edit the first attached image, the mechanically green but visually rejected Cinderwake Ashfang v7 4 by 4 sheet. The second attached image is immutable original Ashfang identity evidence. Make a row-two locomotion correction only. Preserve row one cells 0–3 and rows three/four cells 8–15 as exactly as possible: same living idle, elevated 55-degree camera, compact attack, restrained ability, identity, palette, rough low-sheen material, framing, scale, planted baseline, and cell order.
+
+Redraw only walk cells 4–7 as one coherent four-phase east/lower-right quadruped gait. Every cell must visibly contain the same four anatomical limbs in the same attachment locations: near foreleg at the lower-right shoulder, far foreleg behind the upper/right shoulder, near hind leg at the lower-left hip, and far hind leg behind the upper/left hip. Preserve clear negative space under the belly and around every paw. Do not merge a far-side paw into the torso, duplicate a limb, or let one central paw remain planted through all four phases.
+
+Use this explicit alternating diagonal support cycle:
+- cell 4: near forepaw reaches forward and is planted while far hind paw is planted behind; far forepaw and near hind paw are visibly in swing;
+- cell 5: passing phase with weight moving off that pair; far forepaw reaches forward, near hind paw advances, and the prior support paws push back;
+- cell 6: far forepaw is planted forward while near hind paw is planted behind; near forepaw and far hind paw are visibly in swing;
+- cell 7: complementary passing phase that visibly returns toward cell 4, with near forepaw reaching and far hind paw advancing.
+
+Exactly two diagonal support paws should read as weight-bearing in cells 4 and 6. Swing paws may clear the ground slightly but the torso never becomes airborne. Show subtle alternating shoulder/hip compression and side-to-side torso weight transfer while keeping the head, back plates, hips, and body mass stable. Each planted contact must end on the same source baseline. Keep row-two source silhouette height 162–170 pixels and width 164–174 pixels so idle/walk scale remains continuous.
+
+Preserve the v7 wedge skull, pale eye, curled armored tail, charcoal plates, four clawed limbs, sparse ember fissures, warm upper-left light, cool bounce, and small attached contact shadow. No roar, bite, leap, gallop suspension, prone pose, detached effect, scenery, floor, long shadow, labels, guides, or text.
+
+Return one square image with the same implicit four equal columns and four equal rows, generous safe margins, and literal flat #ff00ff empty space. This edit succeeds only if cells 4–7 can be read in sequence as alternating planted diagonal support and visible weight transfer at 80-pixel runtime height, without changing the approved v7 rows.
