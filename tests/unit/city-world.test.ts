@@ -5,6 +5,7 @@ import {
   cityNpcWorldAnchor,
   createEmbercrossMap,
   isEmbercrossMap,
+  nearbyEmbercrossNpcId,
   wildernessCityLandmarkAnchor,
   wildernessCityLandmarkTile,
 } from "../../src/game/cityWorld";
@@ -44,6 +45,12 @@ describe("deterministic Embercross world", () => {
       JSON.stringify(cityNpcWorldAnchor(id)),
     );
     expect(new Set(anchors).size).toBe(EMBERCROSS_CITY.npcs.length);
+  });
+
+  it("derives the nearest resident only inside its configured interaction radius", () => {
+    const mara = cityNpcWorldAnchor("npc:embercross:mara");
+    expect(nearbyEmbercrossNpcId(mara)).toBe("npc:embercross:mara");
+    expect(nearbyEmbercrossNpcId({ x: mara.x + 1_281, y: mara.y })).toBeNull();
   });
 
   it("derives a visible discovery cell on the guaranteed route before the gate", () => {

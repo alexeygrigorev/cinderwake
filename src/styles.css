@@ -622,6 +622,76 @@ button {
   }
 }
 
+/* Resident actions sit above the touch controls and retain 48px targets. */
+.city-service-sheet {
+  position: fixed;
+  z-index: 8;
+  right: max(10px, env(safe-area-inset-right));
+  bottom: calc(118px + env(safe-area-inset-bottom));
+  left: max(10px, env(safe-area-inset-left));
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  color: #eee8db;
+  background: linear-gradient(180deg, #1d2926f5, #101817fa);
+  border: 1px solid #718278;
+  border-radius: 10px 10px 4px 4px;
+  box-shadow: 0 -5px 16px #0009;
+}
+
+.city-service-sheet.hidden {
+  display: none;
+}
+
+.city-service-heading,
+.city-service-feedback {
+  text-align: center;
+}
+
+.city-service-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.city-service-actions button {
+  min-height: 48px;
+  padding: 7px;
+  color: #eee8db;
+  background: #293832;
+  border: 1px solid #8d9b78;
+  border-radius: 4px;
+  touch-action: manipulation;
+}
+
+.city-service-actions button:active {
+  transform: scale(0.97);
+  background: #465640;
+}
+
+.city-service-heading .sprite-text {
+  font-size: 10px;
+}
+
+.city-service-actions .sprite-text,
+.city-service-feedback .sprite-text {
+  font-size: 8px;
+}
+
+.city-service-feedback {
+  min-height: 12px;
+  color: #b9d2a5;
+}
+
+@media (min-width: 761px) and (pointer: fine) {
+  .city-service-sheet {
+    right: 14px;
+    bottom: 14px;
+    left: auto;
+    width: 240px;
+  }
+}
+
 @media (min-width: 761px) and (pointer: fine) {
   .game .stage {
     width: min(100vw, 177.778svh);

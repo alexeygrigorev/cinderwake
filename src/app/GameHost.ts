@@ -1,4 +1,12 @@
 import { TICK_MS, TILE_PIXELS } from "../game/constants";
+import {
+  executeCityService,
+  updateCityInteractionContext,
+  type CityCommandResultV1,
+  type CityServiceActionId,
+  type CityServiceReceiptV1,
+} from "../game/city";
+import { isEmbercrossMap, nearbyEmbercrossNpcId } from "../game/cityWorld";
 import { stepGame } from "../game/simulation";
 import type { GameState, InputState, Vec2 } from "../game/types";
 import { EMPTY_INPUT } from "../game/types";
@@ -44,6 +52,7 @@ export class GameHost {
   }
   startScenario(scenario: ScenarioV1): GameState {
     this.state = worldFromScenario(scenario);
+    this.refreshCityNpcContext();
     this.cameraMode =
       scenario.camera?.mode ?? (this.testMode ? "snap" : "smooth");
     const center = scenario.camera?.centerTile;
@@ -62,6 +71,7 @@ export class GameHost {
   }
   startState(snapshot: GameState): GameState {
     this.state = stateFromSnapshot(snapshot);
+    this.refreshCityNpcContext();
     this.cameraMode = this.testMode ? "snap" : "smooth";
     this.renderer.resetCamera(this.state);
     this.render();
@@ -120,6 +130,50 @@ export class GameHost {
   getCanvas(): HTMLCanvasElement {
     return this.renderer.canvas;
   }
+  /** Execute an action for the NPC currently within the player's service radius. */
+  executeNearbyCityAction(
+    actionId: CityServiceActionId,
+    quantity = 1,
+  ): CityCommandResultV1<{ receipt: CityServiceReceiptV1 }> {
+    this.refreshCityNpcContext();
+    const npcId = this.state.city.nearbyNpcId;
+    if (!npcId) {
+      return {
+        ok: false,
+        state: this.state.city,
+        code: "not_near_provider",
+        message: "Move into a resident's service radius first.",
+      };
+    }
+    // Player combat state is authoritative between city visits. Keep the
+    // service traveler aligned immediately before and after the transaction.
+    const traveler = this.state.city.traveler;
+    this.state.city = {
+      ...this.state.city,
+      traveler: {
+        ...traveler,
+        gold: this.state.player.gold,
+        health: this.state.player.health,
+        maxHealth: this.state.player.maxHealth,
+        tonics: this.state.player.tonics,
+      },
+    };
+    const result = executeCityService(this.state.city, {
+      tick: this.state.tick,
+      npcId,
+      actionId,
+      quantity,
+    });
+    if (result.ok) {
+      this.state.city = result.state;
+      this.state.player.gold = result.state.traveler.gold;
+      this.state.player.health = result.state.traveler.health;
+      this.state.player.maxHealth = result.state.traveler.maxHealth;
+      this.state.player.tonics = result.state.traveler.tonics;
+    }
+    this.render();
+    return result;
+  }
   getManifest(): RenderManifestV1 {
     return this.manifest ?? this.render();
   }
@@ -141,6 +195,19 @@ export class GameHost {
       { x: screenX, y: screenY },
       this.renderer.displayCamera,
     );
+  }
+  private refreshCityNpcContext(): void {
+    if (
+      !isEmbercrossMap(this.state.map) ||
+      this.state.city.locationPhase !== "inside"
+    )
+      return;
+    const context = updateCityInteractionContext(this.state.city, {
+      tick: this.state.tick,
+      nearbyNpcId: nearbyEmbercrossNpcId(this.state.player.position),
+      threatened: this.state.monsters.some((monster) => monster.health > 0),
+    });
+    if (context.ok) this.state.city = context.state;
   }
   private loop = (now: number): void => {
     if (!this.running) return;

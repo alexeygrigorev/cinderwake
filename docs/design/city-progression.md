@@ -1,6 +1,6 @@
 # Embercross: wilderness-to-city progression
 
-Status: domain contract implemented; world map, sprites, simulation adapter, and UI integration pending.
+Status: domain contract, deterministic city runtime, and mobile service UI implemented.
 
 ## Player experience
 
@@ -102,12 +102,11 @@ A scenario runner should store the city state beside `GameState`, not hide it in
 The pure domain is integrated into versioned shared state. Remaining runtime work uses these focused integration points:
 
 1. **Save/scenario schema (complete):** GameState v2 requires `city: CityStateV1`; ScenarioV1 accepts an exact override; canonical capture, hashes, replay restoration, and the documented legacy-v1 migration include it.
-2. **World progression:** place a visible road-sign trigger and gate trigger in a deterministic wilderness route. Convert their overlaps into `transitionCityProgression` signals.
-3. **Scene selection:** load an Embercross map after accepted gate entry. Restore the prior wilderness state or a stable exit anchor when leaving.
-4. **Player adapter:** copy player gold, health, maximum health, and tonics into the city traveler projection, then apply receipt deltas atomically. Add inventory, hunger, and fatigue to the versioned game schema rather than storing them only in UI.
-5. **Proximity adapter:** derive `nearbyNpcId` from deterministic NPC interaction circles and `threatened` from hostile combat state. Feed those facts through `updateCityInteractionContext`.
-6. **Input/UI:** ground taps continue to mean movement. Tapping an NPC should approach it; only the explicit context action opens the bottom sheet. Buying, selling, eating, sleeping, and healing each need a confirm button and a visible result state.
-7. **Rendering:** buildings, doors, counters, beds, food, signs, residents, selection states, and interaction feedback all require authored sprites in the established art style. Collision footprints must be visibly contained by the opaque bases of buildings and objects.
+2. **World progression (complete):** deterministic road-sign and gate overlaps emit `transitionCityProgression` signals and load Embercross after entry.
+3. **Player adapter (complete):** `GameHost.executeNearbyCityAction` copies player gold, health, maximum health, and tonics into the city traveler, executes the atomic receipt, then mirrors those fields back to the live player.
+4. **Proximity adapter (complete):** each simulation tick, loaded state, and service action derives `nearbyNpcId` from the configured interaction circles with distance/ID tie-breaking. Active monsters mark services unsafe.
+5. **Input/UI (complete):** an explicit sprite-glyph context action is shown for the nearby resident. Its mobile bottom sheet has 48 CSS pixel minimum buttons and retains deterministic completion or rejection feedback.
+6. **Rendering:** buildings, doors, counters, beds, food, signs, residents, selection states, and interaction feedback all require authored sprites in the established art style. Collision footprints must be visibly contained by the opaque bases of buildings and objects.
 
 ## Test and visual acceptance criteria
 

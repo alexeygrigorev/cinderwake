@@ -1,10 +1,97 @@
 import { expect, test } from "@playwright/test";
+import {
+  CITY_DISCOVERY_LANDMARK_ID,
+  CITY_GATE_ID,
+  createInitialCityState,
+  transitionCityProgression,
+} from "../../src/game/city";
+import {
+  cityNpcWorldAnchor,
+  createEmbercrossMap,
+} from "../../src/game/cityWorld";
 
 test.use({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 1,
   hasTouch: true,
   isMobile: true,
+});
+
+function insideEmbercrossCity() {
+  const initial = createInitialCityState();
+  const discovered = transitionCityProgression(initial, {
+    type: "discover_city",
+    tick: 1,
+    landmarkId: CITY_DISCOVERY_LANDMARK_ID,
+  });
+  if (!discovered.ok) throw new Error(discovered.message);
+  const arrived = transitionCityProgression(discovered.state, {
+    type: "arrive_at_gate",
+    tick: 2,
+    gateId: CITY_GATE_ID,
+  });
+  if (!arrived.ok) throw new Error(arrived.message);
+  const entered = transitionCityProgression(arrived.state, {
+    type: "enter_city",
+    tick: 3,
+    gateId: CITY_GATE_ID,
+  });
+  if (!entered.ok) throw new Error(entered.message);
+  return entered.state;
+}
+
+test("mobile city service actions synchronize loaded player state and report rejection", async ({
+  page,
+}) => {
+  await page.goto("/?testMode=1&scenario=animation-idle");
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  const city = insideEmbercrossCity();
+  const mara = cityNpcWorldAnchor("npc:embercross:mara");
+  await page.evaluate(
+    ({ city, map, mara }) => {
+      const state = window.__GAME_TEST__!.snapshot();
+      state.tick = 3;
+      state.map = map;
+      state.monsters = [];
+      state.player.position = mara;
+      state.player.previousPosition = mara;
+      state.player.gold = 40;
+      state.player.health = 52;
+      state.player.tonics = 1;
+      city.traveler = {
+        ...city.traveler,
+        gold: state.player.gold,
+        health: state.player.health,
+        maxHealth: state.player.maxHealth,
+        tonics: state.player.tonics,
+      };
+      state.city = city;
+      window.__GAME_TEST__!.loadState(state);
+    },
+    { city, map: createEmbercrossMap(), mara },
+  );
+
+  const buy = page.locator("[data-city-action='merchant:buy-tonic']");
+  await expect(buy).toBeVisible();
+  expect((await buy.boundingBox())?.height).toBeGreaterThanOrEqual(48);
+  await buy.tap();
+  const afterBuy = await page.evaluate(() => window.__GAME_TEST__!.snapshot());
+  expect(afterBuy.player).toMatchObject({ gold: 22, health: 52, tonics: 2 });
+  expect(afterBuy.city.traveler).toMatchObject({
+    gold: 22,
+    health: 52,
+    tonics: 2,
+  });
+  await expect(page.locator(".city-service-feedback")).toHaveAttribute(
+    "aria-label",
+    "Buy tonic complete",
+  );
+
+  await page.locator("[data-city-action='merchant:sell-ashfang-pelt']").tap();
+  await expect(page.locator(".city-service-feedback")).toHaveAttribute(
+    "aria-label",
+    "The traveler does not have enough Ashfang pelts.",
+  );
 });
 
 test("mobile character selection fills the viewport and has no horizontal overflow", async ({

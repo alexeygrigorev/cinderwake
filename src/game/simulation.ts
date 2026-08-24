@@ -3,10 +3,12 @@ import {
   CITY_DISCOVERY_LANDMARK_ID,
   CITY_GATE_ID,
   transitionCityProgression,
+  updateCityInteractionContext,
 } from "./city";
 import {
   createEmbercrossMap,
   isEmbercrossMap,
+  nearbyEmbercrossNpcId,
   wildernessCityLandmarkAnchor,
 } from "./cityWorld";
 import {
@@ -1247,6 +1249,17 @@ function checkExit(state: GameState): void {
     enterEmbercross(state);
 }
 
+function updateCityNpcContext(state: GameState): void {
+  if (!isEmbercrossMap(state.map) || state.city.locationPhase !== "inside")
+    return;
+  const context = updateCityInteractionContext(state.city, {
+    tick: state.tick,
+    nearbyNpcId: nearbyEmbercrossNpcId(state.player.position),
+    threatened: state.monsters.some((monster) => monster.health > 0),
+  });
+  if (context.ok) state.city = context.state;
+}
+
 export function stepGame(state: GameState, input: InputState): GameState {
   if (state.phase !== "playing") {
     state.events = [];
@@ -1265,6 +1278,7 @@ export function stepGame(state: GameState, input: InputState): GameState {
   resolveDeaths(state);
   collectLoot(state);
   checkExit(state);
+  updateCityNpcContext(state);
   state.effects = state.effects.filter(
     (effect) => effect.expiresAtTick > state.tick,
   );

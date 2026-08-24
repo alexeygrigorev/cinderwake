@@ -1,5 +1,6 @@
 import "./styles.css";
 import { ARCHETYPES } from "./game/content";
+import { EMBERCROSS_CITY, type CityServiceActionId } from "./game/city";
 import { findStateNavigationRoute } from "./game/navigation";
 import type { CharacterClass, GameState } from "./game/types";
 import {
@@ -21,6 +22,15 @@ let selected: CharacterClass = "vanguard",
   host: GameHost | undefined,
   input: InputController | undefined,
   activeScenario: ScenarioV1 | undefined;
+let cityServiceFeedback = "";
+
+const CITY_ACTION_LABELS: Record<CityServiceActionId, string> = {
+  "merchant:buy-tonic": "Buy tonic",
+  "merchant:sell-ashfang-pelt": "Sell pelt",
+  "tavern:eat-stew": "Eat stew",
+  "inn:sleep-until-dawn": "Sleep",
+  "healer:restore-health": "Restore health",
+};
 const query = new URLSearchParams(location.search),
   testMode = query.get("testMode") === "1",
   captureMode = query.get("captureMode") === "1";
@@ -136,7 +146,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
       () => screen();
     return;
   }
-  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
+  app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><aside id="city-services" class="city-service-sheet hidden" aria-live="polite" aria-label="Nearby city services"></aside><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
@@ -167,6 +177,18 @@ async function boot(scenario: ScenarioV1): Promise<void> {
         (b.onclick = () =>
           input!.press(b.dataset.action as "attack" | "ability" | "tonic")),
     );
+  app.querySelector<HTMLElement>("#city-services")!.onclick = (event) => {
+    const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
+      "[data-city-action]",
+    );
+    if (!button) return;
+    const actionId = button.dataset.cityAction as CityServiceActionId;
+    const result = host!.executeNearbyCityAction(actionId);
+    cityServiceFeedback = result.ok
+      ? `${CITY_ACTION_LABELS[actionId]} complete`
+      : result.message;
+    updateHud(host!.getState());
+  };
   const gameLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
   if (gameLab) gameLab.onclick = () => lab();
 }
@@ -188,6 +210,7 @@ function updateHud(state: GameState): void {
       ".objective-direction",
     );
   if (!hp) return;
+  updateCityServices(state);
   setSpriteGlyphs(hp, `${p.health} / ${p.maxHealth}`);
   setSpriteGlyphs(runSeed!, state.seed);
   bar!.style.width = `${(100 * p.health) / p.maxHealth}%`;
@@ -283,6 +306,26 @@ function updateHud(state: GameState): void {
     out.classList.add("hidden");
     out.replaceChildren();
   }
+}
+
+function updateCityServices(state: GameState): void {
+  const sheet = document.querySelector<HTMLElement>("#city-services");
+  if (!sheet) return;
+  const npc = EMBERCROSS_CITY.npcs.find(
+    ({ id }) => id === state.city.nearbyNpcId,
+  );
+  if (!npc || state.city.locationPhase !== "inside") {
+    sheet.classList.add("hidden");
+    sheet.replaceChildren();
+    delete sheet.dataset.contentKey;
+    return;
+  }
+  sheet.classList.remove("hidden");
+  const feedback = cityServiceFeedback || "Choose a service";
+  const contentKey = `${npc.id}:${feedback}`;
+  if (sheet.dataset.contentKey === contentKey) return;
+  sheet.dataset.contentKey = contentKey;
+  sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}</div><div class="city-service-actions">${npc.actions.map((actionId) => `<button data-city-action="${actionId}" aria-label="${escapeAttribute(CITY_ACTION_LABELS[actionId])}">${spriteText(CITY_ACTION_LABELS[actionId], "sprite-city-action")}</button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedback, "sprite-city-feedback")}</output>`;
 }
 function lab(): void {
   const existing = document.querySelector(".lab");

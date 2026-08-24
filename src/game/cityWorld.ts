@@ -227,4 +227,28 @@ export function cityNpcWorldAnchor(npcId: CityNpcId): Vec2 {
   };
 }
 
+/**
+ * Finds the one service resident the player can address from a world position.
+ * Distance and ID tie-breaking make the context stable for replays and saves.
+ */
+export function nearbyEmbercrossNpcId(position: Vec2): CityNpcId | null {
+  const nearby = EMBERCROSS_CITY.npcs
+    .map((npc) => {
+      const anchor = cityNpcWorldAnchor(npc.id);
+      const dx = position.x - anchor.x;
+      const dy = position.y - anchor.y;
+      return { npc, distanceSquared: dx * dx + dy * dy };
+    })
+    .filter(
+      ({ npc, distanceSquared }) =>
+        distanceSquared <= npc.affordance.interactionRadiusUnits ** 2,
+    )
+    .sort(
+      (left, right) =>
+        left.distanceSquared - right.distanceSquared ||
+        left.npc.id.localeCompare(right.npc.id),
+    );
+  return nearby[0]?.npc.id ?? null;
+}
+
 export { CITY_DISCOVERY_LANDMARK_ID, CITY_GATE_ID };
