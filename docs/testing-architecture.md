@@ -58,6 +58,13 @@ playwright-report/
 
 The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 23 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
+The public quality index is generated only after the component reports exist
+and links them from one commit. Screen evidence has three explicit states:
+candidate, hash-matched accepted, and hash-matched rejected. A matching visual
+rejection remains public even when geometry, input, and pixel-risk checks pass;
+changing either the contract or ordered screenshot hash invalidates the verdict
+and returns the next set to candidate.
+
 ## Three complementary verdicts
 
 1. **Semantic state:** canonical snapshots, typed events, and hashes prove behavior and replay equality.
