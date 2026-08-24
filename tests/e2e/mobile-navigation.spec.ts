@@ -1,9 +1,21 @@
 import { expect, test } from "@playwright/test";
+import {
+  TILE_PIXELS,
+  UNITS_PER_TILE,
+  VIEW_HEIGHT,
+  VIEW_WIDTH,
+} from "../../src/game/constants";
 import { tileCenter } from "../../src/game/dungeon";
+import {
+  findStateNavigationRoute,
+  navigationPointWalkable,
+} from "../../src/game/navigation";
 import {
   buildSceneryLayout,
   openingRoomThreshold,
   overlapsScenery,
+  sceneryCollisions,
+  type SceneryCollisionFootprint,
 } from "../../src/game/sceneryLayout";
 import {
   createRunScenario,
@@ -34,32 +46,171 @@ function generatedOpeningState(
   throw new Error("No matching generated opening seed found");
 }
 
-test("touch navigation routes to a reachable point around the spawn forge and settles", async ({
+function segmentHitsEllipse(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+  collision: SceneryCollisionFootprint,
+  radius: number,
+): boolean {
+  const horizontalRadius = collision.halfWidth + radius;
+  const verticalRadius = collision.halfHeight + radius;
+  const startX = (from.x - collision.center.x) / horizontalRadius;
+  const startY = (from.y - collision.center.y) / verticalRadius;
+  const deltaX = (to.x - from.x) / horizontalRadius;
+  const deltaY = (to.y - from.y) / verticalRadius;
+  const a = deltaX * deltaX + deltaY * deltaY;
+  const b = 2 * (startX * deltaX + startY * deltaY);
+  const c = startX * startX + startY * startY - 1;
+  const discriminant = b * b - 4 * a * c;
+  if (discriminant < 0 || a < Number.EPSILON) return c <= 0;
+  const enter = (-b - Math.sqrt(discriminant)) / (2 * a);
+  return enter >= 0 && enter <= 1;
+}
+
+test("touch navigation routes around the compact v2 workshop and settles", async ({
   page,
 }) => {
   const state = generatedOpeningState(
-    "mobile-forge-route",
+    "mobile-workshop-route",
     (side) => side !== "north",
   );
+  // Isolate touch pathfinding from combat reactions. Monster pursuit has its
+  // own browser test below; this contract must end in idle because navigation
+  // settled, not fail intermittently when a generated enemy lands a hit.
+  state.monsters = [];
+  state.pendingAttacks = [];
+  state.settings.ai = false;
+  const layout = buildSceneryLayout(state.map);
+  const collisions = sceneryCollisions(state.map);
+  const workshopIds = new Set([
+    "structure:0:forge",
+    "prop:0:barricade-v2",
+    "prop:0:raised-clutter-bench",
+  ]);
+  const workshop = layout.flatMap((placement) =>
+    workshopIds.has(placement.id) && placement.collision
+      ? [{ id: placement.id, collision: placement.collision }]
+      : [],
+  );
+  expect(workshop.map(({ id }) => id).sort()).toEqual([...workshopIds].sort());
+  const candidateTargets: Array<{
+    world: { x: number; y: number };
+    routeLength: number;
+    blockedObjectIds: string[];
+  }> = [];
+  for (let y = 0; y < state.map.height; y += 1) {
+    for (let x = 0; x < state.map.width; x += 1) {
+      if (state.map.tiles[y * state.map.width + x] !== 0) continue;
+      const world = tileCenter({ x, y });
+      if (
+        Math.hypot(
+          world.x - state.player.position.x,
+          world.y - state.player.position.y,
+        ) <=
+          3 * UNITS_PER_TILE ||
+        !navigationPointWalkable(
+          state.map,
+          collisions,
+          world,
+          state.player.radius,
+        )
+      )
+        continue;
+      const blockedObjectIds = workshop
+        .filter(({ collision }) =>
+          segmentHitsEllipse(
+            state.player.position,
+            world,
+            collision,
+            state.player.radius,
+          ),
+        )
+        .map(({ id }) => id);
+      if (blockedObjectIds.length === 0) continue;
+      const route = findStateNavigationRoute(
+        state,
+        state.player.position,
+        world,
+        state.player.radius,
+      );
+      if (route.at(-1)?.x === world.x && route.at(-1)?.y === world.y)
+        candidateTargets.push({
+          world,
+          routeLength: route.length,
+          blockedObjectIds,
+        });
+    }
+  }
+  candidateTargets.sort(
+    (first, second) =>
+      first.routeLength - second.routeLength ||
+      first.world.y - second.world.y ||
+      first.world.x - second.world.x,
+  );
+  expect(candidateTargets.length).toBeGreaterThan(0);
   await page.goto("/?testMode=1&scenario=animation-idle");
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
-  const target = await page.evaluate((injectedState) => {
-    window.__GAME_TEST__!.loadState(injectedState);
-    const forge = window
-      .__GAME_TEST__!.renderManifest()
-      .sceneSprites.find(({ objectId }) => objectId === "structure:0:forge");
-    if (!forge?.collision) throw new Error("Spawn structure is not solid");
-    const canvas = document.querySelector("canvas")!.getBoundingClientRect();
-    return {
-      client: {
-        x: canvas.left + (forge.screenAnchor.x / 960) * canvas.width,
-        // The requested point is on the floor behind the forge. Direct input
-        // deadlocks at its base; a valid route must visibly travel around it.
-        y: canvas.top + ((forge.screenAnchor.y - 60) / 540) * canvas.height,
+  const target = await page.evaluate(
+    ({ injectedState, candidates, geometry }) => {
+      window.__GAME_TEST__!.loadState(injectedState);
+      const manifest = window.__GAME_TEST__!.renderManifest();
+      const canvas = document.querySelector("canvas")!.getBoundingClientRect();
+      const controlsTop = document
+        .querySelector(".mobile-controls")!
+        .getBoundingClientRect().top;
+      const projected = candidates.map(
+        ({ world, routeLength, blockedObjectIds }) => {
+          const screen = {
+            x:
+              geometry.viewWidth / 2 +
+              ((world.x / geometry.unitsPerTile) * geometry.tilePixels -
+                manifest.camera.x) *
+                manifest.camera.zoom,
+            y:
+              geometry.viewHeight / 2 +
+              ((world.y / geometry.unitsPerTile) * geometry.tilePixels -
+                manifest.camera.y) *
+                manifest.camera.zoom,
+          };
+          return {
+            world,
+            routeLength,
+            blockedObjectIds,
+            client: {
+              x: canvas.left + (screen.x / geometry.viewWidth) * canvas.width,
+              y: canvas.top + (screen.y / geometry.viewHeight) * canvas.height,
+            },
+          };
+        },
+      );
+      const chosen = projected.find(
+        ({ client }) =>
+          client.x >= 24 &&
+          client.x <= innerWidth - 24 &&
+          client.y >= 48 &&
+          client.y <= controlsTop - 24,
+      );
+      if (!chosen)
+        throw new Error("No routed workshop-crossing target is tappable");
+      return {
+        ...chosen,
+        client: {
+          x: chosen.client.x,
+          y: chosen.client.y,
+        },
+      };
+    },
+    {
+      injectedState: state,
+      candidates: candidateTargets,
+      geometry: {
+        unitsPerTile: UNITS_PER_TILE,
+        tilePixels: TILE_PIXELS,
+        viewWidth: VIEW_WIDTH,
+        viewHeight: VIEW_HEIGHT,
       },
-      collision: forge.collision,
-    };
-  }, state);
+    },
+  );
   await page.touchscreen.tap(target.client.x, target.client.y);
   const evidence = await page.evaluate(() => {
     const start = window.__GAME_TEST__!.snapshot().player.position;
@@ -86,13 +237,18 @@ test("touch navigation routes to a reachable point around the spawn forge and se
     ),
   ).toBeGreaterThan(3 * 1024);
   expect(
-    overlapsScenery(end.position, 320, {
-      shape: "ellipse",
-      center: target.collision.worldCenter,
-      halfWidth: target.collision.halfWidth,
-      halfHeight: target.collision.halfHeight,
-    }),
-  ).toBe(false);
+    Math.hypot(
+      end.position.x - target.world.x,
+      end.position.y - target.world.y,
+    ),
+  ).toBeLessThan(UNITS_PER_TILE);
+  expect(
+    collisions.every(
+      (collision) =>
+        !overlapsScenery(end.position, state.player.radius, collision),
+    ),
+  ).toBe(true);
+  expect(target.blockedObjectIds.length).toBeGreaterThan(0);
   expect(
     finalWindow.every(
       ({ position }) =>

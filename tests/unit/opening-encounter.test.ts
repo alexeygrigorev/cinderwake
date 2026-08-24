@@ -425,7 +425,7 @@ describe("generated opening encounter", () => {
             (firstCollision.halfHeight + secondCollision.halfHeight);
           expect(
             normalizedX * normalizedX + normalizedY * normalizedY,
-            `${kitRoles[first]!.id} overlaps ${kitRoles[second]!.id} for seed ${index}`,
+            `${kitRoles[first]!.id} overlaps ${kitRoles[second]!.id} for seed ${index} (${threshold.side}); first=${JSON.stringify(firstCollision)} second=${JSON.stringify(secondCollision)}`,
           ).toBeGreaterThanOrEqual(1);
         }
       }

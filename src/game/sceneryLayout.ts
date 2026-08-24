@@ -315,19 +315,19 @@ function openingKitPropAnchor(
 ): Vec2 {
   const horizontalThreshold =
     thresholdSide === "east" || thresholdSide === "west";
-  // Horizontal entrances place both workshop props against the forge front
-  // instead of scattering them across the room's lower corners. The mirrored
-  // x offsets keep the doorway side readable, while the staggered base line
-  // leaves the three full solid footprints disjoint.
+  // Horizontal entrances group both workshop props behind and toward the
+  // room-interior side of the forge. Their painted silhouettes overlap the
+  // landmark into one compact mobile composition, while their solid bases
+  // leave the forge's south/front tangent clear for actor-width movement.
   const anchorInTiles = horizontalThreshold
     ? thresholdSide === "west"
       ? {
-          x: room.x + (role === "barricade-v2" ? 1.4 : 2.9),
-          y: room.y + (role === "barricade-v2" ? 2.625 : 2.9375),
+          x: room.x + (role === "barricade-v2" ? 3.4 : 4.5),
+          y: room.y + (role === "barricade-v2" ? 0.9 : 1.5),
         }
       : {
-          x: room.x + room.width - (role === "barricade-v2" ? 1.4 : 2.9),
-          y: room.y + (role === "barricade-v2" ? 2.625 : 2.9375),
+          x: room.x + room.width - (role === "barricade-v2" ? 3.4 : 4.5),
+          y: room.y + (role === "barricade-v2" ? 0.9 : 1.5),
         }
     : {
         x:

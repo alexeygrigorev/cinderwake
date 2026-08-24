@@ -3,6 +3,7 @@ import {
   buildSceneryLayout,
   openingRoomThreshold,
   overlapsScenery,
+  sceneryCollisions,
 } from "../../src/game/sceneryLayout";
 import {
   createRunScenario,
@@ -28,11 +29,19 @@ test("real keyboard movement stops at the manifested v2 forge footprint and slid
   )!;
   expect(building.name).toBe("forge-workshop");
   const collision = building.collision!;
+  const collisions = sceneryCollisions(state.map);
   state.player.position = {
     x: collision.center.x,
     y: collision.center.y + collision.halfHeight + state.player.radius + 16,
   };
   state.player.previousPosition = { ...state.player.position };
+  expect(
+    collisions.every(
+      (candidate) =>
+        !overlapsScenery(state.player.position, state.player.radius, candidate),
+    ),
+    "the injected forge approach must not start inside compact workshop scenery",
+  ).toBe(true);
 
   await page.goto("/?testMode=1&scenario=animation-idle");
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
@@ -67,8 +76,10 @@ test("real keyboard movement stops at the manifested v2 forge footprint and slid
   });
   await page.keyboard.up("w");
   expect(
-    approach.every(
-      (point) => !overlapsScenery(point, state.player.radius, collision),
+    approach.every((point) =>
+      collisions.every(
+        (candidate) => !overlapsScenery(point, state.player.radius, candidate),
+      ),
     ),
   ).toBe(true);
   const blocked = approach.at(-1)!;
@@ -84,5 +95,9 @@ test("real keyboard movement stops at the manifested v2 forge footprint and slid
   });
   await page.keyboard.up("d");
   expect(slid.x).toBeGreaterThan(blocked.x + state.player.moveSpeed * 8);
-  expect(overlapsScenery(slid, state.player.radius, collision)).toBe(false);
+  expect(
+    collisions.every(
+      (candidate) => !overlapsScenery(slid, state.player.radius, candidate),
+    ),
+  ).toBe(true);
 });
