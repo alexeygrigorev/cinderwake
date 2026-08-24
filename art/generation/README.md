@@ -365,6 +365,16 @@ allows one v12 correction to use v11 only for identity, natural anatomy
 quality, camera intent, palette, and material treatment. Its silhouette,
 framing, support, paw layout, scale, and phase pixels have no authority.
 
+Identity master v12 proves that role text does not override attached-pixel
+conditioning. Although the prompt explicitly denied v11 silhouette authority,
+v12 repeats the same three-chain composition. Its deterministic 102 × 85
+runtime envelope, aspect, contact, and all five pose controls pass, while exact
+review still rejects the missing far-hind route, diagonals, two-near-paw
+support, raw chroma, and surface `0.276965` / `0.373394` near miss. V11 and v12
+are therefore both forbidden as future image references. Their useful identity,
+natural-anatomy, camera, and material findings continue only as text and test
+criteria. A mechanically green prepared pose remains rejected art.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

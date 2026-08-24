@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v12-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "four-chain-framing-correction-east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v12.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v12.png",
+  "candidateSha256": "14b209939ebc891d1744b5fa9d8ab5eb99056ee230cc4c25c541a37b641b019f",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v11.png",
+      "role": "role-limited identity, natural anatomy quality, camera intent, palette, and material treatment only; silhouette, layout, framing, scale, support, and pixels explicitly rejected",
+      "sha256": "38a8a3a04882570b9018618c3f0426e5537fcf4517fd283e2ef34e1b491fd5b1"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "accepted Cinderwake camera, matte value hierarchy, light, palette, common scale, and native-runtime detail density only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-c06de814-2a44-42ea-a969-dca4783a1c36.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "living heavy Ashfang identity, natural joints, elevated camera, and broad cast-compatible material language remain intact",
+      "authored normalized bounds reduce from v11's 868x712 to 806x677 and preserve centered grounded preparation",
+      "one isolated quiet east-facing creature appears without floor, shadow, sheet, UI, text, scenery, or action"
+    ],
+    "failed": [
+      {
+        "code": "fourth-limb-chain-occluded",
+        "detail": "The v11 reference composition remains dominant: only three complete body-to-paw routes and three terminal paws are visually traceable, so both diagonal pairs and four-paw support cannot be assigned."
+      },
+      {
+        "code": "authored-occupancy-too-large",
+        "detail": "Normalized raw ink remains approximately 78.7% by 66.1% of the logical canvas instead of the frozen 60-64% by 58-63% authored envelope."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The visually magenta raw background again contains no literal #ff00ff pixels; deterministic preparation repairs the matte but raw-generation compliance fails."
+      },
+      {
+        "code": "runtime-detail-collapse",
+        "detail": "The exact keyed runtime projection improves to strong occupancy 0.276965 and readability 0.373394 but remains below the frozen 0.30 and 0.38 minima."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V12 is quarantined. It improves mechanical framing but exact review demonstrates that a role restriction in text cannot prevent the attached v11 image from preserving the rejected three-chain silhouette. Neither v11 nor v12 may condition the next generation."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v12.png --output art/generation/prepared/ashfang-idle-master-v12.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v12.png",
+    "sha256": "1115d656532e150587167eb199778fe7ccefd97418728f6be715915fe5313e47",
+    "status": "rejected",
+    "notes": "Canonical framing turns 806x677 normalized ink into 202x169 prepared ink with bottom y=231 and contact centroid offset -0.316959 pixels. Preparation cannot expose the missing fourth chain or make the authored raw matte literal."
+  },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-detail-collapse"]
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT",
+    "nextReferenceDecision": "REJECT_V12_AND_V11_AS_VISUAL_REFERENCES",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "14b209939ebc891d1744b5fa9d8ab5eb99056ee230cc4c25c541a37b641b019f",
+    "reviewedPreparedSha256": "1115d656532e150587167eb199778fe7ccefd97418728f6be715915fe5313e47",
+    "reviewedPoseEvidenceSha256": "f726f0197a3163c2c4d386ce2c95719a1e35975a5a8ee19da7c8095d56409922",
+    "reviewedRuntimeComparisonSha256": "1e300afedbe5d813745c779bab3030bc9249d6426b0d71af2acf4e87668f53e7",
+    "reviewedRuntimeDetailMapSha256": "93c52854b8a6990fa2818a3447b9da9e7b7b8e65e9d6d23154e6296d0b8c4ca8",
+    "acceptedAxes": [
+      "natural continuous animal anatomy without blockout cylinders, ring joints, straight stilts, shell torso, or paddle tail",
+      "living heavy Ashfang identity through compact armored skull, muscular shoulders and hips, layered basalt and ochre plates, ember vents, and hooked tail",
+      "substantially elevated east-facing three-quarter camera with readable top planes and foreshortening",
+      "mechanically valid 102x85 runtime envelope, 1.2 aspect ratio, centered grounding, and plausible common-cast screen presence",
+      "three visible organic limb chains and their three paw terminals remain readable at native runtime scale",
+      "material hierarchy and native-scale detail improve over v11 and are visually close to the Cinderwake cast"
+    ],
+    "rejectedAxes": [
+      "exactly four complete body-to-paw routes and four independently visible paw terminals",
+      "far-hind root, hock, lower limb, and terminal visibility",
+      "both diagonal gait-pair ownerships",
+      "balanced two-near-paw idle support row and four-paw support footprint",
+      "surface-detail contract at 0.276965 strong occupancy and 0.373394 readability",
+      "literal #ff00ff raw source compliance, with raw literal-magenta ratio equal to zero",
+      "authored source occupancy at approximately 78.7 percent width and 66.1 percent height",
+      "v12 as an image reference for another generation attempt",
+      "v11 as a supposedly role-limited image reference, because its rejected three-chain silhouette remained dominant in v12"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Do not attach v11 or v12 to the next generation. Preserve both only as exact failure evidence and translate their accepted identity and material traits into text. Generate a fresh natural elevated quadruped from the accepted Stonekin cast reference plus explicit Ashfang text, with no Ashfang candidate silhouette image. Gate that fresh result first on four independently traceable organic routes, four terminals, both diagonals, and a balanced near-paw support row at native runtime. Only after topology passes should a separate identity and contrast refinement target the surface thresholds and literal source chroma."
+}
