@@ -3,6 +3,7 @@ import { UNITS_PER_TILE } from "../../src/game/constants";
 import { isFloor } from "../../src/game/dungeon";
 import {
   buildSceneryLayout,
+  openingRoomThreshold,
   type SceneryCollisionFootprint,
 } from "../../src/game/sceneryLayout";
 import { stepGame } from "../../src/game/simulation";
@@ -15,7 +16,7 @@ import {
 import { buildRenderManifest } from "../../src/render/manifest";
 import { canonicalState } from "../../src/testkit/canonical";
 import {
-  BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
   type ScenarioV1,
 } from "../../src/testkit/scenarios";
@@ -49,20 +50,59 @@ function configureSceneryCrossing(hostile: boolean): {
   collision: SceneryCollisionFootprint;
   from: Vec2;
   to: Vec2;
+  expectedImpact: Vec2;
 } {
-  const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
-  const collision = buildSceneryLayout(state.map).find(
-    ({ kind, collision: footprint }) => kind === "structure" && footprint,
-  )!.collision!;
+  const state = worldFromScenario(
+    createRunScenario("projectile-v2-forge", "vanguard"),
+  );
+  expect(openingRoomThreshold(state.map)).not.toBeNull();
+  const forge = buildSceneryLayout(state.map).find(
+    ({ id }) => id === "structure:0:forge",
+  )!;
+  expect(forge.name).toBe("forge-workshop");
+  const collision = forge.collision!;
   const radius = 120;
-  const from = {
-    x: collision.center.x - collision.halfWidth - radius - 480,
-    y: collision.center.y,
-  };
-  const to = {
-    x: collision.center.x + collision.halfWidth + radius + 480,
-    y: collision.center.y,
-  };
+  const candidates = [
+    {
+      from: {
+        x: collision.center.x - collision.halfWidth - radius - 480,
+        y: collision.center.y,
+      },
+      to: {
+        x: collision.center.x + collision.halfWidth + radius + 480,
+        y: collision.center.y,
+      },
+      expectedImpact: {
+        x: collision.center.x - collision.halfWidth - radius,
+        y: collision.center.y,
+      },
+    },
+    {
+      from: {
+        x: collision.center.x,
+        y: collision.center.y - collision.halfHeight - radius - 480,
+      },
+      to: {
+        x: collision.center.x,
+        y: collision.center.y + collision.halfHeight + radius + 480,
+      },
+      expectedImpact: {
+        x: collision.center.x,
+        y: collision.center.y - collision.halfHeight - radius,
+      },
+    },
+  ];
+  const crossing = candidates.find(({ from, to }) =>
+    [from, to].every((point) =>
+      isFloor(
+        state.map,
+        Math.floor(point.x / UNITS_PER_TILE),
+        Math.floor(point.y / UNITS_PER_TILE),
+      ),
+    ),
+  );
+  if (!crossing) throw new Error("V2 forge has no floor-backed crossing axis");
+  const { from, to, expectedImpact } = crossing;
   expect(
     isFloor(
       state.map,
@@ -90,7 +130,7 @@ function configureSceneryCrossing(hostile: boolean): {
       radius,
     ),
   ];
-  return { state, collision, from, to };
+  return { state, collision, from, to, expectedImpact };
 }
 
 function stepPastSpawn(state: GameState): void {
@@ -122,13 +162,25 @@ describe("swept projectile collision with solid world geometry", () => {
         startedAtTick: 1,
         expiresAtTick: 9,
       });
-      expect(impact.position.x).toBeCloseTo(
-        configured.collision.center.x - configured.collision.halfWidth - 120,
-        0,
+      expect(impact.position.x).toBeCloseTo(configured.expectedImpact.x, 0);
+      expect(impact.position.y).toBeCloseTo(configured.expectedImpact.y, 0);
+      expect(
+        Math.hypot(
+          impact.position.x - configured.from.x,
+          impact.position.y - configured.from.y,
+        ),
+      ).toBeGreaterThan(0);
+      expect(
+        Math.hypot(
+          impact.position.x - configured.from.x,
+          impact.position.y - configured.from.y,
+        ),
+      ).toBeLessThan(
+        Math.hypot(
+          configured.to.x - configured.from.x,
+          configured.to.y - configured.from.y,
+        ),
       );
-      expect(impact.position.y).toBe(configured.collision.center.y);
-      expect(impact.position.x).toBeGreaterThan(configured.from.x);
-      expect(impact.position.x).toBeLessThan(configured.to.x);
 
       const call = buildRenderManifest(first, {
         x: first.player.position.x,

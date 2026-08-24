@@ -9,12 +9,16 @@ import {
   GROUND_DECAL_NAMES,
   PASSABLE_GROUND_DECAL_NAMES,
   buildSceneryLayout,
+  openingNorthWallFeature,
   openingRoomThreshold,
   overlapsScenery,
   sceneryCollisions,
 } from "../../src/game/sceneryLayout";
 import { tileCenter } from "../../src/game/dungeon";
-import { findStateNavigationRoute } from "../../src/game/navigation";
+import {
+  findNavigationRoute,
+  findStateNavigationRoute,
+} from "../../src/game/navigation";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
   createRunScenario,
@@ -228,10 +232,12 @@ describe("generated opening encounter", () => {
       ),
     ).toBe(true);
 
-    const forge = layout.find(
-      ({ kind, name }) => kind === "structure" && name === "forge",
-    );
-    expect(forge).toBeDefined();
+    const forge = layout.find(({ id }) => id === "structure:0:forge");
+    expect(forge).toMatchObject({
+      kind: "structure",
+      name: "forge-workshop",
+      collisionMode: "solid",
+    });
     expect(decals[0]?.name).toBe("scorch-ring");
     expect(decals[0]?.worldAnchor).toEqual(forge?.worldAnchor);
 
@@ -272,10 +278,27 @@ describe("generated opening encounter", () => {
         collision: null,
       });
       expect(lanterns).toHaveLength(2);
+      expect(lanterns.map(({ name }) => name)).toEqual([
+        "lantern-a",
+        "lantern-b",
+      ]);
       for (const lantern of lanterns) {
         expect(lantern.collisionMode).toBe("solid");
         expect(lantern.collision).not.toBeNull();
       }
+      const lanternLights = layout.filter(({ id }) =>
+        id.startsWith("architecture:opening:lantern-light:"),
+      );
+      expect(lanternLights).toHaveLength(2);
+      lanternLights.forEach((light, lightIndex) => {
+        expect(light).toMatchObject({
+          kind: "decal",
+          name: "scorch-ring",
+          collisionMode: "passable",
+          collision: null,
+          worldAnchor: lanterns[lightIndex]!.worldAnchor,
+        });
+      });
 
       const target = tileCenter(threshold!.floorTiles[0]!);
       const route = findStateNavigationRoute(
@@ -341,5 +364,148 @@ describe("generated opening encounter", () => {
     expect(
       buildSceneryLayout(explicit.map).filter(({ kind }) => kind === "decal"),
     ).toEqual([]);
+    expect(openingNorthWallFeature(explicit.map)).toBeNull();
+    expect(
+      buildSceneryLayout(explicit.map).filter(({ name }) =>
+        [
+          "forge-workshop",
+          "lantern-a",
+          "lantern-b",
+          "barricade-v2",
+          "raised-clutter-bench",
+        ].includes(name),
+      ),
+    ).toEqual([]);
+  });
+
+  it("composes environment-kit v2 once in generated room zero without changing the real route", () => {
+    let sawNorthWall = false;
+    let sawNorthThreshold = false;
+    for (let index = 0; index < 100; index += 1) {
+      const state = worldFromScenario(
+        createRunScenario(`environment-kit-topology-${index}`, "vanguard"),
+      );
+      const threshold = openingRoomThreshold(state.map)!;
+      const layout = buildSceneryLayout(state.map);
+      const kitRoles = layout.filter(({ name }) =>
+        [
+          "forge-workshop",
+          "lantern-a",
+          "lantern-b",
+          "barricade-v2",
+          "raised-clutter-bench",
+        ].includes(name),
+      );
+      expect(
+        kitRoles.map(({ id }) => id).sort(),
+        `complete kit roles for seed ${index} (${threshold.side})`,
+      ).toEqual([
+        "architecture:opening:lantern:0",
+        "architecture:opening:lantern:1",
+        "prop:0:barricade-v2",
+        "prop:0:raised-clutter-bench",
+        "structure:0:forge",
+      ]);
+      expect(
+        kitRoles.every(
+          ({ collisionMode, collision }) =>
+            collisionMode === "solid" && collision !== null,
+        ),
+      ).toBe(true);
+
+      for (let first = 0; first < kitRoles.length; first += 1) {
+        const firstCollision = kitRoles[first]!.collision!;
+        for (let second = first + 1; second < kitRoles.length; second += 1) {
+          const secondCollision = kitRoles[second]!.collision!;
+          const normalizedX =
+            (firstCollision.center.x - secondCollision.center.x) /
+            (firstCollision.halfWidth + secondCollision.halfWidth);
+          const normalizedY =
+            (firstCollision.center.y - secondCollision.center.y) /
+            (firstCollision.halfHeight + secondCollision.halfHeight);
+          expect(
+            normalizedX * normalizedX + normalizedY * normalizedY,
+            `${kitRoles[first]!.id} overlaps ${kitRoles[second]!.id} for seed ${index}`,
+          ).toBeGreaterThanOrEqual(1);
+        }
+      }
+
+      const target = tileCenter(threshold.floorTiles[0]!);
+      expect(
+        findStateNavigationRoute(
+          state,
+          state.player.position,
+          target,
+          state.player.radius,
+        ).at(-1),
+        `environment-kit threshold route for seed ${index}`,
+      ).toEqual(target);
+
+      const northWall = openingNorthWallFeature(state.map);
+      if (threshold.side === "north") {
+        sawNorthThreshold = true;
+        expect(northWall).toBeNull();
+      } else {
+        sawNorthWall = true;
+        expect(northWall).not.toBeNull();
+        expect(northWall?.suppressedFacadeTiles).toHaveLength(3);
+        for (const tile of northWall!.suppressedFacadeTiles)
+          expect(state.map.tiles[tile.y * state.map.width + tile.x]).toBe(1);
+      }
+    }
+    expect(sawNorthWall).toBe(true);
+    expect(sawNorthThreshold).toBe(true);
+  });
+
+  it("rejects a north-wall feature when one central shell tile is opened", () => {
+    let state = worldFromScenario(
+      createRunScenario("environment-wall-negative-control", "vanguard"),
+    );
+    for (let suffix = 0; !openingNorthWallFeature(state.map); suffix += 1)
+      state = worldFromScenario(
+        createRunScenario(
+          `environment-wall-negative-control-${suffix}`,
+          "vanguard",
+        ),
+      );
+    const broken = structuredClone(state.map);
+    const feature = openingNorthWallFeature(broken)!;
+    broken.tiles[feature.tile.y * broken.width + feature.tile.x] = 0;
+    expect(openingNorthWallFeature(broken)).toBeNull();
+  });
+
+  it("rejects a solid negative control placed across the real threshold", () => {
+    const state = worldFromScenario(
+      createRunScenario("environment-threshold-blocker", "vanguard"),
+    );
+    const threshold = openingRoomThreshold(state.map)!;
+    const target = tileCenter(threshold.floorTiles[0]!);
+    const collisions = sceneryCollisions(state.map);
+    expect(
+      findNavigationRoute(
+        state.map,
+        collisions,
+        state.player.position,
+        target,
+        state.player.radius,
+      ).at(-1),
+    ).toEqual(target);
+
+    const blockedRoute = findNavigationRoute(
+      state.map,
+      [
+        ...collisions,
+        {
+          shape: "ellipse",
+          center: target,
+          halfWidth: UNITS_PER_TILE / 2,
+          halfHeight: UNITS_PER_TILE / 2,
+        },
+      ],
+      state.player.position,
+      target,
+      state.player.radius,
+    );
+    expect(blockedRoute.at(-1)).not.toEqual(target);
   });
 });

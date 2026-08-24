@@ -1,28 +1,65 @@
 import { expect, test } from "@playwright/test";
+import { UNITS_PER_TILE } from "../../src/game/constants";
+import { isFloor } from "../../src/game/dungeon";
 import { buildSceneryLayout } from "../../src/game/sceneryLayout";
 import type { ProjectileState } from "../../src/game/types";
 import {
-  BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 
-test("browser state records and renders a projectile impact on solid scenery", async ({
+test("browser state records and renders a projectile impact on the solid v2 forge", async ({
   page,
 }) => {
-  const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
+  const state = worldFromScenario(
+    createRunScenario("browser-projectile-v2-forge", "vanguard"),
+  );
   const structure = buildSceneryLayout(state.map).find(
-    ({ kind, collision }) => kind === "structure" && collision,
+    ({ id }) => id === "structure:0:forge",
   )!;
+  expect(structure.name).toBe("forge-workshop");
   const collision = structure.collision!;
   const radius = 120;
-  const from = {
-    x: collision.center.x - collision.halfWidth - radius - 480,
-    y: collision.center.y,
-  };
-  const to = {
-    x: collision.center.x + collision.halfWidth + radius + 480,
-    y: collision.center.y,
-  };
+  const crossing = [
+    {
+      from: {
+        x: collision.center.x - collision.halfWidth - radius - 480,
+        y: collision.center.y,
+      },
+      to: {
+        x: collision.center.x + collision.halfWidth + radius + 480,
+        y: collision.center.y,
+      },
+      impact: {
+        x: collision.center.x - collision.halfWidth - radius,
+        y: collision.center.y,
+      },
+    },
+    {
+      from: {
+        x: collision.center.x,
+        y: collision.center.y - collision.halfHeight - radius - 480,
+      },
+      to: {
+        x: collision.center.x,
+        y: collision.center.y + collision.halfHeight + radius + 480,
+      },
+      impact: {
+        x: collision.center.x,
+        y: collision.center.y - collision.halfHeight - radius,
+      },
+    },
+  ].find(({ from, to }) =>
+    [from, to].every((point) =>
+      isFloor(
+        state.map,
+        Math.floor(point.x / UNITS_PER_TILE),
+        Math.floor(point.y / UNITS_PER_TILE),
+      ),
+    ),
+  );
+  if (!crossing) throw new Error("V2 forge has no floor-backed crossing axis");
+  const { from, to } = crossing;
   const projectile: ProjectileState = {
     id: "projectile:browser:scenery-probe",
     owner: "player",
@@ -74,10 +111,8 @@ test("browser state records and renders a projectile impact on solid scenery", a
     halfHeight: collision.halfHeight,
   });
   expect(evidence.projectileIds).toEqual([]);
-  expect(evidence.impact?.position).toEqual({
-    x: collision.center.x - collision.halfWidth - radius,
-    y: collision.center.y,
-  });
+  expect(evidence.impact?.position.x).toBeCloseTo(crossing.impact.x, 0);
+  expect(evidence.impact?.position.y).toBeCloseTo(crossing.impact.y, 0);
   expect(evidence.impactCall).toMatchObject({
     type: "effect",
     geometryId: "effect:impact",

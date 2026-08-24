@@ -20,6 +20,14 @@ export interface OpeningCompositionEvidence {
   forgeVisibleFraction: number;
   raisedCollisionViolationCount: number;
   adjacentRoomLeakCount: number;
+  environmentKitVisibleRoleCount: number;
+  environmentKitSpriteMismatchCount: number;
+  warmFloorLightCount: number;
+  detachedWarmFloorLightCount: number;
+  northWallFeatureCount: number;
+  northWallStretchedCount: number;
+  centralLegacyFacadeCount: number;
+  outerLegacyFacadeCount: number;
 }
 
 export interface OpeningCompositionAssessment {
@@ -197,6 +205,72 @@ export function assessOpeningComposition(
   const wallTileKeys = new Set(
     wallFronts.map(({ tile }) => `${tile.x}:${tile.y}`),
   );
+  const environmentKitRoles = [
+    {
+      objectId: "structure:0:forge",
+      spriteId: "scenery:structure:forge-workshop",
+    },
+    {
+      objectId: "architecture:opening:lantern:0",
+      spriteId: "scenery:prop:lantern-a",
+    },
+    {
+      objectId: "architecture:opening:lantern:1",
+      spriteId: "scenery:prop:lantern-b",
+    },
+    {
+      objectId: "prop:0:barricade-v2",
+      spriteId: "scenery:prop:barricade-v2",
+    },
+    {
+      objectId: "prop:0:raised-clutter-bench",
+      spriteId: "scenery:prop:raised-clutter-bench",
+    },
+  ] as const;
+  const visibleKitRoles = environmentKitRoles.flatMap((role) => {
+    const sprite = visible.find(({ objectId }) => objectId === role.objectId);
+    return sprite ? [{ role, sprite }] : [];
+  });
+  const forgeLight = visible.find(({ objectId }) =>
+    objectId.startsWith("decal:0:0:scorch-ring"),
+  );
+  const lanternLights = visible.filter(({ objectId }) =>
+    objectId.startsWith("architecture:opening:lantern-light:"),
+  );
+  const warmFloorLights = forgeLight
+    ? [forgeLight, ...lanternLights]
+    : lanternLights;
+  const raisedLightOwners = [forge, ...lanterns].filter(
+    (sprite): sprite is SceneSpriteV2 => Boolean(sprite),
+  );
+  const detachedWarmFloorLights = warmFloorLights.filter((light) =>
+    raisedLightOwners.every(
+      ({ worldAnchor }) =>
+        worldAnchor.x !== light.worldAnchor.x ||
+        worldAnchor.y !== light.worldAnchor.y,
+    ),
+  );
+  const northWalls = manifest.sceneSprites.filter(
+    ({ objectId }) => objectId === "architecture:opening:north-wall",
+  );
+  const centralFacadeKeys = new Set(
+    northWalls.flatMap(({ tile }) =>
+      [-1, 0, 1].map((offset) => `${tile.x + offset}:${tile.y}`),
+    ),
+  );
+  const centralLegacyFacades = manifest.sceneSprites.filter(
+    ({ objectId, tile }) =>
+      objectId.startsWith("wall-front:") &&
+      centralFacadeKeys.has(`${tile.x}:${tile.y}`),
+  );
+  const outerLegacyFacades = northWalls.flatMap((wall) =>
+    manifest.sceneSprites.filter(
+      ({ objectId, tile }) =>
+        objectId.startsWith("wall-front:") &&
+        tile.y === wall.tile.y &&
+        Math.abs(tile.x - wall.tile.x) > 1,
+    ),
+  );
   const lanternDistances = threshold
     ? lanterns.map(({ screenAnchor }) =>
         distance(screenAnchor, threshold.screenAnchor),
@@ -237,6 +311,19 @@ export function assessOpeningComposition(
       : 0,
     raisedCollisionViolationCount: raisedCollisionViolations.length,
     adjacentRoomLeakCount: adjacentRoomLeaks.length,
+    environmentKitVisibleRoleCount: visibleKitRoles.length,
+    environmentKitSpriteMismatchCount: visibleKitRoles.filter(
+      ({ role, sprite }) => sprite.spriteId !== role.spriteId,
+    ).length,
+    warmFloorLightCount: warmFloorLights.length,
+    detachedWarmFloorLightCount: detachedWarmFloorLights.length,
+    northWallFeatureCount: northWalls.length,
+    northWallStretchedCount: northWalls.filter(
+      ({ destinationRect }) =>
+        destinationRect.width !== 187 || destinationRect.height !== 172,
+    ).length,
+    centralLegacyFacadeCount: centralLegacyFacades.length,
+    outerLegacyFacadeCount: outerLegacyFacades.length,
   };
 
   const violations: string[] = [];
@@ -274,6 +361,27 @@ export function assessOpeningComposition(
     violations.push("opening:raised-scenery-missing-solid-collision");
   if (evidence.adjacentRoomLeakCount > 0)
     violations.push("opening:adjacent-room-fragment-visible");
+  if (
+    evidence.environmentKitVisibleRoleCount !== 5 ||
+    evidence.environmentKitSpriteMismatchCount > 0
+  )
+    violations.push("opening:environment-kit-role-missing-or-mismatched");
+  if (
+    evidence.warmFloorLightCount !== 3 ||
+    evidence.detachedWarmFloorLightCount > 0
+  )
+    violations.push("opening:warm-floor-light-missing-or-detached");
+  if (evidence.northWallFeatureCount > 1)
+    violations.push("opening:north-wall-repeated");
+  if (evidence.northWallStretchedCount > 0)
+    violations.push("opening:north-wall-stretched");
+  if (evidence.centralLegacyFacadeCount > 0)
+    violations.push("opening:north-wall-central-facade-not-suppressed");
+  if (
+    evidence.northWallFeatureCount === 1 &&
+    evidence.outerLegacyFacadeCount < 2
+  )
+    violations.push("opening:north-wall-outer-facades-missing");
 
   return {
     pass: violations.length === 0,

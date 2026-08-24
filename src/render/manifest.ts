@@ -6,7 +6,10 @@ import {
   VIEW_HEIGHT,
   VIEW_WIDTH,
 } from "../game/constants";
-import { buildSceneryLayout } from "../game/sceneryLayout";
+import {
+  buildSceneryLayout,
+  openingNorthWallFeature,
+} from "../game/sceneryLayout";
 import type { AnimationClip, GameState, Vec2 } from "../game/types";
 import {
   SPRITE_CATALOG,
@@ -216,6 +219,11 @@ function buildSceneSprites(
 ): SceneSpriteV2[] {
   const scene: SceneSpriteV2[] = [];
   const openingRoom = state.map.rooms[0];
+  const northWallFeature = openingNorthWallFeature(state.map);
+  const suppressedNorthFacadeTiles = new Set(
+    northWallFeature?.suppressedFacadeTiles.map(({ x, y }) => `${x}:${y}`) ??
+      [],
+  );
   const playerTile = {
     x: state.player.position.x / UNITS_PER_TILE,
     y: state.player.position.y / UNITS_PER_TILE,
@@ -461,7 +469,7 @@ function buildSceneSprites(
           y === openingRoom.y - 1 &&
           x >= openingRoom.x &&
           x < openingRoom.x + openingRoom.width;
-        if (openingBackWall) {
+        if (openingBackWall && !suppressedNorthFacadeTiles.has(`${x}:${y}`)) {
           const facadeRect = destinationAt(screenAnchor, 62, 72, {
             x: 128,
             y: 232,
@@ -495,19 +503,66 @@ function buildSceneSprites(
     }
   }
 
+  if (northWallFeature) {
+    const screenAnchor = screenFor(northWallFeature.worldAnchor, camera);
+    const wallSprite =
+      SPRITE_CATALOG.sprites["scenery:architecture:north-wall-solid"]!;
+    const wallSize = wallSprite.logicalSize!;
+    const wallAnchor = wallSprite.anchor!;
+    const destinationRect = destinationAt(
+      screenAnchor,
+      wallSize.width,
+      wallSize.height,
+      {
+        x: (wallAnchor.x / wallSize.width) * 256,
+        y: (wallAnchor.y / wallSize.height) * 256,
+      },
+    );
+    scene.push({
+      ...sceneReference("scenery:architecture:north-wall-solid"),
+      objectId: northWallFeature.id,
+      kind: "prop",
+      tile: { ...northWallFeature.tile },
+      worldAnchor: { ...northWallFeature.worldAnchor },
+      screenAnchor,
+      destinationRect,
+      layer: "structures",
+      zOrder: scene.length,
+      visible: intersectsViewport(destinationRect),
+      opacity: 1,
+      // This declaration describes the visible mass, but simulation remains
+      // authoritative on the three blocked north-shell tiles beneath it.
+      collision: {
+        mode: "solid",
+        shape: "ellipse",
+        worldCenter: {
+          x: (northWallFeature.tile.x + 0.5) * UNITS_PER_TILE,
+          y: (northWallFeature.tile.y + 0.5) * UNITS_PER_TILE,
+        },
+        halfWidth: (UNITS_PER_TILE * 3) / 2,
+        halfHeight: UNITS_PER_TILE / 2,
+      },
+    });
+  }
+
   for (const placement of buildSceneryLayout(state.map)) {
     const spriteId = `scenery:${placement.kind}:${placement.name}`;
+    const authoredSprite = SPRITE_CATALOG.sprites[spriteId];
+    const authoredSize = authoredSprite?.logicalSize;
+    const authoredAnchor = authoredSprite?.anchor;
     const screenAnchor = screenFor(placement.worldAnchor, camera);
     const structureSize =
-      placement.name === "ruined-house"
-        ? 158
-        : placement.name === "dead-tree"
-          ? 172
-          : placement.name === "well" || placement.name === "wagon"
-            ? 154
-            : placement.name === "obelisk" || placement.name === "rubble"
-              ? 144
-              : 196;
+      placement.name === "forge-workshop"
+        ? 195
+        : placement.name === "ruined-house"
+          ? 158
+          : placement.name === "dead-tree"
+            ? 172
+            : placement.name === "well" || placement.name === "wagon"
+              ? 154
+              : placement.name === "obelisk" || placement.name === "rubble"
+                ? 144
+                : 196;
     const decalSize =
       placement.name === "blood-smear" ||
       placement.name === "occult-circle" ||
@@ -518,17 +573,26 @@ function buildSceneSprites(
             placement.name === "dead-bramble"
           ? 96
           : 78;
-    const size =
+    const fallbackSize =
       placement.kind === "structure"
         ? structureSize
         : placement.kind === "decal"
           ? decalSize
           : 82;
+    const width = authoredSize?.width ?? fallbackSize;
+    const height = authoredSize?.height ?? fallbackSize;
     const destinationRect = destinationAt(
       screenAnchor,
-      size,
-      size,
-      placement.kind === "decal" ? { x: 128, y: 128 } : undefined,
+      width,
+      height,
+      placement.kind === "decal"
+        ? { x: 128, y: 128 }
+        : authoredSize && authoredAnchor
+          ? {
+              x: (authoredAnchor.x / authoredSize.width) * 256,
+              y: (authoredAnchor.y / authoredSize.height) * 256,
+            }
+          : undefined,
     );
     const placementRoomIndex = Number(
       placement.id.match(/^(?:structure|prop|decal):(\d+):/)?.[1] ?? -1,

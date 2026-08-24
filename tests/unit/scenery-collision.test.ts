@@ -44,6 +44,80 @@ describe("deterministic scenery collision", () => {
     );
   });
 
+  it("rebuilds the environment-kit opening from a restored generated state", () => {
+    const state = worldFromScenario(
+      createRunScenario("environment-kit-restoration", "vanguard"),
+    );
+    const restored = stateFromSnapshot(canonicalState(state));
+    const names = new Set([
+      "forge-workshop",
+      "lantern-a",
+      "lantern-b",
+      "barricade-v2",
+      "raised-clutter-bench",
+    ]);
+
+    expect(
+      buildSceneryLayout(restored.map).filter(({ name }) => names.has(name)),
+    ).toEqual(
+      buildSceneryLayout(state.map).filter(({ name }) => names.has(name)),
+    );
+  });
+
+  it("keeps environment-kit roles independent of digest modulus selection", () => {
+    const map = generateDungeon("environment-kit-modulus-control");
+    const changedDigest = structuredClone(map);
+    changedDigest.digest = "ffffffff";
+    const names = new Set([
+      "forge-workshop",
+      "lantern-a",
+      "lantern-b",
+      "barricade-v2",
+      "raised-clutter-bench",
+    ]);
+    const roles = (candidate: typeof map) =>
+      buildSceneryLayout(candidate).filter(({ name }) => names.has(name));
+
+    expect(roles(changedDigest)).toEqual(roles(map));
+  });
+
+  it("matches each environment-kit footprint to its visible contact mass", () => {
+    const state = worldFromScenario(
+      createRunScenario("environment-kit-footprints", "vanguard"),
+    );
+    const layout = buildSceneryLayout(state.map);
+    const forge = layout.find(({ id }) => id === "structure:0:forge")!;
+    const lanterns = layout.filter(({ id }) =>
+      id.startsWith("architecture:opening:lantern:"),
+    );
+    const barricade = layout.find(({ id }) => id === "prop:0:barricade-v2")!;
+    const bench = layout.find(
+      ({ id }) => id === "prop:0:raised-clutter-bench",
+    )!;
+
+    expect(forge).toMatchObject({
+      name: "forge-workshop",
+      collision: { halfWidth: 1_480, halfHeight: 760 },
+    });
+    expect(forge.collision!.center.y).toBe(forge.worldAnchor.y - 360);
+    expect(lanterns.map(({ collision }) => collision)).toEqual(
+      lanterns.map(({ worldAnchor }) => ({
+        shape: "ellipse",
+        center: { x: worldAnchor.x, y: worldAnchor.y - 30 },
+        halfWidth: 180,
+        halfHeight: 110,
+      })),
+    );
+    expect(barricade.collision).toMatchObject({
+      halfWidth: 680,
+      halfHeight: 180,
+    });
+    expect(bench.collision).toMatchObject({
+      halfWidth: 780,
+      halfHeight: 380,
+    });
+  });
+
   it("keeps collision placements aligned with visible scenery", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
     const layout = buildSceneryLayout(state.map);

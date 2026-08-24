@@ -1,20 +1,32 @@
 import { expect, test } from "@playwright/test";
 import {
   buildSceneryLayout,
+  openingRoomThreshold,
   overlapsScenery,
 } from "../../src/game/sceneryLayout";
 import {
-  BUILTIN_SCENARIOS,
+  createRunScenario,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 
-test("real keyboard movement stops at the manifested building footprint and slides beside it", async ({
+function openingStateWithNorthFreeForge() {
+  for (let index = 0; index < 100; index += 1) {
+    const state = worldFromScenario(
+      createRunScenario(`browser-forge-collision-${index}`, "vanguard"),
+    );
+    if (openingRoomThreshold(state.map)?.side !== "north") return state;
+  }
+  throw new Error("No generated non-north opening seed found");
+}
+
+test("real keyboard movement stops at the manifested v2 forge footprint and slides beside it", async ({
   page,
 }) => {
-  const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
+  const state = openingStateWithNorthFreeForge();
   const building = buildSceneryLayout(state.map).find(
-    ({ kind, collision }) => kind === "structure" && collision,
+    ({ id }) => id === "structure:0:forge",
   )!;
+  expect(building.name).toBe("forge-workshop");
   const collision = building.collision!;
   state.player.position = {
     x: collision.center.x,

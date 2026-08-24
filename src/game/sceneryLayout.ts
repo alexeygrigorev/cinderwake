@@ -104,6 +104,14 @@ interface CollisionProfile {
   offsetY: number;
 }
 
+export interface OpeningNorthWallFeature {
+  id: "architecture:opening:north-wall";
+  name: "north-wall-solid";
+  tile: Vec2;
+  worldAnchor: Vec2;
+  suppressedFacadeTiles: Vec2[];
+}
+
 // Footprints cover the object base, not its tall painted silhouette. This lets
 // actors walk behind roofs and branches while still preventing them from
 // crossing the masonry, trunk, wagon, or other solid contact surface.
@@ -134,6 +142,27 @@ const PROP_COLLISIONS: Record<PropName, CollisionProfile> = {
   "ritual-totem": { halfWidth: 560, halfHeight: 350, offsetY: -40 },
   barricade: { halfWidth: 820, halfHeight: 380, offsetY: -40 },
 };
+
+// Environment-kit v2 footprints follow the full visible contact masses, not
+// the narrower alpha-support proxy used by the ingress audit. In particular,
+// the workshop footprint includes its anvil foreground, while the lantern
+// ellipses cover only the small post bases that actually touch the floor.
+const FORGE_WORKSHOP_COLLISION: CollisionProfile = {
+  halfWidth: 1_480,
+  halfHeight: 760,
+  offsetY: -360,
+};
+
+const ENVIRONMENT_KIT_PROP_COLLISIONS = {
+  "lantern-a": { halfWidth: 180, halfHeight: 110, offsetY: -30 },
+  "lantern-b": { halfWidth: 180, halfHeight: 110, offsetY: -30 },
+  "barricade-v2": { halfWidth: 680, halfHeight: 180, offsetY: -80 },
+  "raised-clutter-bench": {
+    halfWidth: 780,
+    halfHeight: 380,
+    offsetY: -220,
+  },
+} as const satisfies Record<string, CollisionProfile>;
 
 function sceneVariant(map: DungeonMap, x: number, y: number, count: number) {
   const digest = Number.parseInt(map.digest.slice(0, 8), 16) || 0;
@@ -242,6 +271,70 @@ export function openingRoomThreshold(
 }
 
 /**
+ * Describes the one authored north-wall feature without adding another source
+ * of world collision. It is eligible only for a generated opening room whose
+ * complete north shell remains blocked and whose real carved route exits on a
+ * different side. Movement and projectile collision therefore continue to be
+ * governed by the same blocked map tiles that permit this visual feature.
+ */
+export function openingNorthWallFeature(
+  map: DungeonMap,
+): OpeningNorthWallFeature | null {
+  const room = map.rooms[0];
+  const threshold = openingRoomThreshold(map);
+  if (!room || !threshold || threshold.side === "north") return null;
+  const shellY = room.y - 1;
+  const fullyBlocked = Array.from(
+    { length: room.width },
+    (_, index) => map.tiles[shellY * map.width + room.x + index] === 1,
+  ).every(Boolean);
+  if (!fullyBlocked) return null;
+
+  const centerX = room.x + Math.floor(room.width / 2);
+  return {
+    id: "architecture:opening:north-wall",
+    name: "north-wall-solid",
+    tile: { x: centerX, y: shellY },
+    worldAnchor: {
+      x: (room.x + room.width / 2) * UNITS_PER_TILE,
+      y: room.y * UNITS_PER_TILE,
+    },
+    // The calibrated 187 × 172 px feature covers the central three 64 px
+    // facade cells. Keep the remaining tile-backed facades as continuations.
+    suppressedFacadeTiles: [-1, 0, 1].map((offset) => ({
+      x: centerX + offset,
+      y: shellY,
+    })),
+  };
+}
+
+function openingKitPropAnchor(
+  room: DungeonMap["rooms"][number],
+  thresholdSide: OpeningSide,
+  role: "barricade-v2" | "raised-clutter-bench",
+): Vec2 {
+  const horizontalThreshold =
+    thresholdSide === "east" || thresholdSide === "west";
+  const anchorInTiles = horizontalThreshold
+    ? {
+        x:
+          room.x +
+          (role === "barricade-v2" ? 1.4 : Math.max(1.4, room.width - 1.4)),
+        y: room.y + Math.max(1.5, room.height - 1.15),
+      }
+    : {
+        x:
+          room.x +
+          (role === "barricade-v2" ? 1.4 : Math.max(1.4, room.width - 1.4)),
+        y: room.y + room.height / 2 + (role === "barricade-v2" ? 0.8 : -0.45),
+      };
+  return {
+    x: Math.round(anchorInTiles.x * UNITS_PER_TILE),
+    y: Math.round(anchorInTiles.y * UNITS_PER_TILE),
+  };
+}
+
+/**
  * Produces the deterministic semantic scenery layout from authoritative map
  * state. Renderers and simulations can consume this data without either layer
  * depending on the other, and restored arbitrary states reproduce the same
@@ -266,7 +359,7 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       let x = room.x + Math.floor(room.width / 2);
       let y = room.y + 1;
       if (roomIndex === 0 && threshold) {
-        if (threshold.side === "north") y = room.y + room.height - 2;
+        if (threshold.side === "north") y = room.y + room.height - 1;
         if (threshold.side === "west") {
           x = room.x + 1;
           y = room.y + 2;
@@ -276,12 +369,12 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
           y = room.y + 2;
         }
       }
-      const name: StructureName =
-        roomIndex === 0
+      const generatedOpening = roomIndex === 0 && map.rooms.length > 0;
+      const name: StructureName | "forge-workshop" = generatedOpening
+        ? "forge-workshop"
+        : roomIndex === 0
           ? "forge"
-          : map.rooms.length
-            ? STRUCTURE_NAMES[sceneVariant(map, x, y, STRUCTURE_NAMES.length)]!
-            : "chapel";
+          : STRUCTURE_NAMES[sceneVariant(map, x, y, STRUCTURE_NAMES.length)]!;
       const worldAnchor = {
         x:
           x * UNITS_PER_TILE +
@@ -300,17 +393,33 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
             : -UNITS_PER_TILE / 4),
       };
       placements.push({
-        id: `structure:${roomIndex}:${name}`,
+        // Preserve the semantic forge role ID across the controlled art swap.
+        id: generatedOpening
+          ? "structure:0:forge"
+          : `structure:${roomIndex}:${name}`,
         kind: "structure",
         name,
-        collisionMode: STRUCTURE_COLLISIONS[name] ? "solid" : "passable",
+        collisionMode: "solid",
         tile: { x, y },
         worldAnchor,
-        collision: footprint(worldAnchor, STRUCTURE_COLLISIONS[name]),
+        collision: footprint(
+          worldAnchor,
+          name === "forge-workshop"
+            ? FORGE_WORKSHOP_COLLISION
+            : STRUCTURE_COLLISIONS[name],
+        ),
       });
     }
 
-    const propIndexes = roomIndex === 0 ? [1] : [0, 1];
+    // The room-zero random prop previously changed identity by digest. Keep
+    // every legacy modulus and array order intact, but replace only that one
+    // generated-room slot with the two deterministic environment-kit roles.
+    const propIndexes =
+      roomIndex === 0 && map.rooms.length > 0
+        ? []
+        : roomIndex === 0
+          ? [1]
+          : [0, 1];
     for (const propIndex of propIndexes) {
       const x = room.x + 1 + propIndex * Math.max(1, room.width - 3);
       const y = room.y + Math.max(1, room.height - 2);
@@ -328,6 +437,27 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
         worldAnchor,
         collision: footprint(worldAnchor, PROP_COLLISIONS[name]),
       });
+    }
+
+    if (roomIndex === 0 && map.rooms.length > 0 && threshold) {
+      for (const name of ["barricade-v2", "raised-clutter-bench"] as const) {
+        const worldAnchor = openingKitPropAnchor(room, threshold.side, name);
+        placements.push({
+          id: `prop:0:${name}`,
+          kind: "prop",
+          name,
+          collisionMode: "solid",
+          tile: {
+            x: Math.floor(worldAnchor.x / UNITS_PER_TILE),
+            y: Math.floor(worldAnchor.y / UNITS_PER_TILE),
+          },
+          worldAnchor,
+          collision: footprint(
+            worldAnchor,
+            ENVIRONMENT_KIT_PROP_COLLISIONS[name],
+          ),
+        });
+      }
     }
 
     // Explicit test arenas deliberately keep their authored floor unchanged so
@@ -430,14 +560,25 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       placements.push({
         id: `architecture:opening:lantern:${index}`,
         kind: "prop",
-        name: "witchlight-lantern",
+        name: index === 0 ? "lantern-a" : "lantern-b",
         collisionMode: "solid",
         tile: cueTile,
         worldAnchor,
         collision: footprint(
           worldAnchor,
-          PROP_COLLISIONS["witchlight-lantern"],
+          index === 0
+            ? ENVIRONMENT_KIT_PROP_COLLISIONS["lantern-a"]
+            : ENVIRONMENT_KIT_PROP_COLLISIONS["lantern-b"],
         ),
+      });
+      placements.push({
+        id: `architecture:opening:lantern-light:${index}`,
+        kind: "decal",
+        name: "scorch-ring",
+        collisionMode: "passable",
+        tile: cueTile,
+        worldAnchor: { ...worldAnchor },
+        collision: null,
       });
     });
   }
