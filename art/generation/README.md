@@ -263,6 +263,15 @@ production readiness, species surface identity, natural anatomy, paws/joints,
 and final material. The next edit may naturalize the mannequin around locked
 limb centerlines and paw contacts but may not move or merge any accepted chain.
 
+Anatomy blockout v3 naturalizes shoulders, elbows, hocks, tapered lower limbs,
+and three-claw paws while retaining all four chains, gaps, camera, and diagonal
+ownership. It is still rejected. The near forepaw becomes the sole lowest
+contact and reaches too far outward, so contact-aware safe fitting drops from
+canonical 0.25 scale to 0.207534 and runtime height falls from 82 to 71 pixels.
+Exact-hash review permits one baseline-only edit: restore v2's two-near-paw
+contact row and compact centered footprint without changing v3's improved
+anatomy.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

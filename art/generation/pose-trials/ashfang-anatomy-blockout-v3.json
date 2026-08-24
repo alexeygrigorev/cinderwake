@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-anatomy-blockout-v3-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-natural-anatomy-blockout",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-anatomy-blockout-v3.txt",
+  "candidateFile": "art/generation/candidates/ashfang-anatomy-blockout-v3.png",
+  "candidateSha256": "0622c4b8896fc3f77aeab81619bc66443e7f43cf6f55791769abf8423dce1828",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v2.png",
+      "role": "exact accepted four-chain topology, camera, gaps, paw centers, framing, and baseline edit target",
+      "sha256": "b93ed1bfea62bf42272f5c33b74cf3663941e32f1aa4c0c8342705bae7308d27"
+    },
+    {
+      "file": "art/generation/guides/quadruped-pose-layout.png",
+      "role": "reviewed perspective ordering, nonparallel corridors, framing, and contact rows only",
+      "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91"
+    },
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v4.png",
+      "role": "natural predator joint masses and planted paw construction only",
+      "sha256": "5ebe7f4e9f7006c69b0c378b6857da2c844dfcd1538e4f45af95517ee6369e35"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-2c2afa64-28d4-4aca-9a57-e8d118554ded.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "cylindrical stilts are replaced by more continuous shoulder, elbow, hock, and tapered lower-limb anatomy",
+      "exactly four connected limb chains and four three-claw paw shapes remain visible",
+      "elevated camera, broad raised body, gaps, and diagonal ownership remain legible",
+      "neutral blockout material remains keyable and no finished surface identity is claimed"
+    ],
+    "failed": [
+      {
+        "code": "near-contact-baseline-drift",
+        "detail": "The near forepaw becomes the sole lowest contact while the near hind paw rises, breaking the locked two-contact support row."
+      },
+      {
+        "code": "contact-centroid-scale-loss",
+        "detail": "Centering the authored lowest-contact band pushes the wider body toward the safe edge and forces scale down from 0.25 to 0.207534."
+      },
+      {
+        "code": "internal-blockout-only",
+        "detail": "The neutral mannequin intentionally remains rejected as production art and lacks Ashfang surface identity."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta field remains graded rather than flat literal #ff00ff."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V3 improves organic joint and paw construction but violates the exact accepted support row, contact footprint, and absolute-scale contract."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-anatomy-blockout-v3.png --output art/generation/prepared/ashfang-anatomy-blockout-v3.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-anatomy-blockout-v3.png",
+    "sha256": "a861aaf572e350753a0c0a1d0a9c9ddd5cee503cb02b08f93e56c73f9a887e7e",
+    "status": "rejected",
+    "notes": "Contact-aware safe fitting shrinks 699x676 normalized ink to scale 0.207534, producing 145x140 prepared ink. Grounding and contact centering remain exact, but the authored support drift loses absolute runtime scale."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_anatomy_blockout_v3",
+    "reviewedRawSha256": "0622c4b8896fc3f77aeab81619bc66443e7f43cf6f55791769abf8423dce1828",
+    "reviewedPreparedSha256": "a861aaf572e350753a0c0a1d0a9c9ddd5cee503cb02b08f93e56c73f9a887e7e",
+    "reviewedPoseEvidenceSha256": "8cd3f59e37d23b5d9584b33a5dc81a7b78a76ec49a5355a2a92b0513d49815b1",
+    "reviewedRuntimeComparisonSha256": "3a88ddcf365fc31b22a612d0fd8386356411f5c1385ad39ce20b2ecbac0c629d",
+    "acceptedAxes": [
+      "more organic shoulder, elbow, hock, lower-limb, and three-claw paw construction than v2",
+      "exactly four body-connected limb chains and four paw terminals",
+      "elevated three-quarter camera with broad readable back plane",
+      "useful negative-space gaps at source and runtime scale",
+      "clear near/far ordering with both diagonal gait pairs identifiable",
+      "neutral blockout suitable for constrained anatomy-reference use"
+    ],
+    "rejectedAxes": [
+      "locked two-near-paw support baseline",
+      "accepted compact centered support footprint",
+      "canonical 0.25 scale and runtime-height envelope",
+      "common gameplay mass and proportion",
+      "production art, Ashfang identity, material, and value design",
+      "literal key-color compliance"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-height"]
+  },
+  "recommendation": "Do not style this blockout. V4 must preserve v3's improved organic limb chains while restoring v2's two near-paw baseline, centered support footprint, canonical 0.25 scale, and runtime-height envelope."
+}
