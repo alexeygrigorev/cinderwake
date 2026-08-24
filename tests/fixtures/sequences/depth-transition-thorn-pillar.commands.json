@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "scenarioId": "depth-transition-thorn-pillar",
+  "entries": [
+    { "tick": 0, "input": { "moveX": -1 } },
+    { "tick": 16, "input": { "moveX": 0, "moveY": 1 } },
+    { "tick": 38, "input": { "moveX": 1, "moveY": 0 } },
+    { "tick": 54, "input": { "moveX": 0, "moveY": 0 } }
+  ],
+  "expected": {
+    "propId": "prop:3:0:thorn-pillar",
+    "propAnchor": { "x": 32256, "y": 6656 },
+    "playerStart": { "x": 32256, "y": 5956 },
+    "playerFinal": { "x": 32256, "y": 7364 },
+    "fixedCameraTile": [31, 6]
+  }
+}

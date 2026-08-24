@@ -787,10 +787,11 @@
       "id": "recipe:pres-depth-019",
       "checkId": "PRES-DEPTH-019",
       "scenarioSet": {
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredIds": [
           "actor-circles-each-tall-occluder",
-          "attached-health-and-effects"
+          "attached-health-and-effects",
+          "depth-transition-thorn-pillar"
         ]
       },
       "deviceProfileSet": {
@@ -798,18 +799,18 @@
         "requiredIds": ["desktop", "phone-portrait"]
       },
       "gestureSet": {
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredIds": ["pass-in-front", "pass-behind", "attack-on-both-sides"]
       },
       "evaluator": {
         "id": "depth-transition-oracle-v1",
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredSignalIds": [
           "z-order-follows-foot-boundary",
           "attachments-follow-owner"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts",
+      "reproduce": "npx playwright test tests/e2e/depth-transition-thorn-pillar.spec.ts tests/e2e/live-player-journey.spec.ts",
       "negativeControls": [
         {
           "id": "actor-prop-z-swapped",

@@ -1588,6 +1588,28 @@ function openingStartStopScenario(subject: "ashfang" | "arcanist"): ScenarioV1 {
   };
 }
 
+/**
+ * Production cinder-041 route that crosses the tall thorn-pillar's foot
+ * boundary. World coordinates are intentionally retained as exact tile
+ * fractions so the depth tape reproduces the audited occlusion transition.
+ */
+function depthTransitionThornPillarScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "depth-transition-thorn-pillar",
+    seed: "cinder-041",
+    classId: "vanguard",
+    map: { mode: "generated" },
+    player: {
+      tile: [31, 5.31640625],
+      facing: [-1024, 0],
+    },
+    monsters: [],
+    settings: { ai: false, autoPickup: false, cameraFollow: false },
+    camera: { mode: "fixed", centerTile: [31, 6] },
+  };
+}
+
 function vanguardStartStopScenario(
   direction: "east" | "west" | "north" | "south",
 ): ScenarioV1 {
@@ -1750,6 +1772,7 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     targetTile: [9, 8.55],
   }),
   "temporal-ashfang-attack": temporalEnemyAttack("ashfang"),
+  "depth-transition-thorn-pillar": depthTransitionThornPillarScenario(),
   "temporal-hexer-attack": temporalEnemyAttack("hexer"),
   "temporal-stonekin-attack": temporalEnemyAttack("stonekin"),
   "temporal-enemy-death": {
