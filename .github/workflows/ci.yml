@@ -42,6 +42,8 @@ jobs:
         run: npm run art:candidate:check
       - name: Reject unsafe production-actor presentation transforms
         run: npm run art:presentation:audit
+      - name: Audit rejected isolated Ashfang idle-pose master
+        run: npm run art:pose:audit
       - run: npm test
       - run: npm run test:e2e
       - name: Build candidate screen gallery
@@ -113,6 +115,13 @@ jobs:
           name: actor-presentation
           path: quality-results/actor-presentation/
           if-no-files-found: error
+      - name: Upload actor-pose audit evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: actor-pose
+          path: quality-results/actor-pose/
+          if-no-files-found: error
       - name: Upload public quality index
         if: ${{ success() }}
         uses: actions/upload-artifact@v7
@@ -182,6 +191,11 @@ jobs:
         with:
           name: actor-presentation
           path: site/quality/actor-presentation
+      - name: Download actor-pose audit evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: actor-pose
+          path: site/quality/actor-pose
       - name: Download public quality index
         uses: actions/download-artifact@v8
         with:

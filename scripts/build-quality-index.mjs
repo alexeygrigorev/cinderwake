@@ -41,6 +41,7 @@ const [
   environment,
   candidate,
   presentation,
+  pose,
 ] = await Promise.all([
   readJson("quality-results/screens/index.json"),
   readJson("quality-results/sequences/index.json"),
@@ -53,6 +54,7 @@ const [
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
   ),
+  readJson("quality-results/actor-pose/ashfang-idle-master-v1/report.json"),
 ]);
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
@@ -141,6 +143,15 @@ const reports = [
       : "No actor-candidate calibration report was generated.",
   },
   {
+    id: "pose",
+    title: "Ashfang isolated idle-pose audit",
+    href: "actor-pose/ashfang-idle-master-v1/",
+    status: pose?.status === "rejected" ? "rejected" : "missing",
+    summary: pose
+      ? "REJECTED isolated-pose evidence: this single master is diagnostic only and cannot seed follow-up poses or count as production approval."
+      : "No isolated Ashfang pose-audit report was generated.",
+  },
+  {
     id: "browser",
     title: "Browser interaction suite",
     href: "playwright/",
@@ -156,10 +167,11 @@ const report = {
   sourceCommit,
   sourceDirty: Boolean(sourceStatus),
   generatedAt: new Date().toISOString(),
-  completionClaim:
+  completionClaim: `${
     screens?.status === "accepted"
       ? "The exact responsive screen set is independently accepted; individual report limits still apply."
-      : "No 10/10 or visual-completion claim: the current responsive screen set is not independently accepted.",
+      : "No 10/10 or visual-completion claim: the current responsive screen set is not independently accepted."
+  } Rejected isolated-pose evidence is diagnostic only and never production approval.`,
   reports,
 };
 
