@@ -165,6 +165,12 @@ lowest support band must remain centered on the fixed actor anchor closely
 enough to represent the shared collision disc; a visually planted sprite whose
 contact point sits beside its gameplay body is rejected.
 
+The five detector mutations never derive their green fixture from the current
+candidate. They use one deterministic centered synthetic body/support image,
+then inject edge cut, floating anchor, overwide shape, undersized shape, and
+contact offset. This prevents an already-asymmetric candidate from making the
+supposed control fixture red before mutations are applied.
+
 Ashfang east-idle master v1 proved that isolation prevents sheet-level phase
 collapse, but it is still rejected. Its runtime ink is 118 × 63 at aspect
 1.873, and its lowest support center is 16.07 logical pixels right of the rig

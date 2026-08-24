@@ -361,7 +361,43 @@ async function contactCenteredFixture(prepared, width, height, top, targets) {
   };
 }
 
-async function negativeControls(prepared, targets) {
+async function syntheticDetectorFixture() {
+  const rectangle = async (width, height, background) =>
+    sharp({ create: { width, height, channels: 4, background } })
+      .png()
+      .toBuffer();
+  const body = await rectangle(160, 120, {
+    r: 46,
+    g: 40,
+    b: 48,
+    alpha: 1,
+  });
+  const foot = await rectangle(24, 40, {
+    r: 78,
+    g: 65,
+    b: 60,
+    alpha: 1,
+  });
+  const buffer = await sharp({
+    create: {
+      width: sourceCell,
+      height: sourceCell,
+      channels: 4,
+      background: { r: 255, g: 0, b: 255, alpha: 1 },
+    },
+  })
+    .composite([
+      { input: body, left: 48, top: 72 },
+      { input: foot, left: 88, top: 192 },
+      { input: foot, left: 144, top: 192 },
+    ])
+    .png()
+    .toBuffer();
+  return keyedImage(buffer);
+}
+
+async function negativeControls(targets) {
+  const prepared = await syntheticDetectorFixture();
   const validFixture = await contactCenteredFixture(
     prepared,
     180,
@@ -673,7 +709,6 @@ async function run() {
     trial.mechanicalTargets,
   );
   const negativeControlsResult = await negativeControls(
-    preparedImage,
     trial.mechanicalTargets,
   );
   const actualViolationCodes = assessment.violations
