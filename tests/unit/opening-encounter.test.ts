@@ -492,8 +492,8 @@ describe("generated opening encounter", () => {
       } else {
         sawNorthWall = true;
         expect(northWall).not.toBeNull();
-        expect(northWall?.suppressedFacadeTiles).toHaveLength(3);
-        for (const tile of northWall!.suppressedFacadeTiles)
+        expect(northWall?.shellTiles).toHaveLength(state.map.rooms[0]!.width);
+        for (const tile of northWall!.shellTiles)
           expect(state.map.tiles[tile.y * state.map.width + tile.x]).toBe(1);
       }
     }

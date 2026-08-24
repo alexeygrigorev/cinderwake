@@ -109,7 +109,7 @@ export interface OpeningNorthWallFeature {
   name: "north-wall-solid";
   tile: Vec2;
   worldAnchor: Vec2;
-  suppressedFacadeTiles: Vec2[];
+  shellTiles: Vec2[];
 }
 
 // Footprints cover the object base, not its tall painted silhouette. This lets
@@ -299,10 +299,11 @@ export function openingNorthWallFeature(
       x: (room.x + room.width / 2) * UNITS_PER_TILE,
       y: room.y * UNITS_PER_TILE,
     },
-    // The calibrated 187 × 172 px feature covers the central three 64 px
-    // facade cells. Keep the remaining tile-backed facades as continuations.
-    suppressedFacadeTiles: [-1, 0, 1].map((offset) => ({
-      x: centerX + offset,
+    // The authored wall and the thin masonry caps describe this complete
+    // blocked shell. Legacy full-height facade cells must not be mixed into
+    // this feature: their opaque lower panels render as rectangular bays.
+    shellTiles: Array.from({ length: room.width }, (_, offset) => ({
+      x: room.x + offset,
       y: shellY,
     })),
   };

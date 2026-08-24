@@ -222,10 +222,6 @@ function buildSceneSprites(
   const scene: SceneSpriteV2[] = [];
   const openingRoom = state.map.rooms[0];
   const northWallFeature = openingNorthWallFeature(state.map);
-  const suppressedNorthFacadeTiles = new Set(
-    northWallFeature?.suppressedFacadeTiles.map(({ x, y }) => `${x}:${y}`) ??
-      [],
-  );
   const playerTile = {
     x: state.player.position.x / UNITS_PER_TILE,
     y: state.player.position.y / UNITS_PER_TILE,
@@ -461,17 +457,17 @@ function buildSceneSprites(
           rotation: direction.rotation + cadence * 0.008,
         });
 
-        // A single continuous authored facade establishes the opening room's
-        // back wall. It is emitted only along the north shell (whose floor is
-        // south of the blocked cell), while the lower masonry caps carry the
-        // remaining collision outline without detached facade stamps.
+        // Legacy generated rooms without the authored north-wall feature keep
+        // their facade. The authored feature uses one coherent wall sprite and
+        // the thin tile-backed masonry caps above; mixing these full-height
+        // legacy cells into it creates opaque rectangular wall bays.
         const openingBackWall =
           direction.id === "south" &&
           openingRoom !== undefined &&
           y === openingRoom.y - 1 &&
           x >= openingRoom.x &&
           x < openingRoom.x + openingRoom.width;
-        if (openingBackWall && !suppressedNorthFacadeTiles.has(`${x}:${y}`)) {
+        if (openingBackWall && !northWallFeature) {
           const facadeRect = destinationAt(screenAnchor, 62, 72, {
             x: 128,
             y: 232,

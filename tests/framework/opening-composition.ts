@@ -26,8 +26,11 @@ export interface OpeningCompositionEvidence {
   detachedWarmFloorLightCount: number;
   northWallFeatureCount: number;
   northWallStretchedCount: number;
-  centralLegacyFacadeCount: number;
-  outerLegacyFacadeCount: number;
+  northWallLegacyFacadeCount: number;
+  northWallShellTileCount: number;
+  northWallVisibleCapCount: number;
+  northWallMissingCapCount: number;
+  northWallMismatchedCapCount: number;
 }
 
 export interface OpeningCompositionAssessment {
@@ -253,23 +256,44 @@ export function assessOpeningComposition(
   const northWalls = manifest.sceneSprites.filter(
     ({ objectId }) => objectId === "architecture:opening:north-wall",
   );
-  const centralFacadeKeys = new Set(
-    northWalls.flatMap(({ tile }) =>
-      [-1, 0, 1].map((offset) => `${tile.x + offset}:${tile.y}`),
-    ),
+  const northWallLegacyFacades = manifest.sceneSprites.filter(({ objectId }) =>
+    objectId.startsWith("wall-front:"),
   );
-  const centralLegacyFacades = manifest.sceneSprites.filter(
-    ({ objectId, tile }) =>
-      objectId.startsWith("wall-front:") &&
-      centralFacadeKeys.has(`${tile.x}:${tile.y}`),
+  const wallOverlayKeys = new Set(
+    manifest.sceneSprites
+      .filter(({ objectId }) => objectId.startsWith("wall-overlay:"))
+      .map(({ tile }) => `${tile.x}:${tile.y}`),
   );
-  const outerLegacyFacades = northWalls.flatMap((wall) =>
-    manifest.sceneSprites.filter(
-      ({ objectId, tile }) =>
-        objectId.startsWith("wall-front:") &&
-        tile.y === wall.tile.y &&
-        Math.abs(tile.x - wall.tile.x) > 1,
+  const northWallShellTiles = northWalls.flatMap((wall) => {
+    const isSouthEdgeWall = (x: number) =>
+      wallOverlayKeys.has(`${x}:${wall.tile.y}`) &&
+      !wallOverlayKeys.has(`${x}:${wall.tile.y + 1}`);
+    if (!isSouthEdgeWall(wall.tile.x)) return [];
+    let firstX = wall.tile.x;
+    let lastX = wall.tile.x;
+    while (isSouthEdgeWall(firstX - 1)) firstX -= 1;
+    while (isSouthEdgeWall(lastX + 1)) lastX += 1;
+    return Array.from({ length: lastX - firstX + 1 }, (_, index) => ({
+      x: firstX + index,
+      y: wall.tile.y,
+    }));
+  });
+  const northWallCaps = northWallShellTiles.map((tile) => ({
+    tile,
+    sprite: manifest.sceneSprites.find(
+      ({ objectId }) => objectId === `boundary:south:${tile.x}:${tile.y}`,
     ),
+  }));
+  const missingNorthWallCaps = northWallCaps.filter(
+    ({ sprite }) => !sprite || !sprite.visible,
+  );
+  const mismatchedNorthWallCaps = northWallCaps.filter(
+    ({ tile, sprite }) =>
+      Boolean(sprite) &&
+      (sprite!.spriteId !== "scenery:boundary:stone" ||
+        sprite!.tile.x !== tile.x ||
+        sprite!.tile.y !== tile.y ||
+        sprite!.sourceRect.height !== 64),
   );
   const lanternDistances = threshold
     ? lanterns.map(({ screenAnchor }) =>
@@ -322,8 +346,12 @@ export function assessOpeningComposition(
       ({ destinationRect }) =>
         destinationRect.width !== 187 || destinationRect.height !== 172,
     ).length,
-    centralLegacyFacadeCount: centralLegacyFacades.length,
-    outerLegacyFacadeCount: outerLegacyFacades.length,
+    northWallLegacyFacadeCount: northWallLegacyFacades.length,
+    northWallShellTileCount: northWallShellTiles.length,
+    northWallVisibleCapCount:
+      northWallCaps.length - missingNorthWallCaps.length,
+    northWallMissingCapCount: missingNorthWallCaps.length,
+    northWallMismatchedCapCount: mismatchedNorthWallCaps.length,
   };
 
   const violations: string[] = [];
@@ -375,13 +403,22 @@ export function assessOpeningComposition(
     violations.push("opening:north-wall-repeated");
   if (evidence.northWallStretchedCount > 0)
     violations.push("opening:north-wall-stretched");
-  if (evidence.centralLegacyFacadeCount > 0)
-    violations.push("opening:north-wall-central-facade-not-suppressed");
   if (
     evidence.northWallFeatureCount === 1 &&
-    evidence.outerLegacyFacadeCount < 2
+    evidence.northWallLegacyFacadeCount > 0
   )
-    violations.push("opening:north-wall-outer-facades-missing");
+    violations.push("opening:north-wall-legacy-facade-present");
+  if (
+    evidence.northWallFeatureCount === 1 &&
+    (evidence.northWallShellTileCount === 0 ||
+      evidence.northWallMissingCapCount > 0)
+  )
+    violations.push("opening:north-wall-shell-cap-missing");
+  if (
+    evidence.northWallFeatureCount === 1 &&
+    evidence.northWallMismatchedCapCount > 0
+  )
+    violations.push("opening:north-wall-shell-cap-mismatched");
 
   return {
     pass: violations.length === 0,

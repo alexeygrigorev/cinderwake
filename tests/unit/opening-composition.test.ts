@@ -219,14 +219,19 @@ describe("opening-room composition gate", () => {
     expect(assessOpeningComposition(manifest).violations).toContain(expected);
   });
 
-  it("keeps one calibrated north wall, suppresses its center facades, and retains the outer facades", () => {
+  it("keeps one calibrated north wall, removes legacy facades, and caps every blocked shell tile", () => {
     const assessment = assessOpeningComposition(northWallManifest());
     expect(assessment.evidence.northWallFeatureCount).toBe(1);
     expect(assessment.evidence.northWallStretchedCount).toBe(0);
-    expect(assessment.evidence.centralLegacyFacadeCount).toBe(0);
-    expect(assessment.evidence.outerLegacyFacadeCount).toBeGreaterThanOrEqual(
-      2,
+    expect(assessment.evidence.northWallLegacyFacadeCount).toBe(0);
+    expect(assessment.evidence.northWallShellTileCount).toBeGreaterThanOrEqual(
+      3,
     );
+    expect(assessment.evidence.northWallVisibleCapCount).toBe(
+      assessment.evidence.northWallShellTileCount,
+    );
+    expect(assessment.evidence.northWallMissingCapCount).toBe(0);
+    expect(assessment.evidence.northWallMismatchedCapCount).toBe(0);
   });
 
   it.each([
@@ -251,20 +256,52 @@ describe("opening-room composition gate", () => {
       },
     },
     {
-      name: "central legacy facade",
-      expected: "opening:north-wall-central-facade-not-suppressed",
+      name: "legacy wall bay reinserted",
+      expected: "opening:north-wall-legacy-facade-present",
       mutate(manifest: RenderManifestV1) {
         const wall = manifest.sceneSprites.find(
           ({ objectId }) => objectId === "architecture:opening:north-wall",
         )!;
-        const facade = manifest.sceneSprites.find(({ objectId }) =>
-          objectId.startsWith("wall-front:"),
+        const cap = manifest.sceneSprites.find(
+          ({ objectId }) =>
+            objectId === `boundary:south:${wall.tile.x}:${wall.tile.y}`,
         )!;
         manifest.sceneSprites.push({
-          ...structuredClone(facade),
-          objectId: "wall-front:negative-control:center",
+          ...structuredClone(cap),
+          objectId: "wall-front:negative-control:reinserted-bay",
+          spriteId: "scenery:boundary:wall-front",
+          sourceRect: { x: 0, y: 512, width: 256, height: 256 },
           tile: { ...wall.tile },
         });
+      },
+    },
+    {
+      name: "missing blocked-shell cap",
+      expected: "opening:north-wall-shell-cap-missing",
+      mutate(manifest: RenderManifestV1) {
+        const wall = manifest.sceneSprites.find(
+          ({ objectId }) => objectId === "architecture:opening:north-wall",
+        )!;
+        const cap = manifest.sceneSprites.find(
+          ({ objectId }) =>
+            objectId === `boundary:south:${wall.tile.x}:${wall.tile.y}`,
+        )!;
+        cap.visible = false;
+      },
+    },
+    {
+      name: "wrong blocked-shell cap sprite",
+      expected: "opening:north-wall-shell-cap-mismatched",
+      mutate(manifest: RenderManifestV1) {
+        const wall = manifest.sceneSprites.find(
+          ({ objectId }) => objectId === "architecture:opening:north-wall",
+        )!;
+        const cap = manifest.sceneSprites.find(
+          ({ objectId }) =>
+            objectId === `boundary:south:${wall.tile.x}:${wall.tile.y}`,
+        )!;
+        cap.spriteId = "scenery:boundary:wall-front";
+        cap.sourceRect = { x: 0, y: 512, width: 256, height: 256 };
       },
     },
   ])("rejects north-wall negative control: $name", ({ expected, mutate }) => {
