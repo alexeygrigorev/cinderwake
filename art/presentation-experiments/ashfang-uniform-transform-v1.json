@@ -4,14 +4,14 @@
   "id": "ashfang-uniform-side-transform-v1",
   "status": "rejected",
   "scope": "Diagnostic only. No production source, atlas, actor contract, or runtime manifest is changed by this experiment.",
-  "method": "Measure the immutable published east-facing atlas. Deterministically inverse-resample the declared walk-only X 0.9 / Y 1.42 foot transform to recover a canonical comparison bank, then apply each uniform candidate to idle, walk, attack, ability, hurt, and death. The inverse is evaluation evidence, not reconstructed source art.",
+  "method": "Measure the immutable published east-facing atlas. Deterministically inverse-resample the declared walk-only X 0.9 / Y 1.17 foot transform to recover a canonical comparison bank, then apply each uniform candidate to idle, walk, attack, ability, hurt, and death. The inverse is evaluation evidence, not reconstructed source art.",
   "actorId": "ashfang",
   "sourceFamily": "primary",
   "acceptanceBrief": "docs/research/ashfang-regeneration-brief.md",
   "sources": {
     "atlas": {
       "file": "public/assets/sprites/actor-ashfang.png",
-      "sha256": "3b5662c31bedfc997da0c1ed7a9fe59397c28a9ec71b93c4ee769e5783af41ed"
+      "sha256": "408fc2e5bafa90f890cabdfa0e0250fe37f159c6f6130f1944dd5580ee036087"
     },
     "primary": {
       "file": "art/source/actors/ashfang-source.png",
@@ -20,7 +20,7 @@
   },
   "legacyWalkTransform": {
     "scaleX": 0.9,
-    "scaleY": 1.42,
+    "scaleY": 1.17,
     "anchor": "foot"
   },
   "search": {
