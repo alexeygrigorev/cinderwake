@@ -31,7 +31,7 @@
     "art:pose:check": "node scripts/test-actor-pose-trials.mjs",
     "art:topology:check": "node scripts/test-actor-topology-stencil.mjs && node scripts/test-actor-topology-assessment.mjs",
     "art:detail:check": "node scripts/test-actor-detail-metrics.mjs",
-    "art:pose:guide:check": "node scripts/build-pose-layout-guide.mjs --check",
+    "art:pose:guide:check": "node scripts/build-pose-layout-guide.mjs --check && node scripts/build-pose-layout-guide-v2.mjs --check",
     "art:anatomy:check": "node scripts/test-anatomy-blockout-trials.mjs",
     "art:pose:assembly:check": "node scripts/test-actor-pose-assembly.mjs",
     "art:animation:audit": "node scripts/audit-actor-atlases.mjs --report-only",

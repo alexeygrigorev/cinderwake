@@ -39,3 +39,27 @@ geometry because pixel ratios cannot prove the intended camera semantics.
 
 Those mechanical checks cannot prove that the elevated camera reads correctly;
 every regenerated guide still requires exact-hash visual review before use.
+
+## Sparse balanced guide v2
+
+`quadruped-pose-layout-v2.png` removes every filled creature shape. It contains
+only four root→joint→paw centerlines, terminal markers, one open elevated body
+axis with orientation ticks, and separate head/tail direction arrows. The near
+paws share Y 790 at X 400 and 640, placing their midpoint at X 520 so a
+generator is not conditioned toward v14's right-biased support.
+
+The first v2 hash was mechanically green but visually rejected because the
+near-hind joint marker did not lie on its route and two dotted arcs enclosed an
+accidental oval torso. The corrected builder uses two explicit quadratic
+segments per route, samples both segments, requires route ink at every declared
+root/joint/paw, and uses one non-enclosing center axis. Exact hash
+`ad58dca2bc784c6e59884703f4e9f430874ba4da8d477e5d31359bd3ec741478`
+is independently accepted for one V15 conditioning attempt with Stonekin only.
+
+It is not a silhouette, width, anatomy, material, lighting, or production-art
+reference, and it cannot approve generated pixels. Rebuild or verify it with:
+
+```sh
+node scripts/build-pose-layout-guide-v2.mjs
+node scripts/build-pose-layout-guide-v2.mjs --check
+```

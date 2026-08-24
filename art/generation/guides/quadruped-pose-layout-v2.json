@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 2,
+  "contract": "CinderwakeSparseQuadrupedPoseLayoutGuideV2",
+  "id": "quadruped-pose-layout-v2-2026-08-24",
+  "file": "art/generation/guides/quadruped-pose-layout-v2.png",
+  "sha256": "ad58dca2bc784c6e59884703f4e9f430874ba4da8d477e5d31359bd3ec741478",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "matte": "#ff00ff",
+    "literalMatteRequired": true
+  },
+  "intendedRole": "Spatial conditioning only: expose four independently owned body-root-to-joint-to-paw route centers, terminal placement, elevated axis, heading, tail direction, support rows, and negative-space separation for an east-facing quadruped.",
+  "excludedRole": "Not a creature render, silhouette, contour lock, anatomy reference, surface reference, armor/material reference, lighting reference, or stilt/block construction reference. Do not copy its sparse marks as anatomy or fill between them.",
+  "routes": [
+    {
+      "id": "farHind",
+      "depth": "far",
+      "root": [415, 385],
+      "joint": [347, 491],
+      "paw": [287, 624]
+    },
+    {
+      "id": "nearHind",
+      "depth": "near",
+      "root": [448, 438],
+      "joint": [442, 604],
+      "paw": [400, 790]
+    },
+    {
+      "id": "farFore",
+      "depth": "far",
+      "root": [585, 402],
+      "joint": [590, 503],
+      "paw": [600, 650]
+    },
+    {
+      "id": "nearFore",
+      "depth": "near",
+      "root": [615, 452],
+      "joint": [637, 614],
+      "paw": [640, 790]
+    }
+  ],
+  "spatialTargets": {
+    "nearPawBaselineY": 790,
+    "nearHindPaw": [400, 790],
+    "nearForePaw": [640, 790],
+    "nearPairMidpointX": 520,
+    "farHindPaw": [287, 624],
+    "farForePaw": [600, 650],
+    "bodyAxis": "one open dotted elevated center axis from approximately (375,377) to (665,401), with four short orientation ticks; it must not enclose a torso",
+    "tailDirection": "upper-left from approximately (375,357) toward (205,195)",
+    "headDirection": "east/right from approximately (674,365) toward (850,278)"
+  },
+  "measuredOutput": {
+    "occupiedBounds": {
+      "left": 204,
+      "top": 195,
+      "right": 851,
+      "bottom": 800,
+      "width": 648,
+      "height": 606
+    },
+    "occupiedWidthRatio": 0.6328125,
+    "occupiedHeightRatio": 0.591796875,
+    "lowestInkRatio": 0.78125,
+    "literalMatteRatio": 0.992466926574707
+  },
+  "visualReview": {
+    "status": "ACCEPT",
+    "reviewedSha256": "ad58dca2bc784c6e59884703f4e9f430874ba4da8d477e5d31359bd3ec741478",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "approvedRole": "Exact-hash spatial conditioning only, paired with the accepted Stonekin reference for exactly one v15 generation: four route centerlines, root-joint-paw ordering, four paw centers, far/near rows, diagonal ownership, balanced support midpoint, elevated body-axis intent, head and tail directions, occupied envelope, and contact baseline. It has no contour, width, silhouette, anatomy, material, lighting, production-art, or automatic-acceptance authority.",
+    "acceptedAxes": [
+      "all four rendered route curves visibly pass through their declared root, joint, and paw markers",
+      "four paw markers occupy distinct far-hind, near-hind, far-fore, and near-fore positions with open gaps between every route",
+      "near paws share exact y=790 support baseline and midpoint x=520 while far paws remain higher",
+      "both diagonal pairs are assignable from the four depth-ordered routes without guessing",
+      "head arrow points screen-right and tail arrow points upper-left around an elevated open center axis",
+      "the former enclosing torso oval is gone and no closed creature contour remains",
+      "no filled creature, body mass, limb width, paw anatomy, armor, material, lighting, texture, or production surface is present",
+      "1024x1024 RGBA output, literal matte, occupied bounds, and lowest ink match the mechanical manifest"
+    ],
+    "rejectedAxes": [],
+    "cautions": [
+      "long near-side centerlines remain relatively vertical, so generation must require bent organic joints and tapered lower limbs rather than copying stilts",
+      "joint rings and paw ovals are coordinate markers only and must not become ball joints or puck feet",
+      "the dotted center axis and ticks must not become a spine row, armor contour, or enclosed torso",
+      "identical line color carries no material or depth authority; far and near meaning comes only from declared placement",
+      "acceptance authorizes one generation attempt only and does not approve any resulting pixels"
+    ]
+  }
+}
