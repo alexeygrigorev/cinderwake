@@ -56,6 +56,12 @@ const trials = [
     expectedViolations: ["runtime-aspect", "runtime-height"],
     requiresReview: true,
   },
+  {
+    id: "ashfang-anatomy-blockout-v2",
+    manifest: "art/generation/pose-trials/ashfang-anatomy-blockout-v2.json",
+    expectedViolations: [],
+    requiresReview: true,
+  },
 ];
 
 function assert(condition, message) {

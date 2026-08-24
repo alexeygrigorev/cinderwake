@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-anatomy-blockout-v2-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-anatomy-blockout",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-anatomy-blockout-v2.txt",
+  "candidateFile": "art/generation/candidates/ashfang-anatomy-blockout-v2.png",
+  "candidateSha256": "b93ed1bfea62bf42272f5c33b74cf3663941e32f1aa4c0c8342705bae7308d27",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-anatomy-blockout-v1.png",
+      "role": "exact internal-only topology, camera, four limb chains, gaps, framing, and contact edit target",
+      "sha256": "6f7672c7ae8f9247401f511ff90d9d8264d6c7cb2e64600b16c7d7e8cb55ddc6"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-0b55158d-b807-4ac5-87f7-0a40028ca0c7.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "neutral non-magenta mannequin material survives deterministic keying",
+      "elevated three-quarter camera and broad top plane are preserved",
+      "exactly four body-to-paw chains and four discrete paws remain visible",
+      "near/far ordering, negative-space gaps, and diagonal ownership remain explicit",
+      "compact raised body, framing, and contact depth rows remain useful",
+      "no finished armor, attack, scenery, text, UI, or sheet layout"
+    ],
+    "failed": [
+      {
+        "code": "internal-blockout-only",
+        "detail": "The mannequin intentionally has no Ashfang surface identity or production rendering and cannot enter an atlas."
+      },
+      {
+        "code": "stilt-anatomy",
+        "detail": "Cylindrical legs, hard joint seams, block paws, and a compressed far-fore chain remain structural risks for a later style edit."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generator still grades the magenta field, though foreground/background independence now allows deterministic keying."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V2 is deliberately rejected as production art but is a candidate internal structure reference: it preserves the first four-chain topology while repairing foreground/background chroma independence."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-anatomy-blockout-v2.png --output art/generation/prepared/ashfang-anatomy-blockout-v2.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-anatomy-blockout-v2.png",
+    "sha256": "9218e53f3177635ff67364a7a69d201f56f61f5ae592547fa8be0a061f2d0b2a",
+    "status": "rejected",
+    "notes": "Canonical 0.25 scale turns 638x643 normalized ink into 160x161 placement and 159x160 visible ink. Visible bottom and alpha-weighted contact are centered. Production rejection is semantic, not a failed raster preparation."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_anatomy_blockout_v2",
+    "reviewedRawSha256": "b93ed1bfea62bf42272f5c33b74cf3663941e32f1aa4c0c8342705bae7308d27",
+    "reviewedPreparedSha256": "9218e53f3177635ff67364a7a69d201f56f61f5ae592547fa8be0a061f2d0b2a",
+    "reviewedPoseEvidenceSha256": "311f64437eaca2b6194ec3fed9e82777af143fc4ff85bc293c3063fabdcd0628",
+    "reviewedRuntimeComparisonSha256": "cc35e40fa9b7aafa47b8c87ec806bf6819d52405a0981bf68f09e0c366e824a4",
+    "acceptedAxes": [
+      "elevated three-quarter camera with broad readable top plane",
+      "compact raised quadruped body mass",
+      "four independently connected body-to-paw limb chains",
+      "four discrete paw terminals with useful negative-space gaps",
+      "clear near/far perspective ordering",
+      "unambiguous ownership for both diagonal gait pairs",
+      "canonical framing, scale, contact baseline, and centered support",
+      "four-chain structural readability at runtime scale"
+    ],
+    "rejectedAxes": [
+      "production-art readiness",
+      "Ashfang species identity and surface treatment",
+      "natural organic anatomy and weight transfer",
+      "cast-compatible matte rendering and finished value design",
+      "production-quality paws, joints, head, horns, and tail"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Submit exact raw, prepared, runtime, and same-scale evidence for structural-only review. If accepted, a later style pass must preserve the hash-reviewed silhouette, four limb chains, gaps, paw coordinates, framing, and baseline while naturalizing joints and adding Ashfang identity."
+}
