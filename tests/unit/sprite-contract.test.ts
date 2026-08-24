@@ -1,6 +1,9 @@
+import crypto from "node:crypto";
+import fs from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { CLIP_DURATIONS } from "../../src/game/constants";
 import { stepGame } from "../../src/game/simulation";
+import { CITY_NPC_ACTOR_GEOMETRY } from "../../src/game/cityWorld";
 import { EMPTY_INPUT, type AnimationClip } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
@@ -13,6 +16,7 @@ import {
   CITY_KIT_SPRITE_GEOMETRY,
   ENVIRONMENT_KIT_SPRITE_GEOMETRY,
   EXPECTED_CLIP_CADENCE,
+  RESIDENT_SPRITES,
   REQUIRED_SPRITE_CLIPS,
   assertDeterministicScenePlacement,
   assertRegisteredAssetFiles,
@@ -430,6 +434,66 @@ describe("sprite atlas quality contract", () => {
         ),
       ).toBeLessThan(0.01);
     }
+  });
+
+  it("registers one audited four-pose row for every distinct Embercross resident", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    expect(catalog.assets["atlas:embercross-residents-idle-v1"]).toMatchObject({
+      url: "/assets/sprites/embercross-residents-idle-v1.png",
+      pixelWidth: 1024,
+      pixelHeight: 1024,
+    });
+    expect(Object.values(CITY_NPC_ACTOR_GEOMETRY)).toEqual(RESIDENT_SPRITES);
+    expect(
+      Object.values(CITY_NPC_ACTOR_GEOMETRY).some((id) =>
+        id.startsWith("hero:"),
+      ),
+    ).toBe(false);
+
+    for (const [row, spriteId] of RESIDENT_SPRITES.entries()) {
+      const sprite = catalog.sprites[spriteId]!;
+      const clip = sprite.clips["resident-idle"]!;
+      expect(sprite.assetId).toBe("atlas:embercross-residents-idle-v1");
+      expect(sprite.logicalSize).toEqual({ width: 256, height: 256 });
+      expect(sprite.anchor).toEqual({ x: 128, y: 228 });
+      expect(clip).toMatchObject({
+        durationTicks: 60,
+        looping: true,
+      });
+      expect(clip.frameIdentities).toHaveLength(4);
+      expect(
+        clip.frameIdentities.map((identity) => sprite.frames[identity]),
+      ).toEqual(
+        Array.from({ length: 4 }, (_, column) => ({
+          x: column * 256,
+          y: row * 256,
+          width: 256,
+          height: 256,
+        })),
+      );
+    }
+  });
+
+  it("binds the public resident atlas and build manifest to the audited prepared bytes", async () => {
+    const spec = JSON.parse(
+      await fs.readFile("art/resident-atlas-v1.json", "utf8"),
+    );
+    const manifest = JSON.parse(
+      await fs.readFile("public/assets/sprites/build-manifest.json", "utf8"),
+    );
+    const digest = (bytes: Buffer) =>
+      crypto.createHash("sha256").update(bytes).digest("hex");
+    const prepared = await fs.readFile(spec.provenance.preparedFile);
+    const published = await fs.readFile(
+      `public/assets/sprites/${spec.atlas.file}`,
+    );
+    expect(digest(prepared)).toBe(spec.atlas.sha256);
+    expect(digest(published)).toBe(spec.atlas.sha256);
+    expect(published.equals(prepared)).toBe(true);
+    expect(manifest.outputs[spec.atlas.file]).toEqual({
+      sha256: spec.atlas.sha256,
+      source: spec.provenance.preparedFile,
+    });
   });
 
   it("emits sprite references and registered frame identities for every gameplay type", async () => {

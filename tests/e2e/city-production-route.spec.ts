@@ -308,9 +308,33 @@ test("physical touch discovers the sign and enters Embercross through the produc
     collision: { mode: "solid" },
     collisionParts: [expect.objectContaining({ mode: "solid" })],
   });
+  const residentCalls = cityManifest.drawCalls.filter(
+    ({ type }) => type === "npc",
+  );
+  expect(residentCalls).toHaveLength(4);
   expect(
-    cityManifest.drawCalls.filter(({ type }) => type === "npc"),
-  ).toHaveLength(4);
+    residentCalls.map(
+      ({ entityId, spriteId, assetId, clip, frameCount, facingBucket }) => ({
+        entityId,
+        spriteId,
+        assetId,
+        clip,
+        frameCount,
+        facingBucket,
+      }),
+    ),
+  ).toEqual(
+    expect.arrayContaining(
+      ["mara", "oren", "tess", "ileya"].map((name) => ({
+        entityId: `npc:embercross:${name}`,
+        spriteId: `resident:embercross:${name}`,
+        assetId: "atlas:embercross-residents-idle-v1",
+        clip: "resident-idle",
+        frameCount: 4,
+        facingBucket: "south",
+      })),
+    ),
+  );
   await attachObserverFrame(page, testInfo, "city-route-03-entered");
   expect(faults).toEqual([]);
 });

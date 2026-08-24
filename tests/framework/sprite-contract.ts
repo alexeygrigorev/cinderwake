@@ -120,6 +120,12 @@ const ACTOR_SPRITES = [
   "monster:hexer",
   "monster:stonekin",
 ];
+export const RESIDENT_SPRITES = [
+  "resident:embercross:mara",
+  "resident:embercross:oren",
+  "resident:embercross:tess",
+  "resident:embercross:ileya",
+] as const;
 const LOOT_SPRITES = ["gold", "tonic", "weapon"].flatMap((kind) =>
   ["common", "tempered", "relic"].map((rarity) => `loot:${kind}:${rarity}`),
 );
@@ -155,6 +161,7 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
     ]),
   ),
   ...Object.fromEntries(LOOT_SPRITES.map((id) => [id, ["loot"]])),
+  ...Object.fromEntries(RESIDENT_SPRITES.map((id) => [id, ["resident-idle"]])),
   "projectile:friendly": ["projectile"],
   "projectile:hostile": ["projectile"],
   "scenery:tile:floor": ["static"],
@@ -176,6 +183,7 @@ export const EXPECTED_CLIP_CADENCE: Record<
   { frameCount: number; durationTicks: number; looping: boolean }
 > = {
   idle: { frameCount: 6, durationTicks: 60, looping: true },
+  "resident-idle": { frameCount: 4, durationTicks: 60, looping: true },
   walk: { frameCount: 8, durationTicks: 40, looping: true },
   attack: { frameCount: 6, durationTicks: 26, looping: false },
   ability: { frameCount: 8, durationTicks: 36, looping: false },

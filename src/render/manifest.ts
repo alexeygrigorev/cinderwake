@@ -51,7 +51,7 @@ export interface DrawCallV1 extends SpriteReferenceV2 {
   entityId: string;
   type: "player" | "monster" | "npc" | "loot" | "projectile" | "effect";
   geometryId: string;
-  clip: AnimationClip | "loot" | "projectile" | "static";
+  clip: AnimationClip | "resident-idle" | "loot" | "projectile" | "static";
   frameIndex: number;
   frameCount: number;
   visualPhase: number;
@@ -761,20 +761,19 @@ export function buildRenderManifest(
   ): void => {
     const bucket = facingBucket(semantic.facing);
     const screenAnchor = screenFor(semantic.worldAnchor, camera);
+    const directionalSpriteId =
+      (bucket === "north" || bucket === "south") &&
+      (semantic.type === "player" || semantic.type === "monster")
+        ? `${semantic.geometryId}:${bucket}`
+        : semantic.geometryId;
+    const spriteAnchor = SPRITE_CATALOG.sprites[directionalSpriteId]?.anchor;
     const destinationRect = destinationAt(
       screenAnchor,
       width,
       height,
-      undefined,
+      spriteAnchor,
       camera.zoom,
     );
-    const directionalSpriteId =
-      (bucket === "north" || bucket === "south") &&
-      (semantic.type === "player" ||
-        semantic.type === "monster" ||
-        semantic.type === "npc")
-        ? `${semantic.geometryId}:${bucket}`
-        : semantic.geometryId;
     calls.push({
       ...semantic,
       scale: semantic.scale * camera.zoom,
@@ -828,9 +827,13 @@ export function buildRenderManifest(
   );
 
   if (isEmbercrossMap(state.map) && state.city.locationPhase === "inside") {
-    const npcSpritePixels = 112;
-    const clip: AnimationClip = "idle";
-    const frame = actorFrame(clip, presentationTick, 0);
+    const npcSpritePixels = 128;
+    const clip = "resident-idle" as const;
+    const frameCount = 4;
+    const clipDurationTicks = 60;
+    const frame = Math.floor(
+      ((presentationTick % clipDurationTicks) * frameCount) / clipDurationTicks,
+    );
     for (const npc of EMBERCROSS_CITY.npcs) {
       add(
         {
@@ -839,9 +842,9 @@ export function buildRenderManifest(
           geometryId: CITY_NPC_ACTOR_GEOMETRY[npc.id],
           clip,
           frameIndex: frame,
-          frameCount: CLIP_FRAMES[clip],
-          visualPhase: frame / Math.max(1, CLIP_FRAMES[clip] - 1),
-          clipDurationTicks: CLIP_DURATIONS[clip],
+          frameCount,
+          visualPhase: frame / (frameCount - 1),
+          clipDurationTicks,
           clipStartedAtTick: 0,
           clipLockedUntilTick: 0,
           facing: { x: 0, y: 1024 },

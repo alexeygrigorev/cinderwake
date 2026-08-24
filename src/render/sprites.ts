@@ -3,6 +3,7 @@ import type { AnimationClip } from "../game/types";
 import actorAtlasSpecJson from "../../art/actor-atlas-v1.json" with { type: "json" };
 import cityKitSpecJson from "../../art/city-kit-v1.json" with { type: "json" };
 import environmentKitSpecJson from "../../art/environment-kit-v2.json" with { type: "json" };
+import residentAtlasSpecJson from "../../art/resident-atlas-v1.json" with { type: "json" };
 
 export interface SourceRectV1 {
   x: number;
@@ -72,11 +73,36 @@ interface AuthoredAtlasSpec {
   }>;
 }
 
+interface ResidentAtlasSpec {
+  atlas: {
+    file: string;
+    pixelWidth: number;
+    pixelHeight: number;
+    cellWidth: number;
+    cellHeight: number;
+    footBaseline: number;
+    footAnchor: number;
+  };
+  runtime: {
+    boxWidth: number;
+    boxHeight: number;
+    clip: "resident-idle";
+    durationTicks: number;
+    poses: string[];
+  };
+  residents: Array<{
+    entityId: string;
+    spriteId: string;
+    atlasRow: number;
+  }>;
+}
+
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
 const CITY_KIT_SPEC = cityKitSpecJson as AuthoredAtlasSpec;
 const ENVIRONMENT_KIT_SPEC = environmentKitSpecJson as AuthoredAtlasSpec;
+export const RESIDENT_ATLAS_SPEC = residentAtlasSpecJson as ResidentAtlasSpec;
 export const SPRITE_CATALOG_REVISION =
-  "cinder-node-v2-embercross-city-kit-2026-08-24";
+  "cinder-node-v2-embercross-residents-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
 
@@ -161,6 +187,12 @@ const assets: Record<string, SpriteAssetV1> = {
     CITY_KIT_SPEC.atlas.pixelWidth,
     CITY_KIT_SPEC.atlas.pixelHeight,
   ),
+  "atlas:embercross-residents-idle-v1": asset(
+    "atlas:embercross-residents-idle-v1",
+    RESIDENT_ATLAS_SPEC.atlas.file,
+    RESIDENT_ATLAS_SPEC.atlas.pixelWidth,
+    RESIDENT_ATLAS_SPEC.atlas.pixelHeight,
+  ),
   "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
   "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
   "atlas:ui": asset("atlas:ui", "ui.png", 1024, 1024),
@@ -209,6 +241,42 @@ function actorSprite(
     };
   });
   return { id, assetId, frames, clips };
+}
+
+function residentSprite(id: string, atlasRow: number): SpriteDefinitionV1 {
+  const frameIdentities = RESIDENT_ATLAS_SPEC.runtime.poses.map(
+    (pose) => `${id}:resident-idle:${pose}`,
+  );
+  return {
+    id,
+    assetId: "atlas:embercross-residents-idle-v1",
+    frames: Object.fromEntries(
+      frameIdentities.map((frameIdentity, frameIndex) => [
+        frameIdentity,
+        {
+          x: frameIndex * RESIDENT_ATLAS_SPEC.atlas.cellWidth,
+          y: atlasRow * RESIDENT_ATLAS_SPEC.atlas.cellHeight,
+          width: RESIDENT_ATLAS_SPEC.atlas.cellWidth,
+          height: RESIDENT_ATLAS_SPEC.atlas.cellHeight,
+        },
+      ]),
+    ),
+    clips: {
+      [RESIDENT_ATLAS_SPEC.runtime.clip]: {
+        frameIdentities,
+        durationTicks: RESIDENT_ATLAS_SPEC.runtime.durationTicks,
+        looping: true,
+      },
+    },
+    logicalSize: {
+      width: RESIDENT_ATLAS_SPEC.atlas.cellWidth,
+      height: RESIDENT_ATLAS_SPEC.atlas.cellHeight,
+    },
+    anchor: {
+      x: RESIDENT_ATLAS_SPEC.atlas.cellWidth / 2,
+      y: RESIDENT_ATLAS_SPEC.atlas.footAnchor,
+    },
+  };
 }
 
 function textureSprite(
@@ -346,6 +414,10 @@ for (const [id, assetId] of [
 ] as const)
   for (const facing of ["north", "south"] as const)
     register(actorSprite(`${id}:${facing}`, assetId, facing));
+
+for (const resident of RESIDENT_ATLAS_SPEC.residents) {
+  register(residentSprite(resident.spriteId, resident.atlasRow));
+}
 
 const lootIds = [
   "loot:gold:common",

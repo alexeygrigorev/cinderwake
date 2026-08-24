@@ -264,6 +264,9 @@ export class CanvasRenderer {
     const width = 220;
     const height = 180;
     const anchor = { x: width / 2, y: height - 28 };
+    const sourceAnchor =
+      SPRITE_CATALOG.sprites[call.spriteId]?.anchor ??
+      ({ x: 128, y: 232 } as const);
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -271,7 +274,9 @@ export class CanvasRenderer {
     if (!context) throw new Error("Entity-mask Canvas 2D is unavailable");
     const normalizedDestination = {
       x: Math.round(anchor.x - call.destinationRect.width / 2),
-      y: Math.round(anchor.y - (232 / 256) * call.destinationRect.height),
+      y: Math.round(
+        anchor.y - (sourceAnchor.y / 256) * call.destinationRect.height,
+      ),
       width: call.destinationRect.width,
       height: call.destinationRect.height,
     };

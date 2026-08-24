@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMBERCROSS_CITY } from "../../src/game/city";
 import {
   buildEmbercrossScenery,
+  CITY_NPC_ACTOR_GEOMETRY,
   CITY_DISCOVERY_INTERACTION_RADIUS,
   cityNpcWorldAnchor,
   createEmbercrossMap,
@@ -195,7 +196,11 @@ describe("deterministic Embercross world", () => {
       ).toMatchObject({
         type: "npc",
         renderMode: "sprite",
-        clip: "idle",
+        geometryId: CITY_NPC_ACTOR_GEOMETRY[npc.id],
+        spriteId: CITY_NPC_ACTOR_GEOMETRY[npc.id],
+        assetId: "atlas:embercross-residents-idle-v1",
+        clip: "resident-idle",
+        frameCount: 4,
         facingBucket: "south",
       });
 

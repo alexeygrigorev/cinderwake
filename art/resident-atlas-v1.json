@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "id": "cinderwake-embercross-residents-idle-v1",
+  "status": "controlled-runtime-integration-approved",
+  "atlas": {
+    "file": "embercross-residents-idle-v1.png",
+    "sha256": "0c5e7fc390603b5958a8b5389ded0da55cc67390e2ceea475aab764b4b620f80",
+    "pixelWidth": 1024,
+    "pixelHeight": 1024,
+    "cellWidth": 256,
+    "cellHeight": 256,
+    "footBaseline": 227,
+    "footAnchor": 228
+  },
+  "runtime": {
+    "boxWidth": 128,
+    "boxHeight": 128,
+    "clip": "resident-idle",
+    "durationTicks": 60,
+    "looping": true,
+    "poses": ["neutral", "inhale", "weight-shift", "return"],
+    "supportedFacings": ["south"]
+  },
+  "provenance": {
+    "preparedFile": "art/generation/city-residents/prepared/embercross-residents-idle-v1.png",
+    "rawFile": "art/generation/city-residents/raw/embercross-residents-idle-v1.png",
+    "rawSha256": "23b6ab6438d9c1b20d6965ee80cb15605d525e5bc886a2d637db430289e3266c",
+    "prompt": "art/generation/city-residents/prompts/embercross-residents-idle-v1.md",
+    "audit": "art/generation/city-residents/evidence/audit-v1.json",
+    "runtimeReview": "art/generation/city-residents/evidence/runtime-scale-contact-sheet-v1.png",
+    "scope": "The exact prepared bytes passed deterministic cutting, five negative controls, and a runtime-scale visual review. This atlas supplies south-facing service-resident idle loops only."
+  },
+  "residents": [
+    {
+      "entityId": "npc:embercross:mara",
+      "spriteId": "resident:embercross:mara",
+      "role": "merchant",
+      "atlasRow": 0
+    },
+    {
+      "entityId": "npc:embercross:oren",
+      "spriteId": "resident:embercross:oren",
+      "role": "tavern_keeper",
+      "atlasRow": 1
+    },
+    {
+      "entityId": "npc:embercross:tess",
+      "spriteId": "resident:embercross:tess",
+      "role": "innkeeper",
+      "atlasRow": 2
+    },
+    {
+      "entityId": "npc:embercross:ileya",
+      "spriteId": "resident:embercross:ileya",
+      "role": "healer",
+      "atlasRow": 3
+    }
+  ]
+}

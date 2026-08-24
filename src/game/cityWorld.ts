@@ -381,10 +381,10 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
 }
 
 export const CITY_NPC_ACTOR_GEOMETRY: Record<CityNpcId, string> = {
-  "npc:embercross:mara": "hero:ranger",
-  "npc:embercross:oren": "hero:vanguard",
-  "npc:embercross:tess": "hero:ranger",
-  "npc:embercross:ileya": "hero:arcanist",
+  "npc:embercross:mara": "resident:embercross:mara",
+  "npc:embercross:oren": "resident:embercross:oren",
+  "npc:embercross:tess": "resident:embercross:tess",
+  "npc:embercross:ileya": "resident:embercross:ileya",
 };
 
 export function cityNpcWorldAnchor(npcId: CityNpcId): Vec2 {

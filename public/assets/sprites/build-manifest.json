@@ -88,6 +88,10 @@
     "embercross-city-kit-v1.png": {
       "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85",
       "source": "art/generation/city-kit/prepared/embercross-city-kit-v3.png"
+    },
+    "embercross-residents-idle-v1.png": {
+      "sha256": "0c5e7fc390603b5958a8b5389ded0da55cc67390e2ceea475aab764b4b620f80",
+      "source": "art/generation/city-residents/prepared/embercross-residents-idle-v1.png"
     }
   }
 }

@@ -185,7 +185,15 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
       "gate:embercross:south",
       "prop:embercross:inn-bed",
     ];
-    const sequences = window.__GAME_TEST__!.captureSequence([3, 13, 23]);
+    const sequences = window.__GAME_TEST__!.captureSequence([
+      3, 18, 33, 48, 63,
+    ]);
+    const residentIds = [
+      "npc:embercross:mara",
+      "npc:embercross:oren",
+      "npc:embercross:tess",
+      "npc:embercross:ileya",
+    ];
     return {
       scenes: cityIds.map((id) => {
         const scene = manifest.sceneSprites.find(
@@ -205,12 +213,41 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
       residents: sequences.map(({ manifest: frame }) =>
         frame.drawCalls
           .filter(({ type }) => type === "npc")
-          .map(({ entityId, frameIndex, destinationRect }) => ({
-            entityId,
-            frameIndex,
-            destinationRect,
-          })),
+          .map(
+            ({
+              entityId,
+              spriteId,
+              assetId,
+              clip,
+              frameIndex,
+              frameCount,
+              frameIdentity,
+              sourceRect,
+              destinationRect,
+              footAnchor,
+            }) => ({
+              entityId,
+              spriteId,
+              assetId,
+              clip,
+              frameIndex,
+              frameCount,
+              frameIdentity,
+              sourceRect,
+              destinationRect,
+              footAnchor,
+            }),
+          ),
       ),
+      residentMasks: residentIds.map((entityId) => {
+        const mask = window.__GAME_TEST__!.captureEntityMask(entityId);
+        return {
+          entityId,
+          pixelHash: mask.pixelHash,
+          bottomOffset: mask.bottomOffset,
+          inkBounds: mask.inkBounds,
+        };
+      }),
     };
   });
   expect(evidence.hasLegacyExit).toBe(false);
@@ -244,7 +281,7 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
       }),
     ]),
   );
-  expect(evidence.residents).toHaveLength(3);
+  expect(evidence.residents).toHaveLength(5);
   for (const residents of evidence.residents) expect(residents).toHaveLength(4);
   const initialRects = new Map(
     evidence.residents[0]!.map(({ entityId, destinationRect }) => [
@@ -257,15 +294,41 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
       expect(resident.destinationRect).toEqual(
         initialRects.get(resident.entityId),
       );
+  const expectedResidentRows = new Map([
+    ["npc:embercross:mara", 0],
+    ["npc:embercross:oren", 1],
+    ["npc:embercross:tess", 2],
+    ["npc:embercross:ileya", 3],
+  ]);
+  for (const [entityId, row] of expectedResidentRows) {
+    const residentFrames = evidence.residents.map((residents) =>
+      residents.find(({ entityId: candidate }) => candidate === entityId)!,
+    );
+    expect(residentFrames.map(({ frameIndex }) => frameIndex)).toEqual([
+      0, 1, 2, 3, 0,
+    ]);
+    for (const [index, resident] of residentFrames.entries()) {
+      expect(resident).toMatchObject({
+        spriteId: `resident:embercross:${entityId.split(":").at(-1)}`,
+        assetId: "atlas:embercross-residents-idle-v1",
+        clip: "resident-idle",
+        frameCount: 4,
+        sourceRect: {
+          x: (index % 4) * 256,
+          y: row * 256,
+          width: 256,
+          height: 256,
+        },
+      });
+    }
+  }
   expect(
-    new Set(
-      evidence.residents.map(
-        (residents) =>
-          residents.find(({ entityId }) => entityId === "npc:embercross:mara")!
-            .frameIndex,
-      ),
-    ).size,
-  ).toBeGreaterThan(1);
+    new Set(evidence.residentMasks.map(({ pixelHash }) => pixelHash)).size,
+  ).toBe(4);
+  for (const mask of evidence.residentMasks) {
+    expect(Math.abs(mask.bottomOffset), mask.entityId).toBeLessThanOrEqual(1);
+    expect(mask.inkBounds.height, mask.entityId).toBeGreaterThanOrEqual(90);
+  }
   await expect(page.locator(".game")).toHaveScreenshot(
     "embercross-market-mobile.png",
   );
