@@ -2,6 +2,8 @@
 
 Cinderwake treats deterministic simulation and observable rendering as first-class product features. Tests can begin from a JSON state, issue a precise command tape, then assess state and pixels without relying on a human playthrough.
 
+The executable [visual self-testing checklist](quality/visual-self-testing-checklist.md) is the release order for presentation defects. Its stable `PRES-*` IDs, required artifacts, negative mutations, and `PASS` / `FAIL` / `NEEDS_VISUAL_REVIEW` results let the same self-testing agent repeat this audit for Cinderwake or another adapter-backed game without reconstructing requirements from prior feedback.
+
 ## Simulation contract
 
 Simulation is a deterministic fixed-step transition kernel at **60 Hz**. `stepGame(world, input)` mutates only the fresh world object it owns; it does not read the DOM, wall-clock time, browser layout, or ambient randomness. Tests construct or clone that owned world before stepping it. Time is integral ticks; positions, velocities, timers, random choices, AI decisions, collision order, and animation phases derive only from declared state and seeded rules. Rendering reads state but never changes it. Floating-point work, if used, is rounded/canonicalized at observable boundaries; iteration order is stable.
