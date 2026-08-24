@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakePoseLayoutGuideV1",
+  "id": "quadruped-east-idle-layout-v1",
+  "file": "art/generation/guides/quadruped-pose-layout.png",
+  "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91",
+  "canvas": {
+    "width": 1024,
+    "height": 1024,
+    "background": "#ff00ff"
+  },
+  "measured": {
+    "occupiedWidth": 636,
+    "occupiedHeight": 604,
+    "occupiedWidthRatio": 0.621094,
+    "occupiedHeightRatio": 0.589844,
+    "lowestContactY": 799,
+    "lowestContactRatio": 0.780273
+  },
+  "intendedUse": [
+    "east-facing quadruped pose topology",
+    "approximately 55-degree elevated composition",
+    "four distinct limb corridors and perspective-ordered paws",
+    "negative-space separation",
+    "canvas occupancy and contact baseline"
+  ],
+  "excludedUse": [
+    "production game art",
+    "character anatomy or proportions",
+    "surface materials or palette",
+    "automatic visual acceptance"
+  ],
+  "visualReview": {
+    "verdict": "ACCEPT",
+    "reviewer": "/root/review_pose_layout_guide",
+    "reviewedSha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91",
+    "acceptedAxes": [
+      "clear east-facing head and west-pointing hooked tail",
+      "broad compact top plane supports an elevated three-quarter view",
+      "four distinct body-connected nonparallel limb corridors",
+      "far-hind upper-left, near-hind lower-left, far-fore upper-right, near-fore lower-right perspective order",
+      "four readable paws and useful adjacent negative-space gaps",
+      "safe margins and coherent near-paw baseline"
+    ],
+    "cautions": [
+      "partially occluded forelimb roots could encourage merging into the neck or underside",
+      "long diagram corridors could encourage unnaturally stilt-like legs",
+      "muted limb colors are depth coding only and must not be copied as creature coloration",
+      "magenta is a disposable chroma field rather than floor or lighting",
+      "the guide supplies topology and framing only, never anatomy, proportions, surface style, or character design"
+    ]
+  }
+}

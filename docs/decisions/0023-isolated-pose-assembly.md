@@ -87,6 +87,14 @@ and four limb corridors yet still emit a wide side-on body with a cast shadow.
 The next iteration uses an exact 1024-pixel guide to make those spatial
 constraints visible rather than relying only on prose.
 
+The accepted guide hash is
+`2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91`.
+Its build check proves dimensions, framing, baseline, paw regions, corridors,
+and deterministic bytes. An independent exact-hash visual record separately
+accepts the diagonal elevated composition and limits use to topology/framing;
+neither check licenses its diagram colors, limb proportions, or pixels as game
+art.
+
 ## Consequence
 
 A new character can use the same manifest and fixed rig without new runtime

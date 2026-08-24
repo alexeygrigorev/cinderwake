@@ -219,6 +219,16 @@ with 5/5 controls. Independent exact-hash review also rejects the low stalking
 posture, side camera, merged upper limbs, baked shadow/graded chroma, and glossy
 plate noise. A fresh reference set alone is not a pose-layout contract.
 
+The reusable `quadruped-pose-layout.png` makes that missing contract explicit.
+Its deterministic builder locks a 1024-pixel literal-magenta canvas, 62.1% ×
+59.0% occupied envelope, 78.0% contact baseline, perspective-ordered paw
+regions, and three negative-space corridors, then rebuilds twice and compares
+exact bytes. A hash-bound independent review accepts its diagonal elevated
+composition while recording that its limb colors are depth codes and its long
+corridors are not anatomy. V7 may use it only for topology, camera, framing,
+and support placement; accepted cast images remain the style and identity
+authority.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.
