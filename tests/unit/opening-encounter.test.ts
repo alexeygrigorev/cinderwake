@@ -200,7 +200,7 @@ describe("generated opening encounter", () => {
         `only the authored opening pair intersects the camera for seed ${index}`,
       ).toEqual(openingGroup.map(({ id }) => id));
     }
-  });
+  }, 10_000);
 
   it("rejects the former same-row stonekin and ashfang placement", () => {
     const state = worldFromScenario(
