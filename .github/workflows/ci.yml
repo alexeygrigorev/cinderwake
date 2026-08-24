@@ -40,6 +40,8 @@ jobs:
         run: npm run art:generation:check
       - name: Calibrate generated actor candidate cuts and motion
         run: npm run art:candidate:check
+      - name: Reject unsafe production-actor presentation transforms
+        run: npm run art:presentation:audit
       - run: npm test
       - run: npm run test:e2e
       - name: Build candidate screen gallery
@@ -103,6 +105,13 @@ jobs:
         with:
           name: actor-candidate-calibration
           path: quality-results/actor-candidate-calibration/
+          if-no-files-found: error
+      - name: Upload actor-presentation evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: actor-presentation
+          path: quality-results/actor-presentation/
           if-no-files-found: error
       - name: Upload public quality index
         if: ${{ success() }}
@@ -168,6 +177,11 @@ jobs:
         with:
           name: actor-candidate-calibration
           path: site/quality/actor-candidate-calibration
+      - name: Download actor-presentation evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: actor-presentation
+          path: site/quality/actor-presentation
       - name: Download public quality index
         uses: actions/download-artifact@v8
         with:

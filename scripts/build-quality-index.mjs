@@ -33,17 +33,27 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-const [screens, sequences, actors, generation, environment, candidate] =
-  await Promise.all([
-    readJson("quality-results/screens/index.json"),
-    readJson("quality-results/sequences/index.json"),
-    readJson("quality-results/actor-atlas-audit/report.json"),
-    readJson("quality-results/generation-pipeline/report.json"),
-    readJson("quality-results/environment-composition/report.json"),
-    readJson(
-      "quality-results/actor-candidate-calibration/ashfang-primary-trial-v2/report.json",
-    ),
-  ]);
+const [
+  screens,
+  sequences,
+  actors,
+  generation,
+  environment,
+  candidate,
+  presentation,
+] = await Promise.all([
+  readJson("quality-results/screens/index.json"),
+  readJson("quality-results/sequences/index.json"),
+  readJson("quality-results/actor-atlas-audit/report.json"),
+  readJson("quality-results/generation-pipeline/report.json"),
+  readJson("quality-results/environment-composition/report.json"),
+  readJson(
+    "quality-results/actor-candidate-calibration/ashfang-primary-trial-v2/report.json",
+  ),
+  readJson(
+    "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
+  ),
+]);
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
 const sourceStatus = await gitValue(["status", "--short"], "");
@@ -63,6 +73,15 @@ const reports = [
       screens?.status === "rejected"
         ? "Machine checks pass, but an independent review rejects the exact hash-bound screen set."
         : (screens?.note ?? "No responsive screen report was generated."),
+  },
+  {
+    id: "presentation",
+    title: "Ashfang presentation transform search",
+    href: "actor-presentation/ashfang-uniform-transform-v1/",
+    status: presentation?.status ?? "missing",
+    summary: presentation
+      ? `${presentation.search.candidatesChecked} consistent foot-anchored transform envelopes searched, ${presentation.search.passingCandidates} passed, and ${presentation.negativeControls.filter(({ detected }) => detected).length}/${presentation.negativeControls.length} bad transforms were rejected. Production remains unchanged.`
+      : "No actor-presentation transform report was generated.",
   },
   {
     id: "sequences",
