@@ -1,0 +1,11 @@
+Edit the first attached image, the quarantined Ashfang v8 sheet. The second attached image is mechanically green Ashfang v7 and is a vertical body-envelope reference only. The third attached image is immutable original Ashfang identity evidence.
+
+Make one row-two correction only. Preserve row one and rows three/four as exactly as possible. In walk cells 4–7, preserve v8's distinct paw placements, alternating forepaw reach, diagonal support ownership, swing-limb separation, torso weight direction, head direction, baseline, and cell order. Do not revert to v7's visually rejected persistent central support paw.
+
+The deterministic rig measured v8 walk cells at only 71, 72, 71, and 73 runtime pixels tall while the unchanged idle bank is 80–81. Repose the upper body in each row-two cell to match v7's 79–81 runtime-pixel vertical envelope. Raise the chest, shoulder ridge, neck carriage, spine plates, and hip mass by roughly 16–20 source pixels while keeping v8's planted paws on the same baseline and at the same horizontal positions. Keep row-two source silhouettes about 164–172 pixels tall and 164–178 pixels wide. Do not uniformly enlarge or stretch the animal, lengthen legs, add a tall decorative tail tip, or change support ownership merely to satisfy the bounds.
+
+The four cells must still read as a coherent walk loop: cell 4 near-fore/far-hind support, cell 5 passing, cell 6 far-fore/near-hind support, cell 7 complementary passing toward cell 4. Exactly two diagonal paws read as planted in cells 4 and 6; other paws are visibly in swing without airborne torso suspension. Preserve readable far-side limbs and negative space under the belly at 80-pixel runtime height.
+
+Preserve the compact elevated 55-degree camera, wedge skull, pale eye, curled armored tail, charcoal plates, four clawed limbs, sparse ember fissures, rough low-sheen material, warm upper-left light, cool bounce, and small attached contact shadow. No roar, bite, leap, gallop suspension, prone pose, detached effect, scenery, floor, long shadow, labels, guides, or text.
+
+Return one square image with the same implicit four equal columns and four equal rows, generous safe margins, and literal flat #ff00ff empty space. This edit succeeds only if it combines v8's trackable alternating gait with v7's living 79–81 pixel height envelope and fixed ground contact.
