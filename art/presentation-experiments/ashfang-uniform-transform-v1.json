@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeActorPresentationExperimentV1",
+  "id": "ashfang-uniform-side-transform-v1",
+  "status": "rejected",
+  "scope": "Diagnostic only. No production source, atlas, actor contract, or runtime manifest is changed by this experiment.",
+  "method": "Measure the immutable published east-facing atlas. Deterministically inverse-resample the declared walk-only X 0.9 / Y 1.42 foot transform to recover a canonical comparison bank, then apply each uniform candidate to idle, walk, attack, ability, hurt, and death. The inverse is evaluation evidence, not reconstructed source art.",
+  "actorId": "ashfang",
+  "sourceFamily": "primary",
+  "acceptanceBrief": "docs/research/ashfang-regeneration-brief.md",
+  "sources": {
+    "atlas": {
+      "file": "public/assets/sprites/actor-ashfang.png",
+      "sha256": "3b5662c31bedfc997da0c1ed7a9fe59397c28a9ec71b93c4ee769e5783af41ed"
+    },
+    "primary": {
+      "file": "art/source/actors/ashfang-source.png",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    }
+  },
+  "legacyWalkTransform": {
+    "scaleX": 0.9,
+    "scaleY": 1.42,
+    "anchor": "foot"
+  },
+  "search": {
+    "scaleX": { "minimum": 0.82, "maximum": 0.96, "step": 0.01 },
+    "scaleY": { "minimum": 1.1, "maximum": 1.35, "step": 0.01 },
+    "anchor": "foot"
+  },
+  "reviewTransform": {
+    "scaleX": 0.88,
+    "scaleY": 1.2,
+    "anchor": "foot"
+  },
+  "thresholds": {
+    "runtimeIdleMinimumHeight": 72,
+    "runtimeIdleMedianHeightMinimum": 76,
+    "runtimeIdleMedianHeightMaximum": 86,
+    "runtimeIdleMaximumAspectRatio": 1.5,
+    "runtimeLoopMaximumHeightStep": 8,
+    "runtimeLoopMaximumCentroidStep": 5,
+    "runtimeLoopMinimumMaskIou": 0.45,
+    "runtimeIdleWalkMaximumMedianHeightDifference": 8,
+    "maximumAxisScaleRatio": 1.5,
+    "actionMaximumCentroidStep": 32,
+    "actionMaximumDimensionStep": 60,
+    "hurtMaximumCentroidStep": 18,
+    "deathMaximumCentroidStep": 32,
+    "deathMaximumDimensionStep": 64
+  },
+  "expectedVerdict": "rejected",
+  "expectedViolationCodes": ["idle-walk-height-mismatch"],
+  "recommendation": "Do not replace the current walk-only override with a uniform transform. The immutable primary art has materially different idle and walk source envelopes, so a common transform cannot satisfy both the target idle size and the stop/start continuity limit. New accepted source art remains necessary.",
+  "command": "node scripts/assess-actor-presentation-transform.mjs --experiment art/presentation-experiments/ashfang-uniform-transform-v1.json --output quality-results/actor-presentation/ashfang-uniform-transform-v1"
+}

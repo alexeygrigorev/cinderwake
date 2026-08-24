@@ -25,6 +25,7 @@
     "art:selection:build": "node scripts/build-selection-assets.mjs",
     "art:selection:check": "node scripts/build-selection-assets.mjs --check",
     "art:candidate:check": "node scripts/assess-actor-candidate.mjs --actor ashfang --family primary --profile ashfang-primary-v1 --candidate art/generation/prepared/ashfang-primary-trial-v2.png --output quality-results/actor-candidate-calibration/ashfang-primary-trial-v2",
+    "art:presentation:audit": "node scripts/assess-actor-presentation-transform.mjs --experiment art/presentation-experiments/ashfang-uniform-transform-v1.json --output quality-results/actor-presentation/ashfang-uniform-transform-v1",
     "art:animation:audit": "node scripts/audit-actor-atlases.mjs --report-only",
     "art:animation:check": "node scripts/audit-actor-atlases.mjs",
     "quality:environment:check": "node scripts/assess-environment-composition.mjs",
