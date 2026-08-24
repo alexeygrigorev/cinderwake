@@ -415,9 +415,9 @@ export class CanvasRenderer {
         call.destinationRect.y +
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
       const width = Math.round(
-        Math.max(72, Math.min(88, call.destinationRect.width * 0.62)),
+        Math.max(64, Math.min(76, call.destinationRect.width * 0.54)),
       );
-      const height = Math.round((width * 82) / 256);
+      const height = Math.round((width * 82) / 197);
       const destinationRect = {
         x: Math.round(call.screenAnchor.x - width / 2),
         y: Math.round(actorInkTop - height - 3),
@@ -431,7 +431,7 @@ export class CanvasRenderer {
         Math.min(1, monster.health / monster.maxHealth),
       );
       const horizontalInset = Math.round(width * 0.09);
-      const fillHeight = Math.max(1, Math.round(height * 0.48));
+      const fillHeight = Math.max(1, Math.round(height * (48 / 82)));
       const fillWidth = Math.max(
         1,
         Math.round((width - horizontalInset * 2) * healthRatio),

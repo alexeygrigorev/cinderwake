@@ -537,9 +537,9 @@ register({
   assetId: "atlas:ui",
   frames: {
     "world-ui:health-frame:static:0": {
-      x: 512,
-      y: 0,
-      width: 256,
+      x: 583,
+      y: 95,
+      width: 197,
       height: 82,
     },
   },
@@ -556,9 +556,9 @@ register({
   assetId: "atlas:ui",
   frames: {
     "world-ui:health-fill:static:0": {
-      x: 256,
-      y: 0,
-      width: 256,
+      x: 294,
+      y: 122,
+      width: 254,
       height: 48,
     },
   },

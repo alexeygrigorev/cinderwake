@@ -269,8 +269,8 @@ describe("sprite atlas quality contract", () => {
   it("registers tight health art instead of padded UI atlas cells", async () => {
     const catalog = await loadProductionSpriteCatalog();
     const expected = {
-      "world-ui:health-frame": { x: 512, y: 0, width: 256, height: 82 },
-      "world-ui:health-fill": { x: 256, y: 0, width: 256, height: 48 },
+      "world-ui:health-frame": { x: 583, y: 95, width: 197, height: 82 },
+      "world-ui:health-fill": { x: 294, y: 122, width: 254, height: 48 },
     } as const;
     for (const [spriteId, sourceRect] of Object.entries(expected)) {
       const sprite = catalog.sprites[spriteId]!;
@@ -278,6 +278,7 @@ describe("sprite atlas quality contract", () => {
       expect(sprite.assetId).toBe("atlas:ui");
       expect(sprite.frames[frameIdentity]).toEqual(sourceRect);
       expect(sourceRect.height).toBeLessThan(256);
+      expect(sourceRect.width).toBeLessThan(256);
     }
   });
 
