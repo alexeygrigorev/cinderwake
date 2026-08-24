@@ -141,6 +141,14 @@ function maximum(values) {
   return values.length > 0 ? Math.max(...values) : 0;
 }
 
+function median(values) {
+  const sorted = [...values].sort((first, second) => first - second);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+}
+
 function maximumRun(values) {
   let current = 0;
   let peak = 0;
@@ -518,6 +526,65 @@ function facingComparisonPass(comparison) {
   );
 }
 
+function transitionContractComparison(
+  actorId,
+  contractId,
+  contract,
+  facing,
+  framesByBank,
+) {
+  assert(
+    contract.anchor === "foot",
+    `${actorId}/${contractId} must use the fixed foot anchor`,
+  );
+  assert(
+    Array.isArray(contract.clips) && contract.clips.length === 2,
+    `${actorId}/${contractId} must compare exactly two clips`,
+  );
+  const [firstClip, secondClip] = contract.clips;
+  const firstFrames = framesByBank.get(`${facing}:${firstClip}`);
+  const secondFrames = framesByBank.get(`${facing}:${secondClip}`);
+  assert(
+    firstFrames && secondFrames,
+    `${actorId}/${contractId}/${facing} names an unavailable clip bank`,
+  );
+  const firstMedianInkHeight = median(
+    firstFrames.map(({ bounds }) => bounds.height),
+  );
+  const secondMedianInkHeight = median(
+    secondFrames.map(({ bounds }) => bounds.height),
+  );
+  const footBottomRange =
+    Math.max(
+      ...firstFrames.map(({ bounds }) => bounds.bottom),
+      ...secondFrames.map(({ bounds }) => bounds.bottom),
+    ) -
+    Math.min(
+      ...firstFrames.map(({ bounds }) => bounds.bottom),
+      ...secondFrames.map(({ bounds }) => bounds.bottom),
+    );
+  const medianInkHeightDifference = Math.abs(
+    firstMedianInkHeight - secondMedianInkHeight,
+  );
+  return {
+    actorId,
+    contractId,
+    facing,
+    clips: contract.clips,
+    anchor: contract.anchor,
+    firstMedianInkHeight,
+    secondMedianInkHeight,
+    medianInkHeightDifference,
+    maximumMedianInkHeightDifference:
+      contract.maximumAtlasMedianInkHeightDifference,
+    footBottomRange,
+    pass:
+      footBottomRange === 0 &&
+      medianInkHeightDifference <=
+        contract.maximumAtlasMedianInkHeightDifference,
+  };
+}
+
 function runNegativeControls(framesByBank) {
   const idle = framesByBank.get("east:idle")[0];
   const hurt = framesByBank.get("east:hurt");
@@ -564,6 +631,11 @@ function runNegativeControls(framesByBank) {
     ...turnComparison,
     heightDifference: THRESHOLDS.turnHeightDifference + 1,
   };
+  const oversizedClipTransition = {
+    medianInkHeightDifference: 9,
+    maximumMedianInkHeightDifference: 8,
+    footBottomRange: 0,
+  };
 
   return [
     {
@@ -591,6 +663,16 @@ function runNegativeControls(framesByBank) {
       mutation: "force a same-phase turn height delta one pixel over policy",
       expectedFailure: "turnHeightDifference",
       detected: !facingComparisonPass(oversizedTurn),
+    },
+    {
+      id: "idle-walk-height-pop",
+      mutation:
+        "force a foot-anchored idle/walk median ink-height delta one pixel over policy",
+      expectedFailure: "maximumAtlasMedianInkHeightDifference",
+      detected:
+        oversizedClipTransition.footBottomRange !== 0 ||
+        oversizedClipTransition.medianInkHeightDifference >
+          oversizedClipTransition.maximumMedianInkHeightDifference,
     },
   ];
 }
@@ -672,7 +754,7 @@ function reportHtml(report) {
 </style>
 </head>
 <body>
-<h1>Every runtime actor animation bank</h1><p class="summary"><strong>${report.pass ? "PASS" : "FAIL"}</strong> · ${report.summary.passingBanks}/${report.summary.totalBanks} runtime-facing banks pass; ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} authored-facing comparisons pass.</p>
+<h1>Every runtime actor animation bank</h1><p class="summary"><strong>${report.pass ? "PASS" : "FAIL"}</strong> · ${report.summary.passingBanks}/${report.summary.totalBanks} runtime-facing banks pass; ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} authored-facing comparisons pass; ${report.summary.passingTransitionComparisons}/${report.summary.totalTransitionComparisons} declared clip-transition comparisons pass.</p>
 <p>This is an exhaustive byte-level and visual audit of all six actors, six clips, and four runtime facings. West strips are the exact horizontal reflection used by the renderer. A gold outline marks the loop-wrap frame or idle recovery frame. Metrics diagnose continuity; the strips retain visual-review authority.</p>
 <h2>Defects found before repair</h2><p>The same gate replayed against immutable atlas bytes from commit <code>${htmlEscape(report.repairBaseline.commit)}</code> passed only ${report.repairBaseline.summary.passingBanks}/${report.repairBaseline.summary.totalBanks} banks and ${report.repairBaseline.summary.passingFacingComparisons}/${report.repairBaseline.summary.totalFacingComparisons} authored-facing comparisons. Existing narrower tests had passed that art.</p><ul>${baselineDefects}</ul>
 <p class="coverage"><strong>Existing-test gap:</strong> ${htmlEscape(report.coverageGap)}</p><ul>${findings}</ul>
@@ -722,6 +804,7 @@ async function metadata() {
 await fs.mkdir(REPORT_DIRECTORY, { recursive: true });
 const actorReports = [];
 const authoredFacingComparisons = [];
+const transitionComparisons = [];
 let negativeControls = [];
 for (const actorId of ACTORS) {
   const atlasPath = path.join(ATLAS_DIRECTORY, `actor-${actorId}.png`);
@@ -823,11 +906,34 @@ for (const actorId of ACTORS) {
         );
     }
   }
+  for (const [contractId, contract] of Object.entries(
+    SPEC.actorOverrides?.[actorId]?.transitionContracts ?? {},
+  )) {
+    assert(
+      Array.isArray(contract.facings) && contract.facings.length > 0,
+      `${actorId}/${contractId} must name at least one facing`,
+    );
+    for (const facing of contract.facings)
+      transitionComparisons.push(
+        transitionContractComparison(
+          actorId,
+          contractId,
+          contract,
+          facing,
+          framesByBank,
+        ),
+      );
+  }
+  const actorTransitionComparisons = transitionComparisons.filter(
+    (comparison) => comparison.actorId === actorId,
+  );
   actorReports.push({
     actorId,
     atlasSha256: sha256(await fs.readFile(atlasPath)),
     banks,
-    pass: banks.every(({ checks }) => checks.pass),
+    pass:
+      banks.every(({ checks }) => checks.pass) &&
+      actorTransitionComparisons.every(({ pass }) => pass),
     passingBanks: banks.filter(({ checks }) => checks.pass).length,
     failingBanks: banks.filter(({ checks }) => !checks.pass).length,
     overviewFile: await writeActorOverview(actorId, banks),
@@ -840,6 +946,9 @@ for (const comparison of authoredFacingComparisons)
 const allBanks = actorReports.flatMap(({ banks }) => banks);
 const failedBanks = allBanks.filter(({ checks }) => !checks.pass);
 const failedFacingComparisons = authoredFacingComparisons.filter(
+  ({ pass }) => !pass,
+);
+const failedTransitionComparisons = transitionComparisons.filter(
   ({ pass }) => !pass,
 );
 const failedNegativeControls = negativeControls.filter(
@@ -874,11 +983,18 @@ const findings = [
         : "All authored idle/walk facing comparisons stay within turn-continuity bounds.",
   },
   {
+    id: "declared-clip-transition-scale-pop",
+    summary:
+      failedTransitionComparisons.length > 0
+        ? `${failedTransitionComparisons.length} declared foot-anchored clip transitions exceed their atlas median-height envelope, led by ${failedTransitionComparisons[0].actorId}/${failedTransitionComparisons[0].facing}.`
+        : `All ${transitionComparisons.length} declared foot-anchored clip transitions stay within their atlas median-height envelope.`,
+  },
+  {
     id: "detector-negative-controls",
     summary:
       failedNegativeControls.length > 0
         ? `${failedNegativeControls.length} injected defect controls escaped detection.`
-        : `All ${negativeControls.length} injected recovery, displacement, clipping, and facing-scale defects were rejected.`,
+        : `All ${negativeControls.length} injected recovery, displacement, clipping, facing-scale, and clip-transition defects were rejected.`,
   },
 ];
 const report = {
@@ -887,6 +1003,7 @@ const report = {
   pass:
     failedBanks.length === 0 &&
     failedFacingComparisons.length === 0 &&
+    failedTransitionComparisons.length === 0 &&
     failedNegativeControls.length === 0,
   command: "npm run art:animation:check",
   reportOnlyCommand: "npm run art:animation:audit",
@@ -905,6 +1022,10 @@ const report = {
     passingFacingComparisons:
       authoredFacingComparisons.length - failedFacingComparisons.length,
     failingFacingComparisons: failedFacingComparisons.length,
+    totalTransitionComparisons: transitionComparisons.length,
+    passingTransitionComparisons:
+      transitionComparisons.length - failedTransitionComparisons.length,
+    failingTransitionComparisons: failedTransitionComparisons.length,
     negativeControls: negativeControls.length,
     detectedNegativeControls:
       negativeControls.length - failedNegativeControls.length,
@@ -921,6 +1042,8 @@ const report = {
   })),
   failedFacingComparisons,
   authoredFacingComparisons,
+  failedTransitionComparisons,
+  transitionComparisons,
   actors: actorReports,
 };
 await Promise.all([
@@ -931,6 +1054,6 @@ await Promise.all([
   fs.writeFile(path.join(REPORT_DIRECTORY, "index.html"), reportHtml(report)),
 ]);
 console.log(
-  `${report.pass ? "PASS" : "FAIL"} ${report.summary.passingBanks}/${report.summary.totalBanks} banks, ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} facing comparisons; ${path.relative(ROOT, REPORT_DIRECTORY)}`,
+  `${report.pass ? "PASS" : "FAIL"} ${report.summary.passingBanks}/${report.summary.totalBanks} banks, ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} facing comparisons, ${report.summary.passingTransitionComparisons}/${report.summary.totalTransitionComparisons} declared clip transitions; ${path.relative(ROOT, REPORT_DIRECTORY)}`,
 );
 if (!OPTIONS.reportOnly) process.exitCode = report.pass ? 0 : 1;

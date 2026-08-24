@@ -3,7 +3,7 @@
   "pipeline": "ActorAtlasV2",
   "actorSpec": {
     "source": "art/actor-atlas-v1.json",
-    "sha256": "480b4b05787017440aee8aaf4a20e875022c6534bcd548c84a39275619a63a54"
+    "sha256": "4eec8db9ed46ca7f7e776a1991963d8ab5986029acc75e7e9d706372ba2f0ae8"
   },
   "environmentKitSpec": {
     "source": "art/environment-kit-v2.json",
@@ -26,11 +26,11 @@
       "source": "public/assets/sprites/actor-ranger.png"
     },
     "actor-arcanist.png": {
-      "sha256": "eb4b45358723fa5ce00fcfa01c9d6e80fa2353cb0fda44abb0a27ca3e5c38dca",
+      "sha256": "77d6a7650a9fab427ad7118a5e36cd2c7a36c35577eaee04860203a61c0156d4",
       "source": "public/assets/sprites/actor-arcanist.png"
     },
     "actor-ashfang.png": {
-      "sha256": "3b5662c31bedfc997da0c1ed7a9fe59397c28a9ec71b93c4ee769e5783af41ed",
+      "sha256": "408fc2e5bafa90f890cabdfa0e0250fe37f159c6f6130f1944dd5580ee036087",
       "source": "public/assets/sprites/actor-ashfang.png"
     },
     "actor-hexer.png": {

@@ -216,15 +216,36 @@
     }
   },
   "actorOverrides": {
+    "arcanist": {
+      "clips": {
+        "walk": {
+          "frameTransform": {
+            "scaleX": 1,
+            "scaleY": 1.23,
+            "anchor": "foot"
+          },
+          "reason": "Normalize the undersized side-on walk bank to the idle body-height envelope while preserving the authored stride and fixed foot contact."
+        }
+      },
+      "transitionContracts": {
+        "eastWestIdleWalk": {
+          "clips": ["idle", "walk"],
+          "facings": ["east", "west"],
+          "anchor": "foot",
+          "maximumAtlasMedianInkHeightDifference": 8,
+          "reason": "The character must not visibly shrink when side-on input starts; this atlas-level contract is stricter than the 8 logical-pixel rendered-sequence limit."
+        }
+      }
+    },
     "ashfang": {
       "clips": {
         "walk": {
           "frameTransform": {
             "scaleX": 0.9,
-            "scaleY": 1.42,
+            "scaleY": 1.17,
             "anchor": "foot"
           },
-          "reason": "Bring the low side-on run into the authored north/south body-height envelope without changing cadence or source identity."
+          "reason": "Keep the low side-on run within the idle body-height envelope without the former vertical stretch, while preserving cadence, source identity, and fixed foot contact."
         },
         "ability": {
           "sourceFrames": [
@@ -238,6 +259,15 @@
             { "source": "primary", "cell": 0 }
           ],
           "reason": "Hold the charged crouch for one frame and omit the disconnected airborne pose before the ground strike."
+        }
+      },
+      "transitionContracts": {
+        "eastWestIdleWalk": {
+          "clips": ["idle", "walk"],
+          "facings": ["east", "west"],
+          "anchor": "foot",
+          "maximumAtlasMedianInkHeightDifference": 8,
+          "reason": "The quadruped must not visibly grow when locomotion begins; this atlas-level contract is stricter than the 8 logical-pixel rendered-sequence limit."
         }
       }
     }
