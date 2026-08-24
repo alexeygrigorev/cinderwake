@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "id": "environment-kit-v1",
+  "status": "rejected-quarantined",
+  "created": "2026-08-24",
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-8b3388fc-203a-492a-aaa2-e803f32338eb",
+    "calls": 1,
+    "prompt": {
+      "file": "art/generation/prompts/environment-kit-v1.txt",
+      "sha256": "584f7ab45d79e102e390b83417766375a951293285ecb4c11ca0fe9f873ec303"
+    },
+    "references": [
+      {
+        "file": "art/source/environment/structures-source.png",
+        "role": "camera, structure materials, and painterly treatment reference only",
+        "sha256": "347a890ce51dc3cfe7621c615133912d4103ef70d4fbd8d0bbbb96851643e9f3"
+      },
+      {
+        "file": "art/source/environment/props-source.png",
+        "role": "separated silhouette, chroma layout, and runtime-detail reference only",
+        "sha256": "307a7f8006eb47e6886082deb607506b8a43a4f5c44405f573f3e5096f133c1e"
+      }
+    ],
+    "raw": {
+      "file": "art/generation/environment-kit/candidates/environment-kit-v1.png",
+      "sha256": "def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e",
+      "width": 1536,
+      "height": 1024,
+      "channels": "srgb"
+    }
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 2,
+    "preparedCellWidth": 512,
+    "preparedCellHeight": 512,
+    "safeInset": 28,
+    "footBaseline": 480,
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-doorway",
+        "runtimeHeight": 145,
+        "collision": "two solid wall returns with a passable central aperture"
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "runtimeHeight": 150,
+        "collision": "compact solid footprint beneath the workshop"
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base"
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base"
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "runtimeHeight": 78,
+        "collision": "wide shallow solid ellipse beneath the barricade"
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "runtimeHeight": 95,
+        "collision": "medium solid ellipse beneath the connected workbench"
+      }
+    ]
+  },
+  "preparation": {
+    "command": "node scripts/prepare-environment-kit.mjs --input art/generation/environment-kit/candidates/environment-kit-v1.png --output art/generation/environment-kit/prepared/environment-kit-v1.png",
+    "operation": "recover exactly six large chroma-separated components, attach only nearby meaningful fragments, order them by row and centroid, key and decontaminate magenta, fit each component without upscaling into a 512px safe cell, and align contact pixels to one baseline",
+    "file": "art/generation/environment-kit/prepared/environment-kit-v1.png",
+    "sha256": "d24bb007b9401bc083ad5e69241541a168dc934c516ae9044e196a3aeecdf95d"
+  },
+  "review": {
+    "evaluation": "rejected",
+    "productionApproved": false,
+    "strengths": [
+      "The six silhouettes form one unusually coherent masonry, timber, iron, and ember-light family.",
+      "The elevated camera, material rendering, forge-light direction, doorway aperture, and collision-readable bases are visually consistent.",
+      "Every requested component is present with no actor, UI, text, ground plane, or extra standalone item."
+    ],
+    "failures": [
+      "The backdrop is a generated near-magenta field rather than the required literal #ff00ff source key.",
+      "The wall, forge, barricade, and bench cross their declared equal-cell boundaries and do not retain the required 12 percent cell padding.",
+      "Both lanterns are authored at almost the same source-pixel height as the forge, contradicting the requested shared physical scale even though runtime metadata can shrink them.",
+      "The north wall reads as a standalone ruined gate rather than a safely repeatable wall module with clear continuation seams.",
+      "Prepared edges retain small red-purple spill flecks around rubble, making promotion unsafe without another deterministic cleanup contract."
+    ],
+    "decision": "Quarantine this one-shot candidate as positive coordinated-art evidence and negative ingress evidence. Do not copy it into production atlases or runtime manifests."
+  }
+}
