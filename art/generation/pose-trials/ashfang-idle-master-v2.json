@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v2-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v2.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v2.png",
+  "candidateSha256": "af0850b3898b9c7a4412545ec01752bf72bd8269dddbd643edb22c4adb73cb10",
+  "referenceFiles": [
+    {
+      "file": "art/generation/prepared/ashfang-primary-trial-v7.png",
+      "role": "latest accepted identity direction, compact living silhouette, and elevated camera target",
+      "sha256": "bc0d6bd4c32e9d295361bdfe1e450162f3ab56fc89cef4ffa0615ce2f4de4acf"
+    },
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "role": "immutable species identity and head, plate, claw, and tail language",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated world camera, restrained palette, and apparent gameplay scale only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-fea90d30-b1a7-4f00-bbd0-48650dfe8ddc.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one creature and one quiet east-facing idle pose",
+      "torso is compact, raised, and visibly alive rather than prone or corpse-like",
+      "support footprint is substantially better centered beneath the gameplay body",
+      "no scenery, detached effect, text, UI, floor, or cast shadow"
+    ],
+    "failed": [
+      {
+        "code": "camera-side-dominant",
+        "detail": "The camera is more elevated than production Ashfang, but the long side silhouette still dominates instead of exposing a convincing approximately 55-degree gameplay view of top planes and foot placement."
+      },
+      {
+        "code": "fourth-limb-occluded",
+        "detail": "Only three feet remain trackable after deterministic preparation; the far-side fourth limb is swallowed by the chest and near foreleg mass, so this master cannot define unambiguous diagonal walk support ownership."
+      },
+      {
+        "code": "runtime-height-oversized",
+        "detail": "Aspect-preserving safe-box preparation projects the 236x197 source ink to roughly 118x98.5 runtime pixels, above the current 72-86 pixel isolated-master height window."
+      },
+      {
+        "code": "gloss-and-highlight-density",
+        "detail": "Bright plate rims and dense high-frequency highlights remain glossier and louder than the restrained Cinderwake gameplay material target at runtime size."
+      },
+      {
+        "code": "raw-height-envelope",
+        "detail": "The normalized keyed creature is about 53.5 percent of canvas height, below the requested 58-68 percent range even though its width and foot baseline are close to target."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta background is visibly graded rather than one flat literal #ff00ff value."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "Isolation materially improved the world camera, compact living silhouette, and centered support base, but the missing fourth readable limb and oversized runtime height veto use as an identity master."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v2.png --output art/generation/prepared/ashfang-idle-master-v2.png",
+    "file": "art/generation/prepared/ashfang-idle-master-v2.png",
+    "sha256": "f9263f8e931b3d67bfcff5539e6873c763d85252f52fffb1f29ba43fa22d54a6",
+    "status": "rejected",
+    "notes": "Uniform aspect-preserving placement produces a compact 236x197 source placement box ending at the declared foot anchor; visible keyed ink ends one pixel high. Raster preparation cannot reveal the occluded fourth limb or reduce authored highlight density, and independent per-pose safe-fit remains diagnostic rather than a multi-frame scale contract."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_idle_master_v2",
+    "reviewedRawSha256": "af0850b3898b9c7a4412545ec01752bf72bd8269dddbd643edb22c4adb73cb10",
+    "reviewedPreparedSha256": "f9263f8e931b3d67bfcff5539e6873c763d85252f52fffb1f29ba43fa22d54a6",
+    "reviewedPoseEvidenceSha256": "b5b1fd63b27471ba43932684703686f0e205bb1042800471b26322e8fd1d2b67",
+    "reviewedRuntimeComparisonSha256": "a137b52a408f7c4db4dc2b6e4891a989a9434c92c4d7c2784cc3fa7f40a97494",
+    "acceptedAxes": [
+      "compact alert living-predator posture",
+      "centered support footprint",
+      "readable silhouette, eye, and ember core at runtime scale"
+    ],
+    "rejectedAxes": [
+      "identity continuity of head, armor complexity, and tail",
+      "approximately 55-degree elevated gameplay viewpoint",
+      "restrained matte material and highlight density",
+      "common gameplay scale and proportions",
+      "all four limbs and feet readable",
+      "suitability for explicit diagonal support ownership",
+      "runtime detail stability without shimmer or noise"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedViolationCodes": ["foot-anchor", "runtime-height"]
+  },
+  "recommendation": "Stop after this master and do not generate walk phases. A v3 master must keep the elevated compact posture while exposing all four feet, reducing glossy highlight density, and fitting the shared runtime-height window before the isolated-pose assembler is used."
+}

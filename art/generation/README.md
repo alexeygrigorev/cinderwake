@@ -159,6 +159,16 @@ collapse, but it is still rejected. Its runtime ink is 118 × 63 at aspect
 anchor. It also remains too lateral, prone, glossy, orange-heavy, and poorly
 padded. Do not generate follow-up frames from a rejected identity master.
 
+Ashfang east-idle master v2 preserves the exact frozen prompt and generated
+artifact, and materially improves the compact living posture and centered
+support base. It is still rejected at both boundaries. The deterministic audit
+measures 118 × 99 runtime ink against the 72–86 height window plus a one-pixel
+visible-foot miss, with 5/5 fixture-bound defects caught. Independent review of
+the exact raw, prepared, pose-evidence, and runtime-comparison hashes also sees
+only three trackable paws, a side-dominant camera, oversized gameplay scale,
+and glossy detail noise. Those findings prohibit generating walk phases from
+v2; the assembler is not a license to multiply a rejected identity master.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

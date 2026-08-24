@@ -410,7 +410,13 @@ async function negativeControls(prepared, targets) {
     {
       id: "collision-contact-offset",
       expectedViolation: "contact-footprint",
-      prepared: await spriteFromPrepared(prepared, 180, 160, 38, 72),
+      prepared: await spriteFromPrepared(
+        prepared,
+        180,
+        160,
+        validFixture.left + 24,
+        72,
+      ),
     },
   ];
   return Promise.all(
@@ -619,7 +625,10 @@ function htmlReport(report) {
         `<li><strong>${escapeHtml(id)}</strong>: ${detected ? "caught" : "MISSED"} — ${escapeHtml(violations.join(", "))}</li>`,
     )
     .join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Isolated Ashfang idle master</title><style>body{max-width:1120px;margin:2rem auto;padding:0 1rem;background:#0c0a0c;color:#eadfce;font:16px/1.5 system-ui}.reject{color:#ef8d83}code{color:#efbd70}img{max-width:100%;height:auto;border:1px solid #584549}figure{margin:1.25rem 0}figcaption{color:#b8a699}</style></head><body><h1>Isolated Ashfang idle master v1</h1><p class="reject"><strong>REJECTED:</strong> stop after this one master; do not generate follow-up poses.</p><p>${escapeHtml(report.trial.recommendation)}</p><dl><dt>Raw SHA-256</dt><dd><code>${report.sources.candidate.sha256}</code></dd><dt>Prepared SHA-256</dt><dd><code>${report.sources.prepared.sha256}</code></dd><dt>Runtime ink</dt><dd>${report.assessment.runtime.bounds.width}×${report.assessment.runtime.bounds.height}, aspect ${report.assessment.runtime.bounds.aspectRatio}</dd><dt>Contact center / rig anchor</dt><dd>${report.assessment.runtime.contact.centroidX} / ${actorSpec.atlas.footAnchor.x} px</dd><dt>Shared collision radius</dt><dd>${report.collisionContract.logicalRadiusPixels} logical px</dd><dt>Raw literal magenta</dt><dd>${report.raw.literalMagentaRatio}</dd></dl><h2>Visual review</h2><ul>${failures}</ul><h2>Mechanical review</h2><ul>${mechanical}</ul><figure><a href="pose-evidence.png"><img src="pose-evidence.png" alt="Raw, prepared, runtime, and alpha evidence"></a><figcaption>One generated pose through deterministic ingress. The aspect-preserving safe-box fit remains too wide and only about 63 runtime pixels tall.</figcaption></figure><figure><a href="runtime-scale-comparison.png"><img src="runtime-scale-comparison.png" alt="Isolated master beside production actors at runtime scale"></a><figcaption>Same logical scale and ground line. The isolated master does not solve Ashfang's prone floor-prop reading or put its lowest support over the shared collision anchor.</figcaption></figure><h2>Detector controls</h2><ul>${controls}</ul><p>Pose isolation did solve the sheet-level semantic-collapse problem. It did not produce a credible identity anchor, so an eight-frame assembly pipeline is not justified by this trial.</p></body></html>`;
+  const independentReview = report.visualReview
+    ? `<h2>Independent exact-hash review</h2><p>Verdict: <strong>${escapeHtml(report.visualReview.verdict)}</strong> · reviewer <code>${escapeHtml(report.visualReview.reviewer)}</code> · all four reviewed hashes match: <strong>${report.visualReview.hashesMatch ? "yes" : "NO"}</strong>.</p><h3>Accepted axes</h3><ul>${report.visualReview.acceptedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul><h3>Rejected axes</h3><ul>${report.visualReview.rejectedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul>`
+    : "<h2>Independent exact-hash review</h2><p>No independent review is recorded for this historical diagnostic.</p>";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(report.trial.id)}</title><style>body{max-width:1120px;margin:2rem auto;padding:0 1rem;background:#0c0a0c;color:#eadfce;font:16px/1.5 system-ui}.reject{color:#ef8d83}code{color:#efbd70}img{max-width:100%;height:auto;border:1px solid #584549}figure{margin:1.25rem 0}figcaption{color:#b8a699}</style></head><body><h1>${escapeHtml(report.trial.id)}</h1><p class="reject"><strong>REJECTED:</strong> this identity master cannot seed follow-up poses.</p><p>${escapeHtml(report.trial.recommendation)}</p><dl><dt>Raw SHA-256</dt><dd><code>${report.sources.candidate.sha256}</code></dd><dt>Prepared SHA-256</dt><dd><code>${report.sources.prepared.sha256}</code></dd><dt>Runtime ink</dt><dd>${report.assessment.runtime.bounds.width}×${report.assessment.runtime.bounds.height}, aspect ${report.assessment.runtime.bounds.aspectRatio}</dd><dt>Contact center / rig anchor</dt><dd>${report.assessment.runtime.contact.centroidX} / ${actorSpec.atlas.footAnchor.x} px</dd><dt>Shared collision radius</dt><dd>${report.collisionContract.logicalRadiusPixels} logical px</dd><dt>Raw literal magenta</dt><dd>${report.raw.literalMagentaRatio}</dd></dl><h2>Recorded visual findings</h2><ul>${failures}</ul>${independentReview}<h2>Mechanical review</h2><ul>${mechanical}</ul><figure><a href="pose-evidence.png"><img src="pose-evidence.png" alt="Raw, prepared, runtime, and alpha evidence"></a><figcaption>One generated pose through deterministic ingress at raw, 256-pixel source-cell, and 128-pixel runtime scale. Preparation preserves aspect ratio and reports the exact safe bounds and foot anchor.</figcaption></figure><figure><a href="runtime-scale-comparison.png"><img src="runtime-scale-comparison.png" alt="Isolated master beside production actors at runtime scale"></a><figcaption>The candidate and production actors share one logical ground line. Relative size, silhouette, material density, and support placement remain visual-review questions.</figcaption></figure><h2>Detector controls</h2><ul>${controls}</ul><p>Mechanical ingress cannot manufacture missing anatomy, correct viewpoint or style, or authorize follow-up generation.</p></body></html>`;
 }
 
 async function run() {
@@ -665,33 +674,63 @@ async function run() {
     preparedImage,
     trial.mechanicalTargets,
   );
-  const actualViolationCodes = assessment.violations.map(({ code }) => code);
+  const actualViolationCodes = assessment.violations
+    .map(({ code }) => code)
+    .sort();
+  const expectedViolationCodes = [
+    ...trial.mechanicalTargets.expectedViolationCodes,
+  ].sort();
   const expectedMechanicalRejection =
     !assessment.pass &&
-    trial.mechanicalTargets.expectedViolationCodes.every((code) =>
-      actualViolationCodes.includes(code),
+    actualViolationCodes.length === expectedViolationCodes.length &&
+    actualViolationCodes.every(
+      (code, index) => code === expectedViolationCodes[index],
     );
   const controlsPass = negativeControlsResult.every(({ detected }) => detected);
   await fs.mkdir(options.output, { recursive: true });
+  const poseEvidencePath = path.join(options.output, "pose-evidence.png");
+  const runtimeComparisonPath = path.join(
+    options.output,
+    "runtime-scale-comparison.png",
+  );
   await Promise.all([
     writePoseEvidence(
       candidate.filePath,
       prepared.filePath,
       preparedImage,
       runtime.buffer,
-      path.join(options.output, "pose-evidence.png"),
+      poseEvidencePath,
     ),
-    writeScaleComparison(
-      runtime.buffer,
-      path.join(options.output, "runtime-scale-comparison.png"),
-    ),
+    writeScaleComparison(runtime.buffer, runtimeComparisonPath),
   ]);
+  const [poseEvidenceSha256, runtimeComparisonSha256] = await Promise.all([
+    fs.readFile(poseEvidencePath).then(sha256),
+    fs.readFile(runtimeComparisonPath).then(sha256),
+  ]);
+  const recordedVisualReview = trial.visualReview ?? null;
+  const visualReviewHashesMatch = Boolean(
+    recordedVisualReview &&
+    recordedVisualReview.verdict === "REJECT" &&
+    typeof recordedVisualReview.reviewer === "string" &&
+    recordedVisualReview.reviewer.length > 0 &&
+    recordedVisualReview.reviewedRawSha256 === candidate.sha256 &&
+    recordedVisualReview.reviewedPreparedSha256 === prepared.sha256 &&
+    recordedVisualReview.reviewedPoseEvidenceSha256 === poseEvidenceSha256 &&
+    recordedVisualReview.reviewedRuntimeComparisonSha256 ===
+      runtimeComparisonSha256 &&
+    Array.isArray(recordedVisualReview.acceptedAxes) &&
+    recordedVisualReview.acceptedAxes.length > 0 &&
+    Array.isArray(recordedVisualReview.rejectedAxes) &&
+    recordedVisualReview.rejectedAxes.length > 0,
+  );
   const report = {
     schemaVersion: 1,
     contract: "CinderwakeIsolatedActorPoseAssessmentV1",
     status: expectedMechanicalRejection ? "rejected" : "unexpected",
     trial: {
       id: trial.id,
+      actorId: trial.actorId,
+      pose: trial.pose,
       evaluation: trial.evaluation,
       semanticReview: trial.semanticReview,
       recommendation: trial.recommendation,
@@ -726,6 +765,17 @@ async function run() {
       ),
     },
     assessment,
+    expectation: {
+      expectedViolationCodes,
+      actualViolationCodes,
+      exactViolationSetMatch: expectedMechanicalRejection,
+    },
+    visualReview: recordedVisualReview
+      ? {
+          ...recordedVisualReview,
+          hashesMatch: visualReviewHashesMatch,
+        }
+      : null,
     negativeControls: negativeControlsResult,
     artifacts: ["pose-evidence.png", "runtime-scale-comparison.png"],
   };
@@ -736,9 +786,13 @@ async function run() {
     ),
     fs.writeFile(path.join(options.output, "index.html"), htmlReport(report)),
   ]);
-  if (!expectedMechanicalRejection || !controlsPass)
+  if (
+    !expectedMechanicalRejection ||
+    !controlsPass ||
+    (recordedVisualReview && !visualReviewHashesMatch)
+  )
     throw new Error(
-      `Pose assessment contract failed: expected-rejection=${expectedMechanicalRejection}, controls=${controlsPass}`,
+      `Pose assessment contract failed: expected-rejection=${expectedMechanicalRejection}, controls=${controlsPass}, visual-review=${recordedVisualReview ? visualReviewHashesMatch : "not-recorded"}`,
     );
   console.log(
     `Isolated Ashfang idle master rejected reproducibly: runtime ${assessment.runtime.bounds.width}x${assessment.runtime.bounds.height}, aspect ${assessment.runtime.bounds.aspectRatio}; ${negativeControlsResult.length}/${negativeControlsResult.length} controls caught. No production asset changed.`,
