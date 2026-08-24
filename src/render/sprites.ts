@@ -1,6 +1,7 @@
 import { CLIP_DURATIONS, CLIP_FRAMES } from "../game/constants";
 import type { AnimationClip } from "../game/types";
 import actorAtlasSpecJson from "../../art/actor-atlas-v1.json" with { type: "json" };
+import cityKitSpecJson from "../../art/city-kit-v1.json" with { type: "json" };
 import environmentKitSpecJson from "../../art/environment-kit-v2.json" with { type: "json" };
 
 export interface SourceRectV1 {
@@ -56,7 +57,7 @@ interface ActorAtlasSpec {
   directionalClips: Record<DirectionalClipKey, { atlasRow: number }>;
 }
 
-interface EnvironmentKitAtlasSpec {
+interface AuthoredAtlasSpec {
   atlas: {
     file: string;
     pixelWidth: number;
@@ -72,9 +73,10 @@ interface EnvironmentKitAtlasSpec {
 }
 
 const ACTOR_ATLAS_SPEC = actorAtlasSpecJson as ActorAtlasSpec;
-const ENVIRONMENT_KIT_SPEC = environmentKitSpecJson as EnvironmentKitAtlasSpec;
+const CITY_KIT_SPEC = cityKitSpecJson as AuthoredAtlasSpec;
+const ENVIRONMENT_KIT_SPEC = environmentKitSpecJson as AuthoredAtlasSpec;
 export const SPRITE_CATALOG_REVISION =
-  "cinder-node-v2-world-ui-crops-2026-08-24";
+  "cinder-node-v2-embercross-city-kit-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
 
@@ -152,6 +154,12 @@ const assets: Record<string, SpriteAssetV1> = {
     ENVIRONMENT_KIT_SPEC.atlas.file,
     ENVIRONMENT_KIT_SPEC.atlas.pixelWidth,
     ENVIRONMENT_KIT_SPEC.atlas.pixelHeight,
+  ),
+  "atlas:embercross-city-kit-v1": asset(
+    "atlas:embercross-city-kit-v1",
+    CITY_KIT_SPEC.atlas.file,
+    CITY_KIT_SPEC.atlas.pixelWidth,
+    CITY_KIT_SPEC.atlas.pixelHeight,
   ),
   "atlas:effects": asset("atlas:effects", "effects.png", 1024, 1024),
   "atlas:loot": asset("atlas:loot", "loot.png", 2048, 2048),
@@ -289,13 +297,14 @@ function fullFrameSprite(
   };
 }
 
-function environmentKitSprite(
-  definition: EnvironmentKitAtlasSpec["cells"][number],
+function authoredAtlasSprite(
+  definition: AuthoredAtlasSpec["cells"][number],
+  assetId: string,
 ): SpriteDefinitionV1 {
   const frameIdentity = `${definition.id}:static:0`;
   return {
     id: definition.id,
-    assetId: "atlas:environment-kit-v2",
+    assetId,
     frames: {
       [frameIdentity]: {
         x: definition.cell.x + definition.ink.x,
@@ -437,7 +446,10 @@ register(singleFrameSprite("scenery:exit:open", "atlas:structures", 3, 3));
 register(singleFrameSprite("scenery:backdrop", "atlas:terrain", 0, 3));
 register(fullFrameSprite("scenery:ground", "atlas:ground", 1024, 1024));
 ENVIRONMENT_KIT_SPEC.cells.forEach((definition) =>
-  register(environmentKitSprite(definition)),
+  register(authoredAtlasSprite(definition, "atlas:environment-kit-v2")),
+);
+CITY_KIT_SPEC.cells.forEach((definition) =>
+  register(authoredAtlasSprite(definition, "atlas:embercross-city-kit-v1")),
 );
 
 const structureNames = [

@@ -9,6 +9,8 @@ import {
   worldFromScenario,
 } from "../../src/testkit/scenarios";
 import {
+  AUTHORED_SPRITE_GEOMETRY,
+  CITY_KIT_SPRITE_GEOMETRY,
   ENVIRONMENT_KIT_SPRITE_GEOMETRY,
   EXPECTED_CLIP_CADENCE,
   REQUIRED_SPRITE_CLIPS,
@@ -29,7 +31,7 @@ function completeCatalog(
   const sprites: Record<string, unknown> = {};
   for (const [spriteId, clipNames] of Object.entries(REQUIRED_SPRITE_CLIPS)) {
     const logicalSize = (
-      ENVIRONMENT_KIT_SPRITE_GEOMETRY as Record<
+      AUTHORED_SPRITE_GEOMETRY as Record<
         string,
         { width: number; height: number } | undefined
       >
@@ -359,6 +361,75 @@ describe("sprite atlas quality contract", () => {
         }),
       ).size,
     ).toBe(6);
+  });
+
+  it("registers the reviewed Embercross kit with exact aspect-preserving crops", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const expectedFrames = {
+      "scenery:structure:embercross-market": {
+        x: 75,
+        y: 115,
+        width: 362,
+        height: 332,
+      },
+      "scenery:structure:embercross-tavern": {
+        x: 574,
+        y: 81,
+        width: 388,
+        height: 366,
+      },
+      "scenery:structure:embercross-infirmary": {
+        x: 1122,
+        y: 73,
+        width: 317,
+        height: 374,
+      },
+      "scenery:structure:embercross-city-gate": {
+        x: 64,
+        y: 628,
+        width: 385,
+        height: 331,
+      },
+      "scenery:prop:embercross-road-sign": {
+        x: 688,
+        y: 642,
+        width: 161,
+        height: 317,
+      },
+      "scenery:prop:embercross-bed-service": {
+        x: 1117,
+        y: 739,
+        width: 326,
+        height: 220,
+      },
+    } as const;
+    expect(catalog.assets["atlas:embercross-city-kit-v1"]).toMatchObject({
+      url: "/assets/sprites/embercross-city-kit-v1.png",
+      pixelWidth: 1536,
+      pixelHeight: 1024,
+    });
+    for (const [spriteId, logicalSize] of Object.entries(
+      CITY_KIT_SPRITE_GEOMETRY,
+    )) {
+      const sprite = catalog.sprites[spriteId]!;
+      const frameIdentity = sprite.clips.static!.frameIdentities[0]!;
+      expect(sprite.assetId).toBe("atlas:embercross-city-kit-v1");
+      expect(sprite.frames[frameIdentity]).toEqual(
+        expectedFrames[spriteId as keyof typeof expectedFrames],
+      );
+      expect(sprite.logicalSize).toEqual(logicalSize);
+      expect(sprite.anchor).toEqual({
+        x: logicalSize.width / 2,
+        y: logicalSize.height,
+      });
+      expect(
+        Math.abs(
+          sprite.frames[frameIdentity]!.width /
+            sprite.frames[frameIdentity]!.height -
+            logicalSize.width / logicalSize.height,
+        ),
+      ).toBeLessThan(0.01);
+    }
   });
 
   it("emits sprite references and registered frame identities for every gameplay type", async () => {

@@ -84,6 +84,10 @@
     "environment-kit-v2.png": {
       "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
       "source": "public/assets/sprites/environment-kit-v2.png"
+    },
+    "embercross-city-kit-v1.png": {
+      "sha256": "1f6b2fe52169c4e99dd101510e11674e4e3008f859be518ded33a0f773c61f85",
+      "source": "art/generation/city-kit/prepared/embercross-city-kit-v3.png"
     }
   }
 }

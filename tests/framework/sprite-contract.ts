@@ -125,6 +125,20 @@ export const ENVIRONMENT_KIT_SPRITE_GEOMETRY = {
   "scenery:prop:raised-clutter-bench": { width: 124, height: 103 },
 } as const;
 
+export const CITY_KIT_SPRITE_GEOMETRY = {
+  "scenery:structure:embercross-market": { width: 140, height: 128 },
+  "scenery:structure:embercross-tavern": { width: 233, height: 220 },
+  "scenery:structure:embercross-infirmary": { width: 166, height: 196 },
+  "scenery:structure:embercross-city-gate": { width: 244, height: 210 },
+  "scenery:prop:embercross-road-sign": { width: 44, height: 86 },
+  "scenery:prop:embercross-bed-service": { width: 142, height: 96 },
+} as const;
+
+export const AUTHORED_SPRITE_GEOMETRY = {
+  ...ENVIRONMENT_KIT_SPRITE_GEOMETRY,
+  ...CITY_KIT_SPRITE_GEOMETRY,
+} as const;
+
 export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   ...Object.fromEntries(
     ACTOR_SPRITES.flatMap((id) => [
@@ -146,7 +160,7 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   "world-ui:health-frame": ["static"],
   "world-ui:health-fill": ["static"],
   ...Object.fromEntries(
-    Object.keys(ENVIRONMENT_KIT_SPRITE_GEOMETRY).map((id) => [id, ["static"]]),
+    Object.keys(AUTHORED_SPRITE_GEOMETRY).map((id) => [id, ["static"]]),
   ),
 };
 
@@ -389,9 +403,7 @@ export function assertRequiredSpriteRegistrations(
         fail(`required sprite ${spriteId} clip ${clip} has invalid cadence`);
     }
   }
-  for (const [spriteId, expected] of Object.entries(
-    ENVIRONMENT_KIT_SPRITE_GEOMETRY,
-  )) {
+  for (const [spriteId, expected] of Object.entries(AUTHORED_SPRITE_GEOMETRY)) {
     const sprite = catalog.sprites[spriteId]!;
     if (
       sprite.logicalSize?.width !== expected.width ||
