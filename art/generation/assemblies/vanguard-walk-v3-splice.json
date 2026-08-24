@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "vanguard-walk-v3-surgical-candidate",
+  "base": {
+    "primary": "art/source/actors/vanguard-source.png",
+    "directions": "art/source/actors/vanguard-directions-source.png"
+  },
+  "replacement": {
+    "primary": { "candidate": "art/generation/prepared/vanguard-primary-walk-v3.png", "cells": [4, 5, 6, 7] },
+    "directions": { "candidate": "art/generation/prepared/vanguard-directions-walk-v3.png", "cells": [4, 5, 6, 7, 12, 13, 14, 15] }
+  },
+  "output": "art/generation/prepared/vanguard-walk-v3-staged"
+}

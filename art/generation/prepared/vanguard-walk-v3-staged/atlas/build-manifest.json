@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "pipeline": "ActorAtlasV2",
+  "actorSpec": {
+    "source": "art/actor-atlas-v1.json",
+    "sha256": "4eec8db9ed46ca7f7e776a1991963d8ab5986029acc75e7e9d706372ba2f0ae8"
+  },
+  "builtAt": "deterministic-from-committed-source",
+  "outputs": {
+    "actor-vanguard.png": {
+      "sha256": "4757e7749994dd11b35ad4238b9cd0ec1bc429e0d4ee4081021965cfc68e40a5",
+      "source": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png"
+    }
+  }
+}
