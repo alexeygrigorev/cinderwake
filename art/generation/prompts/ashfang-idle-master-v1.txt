@@ -1,0 +1,17 @@
+Use case: stylized-concept
+Asset type: one isolated Cinderwake gameplay actor master pose; this is not a sprite sheet, animation, action, or scene
+Input images: Image 1 is the immutable original Ashfang identity and Cinderwake rendering-style reference. Image 2 is only the elevated world-camera and apparent gameplay-scale reference; never copy its humanoid anatomy, armor, stance, or proportions.
+
+Primary request: Render exactly one east-facing idle Ashfang: one living four-legged volcanic predator standing quietly at rest. Preserve Image 1's wedge-shaped fanged head, pale eyes, long armored tail, exactly four clawed limbs, layered charcoal-black back plates, realistic heavy anatomy, sparse narrow ember-orange fissures, and lack of equipment. Do not redesign the species.
+
+Pose: a calm planted idle, not an action. All four feet are visible, separated by readable negative space, naturally weight-bearing, and on one shared baseline. Raise the chest and shoulder ridge clearly above the feet so the torso reads as alive and supported, never prone or collapsed. Separate the head from the torso. Keep the neck, jaw, shoulder mass, forefeet, hind feet, and inward-curving tail individually readable. No lifted attacking paw, crouch, coil, lunge, roar, leap, recoil, collapse, or exaggerated motion.
+
+Camera and framing: elevated three-quarter Cinderwake world camera near 55 degrees. The creature faces east/screen-right, but is not a strict flat side profile. Show clear top planes on the skull, shoulders, spine plates, rib mass, and hips. Foreshorten the torso and curve the tail inward for a compact silhouette. Center one complete creature in a square canvas with very generous equal padding on every side and extra empty space above. Bottom-center ground anchor. The creature plus shadow should occupy about 60–68% of canvas width and 62–72% of canvas height.
+
+Style and materials: match Image 1's painterly high-detail pre-rendered 2D Cinderwake sprite treatment, but keep surfaces rough, restrained, and low-sheen rather than glossy concept art. Softened material transitions; quiet charcoal body mass; sparse orange only inside thin fissures and eyes; warm upper-left key light; restrained cool bounce; crisp readable silhouette at small gameplay size. No black comic outline, plastic gloss, metallic polish, neon bloom, or over-sharpened promotional rendering.
+
+Backdrop and grounding: one perfectly flat literal #ff00ff chroma-key background across every empty pixel. No gradient, texture, checkerboard, vignette, floor plane, horizon, scenery, prop, debris, label, divider, frame, text, UI, logo, or watermark. Include only one compact soft attached contact shadow immediately beneath the four planted feet. No long cast shadow.
+
+Effects and exclusions: no flame trail, broad glow, ember ring, ground eruption, detached spark, particle, smoke, dust, projectile, duplicate body, motion blur, extra limb, merged paw, cropped tail, or detached anatomy. Orange is a sparse identity accent, not the dominant silhouette.
+
+Output exactly one creature in exactly one idle pose. Do not output variants, multiple poses, a contact sheet, a grid, or any animation frames.

@@ -95,6 +95,41 @@ The report is regenerated and published by CI. `quality-results/` is intentional
 
 `accepted-production.json` covers all six accepted source families for those same actors. Exact historical prompts were not retained, so those entries point to `legacy-briefs/` marked `reconstructed-after-generation`; they preserve source hashes and generated artifact IDs without fabricating history.
 
+## Pose-isolated ingress
+
+When a complete generated sheet collapses row semantics, test one identity
+master before requesting more poses. Save the exact prompt first, generate
+exactly one non-action pose, preserve the raw bytes and artifact ID, then place
+it non-destructively into one 256 × 256 source cell:
+
+```bash
+node scripts/prepare-actor-pose.mjs \
+  --input art/generation/candidates/<pose>.png \
+  --output art/generation/prepared/<pose>.png
+```
+
+The pose normalizer keys the raw background, removes boundary residue, applies
+one aspect-preserving scale, fits the existing safe box, and uses the declared
+bottom-center foot anchor. It never stretches a wide creature to manufacture
+the desired height. Audit a recorded trial with:
+
+```bash
+npm run art:pose:audit
+```
+
+The audit reproduces the prepared bytes twice, projects the cell to 128-pixel
+runtime scale, emits raw/prepared/runtime/alpha and same-scale actor evidence,
+and runs paired cut, anchor, aspect, height, and contact-footprint controls. The
+lowest support band must remain centered on the fixed actor anchor closely
+enough to represent the shared collision disc; a visually planted sprite whose
+contact point sits beside its gameplay body is rejected.
+
+Ashfang east-idle master v1 proved that isolation prevents sheet-level phase
+collapse, but it is still rejected. Its runtime ink is 118 × 63 at aspect
+1.873, and its lowest support center is 16.07 logical pixels right of the rig
+anchor. It also remains too lateral, prone, glossy, orange-heavy, and poorly
+padded. Do not generate follow-up frames from a rejected identity master.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

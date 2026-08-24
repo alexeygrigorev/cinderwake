@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v1-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v1.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v1.png",
+  "candidateSha256": "67efb82558917d2df7a8dadab18ace2d7dc2038e9c0f4c9061becc7e6d7ab948",
+  "referenceFiles": [
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "role": "immutable creature identity and Cinderwake actor rendering style",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated world camera and apparent gameplay scale only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-19a8d303-07d1-4233-b4d7-d4d8dfb0412d.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one creature and one pose",
+      "quiet idle rather than an action",
+      "four planted limbs are present",
+      "torso is more raised than current production",
+      "no scenery, detached effect, text, or UI"
+    ],
+    "failed": [
+      {
+        "code": "camera-too-lateral",
+        "detail": "Some top planes are visible, but the long head and torso still read primarily as a side profile rather than the 55-degree world camera."
+      },
+      {
+        "code": "prone-wide-silhouette",
+        "detail": "The torso remains horizontally dominant and low; at runtime size the creature still reads closer to a crouched carcass than a compact raised predator."
+      },
+      {
+        "code": "limb-separation",
+        "detail": "All four limbs exist, but the two far-side limbs merge into the body/near-leg mass instead of preserving four clean negative-space channels."
+      },
+      {
+        "code": "contact-footprint-offset",
+        "detail": "The lowest visible support is concentrated under the right/front feet rather than straddling the fixed bottom-center actor anchor, so the apparent planted base would not align with the shared monster collision disc."
+      },
+      {
+        "code": "gloss-and-orange-dominance",
+        "detail": "Bright plate highlights and a large orange shoulder core are glossier and louder than the restrained low-sheen Cinderwake material target."
+      },
+      {
+        "code": "oversized-framing",
+        "detail": "The creature occupies roughly four-fifths of the raw canvas width, exceeding the requested 60-68 percent envelope and leaving insufficient horizontal padding."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The pink background is visibly graded rather than one flat literal #ff00ff value."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "Pose-isolated generation successfully prevented row-semantic collapse, but this first master is not credible enough to seed per-pose generation. It remains too lateral, wide, glossy, orange-heavy, and visually prone."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v1.png --output art/generation/prepared/ashfang-idle-master-v1.png",
+    "file": "art/generation/prepared/ashfang-idle-master-v1.png",
+    "sha256": "48bb931cce173920321bdecc46b0c2e5f0fe4769e24487ab83bbe472dc874d7a",
+    "status": "rejected",
+    "notes": "Uniform aspect-preserving placement fits the 236x224 safe box and exact foot anchor, but width becomes the limiting dimension: the prepared ink is 236x126 source pixels, only about 63 runtime pixels tall, with an aspect ratio near 1.87. Raster normalization cannot make the source compact without deforming anatomy."
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedViolationCodes": [
+      "runtime-height",
+      "runtime-aspect",
+      "contact-footprint"
+    ]
+  },
+  "recommendation": "Stop after this one master. Do not generate the remaining idle phases or any actions from it. A later isolated master iteration must first correct camera, compactness, limb separation, material sheen, orange restraint, and raw framing."
+}
