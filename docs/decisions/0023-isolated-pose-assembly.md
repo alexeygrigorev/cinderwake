@@ -76,6 +76,11 @@ the raw image while one limb connection disappears after reduction. Review is
 performed on raw, prepared, runtime evidence, and a same-scale cast comparison;
 source-scale anatomy alone cannot authorize generation of motion phases.
 
+Ashfang v5 further shows that moving a paw without separating its upper limb is
+not a gait correction. Review axes refer to complete joint-to-contact limb
+chains and explicit diagonal ownership at runtime scale, not isolated paw
+blobs.
+
 ## Consequence
 
 A new character can use the same manifest and fixed rig without new runtime

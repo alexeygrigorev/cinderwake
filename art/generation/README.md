@@ -201,6 +201,15 @@ diagonal support ownership. The camera also remains too low and the bright
 plate edges muddy internal anatomy. Source-scale paw count is therefore not a
 substitute for runtime-scale gait-seed readability.
 
+Ashfang east-idle master v5 deliberately asks for a source-canvas separation
+channel, but the generator moves only the paw and leaves the upper far-side limb
+under the belly. Its 82 × 84 mechanical envelope, grounding, contact, and 5/5
+controls pass. Exact-hash review still cannot trace the far-side limb chain at
+runtime or label the diagonal supports; it also rejects the side-dominant
+camera, lighter dragon-like mass, and glossy highlight density. The result
+demonstrates why the pipeline records connected limb readability rather than
+merely counting terminal paw shapes.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

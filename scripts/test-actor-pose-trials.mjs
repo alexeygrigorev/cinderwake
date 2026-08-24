@@ -38,6 +38,12 @@ const trials = [
     expectedViolations: [],
     requiresReview: true,
   },
+  {
+    id: "ashfang-idle-master-v5",
+    manifest: "art/generation/pose-trials/ashfang-idle-master-v5.json",
+    expectedViolations: [],
+    requiresReview: true,
+  },
 ];
 
 function assert(condition, message) {

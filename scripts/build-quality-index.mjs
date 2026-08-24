@@ -73,7 +73,7 @@ const [
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
   ),
-  readJson("quality-results/actor-pose/ashfang-idle-master-v4/report.json"),
+  readJson("quality-results/actor-pose/ashfang-idle-master-v5/report.json"),
 ]);
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
@@ -196,7 +196,7 @@ const reports = [
   {
     id: "pose",
     title: "Ashfang isolated idle-pose audit",
-    href: "actor-pose/ashfang-idle-master-v4/",
+    href: "actor-pose/ashfang-idle-master-v5/",
     status:
       pose?.status === "rejected" &&
       pose.verificationStatus === "pass" &&
@@ -206,7 +206,7 @@ const reports = [
           ? "failed"
           : "missing",
     summary: pose
-      ? `V4 passes the mechanical ${pose.assessment.runtime.bounds.width}×${pose.assessment.runtime.bounds.height} runtime envelope with exact grounding and centered support, and catches ${pose.negativeControls.filter(({ detected }) => detected).length}/${pose.negativeControls.length} mutations. Its matching exact-hash visual veto confirms four source-scale paws but rejects the merged far-forelimb connection at runtime, low camera, ambiguous diagonal ownership, and specular detail, so it cannot seed walk phases.`
+      ? `V5 passes the mechanical ${pose.assessment.runtime.bounds.width}×${pose.assessment.runtime.bounds.height} runtime envelope with exact grounding and centered support, and catches ${pose.negativeControls.filter(({ detected }) => detected).length}/${pose.negativeControls.length} mutations. Its matching exact-hash visual veto confirms four source-scale paws but rejects the merged far-side limb chain at runtime, low camera, mismatched mass, ambiguous diagonal ownership, and glossy detail, so it cannot seed walk phases.`
       : "No isolated Ashfang pose-audit report was generated.",
   },
   {
