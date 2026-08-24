@@ -19,6 +19,7 @@
     "capture:sequence": "node scripts/capture-sequence.mjs",
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "report:screens": "node scripts/build-screen-report.mjs",
+    "report:quality": "node scripts/build-quality-index.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",

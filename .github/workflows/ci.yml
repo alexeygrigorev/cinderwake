@@ -30,18 +30,24 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run art:check
+      - name: Inspect environment composition and negative controls
+        run: npm run quality:environment:check
       - name: Audit every runtime actor animation bank
         run: npm run art:animation:check
       - name: Rebuild mobile selection sprites byte-for-byte
         run: npm run art:selection:check
       - name: Verify generation ingress and deterministic actor builds
         run: npm run art:generation:check
+      - name: Calibrate generated actor candidate cuts and motion
+        run: npm run art:candidate:check
       - run: npm test
       - run: npm run test:e2e
       - name: Build candidate screen gallery
         run: npm run report:screens
       - name: Capture temporal quality matrix
         run: npm run capture:matrix
+      - name: Build public quality index
+        run: npm run report:quality
       - name: Upload Playwright report
         if: ${{ always() && hashFiles('playwright-report/**') != '' }}
         uses: actions/upload-artifact@v7
@@ -83,6 +89,27 @@ jobs:
         with:
           name: actor-atlas-audit
           path: quality-results/actor-atlas-audit/
+          if-no-files-found: error
+      - name: Upload environment-composition evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: environment-composition
+          path: quality-results/environment-composition/
+          if-no-files-found: error
+      - name: Upload actor-candidate calibration evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: actor-candidate-calibration
+          path: quality-results/actor-candidate-calibration/
+          if-no-files-found: error
+      - name: Upload public quality index
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: quality-index
+          path: quality-results/quality-index/
           if-no-files-found: error
 
   deploy:
@@ -131,6 +158,21 @@ jobs:
         with:
           name: actor-atlas-audit
           path: site/quality/actor-atlas-audit
+      - name: Download environment-composition evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: environment-composition
+          path: site/quality/environment-composition
+      - name: Download actor-candidate calibration evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: actor-candidate-calibration
+          path: site/quality/actor-candidate-calibration
+      - name: Download public quality index
+        uses: actions/download-artifact@v8
+        with:
+          name: quality-index
+          path: site/quality
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
