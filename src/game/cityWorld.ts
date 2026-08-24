@@ -111,6 +111,12 @@ export interface CityWorldPlacement {
     halfWidth: number;
     halfHeight: number;
   } | null;
+  collisionParts?: Array<{
+    shape: "ellipse";
+    center: Vec2;
+    halfWidth: number;
+    halfHeight: number;
+  }>;
 }
 
 function solidPlacement(
@@ -139,39 +145,115 @@ function solidPlacement(
   };
 }
 
+function passablePlacement(
+  id: string,
+  name: string,
+  tile: Vec2,
+): CityWorldPlacement {
+  return {
+    id,
+    kind: "decal",
+    name,
+    collisionMode: "passable",
+    tile: { ...tile },
+    worldAnchor: tileCenter(tile),
+    collision: null,
+  };
+}
+
 /**
- * Stable semantic city composition. Existing same-style sprites are temporary
- * role mappings; object IDs and ground-contact geometry survive art swaps.
+ * Stable semantic city composition using the reviewed Embercross atlas for
+ * landmarks and service buildings plus compatible existing environment props.
  */
 export function buildEmbercrossScenery(): CityWorldPlacement[] {
   const [market, tavern, infirmary] = EMBERCROSS_CITY.buildings;
+  const gateTile = { x: EMBERCROSS_CITY.gateTile[0], y: 29 };
+  const gateAnchor = tileCenter(gateTile);
   return [
     solidPlacement(
       market.id,
       "structure",
-      "forge-workshop",
+      "embercross-market",
       { x: market.entranceTile[0], y: market.entranceTile[1] - 2 },
-      856,
-      320,
-      -200,
+      1_200,
+      460,
+      -460,
     ),
     solidPlacement(
       tavern.id,
       "structure",
-      "ruined-house",
+      "embercross-tavern",
       { x: tavern.entranceTile[0], y: tavern.entranceTile[1] - 2 },
-      1_300,
-      520,
-      -100,
+      1_920,
+      650,
+      -650,
     ),
     solidPlacement(
       infirmary.id,
       "structure",
-      "mausoleum",
+      "embercross-infirmary",
       { x: infirmary.entranceTile[0], y: infirmary.entranceTile[1] - 2 },
-      1_180,
+      1_380,
+      590,
+      -590,
+    ),
+    {
+      id: CITY_GATE_ID,
+      kind: "structure",
+      name: "embercross-city-gate",
+      collisionMode: "solid",
+      tile: gateTile,
+      worldAnchor: gateAnchor,
+      collision: {
+        shape: "ellipse",
+        center: { x: gateAnchor.x - 1_750, y: gateAnchor.y - 650 },
+        halfWidth: 700,
+        halfHeight: 650,
+      },
+      collisionParts: [
+        {
+          shape: "ellipse",
+          center: { x: gateAnchor.x + 1_750, y: gateAnchor.y - 650 },
+          halfWidth: 700,
+          halfHeight: 650,
+        },
+      ],
+    },
+    solidPlacement(
+      "prop:embercross:gate-lantern-west",
+      "prop",
+      "lantern-a",
+      { x: 13, y: 27 },
+      180,
       500,
-      -100,
+      -500,
+    ),
+    solidPlacement(
+      "prop:embercross:gate-lantern-east",
+      "prop",
+      "lantern-b",
+      { x: 17, y: 27 },
+      180,
+      500,
+      -500,
+    ),
+    solidPlacement(
+      "prop:embercross:market-lantern-west",
+      "prop",
+      "lantern-a",
+      { x: 9, y: 15 },
+      180,
+      500,
+      -500,
+    ),
+    solidPlacement(
+      "prop:embercross:market-lantern-east",
+      "prop",
+      "lantern-b",
+      { x: 13, y: 15 },
+      180,
+      500,
+      -500,
     ),
     solidPlacement(
       "prop:embercross:market-crates",
@@ -180,7 +262,34 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       { x: 8, y: 16 },
       560,
       300,
-      -40,
+      -300,
+    ),
+    solidPlacement(
+      "structure:embercross:market-wagon",
+      "structure",
+      "wagon",
+      { x: 7, y: 19 },
+      1_100,
+      440,
+      -440,
+    ),
+    solidPlacement(
+      "structure:embercross:square-well",
+      "structure",
+      "well",
+      { x: 15, y: 20 },
+      1_000,
+      420,
+      -420,
+    ),
+    solidPlacement(
+      "prop:embercross:square-bench",
+      "prop",
+      "raised-clutter-bench",
+      { x: 15, y: 23 },
+      700,
+      300,
+      -300,
     ),
     solidPlacement(
       "prop:embercross:tavern-table",
@@ -189,16 +298,25 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       { x: 18, y: 15 },
       500,
       300,
-      -40,
+      -300,
+    ),
+    solidPlacement(
+      "prop:embercross:tavern-lantern",
+      "prop",
+      "lantern-b",
+      { x: 18, y: 14 },
+      180,
+      500,
+      -500,
     ),
     solidPlacement(
       "prop:embercross:inn-bed",
       "prop",
-      "sarcophagus",
+      "embercross-bed-service",
       { x: 23, y: 15 },
-      620,
-      330,
-      -40,
+      1_080,
+      390,
+      -390,
     ),
     solidPlacement(
       "prop:embercross:healer-shrine",
@@ -207,8 +325,54 @@ export function buildEmbercrossScenery(): CityWorldPlacement[] {
       { x: 27, y: 20 },
       420,
       300,
-      -40,
+      -300,
     ),
+    solidPlacement(
+      "prop:embercross:infirmary-lantern",
+      "prop",
+      "lantern-a",
+      { x: 23, y: 19 },
+      180,
+      500,
+      -500,
+    ),
+    solidPlacement(
+      "prop:embercross:east-barricade",
+      "prop",
+      "barricade-v2",
+      { x: 28, y: 24 },
+      600,
+      300,
+      -300,
+    ),
+    passablePlacement("decal:embercross:market-banner", "banner-scrap", {
+      x: 11,
+      y: 17,
+    }),
+    passablePlacement("decal:embercross:west-tracks", "claw-tracks", {
+      x: 8,
+      y: 22,
+    }),
+    passablePlacement("decal:embercross:square-scorch", "scorch-ring", {
+      x: 17,
+      y: 20,
+    }),
+    passablePlacement("decal:embercross:tavern-boards", "banner-scrap", {
+      x: 20,
+      y: 16,
+    }),
+    passablePlacement("decal:embercross:infirmary-flowers", "blood-smear", {
+      x: 25,
+      y: 21,
+    }),
+    passablePlacement("decal:embercross:south-tracks", "claw-tracks", {
+      x: 15,
+      y: 25,
+    }),
+    passablePlacement("decal:embercross:east-banner", "banner-scrap", {
+      x: 27,
+      y: 23,
+    }),
   ];
 }
 

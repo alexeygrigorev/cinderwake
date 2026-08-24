@@ -683,6 +683,21 @@ button {
   color: #b9d2a5;
 }
 
+@media (orientation: landscape) and (max-height: 500px) {
+  .city-service-sheet {
+    top: max(52px, env(safe-area-inset-top));
+    right: max(96px, env(safe-area-inset-right));
+    bottom: auto;
+    left: auto;
+    width: min(270px, calc(100vw - 210px));
+    padding: 7px;
+  }
+
+  .city-service-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 761px) and (pointer: fine) {
   .city-service-sheet {
     right: 14px;

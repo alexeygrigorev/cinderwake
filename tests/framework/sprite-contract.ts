@@ -78,6 +78,13 @@ export interface ManifestSceneSpriteV2 extends ManifestSpriteReferenceV2 {
     halfWidth: number;
     halfHeight: number;
   } | null;
+  collisionParts?: Array<{
+    mode: "solid";
+    shape: "ellipse";
+    worldCenter: { x: number; y: number };
+    halfWidth: number;
+    halfHeight: number;
+  }>;
 }
 
 export interface ManifestWorldUiCallV1 {
@@ -689,6 +696,22 @@ export function assertDeterministicScenePlacement(
       sprite.collision.halfHeight !== 0
     )
       fail(`passable scenery ${placement.id} has a solid footprint`);
+    const expectedParts = placement.collisionParts ?? [];
+    const actualParts = sprite.collisionParts ?? [];
+    if (actualParts.length !== expectedParts.length)
+      fail(`collision part count differs for scenery ${placement.id}`);
+    expectedParts.forEach((expected, index) => {
+      const actual = actualParts[index]!;
+      if (
+        actual.mode !== "solid" ||
+        actual.shape !== expected.shape ||
+        actual.worldCenter.x !== expected.center.x ||
+        actual.worldCenter.y !== expected.center.y ||
+        actual.halfWidth !== expected.halfWidth ||
+        actual.halfHeight !== expected.halfHeight
+      )
+        fail(`collision part ${index} differs for scenery ${placement.id}`);
+    });
   }
   const boundaryDirections = [
     { id: "north", dx: 0, dy: -1 },

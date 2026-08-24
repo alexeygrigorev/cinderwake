@@ -1,6 +1,11 @@
 import "./styles.css";
 import { ARCHETYPES } from "./game/content";
 import { EMBERCROSS_CITY, type CityServiceActionId } from "./game/city";
+import {
+  cityNpcWorldAnchor,
+  isEmbercrossMap,
+  wildernessCityLandmarkAnchor,
+} from "./game/cityWorld";
 import { findStateNavigationRoute } from "./game/navigation";
 import type { CharacterClass, GameState } from "./game/types";
 import {
@@ -215,9 +220,13 @@ function updateHud(state: GameState): void {
   setSpriteGlyphs(runSeed!, state.seed);
   bar!.style.width = `${(100 * p.health) / p.maxHealth}%`;
   const livingMonsters = state.monsters.filter((monster) => monster.health > 0);
+  const insideCity =
+    isEmbercrossMap(state.map) && state.city.locationPhase === "inside";
   setSpriteGlyphs(
     monsters!,
-    `${livingMonsters.length} ${livingMonsters.length === 1 ? "foe" : "foes"}`,
+    insideCity
+      ? EMBERCROSS_CITY.name
+      : `${livingMonsters.length} ${livingMonsters.length === 1 ? "foe" : "foes"}`,
   );
   setSpriteGlyphs(tonics!, `${p.tonics}`);
   setSpriteGlyphs(mobileTonics!, `${p.tonics}`);
@@ -227,6 +236,22 @@ function updateHud(state: GameState): void {
       : `${((p.abilityReadyTick - state.tick) / 60).toFixed(1)}s`;
   setSpriteGlyphs(cd!, cooldown);
   setSpriteGlyphs(mobileCd!, cooldown);
+  const nearestResident = insideCity
+    ? [...EMBERCROSS_CITY.npcs].sort((first, second) => {
+        const firstAnchor = cityNpcWorldAnchor(first.id);
+        const secondAnchor = cityNpcWorldAnchor(second.id);
+        return (
+          Math.hypot(
+            firstAnchor.x - p.position.x,
+            firstAnchor.y - p.position.y,
+          ) -
+            Math.hypot(
+              secondAnchor.x - p.position.x,
+              secondAnchor.y - p.position.y,
+            ) || first.id.localeCompare(second.id)
+        );
+      })[0]!
+    : undefined;
   const target = livingMonsters.length
     ? [...livingMonsters].sort((first, second) => {
         const firstDistance = Math.hypot(
@@ -241,19 +266,37 @@ function updateHud(state: GameState): void {
           firstDistance - secondDistance || first.id.localeCompare(second.id)
         );
       })[0]!
-    : {
-        id: "exit:rift-gate",
-        position: {
-          x: (state.map.exit.x + 0.5) * 1024,
-          y: (state.map.exit.y + 0.5) * 1024,
-        },
-      };
+    : nearestResident
+      ? {
+          id: nearestResident.id,
+          position: cityNpcWorldAnchor(nearestResident.id),
+        }
+      : state.city.locationPhase === "undiscovered"
+        ? {
+            id: EMBERCROSS_CITY.discoveryLandmarkId,
+            position: wildernessCityLandmarkAnchor(state.map),
+          }
+        : {
+            id: "exit:rift-gate",
+            position: {
+              x: (state.map.exit.x + 0.5) * 1024,
+              y: (state.map.exit.y + 0.5) * 1024,
+            },
+          };
   const objectiveHeading = livingMonsters.length
     ? "Hunt the cinders"
-    : "The rift is open";
+    : nearestResident
+      ? "Seek shelter"
+      : state.city.locationPhase === "undiscovered"
+        ? "Find Embercross"
+        : "The city gate";
   const objectiveCopy = livingMonsters.length
     ? `${livingMonsters.length} remain`
-    : "Enter the gate";
+    : nearestResident
+      ? `Speak with ${nearestResident.name}`
+      : state.city.locationPhase === "undiscovered"
+        ? "Follow the road sign"
+        : "Enter Embercross";
   setSpriteGlyphs(objectiveTitle!, objectiveHeading);
   setSpriteGlyphs(objectiveDetail!, objectiveCopy);
   const targetAngle =
@@ -266,7 +309,13 @@ function updateHud(state: GameState): void {
     90;
   objectiveDirection!.style.transform = `rotate(${targetAngle.toFixed(2)}deg)`;
   objective!.dataset.targetId = target.id;
-  objective!.dataset.state = livingMonsters.length ? "hunt" : "exit";
+  objective!.dataset.state = livingMonsters.length
+    ? "hunt"
+    : nearestResident
+      ? "city-service"
+      : state.city.locationPhase === "undiscovered"
+        ? "discover-city"
+        : "enter-city";
   objective!.setAttribute(
     "aria-label",
     `${objectiveHeading}. ${objectiveCopy}. Direction marker points toward ${target.id}.`,

@@ -106,7 +106,7 @@ The pure domain is integrated into versioned shared state. Remaining runtime wor
 3. **Player adapter (complete):** `GameHost.executeNearbyCityAction` copies player gold, health, maximum health, and tonics into the city traveler, executes the atomic receipt, then mirrors those fields back to the live player.
 4. **Proximity adapter (complete):** each simulation tick, loaded state, and service action derives `nearbyNpcId` from the configured interaction circles with distance/ID tie-breaking. Active monsters mark services unsafe.
 5. **Input/UI (complete):** an explicit sprite-glyph context action is shown for the nearby resident. Its mobile bottom sheet has 48 CSS pixel minimum buttons and retains deterministic completion or rejection feedback.
-6. **Rendering:** buildings, doors, counters, beds, food, signs, residents, selection states, and interaction feedback all require authored sprites in the established art style. Collision footprints must be visibly contained by the opaque bases of buildings and objects.
+6. **Rendering (controlled integration complete):** the exact reviewed V3 atlas supplies the market, tavern, infirmary, open gate, road sign, and bed/food cluster. Compatible authored props build the square and service approaches; four residents use the directional actor system. Every city footprint is projected inside its tight sprite ink, and the gate uses two pier footprints with no center collider. Distinct resident art and an end-to-end production route remain later polish, not hidden acceptance claims.
 
 ## Test and visual acceptance criteria
 
@@ -126,3 +126,5 @@ Runtime integration is not accepted until browser and temporal tests add the fol
 - Tavern eating, inn sleep, healing, buying, and selling each have before/action/after frame sequences plus machine-readable receipts.
 
 Visual captures should use stable city scenarios rather than replaying discovery for every assertion. The complete wilderness-to-city route remains one end-to-end production-gesture test; narrower service tests start from exact city JSON states.
+
+The current browser boundary covers all five service buttons from restored JSON, exact receipts and live-player synchronization, 48-pixel targets, rejected transactions, portrait/landscape containment, reviewed sprite asset IDs, three idle-animation samples, fixed building/NPC destinations, and deterministic screenshot baselines. It does not yet prove NPC-tap auto-approach or the complete production wilderness-to-city gesture; those bullets remain open.

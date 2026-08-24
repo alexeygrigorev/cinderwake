@@ -26,6 +26,8 @@ export interface SceneryPlacement {
   tile: Vec2;
   worldAnchor: Vec2;
   collision: SceneryCollisionFootprint | null;
+  /** Additional visible-mass footprints for open arches and split bases. */
+  collisionParts?: SceneryCollisionFootprint[];
 }
 
 export type OpeningSide = "south" | "east" | "west" | "north";
@@ -609,16 +611,14 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
     placements.push({
       id: CITY_DISCOVERY_LANDMARK_ID,
       kind: "prop",
-      // Temporary same-style role mapping. The semantic ID and collision stay
-      // stable when the generated Embercross road-sign raster is registered.
-      name: "weapon-rack",
+      name: "embercross-road-sign",
       collisionMode: "solid",
       tile,
       worldAnchor,
       collision: footprint(worldAnchor, {
         halfWidth: 220,
         halfHeight: 140,
-        offsetY: -30,
+        offsetY: -140,
       }),
     });
   }
@@ -648,9 +648,10 @@ export function overlapsScenery(
 export function sceneryCollisions(
   map: DungeonMap,
 ): SceneryCollisionFootprint[] {
-  return buildSceneryLayout(map).flatMap(({ collision }) =>
-    collision ? [collision] : [],
-  );
+  return buildSceneryLayout(map).flatMap(({ collision, collisionParts }) => [
+    ...(collision ? [collision] : []),
+    ...(collisionParts ?? []),
+  ]);
 }
 
 export function sceneryCollisionContractViolations(
@@ -670,13 +671,19 @@ export function sceneryCollisionContractViolations(
     }
     if (placement.collisionMode !== "solid" || !placement.collision)
       return [`${placement.id}:raised-object-must-be-solid`];
-    const { center, halfWidth, halfHeight } = placement.collision;
-    return Number.isFinite(center.x) &&
-      Number.isFinite(center.y) &&
-      Number.isFinite(halfWidth) &&
-      Number.isFinite(halfHeight) &&
-      halfWidth > 0 &&
-      halfHeight > 0
+    const footprints = [
+      placement.collision,
+      ...(placement.collisionParts ?? []),
+    ];
+    return footprints.every(
+      ({ center, halfWidth, halfHeight }) =>
+        Number.isFinite(center.x) &&
+        Number.isFinite(center.y) &&
+        Number.isFinite(halfWidth) &&
+        Number.isFinite(halfHeight) &&
+        halfWidth > 0 &&
+        halfHeight > 0,
+    )
       ? []
       : [`${placement.id}:solid-collision-footprint-invalid`];
   });

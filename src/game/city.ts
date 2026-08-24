@@ -64,8 +64,8 @@ export interface CityBuildingDefinitionV1 {
 const STANDARD_AFFORDANCE: CityInteractionAffordanceV1 = {
   trigger: "tap-npc-or-context-button",
   minTapTargetCssPx: 48,
-  interactionRadiusUnits: 1280,
-  approachStopDistanceUnits: 820,
+  interactionRadiusUnits: 2048,
+  approachStopDistanceUnits: 1536,
   mobilePresentation: "bottom-sheet",
   requiresExplicitConfirmation: true,
 };

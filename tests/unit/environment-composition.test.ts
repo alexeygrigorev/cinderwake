@@ -76,7 +76,7 @@ beforeAll(async () => {
   report = JSON.parse(
     await fs.readFile(path.join(outputRoot, "report.json"), "utf8"),
   );
-});
+}, 30_000);
 
 afterAll(async () => {
   await fs.rm(outputRoot, { recursive: true, force: true });

@@ -9,7 +9,13 @@ import {
   wildernessCityLandmarkAnchor,
   wildernessCityLandmarkTile,
 } from "../../src/game/cityWorld";
+import { TILE_PIXELS, UNITS_PER_TILE } from "../../src/game/constants";
 import { generateDungeon, isFloor, tileCenter } from "../../src/game/dungeon";
+import {
+  buildSceneryLayout,
+  overlapsScenery,
+  sceneryCollisions,
+} from "../../src/game/sceneryLayout";
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
@@ -33,11 +39,17 @@ describe("deterministic Embercross world", () => {
 
   it("places every service building and resident on stable distinct anchors", () => {
     const scenery = buildEmbercrossScenery();
+    const expectedBuildingSprites = new Map([
+      ["building:embercross:market", "embercross-market"],
+      ["building:embercross:tavern", "embercross-tavern"],
+      ["building:embercross:infirmary", "embercross-infirmary"],
+    ]);
     for (const building of EMBERCROSS_CITY.buildings) {
       const placement = scenery.find(({ id }) => id === building.id);
       expect(placement, building.id).toMatchObject({
         kind: "structure",
         collisionMode: "solid",
+        name: expectedBuildingSprites.get(building.id),
       });
       expect(placement?.collision).not.toBeNull();
     }
@@ -47,10 +59,48 @@ describe("deterministic Embercross world", () => {
     expect(new Set(anchors).size).toBe(EMBERCROSS_CITY.npcs.length);
   });
 
+  it("keeps both gate piers solid while its visible center stays walkable", () => {
+    const map = createEmbercrossMap();
+    const gate = buildSceneryLayout(map).find(
+      ({ id }) => id === "gate:embercross:south",
+    )!;
+    expect(gate).toMatchObject({
+      name: "embercross-city-gate",
+      collisionMode: "solid",
+      collisionParts: [expect.objectContaining({ shape: "ellipse" })],
+    });
+    const collisions = sceneryCollisions(map);
+    const passage = { x: gate.worldAnchor.x, y: gate.worldAnchor.y - 650 };
+    const leftPier = {
+      x: gate.worldAnchor.x - 1_750,
+      y: gate.worldAnchor.y - 650,
+    };
+    const rightPier = {
+      x: gate.worldAnchor.x + 1_750,
+      y: gate.worldAnchor.y - 650,
+    };
+    expect(
+      collisions.some((collision) => overlapsScenery(passage, 300, collision)),
+    ).toBe(false);
+    expect(
+      collisions.some((collision) => overlapsScenery(leftPier, 300, collision)),
+    ).toBe(true);
+    expect(
+      collisions.some((collision) =>
+        overlapsScenery(rightPier, 300, collision),
+      ),
+    ).toBe(true);
+  });
+
   it("derives the nearest resident only inside its configured interaction radius", () => {
     const mara = cityNpcWorldAnchor("npc:embercross:mara");
+    const radius = EMBERCROSS_CITY.npcs.find(
+      ({ id }) => id === "npc:embercross:mara",
+    )!.affordance.interactionRadiusUnits;
     expect(nearbyEmbercrossNpcId(mara)).toBe("npc:embercross:mara");
-    expect(nearbyEmbercrossNpcId({ x: mara.x + 1_281, y: mara.y })).toBeNull();
+    expect(
+      nearbyEmbercrossNpcId({ x: mara.x + radius + 1, y: mara.y }),
+    ).toBeNull();
   });
 
   it("derives a visible discovery cell on the guaranteed route before the gate", () => {
@@ -120,5 +170,57 @@ describe("deterministic Embercross world", () => {
         clip: "idle",
         facingBucket: "south",
       });
+
+    const cityPlacements = buildSceneryLayout(state.map);
+    for (const placement of cityPlacements) {
+      const scene = manifest.sceneSprites.find(
+        ({ objectId }) => objectId === placement.id,
+      )!;
+      expect(scene.spriteId, placement.id).toBe(
+        `scenery:${placement.kind}:${placement.name}`,
+      );
+      const footprints = [
+        ...(placement.collision ? [placement.collision] : []),
+        ...(placement.collisionParts ?? []),
+      ];
+      const projectedUnit = (TILE_PIXELS / UNITS_PER_TILE) * 0.9;
+      for (const footprint of footprints) {
+        const centerX =
+          scene.screenAnchor.x +
+          (footprint.center.x - placement.worldAnchor.x) * projectedUnit;
+        const centerY =
+          scene.screenAnchor.y +
+          (footprint.center.y - placement.worldAnchor.y) * projectedUnit;
+        expect(
+          centerX - footprint.halfWidth * projectedUnit,
+          `${placement.id} collision left`,
+        ).toBeGreaterThanOrEqual(scene.destinationRect.x - 0.51);
+        expect(
+          centerX + footprint.halfWidth * projectedUnit,
+          `${placement.id} collision right`,
+        ).toBeLessThanOrEqual(
+          scene.destinationRect.x + scene.destinationRect.width + 0.51,
+        );
+        expect(
+          centerY - footprint.halfHeight * projectedUnit,
+          `${placement.id} collision top`,
+        ).toBeGreaterThanOrEqual(scene.destinationRect.y - 0.51);
+        expect(
+          centerY + footprint.halfHeight * projectedUnit,
+          `${placement.id} collision bottom`,
+        ).toBeLessThanOrEqual(
+          scene.destinationRect.y + scene.destinationRect.height + 0.51,
+        );
+      }
+    }
+    const gateScene = manifest.sceneSprites.find(
+      ({ objectId }) => objectId === "gate:embercross:south",
+    );
+    expect(gateScene?.collisionParts).toHaveLength(1);
+    expect(
+      manifest.sceneSprites.some(
+        ({ objectId }) => objectId === "exit:rift-gate",
+      ),
+    ).toBe(false);
   });
 });

@@ -93,6 +93,13 @@ export interface SceneSpriteV2 extends SpriteReferenceV2 {
     halfWidth: number;
     halfHeight: number;
   } | null;
+  collisionParts?: Array<{
+    mode: "solid";
+    shape: "ellipse";
+    worldCenter: Vec2;
+    halfWidth: number;
+    halfHeight: number;
+  }>;
 }
 
 export interface WorldUiCallV1 {
@@ -668,8 +675,21 @@ function buildSceneSprites(
             halfWidth: 0,
             halfHeight: 0,
           },
+      ...(placement.collisionParts?.length
+        ? {
+            collisionParts: placement.collisionParts.map((part) => ({
+              mode: "solid" as const,
+              shape: part.shape,
+              worldCenter: { ...part.center },
+              halfWidth: part.halfWidth,
+              halfHeight: part.halfHeight,
+            })),
+          }
+        : {}),
     });
   }
+
+  if (isEmbercrossMap(state.map)) return scene;
 
   const exitTile = state.map.exit;
   const exitWorld = {
