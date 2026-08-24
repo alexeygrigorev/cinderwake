@@ -348,7 +348,27 @@ describe("sprite atlas quality contract", () => {
       prompt: null,
     });
     expect(record.reviewedAtlas).toMatchObject({
-      visualReviewStatus: "candidate-requires-current-independent-review",
+      visualReviewStatus: "accepted-exact-hash-set",
+    });
+    expect(record.independentVisualReview).toMatchObject({
+      status: "ACCEPT",
+      reviewer: "/root/city_ui_exact_review",
+      sourceCommit: "0c391469ff63e27213ce69efd94d52d04f19b0b9",
+      acceptedAssets: {
+        atlas:
+          "2d305dedcfad07b466f870f793d16dd4fb6572d7ace24d0aa988b79fa47bbce6",
+        panel:
+          "99fb489628613834d05fba82355f26d4562e3c79726b6c4db27e404c99f50d79",
+        button:
+          "2b28d691de6997d7773befa7a54ece4ab2b9875fc8d966eeb6ccfd147ab7b6fa",
+        field:
+          "797f591cb94ed2107d00851c47be85dc48fca8e9a5955055d1fb33e8e727a22c",
+      },
+      snapshotHashSet: {
+        count: 32,
+        sha256:
+          "c31e10f70f50a424a45b17ece9b2868be3cd3052accdada3d54775508d29059c",
+      },
     });
   });
 

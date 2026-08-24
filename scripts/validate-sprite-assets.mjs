@@ -585,7 +585,17 @@ if (
   uiGenerationRecord.reviewedAtlas.sha256 !== uiAtlasSha256 ||
   uiGenerationRecord.generation.status !== "historical-record-unavailable" ||
   uiGenerationRecord.reviewedAtlas.visualReviewStatus !==
-    "candidate-requires-current-independent-review"
+    "accepted-exact-hash-set" ||
+  uiGenerationRecord.independentVisualReview?.status !== "ACCEPT" ||
+  uiGenerationRecord.independentVisualReview?.reviewer !==
+    "/root/city_ui_exact_review" ||
+  uiGenerationRecord.independentVisualReview?.sourceCommit !==
+    "0c391469ff63e27213ce69efd94d52d04f19b0b9" ||
+  uiGenerationRecord.independentVisualReview?.snapshotHashSet?.count !== 32 ||
+  uiGenerationRecord.independentVisualReview?.snapshotHashSet?.sha256 !==
+    "c31e10f70f50a424a45b17ece9b2868be3cd3052accdada3d54775508d29059c" ||
+  uiGenerationRecord.independentVisualReview?.acceptedAssets?.atlas !==
+    uiAtlasSha256
 )
   throw new Error("UI component raw-source generation/review record drifted");
 for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
@@ -606,7 +616,11 @@ for (const [fileName, { sourceRect }] of Object.entries(uiComponentContracts)) {
   );
   if (
     recordedComponent?.sha256 !== evidence.sha256 ||
-    JSON.stringify(recordedComponent?.sourceRect) !== JSON.stringify(sourceRect)
+    JSON.stringify(recordedComponent?.sourceRect) !==
+      JSON.stringify(sourceRect) ||
+    uiGenerationRecord.independentVisualReview?.acceptedAssets?.[
+      fileName.replace("ui-service-", "").replace(".png", "")
+    ] !== evidence.sha256
   )
     throw new Error(`${fileName} generation record differs from the manifest`);
 }
