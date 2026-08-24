@@ -246,6 +246,76 @@
         "status": "rejected",
         "notes": "Deterministic preparation repairs the 4x4 cut, keyed background, shared cell scale, and foot anchors. The primary idle/walk metrics are useful calibration evidence, but raster preparation cannot repair style, camera, or authored action semantics."
       }
+    },
+    {
+      "id": "ashfang-primary-v3-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v3.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v3.png",
+      "candidateSha256": "930847ec45a1c17de10084058763d6f22a6ad8ec80649e4c9634df20c2c95afa",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        },
+        {
+          "file": "art/source/actors/stonekin-source.png",
+          "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+        },
+        {
+          "file": "art/source/actors/hexer-source.png",
+          "sha256": "7b36e04ae7e7ef09399aee9bb1172c11b4130ab8d9c24e52dbf3878c085acbf7"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-3129a964-572e-4c1d-9bef-134a1ae4c596.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The raw background is again a varying hot-pink field rather than a literal flat #ff00ff key."
+          },
+          {
+            "kind": "visual",
+            "code": "style-material-mismatch",
+            "detail": "The creature remains glossy and outline-heavy instead of matching the restrained painted Stonekin and Hexer references."
+          },
+          {
+            "kind": "visual",
+            "code": "idle-semantic-mismatch",
+            "detail": "Idle cells 2 and 3 become large open-mouth attack poses instead of subtle planted breathing phases."
+          },
+          {
+            "kind": "visual",
+            "code": "airborne-locomotion-row",
+            "detail": "All four requested walk cells are airborne leaps with no alternating planted support or stable ground contact."
+          },
+          {
+            "kind": "visual",
+            "code": "oversized-detached-ability-effects",
+            "detail": "The ability row contains broad fire trails, eruptions, and detached energy despite the explicit attached-contact-only envelope."
+          }
+        ],
+        "notes": "The higher torso does not compensate for wholesale clip-semantic failure. Visual review rejected this trial before production packing; it is retained so the candidate calibrator can demonstrate which mechanical defects it detects and which semantic/style defects still require review."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v3.png --output art/generation/prepared/ashfang-primary-trial-v3.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v3.png",
+        "sha256": "ec88df2523d01a6ce26de911c9bbf09cc80245ce720add426815b13c05268132",
+        "status": "rejected",
+        "notes": "Preparation repairs the 4x4 cut, key, and shared anchors, but cannot invent planted locomotion, remove baked effects without changing art, or repair style and clip semantics."
+      }
     }
   ]
 }
