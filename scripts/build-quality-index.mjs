@@ -68,7 +68,7 @@ const [
   readJson("quality-results/generation-pipeline/report.json"),
   readJson("quality-results/environment-composition/report.json"),
   readJson(
-    "quality-results/actor-candidate-calibration/ashfang-primary-trial-v2/report.json",
+    "quality-results/actor-candidate-calibration/ashfang-primary-trial-v7/report.json",
   ),
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
@@ -169,11 +169,11 @@ const reports = [
   {
     id: "candidate",
     title: "Ashfang candidate calibration",
-    href: "actor-candidate-calibration/ashfang-primary-trial-v2/",
+    href: "actor-candidate-calibration/ashfang-primary-trial-v7/",
     status:
       candidate?.recordedArtVerdict === "rejected" ? "rejected" : "missing",
     summary: candidate
-      ? "Mechanical cut, scale, grounding, and loop checks pass, while the independent art verdict still rejects production promotion."
+      ? `V7 passes mechanical cut, scale, grounding, idle/walk envelope, and loop checks with ${candidate.negativeControls.filter(({ detected }) => detected).length}/${candidate.negativeControls.length} fixture-bound mutations; independent review still rejects its walk support cycle and production promotion.`
       : "No actor-candidate calibration report was generated.",
   },
   {

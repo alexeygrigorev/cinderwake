@@ -579,29 +579,35 @@ async function oversizedCell(source, index) {
     .toBuffer();
 }
 
-async function negativeControls(options, source) {
+async function negativeControls(options) {
+  const fixture = await keyedSource(defaultCandidate, { requireExact: true });
+  const baseline = await assessSource(options, fixture);
+  if (!baseline.pass)
+    throw new Error(
+      "Actor candidate rejection controls require the mechanically green v2 fixture",
+    );
   const mutations = [
     {
       id: "cut-cell-at-left-edge",
       expectedViolation: "safe-ink-bounds",
       source: await replaceCell(
-        source,
+        fixture,
         0,
-        await translatedCell(source, 0, -40, 0),
+        await translatedCell(fixture, 0, -40, 0),
       ),
     },
     {
       id: "oversized-action-shrinks-rig",
       expectedViolation: "idle-minimum-height",
-      source: await replaceCell(source, 15, await oversizedCell(source, 15)),
+      source: await replaceCell(fixture, 15, await oversizedCell(fixture, 15)),
     },
     {
       id: "walk-frame-jumps-off-ground",
       expectedViolation: "ground-anchor",
       source: await replaceCell(
-        source,
+        fixture,
         6,
-        await translatedCell(source, 6, 0, -24),
+        await translatedCell(fixture, 6, 0, -24),
       ),
     },
   ];
@@ -611,7 +617,10 @@ async function negativeControls(options, source) {
       return {
         id,
         expectedViolation,
+        fixture: path.relative(root, defaultCandidate),
+        fixtureBaselinePass: baseline.pass,
         detected:
+          baseline.pass &&
           !assessment.pass &&
           assessment.violations.some(({ code }) => code === expectedViolation),
         violations: assessment.violations.map(({ code }) => code),
@@ -923,7 +932,7 @@ async function run() {
     recordedVerdict(options),
   ]);
   const assessment = await assessSource(options, source);
-  const controls = await negativeControls(options, source);
+  const controls = await negativeControls(options);
   const candidateAtlas = await buildCandidateAtlas(options);
   const runtime = await runtimeEvidence(candidateAtlas, options.actorId);
   const controlsPass = controls.every(({ detected }) => detected);

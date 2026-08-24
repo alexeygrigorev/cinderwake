@@ -478,6 +478,80 @@
         "status": "rejected",
         "notes": "Deterministic keying, decontamination, shared scaling, and fixed-foot placement are reproducible. Grounding, safe bounds, aspect, loop continuity, the 5.5 px idle-walk height delta, and all three mutations pass, but the 74.5 px idle median remains below the unchanged 76 px minimum. The candidate cannot enter production or seed later families."
       }
+    },
+    {
+      "id": "ashfang-primary-v7-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v7.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v7.png",
+      "candidateSha256": "9975ba5ca66e4f66ce22213bfcd8f86261a21937cf376667f03323bf93a70587",
+      "referenceFiles": [
+        {
+          "file": "art/generation/candidates/ashfang-primary-trial-v6.png",
+          "sha256": "641234e9b83467e63a95902476c40086b7093b4e23e90c1c6b0a4eb946b5c0fa"
+        },
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-087c6bcb-1d03-428b-be26-5943528417f2.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background contains a graded hot-pink field rather than the requested literal flat #ff00ff key, so raw source ingress remains rejected."
+          },
+          {
+            "kind": "visual",
+            "code": "walk-support-cycle-ambiguous",
+            "detail": "Prepared cells 4-7 retain essentially the same lower-center support paw and lifted far-rear limb instead of alternating diagonal supports, so the bank reads as foot-skating or texture morphing rather than locomotion."
+          },
+          {
+            "kind": "visual",
+            "code": "walk-limb-readability",
+            "detail": "Far-side paws merge into the torso at runtime scale and do not expose a trackable four-limb gait or convincing weight transfer."
+          }
+        ],
+        "notes": "The raw v7 edit is quarantined. The prepared candidate passes all unchanged geometry and loop mechanics, and independent review accepts its living-predator silhouette, elevated camera, identity, four idle phases, compact attack, and restrained ability. The same review rejects cells 4-7 for persistent support ownership and merged far-side limbs. Production and later-family generation remain prohibited until a row-two-only replacement passes both gates."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v7.png --output art/generation/prepared/ashfang-primary-trial-v7.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v7.png",
+        "sha256": "bc0d6bd4c32e9d295361bdfe1e450162f3ab56fc89cef4ffa0615ce2f4de4acf",
+        "status": "accepted-for-pipeline-proof",
+        "notes": "Deterministic keying, decontamination, shared scaling, and fixed-foot placement produced a reproducible 1024x1024 candidate. This status is provisional mechanical ingress only and cannot authorize production without separate unchanged calibration and visual gates."
+      },
+      "visualReview": {
+        "verdict": "REJECT",
+        "reviewer": "/root/review_ashfang_v7",
+        "reviewedPreparedSha256": "bc0d6bd4c32e9d295361bdfe1e450162f3ab56fc89cef4ffa0615ce2f4de4acf",
+        "acceptedAxes": [
+          "living-predator silhouette",
+          "elevated camera coherence",
+          "identity and runtime material compatibility",
+          "idle cells 0-3",
+          "grounded attack cells 8-11",
+          "restrained ability cells 12-15"
+        ],
+        "rejectedAxes": [
+          "alternating support and weight transfer in walk cells 4-7",
+          "four-limb readability in walk cells 4-7",
+          "fitness to seed later actor families"
+        ]
+      }
     }
   ]
 }
