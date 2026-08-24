@@ -9,6 +9,7 @@ import { isFloor, tileCenter } from "./dungeon";
 import { navigationDirection, navigationSegmentWalkable } from "./navigation";
 import { createRng, randomFloat } from "./rng";
 import {
+  buildSceneryLayout,
   sceneryCollisions,
   type SceneryCollisionFootprint,
 } from "./sceneryLayout";
@@ -92,13 +93,129 @@ function moveActor(
   return { ...position };
 }
 
+interface MovementObstacleHit {
+  targetId: string;
+  detail: string;
+  position: Vec2;
+  time: number;
+}
+
+function playerMovementObstacle(
+  state: GameState,
+  from: Vec2,
+  to: Vec2,
+  radius: number,
+): MovementObstacleHit | null {
+  let earliest: MovementObstacleHit | null = null;
+  const consider = (
+    time: number | null,
+    targetId: string,
+    detail: string,
+  ): void => {
+    if (time === null || (earliest && earliest.time <= time)) return;
+    earliest = {
+      targetId,
+      detail,
+      time,
+      position: {
+        x: Math.round(from.x + (to.x - from.x) * time),
+        y: Math.round(from.y + (to.y - from.y) * time),
+      },
+    };
+  };
+
+  const minimumTileX = Math.max(
+    -1,
+    Math.floor((Math.min(from.x, to.x) - radius) / UNITS_PER_TILE),
+  );
+  const maximumTileX = Math.min(
+    state.map.width,
+    Math.floor((Math.max(from.x, to.x) + radius) / UNITS_PER_TILE),
+  );
+  const minimumTileY = Math.max(
+    -1,
+    Math.floor((Math.min(from.y, to.y) - radius) / UNITS_PER_TILE),
+  );
+  const maximumTileY = Math.min(
+    state.map.height,
+    Math.floor((Math.max(from.y, to.y) + radius) / UNITS_PER_TILE),
+  );
+  for (let tileY = minimumTileY; tileY <= maximumTileY; tileY += 1) {
+    for (let tileX = minimumTileX; tileX <= maximumTileX; tileX += 1) {
+      if (isFloor(state.map, tileX, tileY)) continue;
+      consider(
+        segmentBoxHitTime(
+          from,
+          to,
+          {
+            x: tileX * UNITS_PER_TILE - radius,
+            y: tileY * UNITS_PER_TILE - radius,
+          },
+          {
+            x: (tileX + 1) * UNITS_PER_TILE + radius,
+            y: (tileY + 1) * UNITS_PER_TILE + radius,
+          },
+        ),
+        `wall:${tileX}:${tileY}`,
+        "stone wall",
+      );
+    }
+  }
+  for (const placement of buildSceneryLayout(state.map)) {
+    if (!placement.collision) continue;
+    consider(
+      segmentEllipseHitTime(from, to, placement.collision, radius),
+      placement.id,
+      placement.name.replaceAll("-", " "),
+    );
+  }
+  return earliest;
+}
+
+function recordBlockedMovement(
+  state: GameState,
+  obstacle: MovementObstacleHit,
+): void {
+  let previous: GameEvent | undefined;
+  for (let index = state.eventLog.length - 1; index >= 0; index -= 1) {
+    const event = state.eventLog[index]!;
+    if (event.type === "movement_blocked") {
+      previous = event;
+      break;
+    }
+  }
+  if (
+    previous &&
+    previous.targetId === obstacle.targetId &&
+    state.tick - previous.tick < 18
+  )
+    return;
+  state.effects.push({
+    id: `effect:${state.nextEntityId}`,
+    kind: "impact",
+    position: { ...obstacle.position },
+    color: "#f2a65a",
+    startedAtTick: state.tick,
+    expiresAtTick: state.tick + 12,
+    radius: 520,
+  });
+  state.nextEntityId += 1;
+  emit(state, {
+    type: "movement_blocked",
+    sourceId: "player",
+    targetId: obstacle.targetId,
+    detail: obstacle.detail,
+  });
+}
+
 /**
  * Extra world-space breathing room claimed by each living monster. Collision
  * radii describe feet/contact only; this semantic padding keeps the much
  * broader painted bodies readable without coupling simulation to sprite or
- * manifest dimensions. 740 units is a little under one floor tile per side.
+ * manifest dimensions. 840 units is a little under one floor tile per side
+ * and preserves the visual gap after removing Ashfang's vertical squashing.
  */
-export const MONSTER_PERSONAL_SPACE_PADDING = 740;
+export const MONSTER_PERSONAL_SPACE_PADDING = 840;
 // Combatants compress their formation near attack range so a crowd can still
 // surround and reach its target, while retaining substantially more space than
 // bare collision discs. This remains gameplay semantics, not sprite geometry.
@@ -639,6 +756,10 @@ function updatePlayer(
   if (input.aim) player.facing = normalized(player.position, input.aim);
   else if (moveX !== 0 || moveY !== 0)
     player.facing = normalized({ x: 0, y: 0 }, { x: moveX, y: moveY });
+  const attemptedPosition = {
+    x: player.position.x + moveX,
+    y: player.position.y + moveY,
+  };
   player.position = moveActor(
     state,
     player.position,
@@ -646,6 +767,19 @@ function updatePlayer(
     player.radius,
     scenery,
   );
+  if (
+    (moveX !== 0 || moveY !== 0) &&
+    player.position.x === player.previousPosition.x &&
+    player.position.y === player.previousPosition.y
+  ) {
+    const obstacle = playerMovementObstacle(
+      state,
+      player.previousPosition,
+      attemptedPosition,
+      player.radius,
+    );
+    if (obstacle) recordBlockedMovement(state, obstacle);
+  }
   player.velocity = {
     x: player.position.x - player.previousPosition.x,
     y: player.position.y - player.previousPosition.y,

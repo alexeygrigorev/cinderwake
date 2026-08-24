@@ -143,6 +143,7 @@ export type GameEventType =
   | "loot_picked"
   | "player_damaged"
   | "player_died"
+  | "movement_blocked"
   | "exit_unlocked"
   | "run_won";
 

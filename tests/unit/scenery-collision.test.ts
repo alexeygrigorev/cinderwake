@@ -210,6 +210,54 @@ describe("deterministic scenery collision", () => {
     );
   });
 
+  it("names a blocked object and renders one rate-limited impact marker", () => {
+    const state = worldFromScenario(
+      createRunScenario("blocked-movement-feedback", "vanguard"),
+    );
+    state.monsters = [];
+    state.settings.ai = false;
+    const forge = buildSceneryLayout(state.map).find(
+      ({ id }) => id === "structure:0:forge",
+    )!;
+    const collision = forge.collision!;
+    state.player.position = {
+      x: collision.center.x,
+      y: collision.center.y + collision.halfHeight + state.player.radius + 1,
+    };
+    state.player.previousPosition = { ...state.player.position };
+
+    stepGame(state, { ...EMPTY_INPUT, moveY: -1 });
+    const event = state.eventLog.find(
+      ({ type }) => type === "movement_blocked",
+    )!;
+    expect(event).toMatchObject({
+      type: "movement_blocked",
+      sourceId: "player",
+      targetId: forge.id,
+      detail: "forge workshop",
+    });
+    expect(state.effects).toHaveLength(1);
+    expect(state.effects[0]).toMatchObject({
+      kind: "impact",
+      color: "#f2a65a",
+    });
+    const marker = buildRenderManifest(state, {
+      x: (state.player.position.x / UNITS_PER_TILE) * 48,
+      y: (state.player.position.y / UNITS_PER_TILE) * 48,
+      zoom: 0.9,
+    }).drawCalls.find(({ entityId }) => entityId === state.effects[0]!.id);
+    expect(marker).toMatchObject({
+      spriteId: "effect:impact",
+      visible: true,
+    });
+
+    for (let tick = 0; tick < 10; tick += 1)
+      stepGame(state, { ...EMPTY_INPUT, moveY: -1 });
+    expect(
+      state.eventLog.filter(({ type }) => type === "movement_blocked"),
+    ).toHaveLength(1);
+  });
+
   it.each(["vanguard", "ranger", "arcanist"] as const)(
     "cannot tunnel a high-speed restored %s through a solid object",
     (classId) => {

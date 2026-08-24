@@ -84,6 +84,27 @@ test("real keyboard movement stops at the manifested v2 forge footprint and slid
   ).toBe(true);
   const blocked = approach.at(-1)!;
   expect(blocked.y).toBeGreaterThan(collision.center.y);
+  const feedback = await page.evaluate(() => ({
+    event: [...window.__GAME_TEST__!.snapshot().eventLog]
+      .reverse()
+      .find(({ type }) => type === "movement_blocked"),
+    effect: window
+      .__GAME_TEST__!.renderManifest()
+      .drawCalls.find(
+        ({ type, geometryId }) =>
+          type === "effect" && geometryId === "effect:impact",
+      ),
+    log: document
+      .querySelector<HTMLElement>("#log .sprite-log")
+      ?.getAttribute("aria-label"),
+  }));
+  expect(feedback.event).toMatchObject({
+    sourceId: "player",
+    targetId: building.id,
+    detail: "forge workshop",
+  });
+  expect(feedback.effect).toMatchObject({ visible: true });
+  expect(feedback.log).toContain("Blocked: forge workshop");
 
   await page.keyboard.down("d");
   const slid = await page.evaluate(() => {

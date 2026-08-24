@@ -256,7 +256,9 @@ function updateHud(state: GameState): void {
       ? events
           .map(
             (event) =>
-              event.type.replaceAll("_", " ") +
+              (event.type === "movement_blocked"
+                ? `Blocked: ${event.detail ?? event.targetId ?? "obstacle"}`
+                : event.type.replaceAll("_", " ")) +
               (event.amount ? ` +${event.amount}` : ""),
           )
           .join(" / ")
