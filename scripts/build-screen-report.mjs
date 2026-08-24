@@ -93,22 +93,30 @@ try {
 } catch (error) {
   if (error?.code !== "ENOENT") throw error;
 }
-const reviewMatches = Boolean(
+const reviewHashesMatch = Boolean(
   review &&
   review.schemaVersion === 1 &&
   review.project === contract.project &&
-  review.verdict === "ACCEPT" &&
   review.contractSha256 === contractSha256 &&
   review.snapshotSetSha256 === snapshotSetSha256,
 );
-const status = reviewMatches ? "accepted" : "candidate";
+const status = !reviewHashesMatch
+  ? "candidate"
+  : review.verdict === "ACCEPT"
+    ? "accepted"
+    : review.verdict === "REJECT"
+      ? "rejected"
+      : "candidate";
 const report = {
   schemaVersion: 1,
   project: contract.project,
   status,
-  note: reviewMatches
-    ? "Machine checks and the hash-bound independent visual review accepted this exact screen set."
-    : "Machine checks passed; screenshot candidates still require a matching independent visual review.",
+  note:
+    status === "accepted"
+      ? "Machine checks and the hash-bound independent visual review accepted this exact screen set."
+      : status === "rejected"
+        ? "Machine checks passed, but the hash-bound independent visual review rejected this exact screen set."
+        : "Machine checks passed; screenshot candidates still require a matching independent visual review.",
   contractSha256,
   snapshotSetSha256,
   sourceCommit,
@@ -116,7 +124,7 @@ const report = {
   review: review
     ? {
         ...review,
-        hashesMatch: reviewMatches,
+        hashesMatch: reviewHashesMatch,
       }
     : null,
   entries,
@@ -162,9 +170,9 @@ const html = `<!doctype html>
     </style>
   </head>
   <body>
-    <div class="status">${reviewMatches ? "Accepted · independent review matched" : "Candidate · never auto-promoted"}</div>
+    <div class="status">${status === "accepted" ? "Accepted · independent review matched" : status === "rejected" ? "Rejected · independent review matched" : "Candidate · never auto-promoted"}</div>
     <h1>Screen acceptance matrix</h1>
-    <p>These are the exact PNG candidates exercised by the public-route screen contract: four viewport/input profiles, every hero selection, and initial gameplay. Geometry, decode, hit testing, console errors, stage coverage, authored character landmarks, real-canvas terrain pixels, and paired assessor mutations pass before this gallery is produced. ${reviewMatches ? "An independent reviewer accepted these exact image and contract hashes at actual play size." : "Appearance still requires a matching independent review at actual size."}</p>
+    <p>These are the exact PNG candidates exercised by the public-route screen contract: four viewport/input profiles, every hero selection, and initial gameplay. Geometry, decode, hit testing, console errors, stage coverage, authored character landmarks, real-canvas terrain pixels, and paired assessor mutations pass before this gallery is produced. ${status === "accepted" ? "An independent reviewer accepted these exact image and contract hashes at actual play size." : status === "rejected" ? "An independent reviewer rejected these exact image and contract hashes at actual play size; machine success cannot promote them." : "Appearance still requires a matching independent review at actual size."}</p>
     <p>Commit <code>${escapeHtml(sourceCommit)}</code>${sourceStatus ? " · dirty source was bundled by the local generator" : " · clean CI source"} · contract <code>${report.contractSha256.slice(0, 16)}</code> · screen set <code>${snapshotSetSha256.slice(0, 16)}</code>${review ? ' · <a href="review.json">review record</a>' : ""}</p>
     <main>${cards}
     </main>
