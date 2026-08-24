@@ -95,6 +95,12 @@ accepts the diagonal elevated composition and limits use to topology/framing;
 neither check licenses its diagram colors, limb proportions, or pixels as game
 art.
 
+V7 proves that a reviewed guide is useful evidence but not strong conditioning:
+the model retains direction and living posture while dropping the fourth paw,
+compact envelope, and elevated camera when a production side-view reference
+competes with it. The pipeline therefore splits structural blockout generation
+from surface-identity generation, with a visual gate between them.
+
 ## Consequence
 
 A new character can use the same manifest and fixed rig without new runtime

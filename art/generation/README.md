@@ -229,6 +229,15 @@ corridors are not anatomy. V7 may use it only for topology, camera, framing,
 and support placement; accepted cast images remain the style and identity
 authority.
 
+Guide-driven Ashfang east-idle master v7 transfers head/tail direction and a
+raised living stance, but not the guide's critical envelope or support topology.
+Its 784 × 483 normalized ink becomes 98 × 60 runtime ink at aspect 1.6333 and
+reproduces exact `runtime-height` plus `runtime-aspect` rejection with 5/5
+controls. Independent review sees only three paws and cannot trace a fourth
+limb chain or diagonal support pair. V8 therefore separates anatomy topology
+from identity styling instead of allowing a side-view species reference to
+override both in one generation step.
+
 ## Mobile selection scenes
 
 Selection key art is a separate raster contract from animated actor sheets. It may use a straight-on cinematic camera and a composed environment because it never supplies gameplay frames, anchors, or collisions. The shared requirements are still original Cinderwake identity, charcoal/ember/cyan palette, realistic anatomy, readable equipment, and prompt/reference provenance.

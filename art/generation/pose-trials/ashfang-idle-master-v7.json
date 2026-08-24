@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v7-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v7.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v7.png",
+  "candidateSha256": "6e769ea6b6d0696dd227e13ed940d66285b65f7c54a265c75a9248cbbebf6591",
+  "referenceFiles": [
+    {
+      "file": "art/generation/guides/quadruped-pose-layout.png",
+      "role": "exact-hash accepted topology, elevated composition, limb corridors, framing, and baseline only",
+      "sha256": "2310bccbe0cd7c336d0beae1e8e1abbad7f8e8a2f99923b7e4aba5b683941a91"
+    },
+    {
+      "file": "art/source/actors/ashfang-source.png",
+      "role": "production species identity and broad proportions only",
+      "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated camera, simplified matte paint, runtime density, palette, light, and world scale",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-497da6a3-5eaa-4fe9-a2e1-47892fc52e83.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one living east-facing Ashfang-like creature",
+      "hooked tail, broad body, and head direction follow the guide topology",
+      "no sprite sheet, text, UI, architecture, prop, or attack effect",
+      "support remains centered after deterministic preparation"
+    ],
+    "failed": [
+      {
+        "code": "guide-envelope-not-followed",
+        "detail": "The keyed source is 784x483 normalized pixels rather than the guide's compact 636x604 envelope, producing another wide low runtime body."
+      },
+      {
+        "code": "fourth-paw-occluded",
+        "detail": "Only three paw terminals are clearly visible; the far hind chain and paw merge into the rear body mass."
+      },
+      {
+        "code": "limb-corridors-not-followed",
+        "detail": "The guide's four separated nonparallel corridors collapse into overlapping upper limbs beneath the belly."
+      },
+      {
+        "code": "camera-side-dominant",
+        "detail": "The production side view dominates the guide and the long head/flank remain too lateral for an approximately 55-degree camera."
+      },
+      {
+        "code": "specular-detail-persistent",
+        "detail": "Bright plate rims, dense scales, and glossy concept-art rendering remain incompatible with the matte cast."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta background remains graded rather than flat literal #ff00ff."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "V7 uses the accepted guide but allows production side-view identity art to override its envelope, four supports, elevated camera, and broad matte simplification."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v7.png --output art/generation/prepared/ashfang-idle-master-v7.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v7.png",
+    "sha256": "1af009b16bad9e24f7eac2cbbf08ba713fbd914eeef8a2d6281ad271a6e57362",
+    "status": "rejected",
+    "notes": "Canonical 0.25 scale turns 784x483 normalized ink into 196x121 placement and 195x120 visible ink. Visible bottom and alpha-weighted support are centered, but preparation cannot restore authored height or the missing fourth limb corridor."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_idle_master_v7",
+    "reviewedRawSha256": "6e769ea6b6d0696dd227e13ed940d66285b65f7c54a265c75a9248cbbebf6591",
+    "reviewedPreparedSha256": "1af009b16bad9e24f7eac2cbbf08ba713fbd914eeef8a2d6281ad271a6e57362",
+    "reviewedPoseEvidenceSha256": "34a73f83e3fe476384abfef55364a3052992315741d67007d615975705488e42",
+    "reviewedRuntimeComparisonSha256": "74c3c3d4123a32038450cf5b27b7a4c858bb51cf615c5e537bab2d27974e26e4",
+    "acceptedAxes": [
+      "raised living weight-bearing posture",
+      "clear Ashfang identity and east-facing direction",
+      "flat magenta background without floor, scenery, or detached effects"
+    ],
+    "rejectedAxes": [
+      "guide compact envelope, separated limb corridors, and perspective footprint",
+      "approximately 55-degree elevated camera",
+      "common cast mass and runtime scale",
+      "four connected limb chains and paws",
+      "explicit diagonal support ownership",
+      "matte simplified cast-compatible style",
+      "runtime limb-topology readability"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-aspect", "runtime-height"]
+  },
+  "recommendation": "Do not generate walk phases. Split the next iteration: first generate and review a simple guide-driven anatomy blockout with four short separated limb chains and no detailed armor; only after its topology passes should a separate edit add Ashfang surface identity without changing the accepted silhouette."
+}
