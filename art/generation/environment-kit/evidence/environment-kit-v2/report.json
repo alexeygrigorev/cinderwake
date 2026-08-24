@@ -1,0 +1,590 @@
+{
+  "schemaVersion": 2,
+  "id": "environment-kit-v2",
+  "status": "prepared-ingress-pass-quarantined",
+  "promotionApproved": false,
+  "sources": {
+    "record": "art/generation/environment-kit-v2.json",
+    "generation": {
+      "tool": "OpenAI built-in image generation tool",
+      "artifactId": "exec-9d1dcb65-4171-4de3-b27d-af282ec19daa",
+      "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+      "calls": 1,
+      "prompt": {
+        "file": "art/generation/prompts/environment-kit-v2.txt",
+        "sha256": "03ffad63d1587d3b68fad263202b181af51502fdf877965eeb2c76e48d73993d",
+        "frozenAtCommit": "53f1febde56978e3c53f57259755e4b4ac31e4ad"
+      },
+      "references": [
+        {
+          "file": "art/generation/environment-kit/candidates/environment-kit-v1.png",
+          "role": "rejected v1 composition, camera, material, and coordination reference only",
+          "sha256": "def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e"
+        }
+      ]
+    },
+    "raw": {
+      "file": "art/generation/environment-kit/candidates/environment-kit-v2.png",
+      "sha256": "b8954bf785d6da2057744c11b1c8e47084140f9458229c4cc739fe6576f2a47e"
+    },
+    "prepared": {
+      "file": "art/generation/environment-kit/prepared/environment-kit-v2.png",
+      "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210"
+    },
+    "floorPreview": {
+      "file": "public/assets/sprites/environment-floor.png",
+      "sha256": "dc55eeeb0764be61d3c960f0b38c05b35d93286f920f891fae68715850e3a112"
+    }
+  },
+  "deterministicPreparation": { "pass": true, "reproductions": 2 },
+  "rawAssessment": {
+    "pass": false,
+    "checks": [
+      { "id": "dimensions-3-to-2", "pass": true, "value": "1536x1024" },
+      { "id": "six-primary-components", "pass": true, "value": 6 },
+      { "id": "literal-chroma-background", "pass": false, "value": 0 },
+      {
+        "id": "deterministically-keyable-background",
+        "pass": true,
+        "value": 0.7083530426025391
+      },
+      { "id": "separated-component-boxes", "pass": true, "value": 67 },
+      { "id": "declared-cell-padding", "pass": false, "value": 0 }
+    ],
+    "literalKeyRatio": 0,
+    "keyableRatio": 0.7083530426025391,
+    "minimumPrimaryGap": 67,
+    "primaryComponents": [
+      {
+        "area": 113116,
+        "minX": 66,
+        "minY": 74,
+        "maxX": 486,
+        "maxY": 464,
+        "centroidX": 275.5893242335302,
+        "centroidY": 282.4377630043495
+      },
+      {
+        "area": 126092,
+        "minX": 554,
+        "minY": 75,
+        "maxX": 1004,
+        "maxY": 475,
+        "centroidX": 787.400548805634,
+        "centroidY": 292.0632633315357
+      },
+      {
+        "area": 26105,
+        "minX": 1203,
+        "minY": 70,
+        "maxX": 1378,
+        "maxY": 468,
+        "centroidX": 1291.617850986401,
+        "centroidY": 288.8987933346102
+      },
+      {
+        "area": 26164,
+        "minX": 168,
+        "minY": 541,
+        "maxX": 341,
+        "maxY": 937,
+        "centroidX": 254.0825944045253,
+        "centroidY": 754.4688885491515
+      },
+      {
+        "area": 74767,
+        "minX": 507,
+        "minY": 594,
+        "maxX": 898,
+        "maxY": 917,
+        "centroidX": 705.3050677437907,
+        "centroidY": 778.0219214359277
+      },
+      {
+        "area": 91933,
+        "minX": 1013,
+        "minY": 599,
+        "maxX": 1423,
+        "maxY": 939,
+        "centroidX": 1214.7535052701423,
+        "centroidY": 778.0443040040029
+      }
+    ],
+    "cellCompliance": [
+      {
+        "index": 0,
+        "bounds": [66, 74, 486, 464],
+        "margins": { "left": 66, "top": 74, "right": 25, "bottom": 47 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      },
+      {
+        "index": 1,
+        "bounds": [554, 75, 1004, 475],
+        "margins": { "left": 42, "top": 75, "right": 19, "bottom": 36 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      },
+      {
+        "index": 2,
+        "bounds": [1203, 70, 1378, 468],
+        "margins": { "left": 179, "top": 70, "right": 157, "bottom": 43 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      },
+      {
+        "index": 3,
+        "bounds": [168, 541, 341, 937],
+        "margins": { "left": 168, "top": 29, "right": 170, "bottom": 86 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      },
+      {
+        "index": 4,
+        "bounds": [507, 594, 898, 917],
+        "margins": { "left": -5, "top": 82, "right": 125, "bottom": 106 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      },
+      {
+        "index": 5,
+        "bounds": [1013, 599, 1423, 939],
+        "margins": { "left": -11, "top": 87, "right": 112, "bottom": 84 },
+        "requiredMargins": { "x": 62, "y": 62 },
+        "pass": false
+      }
+    ]
+  },
+  "strictRawVerdict": "REJECT",
+  "preparedAssessment": {
+    "pass": true,
+    "violations": [],
+    "matte": {
+      "pass": true,
+      "opaqueRatio": 0.2430877685546875,
+      "transparentRatio": 0.7569122314453125,
+      "transparentRgbContaminationRatio": 0,
+      "maximumOpaqueRatio": 0.55
+    },
+    "spill": {
+      "pass": true,
+      "ratio": 0.00000106669161083972,
+      "maximumRatio": 0.00015,
+      "dominance": 20
+    },
+    "opaqueRatio": 0.2430877685546875,
+    "commonBottomContacts": {
+      "expectedBaseline": 446,
+      "tolerance": 2,
+      "values": [446, 446, 447, 446, 448, 445],
+      "maximumDelta": 2,
+      "pass": true
+    },
+    "wall": {
+      "topology": "solid",
+      "pass": true,
+      "aperture": { "medianTransparentWidth": 0, "widthRatio": 0 },
+      "supportWidthRatio": 0.306282722513089,
+      "thresholds": {
+        "maximumCentralGapRatio": 0.08,
+        "minimumSupportWidthRatio": 0.28
+      }
+    },
+    "lanternPair": {
+      "indices": [2, 3],
+      "pass": true,
+      "heightDeltaRatio": 0.00261437908496732,
+      "widthDeltaRatio": 0.011627906976744186,
+      "supportDeltaRatio": 0.08928571428571429,
+      "thresholds": {
+        "maximumHeightDeltaRatio": 0.03,
+        "maximumWidthDeltaRatio": 0.08,
+        "maximumSupportDeltaRatio": 0.12
+      }
+    },
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-solid",
+        "runtimeHeight": 145,
+        "collision": "one continuous solid wall footprint with no passable center",
+        "bounds": {
+          "minX": 65,
+          "minY": 96,
+          "maxX": 446,
+          "maxY": 446,
+          "area": 91258
+        },
+        "margins": { "left": 65, "top": 96, "right": 65, "bottom": 65 },
+        "support": {
+          "band": 18,
+          "minX": 109,
+          "maxX": 225,
+          "pixels": 1070,
+          "width": 117,
+          "widthRatio": 0.306282722513089
+        },
+        "runtime": {
+          "width": 157.81,
+          "height": 145,
+          "silhouetteArea": 15574,
+          "supportWidth": 48.33,
+          "suggestedCollisionHalfWidth": 21.27
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "wall": {
+          "topology": "solid",
+          "pass": true,
+          "aperture": { "medianTransparentWidth": 0, "widthRatio": 0 },
+          "supportWidthRatio": 0.306282722513089,
+          "thresholds": {
+            "maximumCentralGapRatio": 0.08,
+            "minimumSupportWidthRatio": 0.28
+          }
+        },
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "runtimeHeight": 150,
+        "collision": "compact solid footprint beneath the workshop",
+        "bounds": {
+          "minX": 65,
+          "minY": 107,
+          "maxX": 447,
+          "maxY": 446,
+          "area": 90912
+        },
+        "margins": { "left": 65, "top": 107, "right": 64, "bottom": 65 },
+        "support": {
+          "band": 17,
+          "minX": 188,
+          "maxX": 346,
+          "pixels": 1394,
+          "width": 159,
+          "widthRatio": 0.4151436031331593
+        },
+        "runtime": {
+          "width": 168.97,
+          "height": 150,
+          "silhouetteArea": 17695,
+          "supportWidth": 70.15,
+          "suggestedCollisionHalfWidth": 30.86
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base",
+        "bounds": {
+          "minX": 169,
+          "minY": 65,
+          "maxX": 339,
+          "maxY": 447,
+          "area": 24619
+        },
+        "margins": { "left": 169, "top": 65, "right": 172, "bottom": 64 },
+        "support": {
+          "band": 20,
+          "minX": 177,
+          "maxX": 293,
+          "pixels": 1252,
+          "width": 117,
+          "widthRatio": 0.6842105263157895
+        },
+        "runtime": {
+          "width": 32.15,
+          "height": 72,
+          "silhouetteArea": 870,
+          "supportWidth": 21.99,
+          "suggestedCollisionHalfWidth": 9.68
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base",
+        "bounds": {
+          "minX": 170,
+          "minY": 65,
+          "maxX": 342,
+          "maxY": 446,
+          "area": 24906
+        },
+        "margins": { "left": 170, "top": 65, "right": 169, "bottom": 65 },
+        "support": {
+          "band": 20,
+          "minX": 175,
+          "maxX": 281,
+          "pixels": 1197,
+          "width": 107,
+          "widthRatio": 0.6184971098265896
+        },
+        "runtime": {
+          "width": 32.61,
+          "height": 72,
+          "silhouetteArea": 885,
+          "supportWidth": 20.17,
+          "suggestedCollisionHalfWidth": 8.87
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "runtimeHeight": 78,
+        "collision": "wide shallow solid ellipse beneath the barricade",
+        "bounds": {
+          "minX": 65,
+          "minY": 131,
+          "maxX": 449,
+          "maxY": 448,
+          "area": 71136
+        },
+        "margins": { "left": 65, "top": 131, "right": 62, "bottom": 63 },
+        "support": {
+          "band": 16,
+          "minX": 264,
+          "maxX": 377,
+          "pixels": 700,
+          "width": 114,
+          "widthRatio": 0.2961038961038961
+        },
+        "runtime": {
+          "width": 94.43,
+          "height": 78,
+          "silhouetteArea": 4280,
+          "supportWidth": 27.96,
+          "suggestedCollisionHalfWidth": 12.3
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "runtimeHeight": 95,
+        "collision": "medium solid ellipse beneath the connected workbench",
+        "bounds": {
+          "minX": 63,
+          "minY": 128,
+          "maxX": 446,
+          "maxY": 445,
+          "area": 79513
+        },
+        "margins": { "left": 63, "top": 128, "right": 65, "bottom": 66 },
+        "support": {
+          "band": 16,
+          "minX": 229,
+          "maxX": 343,
+          "pixels": 729,
+          "width": 115,
+          "widthRatio": 0.2994791666666667
+        },
+        "runtime": {
+          "width": 114.72,
+          "height": 95,
+          "silhouetteArea": 7096,
+          "supportWidth": 34.36,
+          "suggestedCollisionHalfWidth": 15.12
+        },
+        "violations": [],
+        "preparedIntegrationSafe": true,
+        "pass": true,
+        "integrationReasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      }
+    ]
+  },
+  "preparedIngress": {
+    "pass": true,
+    "verdict": "PASS",
+    "policy": "Strict raw failures are never hidden. Only declared matte/padding failures may become remediated warnings, and only when preparation is byte-reproducible, every prepared check passes, and every paired negative control is caught.",
+    "remediatedRawWarnings": [
+      "literal-chroma-background",
+      "declared-cell-padding"
+    ],
+    "unremediableRawFailures": [],
+    "preparedViolations": []
+  },
+  "negativeControls": [
+    {
+      "id": "opaque-gray-matte",
+      "expectedViolation": "opaque-matte",
+      "detected": true,
+      "violations": [
+        "opaque-matte",
+        "transparent-matte-coverage",
+        "transparent-rgb-spill",
+        "cell-0-unsafe-border",
+        "cell-0-foot-anchor-drift",
+        "cell-0-collision-footprint",
+        "cell-1-unsafe-border",
+        "cell-1-foot-anchor-drift",
+        "cell-1-collision-footprint",
+        "cell-2-unsafe-border",
+        "cell-2-foot-anchor-drift",
+        "cell-2-collision-footprint",
+        "cell-3-unsafe-border",
+        "cell-3-foot-anchor-drift",
+        "cell-3-collision-footprint",
+        "cell-4-unsafe-border",
+        "cell-4-foot-anchor-drift",
+        "cell-4-collision-footprint",
+        "cell-5-unsafe-border",
+        "cell-5-foot-anchor-drift",
+        "cell-5-collision-footprint"
+      ]
+    },
+    {
+      "id": "cell-border-bleed",
+      "expectedViolation": "cell-0-unsafe-border",
+      "detected": true,
+      "violations": ["cell-0-unsafe-border"]
+    },
+    {
+      "id": "cross-cell-bridge",
+      "expectedViolation": "cell-0-unsafe-border",
+      "detected": true,
+      "violations": [
+        "cell-0-unsafe-border",
+        "cell-1-unsafe-border",
+        "cell-0-solid-wall-continuity"
+      ]
+    },
+    {
+      "id": "floating-foot-anchor",
+      "expectedViolation": "cell-3-foot-anchor-drift",
+      "detected": true,
+      "violations": ["cell-3-unsafe-border", "cell-3-foot-anchor-drift"]
+    },
+    {
+      "id": "needle-contact-footprint",
+      "expectedViolation": "cell-4-collision-footprint",
+      "detected": true,
+      "violations": ["cell-4-collision-footprint", "cell-4-runtime-silhouette"]
+    },
+    {
+      "id": "lantern-scale-mismatch",
+      "expectedViolation": "shared-lantern-scale",
+      "detected": true,
+      "violations": ["shared-lantern-scale"]
+    },
+    {
+      "id": "solid-wall-center-gap",
+      "expectedViolation": "cell-0-solid-wall-continuity",
+      "detected": true,
+      "violations": ["cell-0-solid-wall-continuity"]
+    },
+    {
+      "id": "magenta-edge-spill",
+      "expectedViolation": "prepared-magenta-spill",
+      "detected": true,
+      "violations": ["prepared-magenta-spill"]
+    }
+  ],
+  "visualReview": {
+    "evaluation": "pending-independent-visual-review",
+    "productionApproved": false,
+    "strengths": [
+      "The corrected first cell is a broad continuous masonry wall without a doorway or implied walkable opening.",
+      "The six silhouettes share one elevated camera, weathered material family, restrained ember lighting, and compact grounded contacts.",
+      "Both lanterns are matching but non-identical designs at the same authored scale, and the deterministic runtime preview preserves equal logical height."
+    ],
+    "warnings": [
+      "The generated raw backdrop is tolerant near-magenta rather than literal #ff00ff and therefore fails the strict raw contract.",
+      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe."
+    ],
+    "decision": "Keep the candidate quarantined. Mechanical prepared-ingress success may make cells eligible for independent visual acceptance, but this record does not authorize runtime or production promotion."
+  },
+  "integration": {
+    "preparedSafeCells": 6,
+    "totalCells": 6,
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-solid",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "preparedIntegrationSafe": true,
+        "productionApproved": false,
+        "reasons": [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required"
+        ]
+      }
+    ],
+    "note": "Prepared-safe means eligible for independent visual acceptance only. This audit does not authorize production or runtime promotion."
+  }
+}

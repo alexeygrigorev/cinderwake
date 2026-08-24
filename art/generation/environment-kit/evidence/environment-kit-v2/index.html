@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Cinderwake environment-kit-v1 audit</title>
+    <title>Cinderwake environment-kit-v2 audit</title>
     <style>
       body {
         max-width: 1100px;
@@ -47,35 +47,33 @@
     </style>
   </head>
   <body>
-    <h1>environment-kit-v1</h1>
+    <h1>environment-kit-v2</h1>
     <p>
       <strong class="fail">Strict raw contract: REJECT.</strong>
-      <strong class="fail">Deterministic prepared ingress: REJECT.</strong>
+      <strong class="pass">Deterministic prepared ingress: PASS.</strong>
       Production promotion remains prohibited; prepared-safe cells require
       independent visual acceptance.
     </p>
     <p>
       Raw
       <code
-        >def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e</code
+        >b8954bf785d6da2057744c11b1c8e47084140f9458229c4cc739fe6576f2a47e</code
       ><br />Prepared
       <code
-        >d24bb007b9401bc083ad5e69241541a168dc934c516ae9044e196a3aeecdf95d</code
+        >2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210</code
       ><br />Built-in artifact
-      <code>exec-8b3388fc-203a-492a-aaa2-e803f32338eb</code>
+      <code>exec-9d1dcb65-4171-4de3-b27d-af282ec19daa</code>
     </p>
     <h2>Strict raw contract</h2>
     <ul>
       <li class="pass">PASS: dimensions-3-to-2 — 1536x1024</li>
       <li class="pass">PASS: six-primary-components — 6</li>
-      <li class="fail">
-        FAIL: literal-chroma-background — 0.0000031789143880208335
-      </li>
+      <li class="fail">FAIL: literal-chroma-background — 0</li>
       <li class="pass">
-        PASS: deterministically-keyable-background — 0.6776339213053385
+        PASS: deterministically-keyable-background — 0.7083530426025391
       </li>
-      <li class="pass">PASS: separated-component-boxes — 40</li>
-      <li class="fail">FAIL: declared-12-percent-cell-padding — 0</li>
+      <li class="pass">PASS: separated-component-boxes — 67</li>
+      <li class="fail">FAIL: declared-cell-padding — 0</li>
     </ul>
     <p>
       Only declared chroma/padding failures may be remediated warnings. All
@@ -101,52 +99,52 @@
       </thead>
       <tbody>
         <tr>
-          <td>north-wall-doorway</td>
-          <td>453×334</td>
-          <td>196.66×145</td>
-          <td>82.92</td>
-          <td class="fail">FAIL</td>
-          <td class="fail">REJECT</td>
+          <td>north-wall-solid</td>
+          <td>382×351</td>
+          <td>157.81×145</td>
+          <td>48.33</td>
+          <td class="pass">PASS</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
         <tr>
           <td>forge-workshop</td>
-          <td>450×403</td>
-          <td>167.49×150</td>
-          <td>59.93</td>
+          <td>383×340</td>
+          <td>168.97×150</td>
+          <td>70.15</td>
           <td class="pass">PASS</td>
-          <td class="fail">REJECT</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
         <tr>
           <td>lantern-a</td>
-          <td>186×403</td>
-          <td>33.23×72</td>
-          <td>22.33</td>
+          <td>171×383</td>
+          <td>32.15×72</td>
+          <td>21.99</td>
           <td class="pass">PASS</td>
-          <td class="fail">REJECT</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
         <tr>
           <td>lantern-b</td>
-          <td>186×412</td>
-          <td>32.5×72</td>
-          <td>19.57</td>
+          <td>173×382</td>
+          <td>32.61×72</td>
+          <td>20.17</td>
           <td class="pass">PASS</td>
-          <td class="fail">REJECT</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
         <tr>
           <td>barricade</td>
-          <td>385×345</td>
-          <td>87.04×78</td>
-          <td>48.38</td>
+          <td>385×318</td>
+          <td>94.43×78</td>
+          <td>27.96</td>
           <td class="pass">PASS</td>
-          <td class="fail">REJECT</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
         <tr>
           <td>raised-clutter-bench</td>
-          <td>449×373</td>
-          <td>114.36×95</td>
-          <td>32.6</td>
+          <td>384×318</td>
+          <td>114.72×95</td>
+          <td>34.36</td>
           <td class="pass">PASS</td>
-          <td class="fail">REJECT</td>
+          <td class="pass">SAFE FOR VISUAL REVIEW</td>
         </tr>
       </tbody>
     </table>
@@ -173,25 +171,13 @@
     <h2>Recorded review status</h2>
     <ul>
       <li>
-        The backdrop is a generated near-magenta field rather than the required
-        literal #ff00ff source key.
+        The generated raw backdrop is tolerant near-magenta rather than literal
+        #ff00ff and therefore fails the strict raw contract.
       </li>
       <li>
-        The wall, forge, barricade, and bench cross their declared equal-cell
-        boundaries and do not retain the required 12 percent cell padding.
-      </li>
-      <li>
-        Both lanterns are authored at almost the same source-pixel height as the
-        forge, contradicting the requested shared physical scale even though
-        runtime metadata can shrink them.
-      </li>
-      <li>
-        The north wall reads as a standalone ruined gate rather than a safely
-        repeatable wall module with clear continuation seams.
-      </li>
-      <li>
-        Prepared edges retain small red-purple spill flecks around rubble,
-        making promotion unsafe without another deterministic cleanup contract.
+        Several raw objects miss the requested 62-pixel equal-cell inset;
+        deterministic preparation must prove that this is fully remediated
+        before any cell can be considered ingress-safe.
       </li>
     </ul>
     <h2>Paired negative controls</h2>
@@ -205,6 +191,13 @@
       <li class="pass">
         CAUGHT: needle-contact-footprint → cell-4-collision-footprint
       </li>
+      <li class="pass">
+        CAUGHT: lantern-scale-mismatch → shared-lantern-scale
+      </li>
+      <li class="pass">
+        CAUGHT: solid-wall-center-gap → cell-0-solid-wall-continuity
+      </li>
+      <li class="pass">CAUGHT: magenta-edge-spill → prepared-magenta-spill</li>
     </ul>
     <figure>
       <a href="negative-controls-contact-sheet.png"
@@ -213,13 +206,13 @@
           alt="Deliberately damaged environment kit atlases"
       /></a>
       <figcaption>
-        5 mutations evaluated through the same prepared assessor.
+        8 mutations evaluated through the same prepared assessor.
       </figcaption>
     </figure>
     <p>
-      Quarantine this one-shot candidate as positive coordinated-art evidence
-      and negative ingress evidence. Do not copy it into production atlases or
-      runtime manifests.
+      Keep the candidate quarantined. Mechanical prepared-ingress success may
+      make cells eligible for independent visual acceptance, but this record
+      does not authorize runtime or production promotion.
     </p>
   </body>
 </html>

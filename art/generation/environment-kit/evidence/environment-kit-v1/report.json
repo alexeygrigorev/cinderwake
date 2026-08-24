@@ -1,10 +1,31 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "environment-kit-v1",
   "status": "rejected-as-recorded",
   "promotionApproved": false,
   "sources": {
     "record": "art/generation/environment-kit-v1.json",
+    "generation": {
+      "tool": "OpenAI built-in image generation tool",
+      "artifactId": "exec-8b3388fc-203a-492a-aaa2-e803f32338eb",
+      "calls": 1,
+      "prompt": {
+        "file": "art/generation/prompts/environment-kit-v1.txt",
+        "sha256": "584f7ab45d79e102e390b83417766375a951293285ecb4c11ca0fe9f873ec303"
+      },
+      "references": [
+        {
+          "file": "art/source/environment/structures-source.png",
+          "role": "camera, structure materials, and painterly treatment reference only",
+          "sha256": "347a890ce51dc3cfe7621c615133912d4103ef70d4fbd8d0bbbb96851643e9f3"
+        },
+        {
+          "file": "art/source/environment/props-source.png",
+          "role": "separated silhouette, chroma layout, and runtime-detail reference only",
+          "sha256": "307a7f8006eb47e6886082deb607506b8a43a4f5c44405f573f3e5096f133c1e"
+        }
+      ]
+    },
     "raw": {
       "file": "art/generation/environment-kit/candidates/environment-kit-v1.png",
       "sha256": "def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e"
@@ -18,23 +39,12 @@
       "sha256": "dc55eeeb0764be61d3c960f0b38c05b35d93286f920f891fae68715850e3a112"
     }
   },
-  "deterministicPreparation": {
-    "pass": true,
-    "reproductions": 2
-  },
+  "deterministicPreparation": { "pass": true, "reproductions": 2 },
   "rawAssessment": {
     "pass": false,
     "checks": [
-      {
-        "id": "dimensions-3-to-2",
-        "pass": true,
-        "value": "1536x1024"
-      },
-      {
-        "id": "six-primary-components",
-        "pass": true,
-        "value": 6
-      },
+      { "id": "dimensions-3-to-2", "pass": true, "value": "1536x1024" },
+      { "id": "six-primary-components", "pass": true, "value": 6 },
       {
         "id": "literal-chroma-background",
         "pass": false,
@@ -45,16 +55,8 @@
         "pass": true,
         "value": 0.6776339213053385
       },
-      {
-        "id": "separated-component-boxes",
-        "pass": true,
-        "value": 40
-      },
-      {
-        "id": "declared-12-percent-cell-padding",
-        "pass": false,
-        "value": 0
-      }
+      { "id": "separated-component-boxes", "pass": true, "value": 40 },
+      { "id": "declared-12-percent-cell-padding", "pass": false, "value": 0 }
     ],
     "literalKeyRatio": 0.0000031789143880208335,
     "keyableRatio": 0.6776339213053385,
@@ -118,132 +120,87 @@
     "cellCompliance": [
       {
         "index": 0,
-        "bounds": [
-          56,
-          81,
-          575,
-          469
-        ],
-        "margins": {
-          "left": 56,
-          "top": 81,
-          "right": -64,
-          "bottom": 42
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [56, 81, 575, 469],
+        "margins": { "left": 56, "top": 81, "right": -64, "bottom": 42 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       },
       {
         "index": 1,
-        "bounds": [
-          616,
-          51,
-          1091,
-          476
-        ],
-        "margins": {
-          "left": 104,
-          "top": 51,
-          "right": -68,
-          "bottom": 35
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [616, 51, 1091, 476],
+        "margins": { "left": 104, "top": 51, "right": -68, "bottom": 35 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       },
       {
         "index": 2,
-        "bounds": [
-          1219,
-          51,
-          1366,
-          453
-        ],
-        "margins": {
-          "left": 195,
-          "top": 51,
-          "right": 169,
-          "bottom": 58
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [1219, 51, 1366, 453],
+        "margins": { "left": 195, "top": 51, "right": 169, "bottom": 58 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       },
       {
         "index": 3,
-        "bounds": [
-          207,
-          520,
-          392,
-          931
-        ],
-        "margins": {
-          "left": 207,
-          "top": 8,
-          "right": 119,
-          "bottom": 92
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [207, 520, 392, 931],
+        "margins": { "left": 207, "top": 8, "right": 119, "bottom": 92 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       },
       {
         "index": 4,
-        "bounds": [
-          496,
-          571,
-          876,
-          915
-        ],
-        "margins": {
-          "left": -16,
-          "top": 59,
-          "right": 147,
-          "bottom": 108
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [496, 571, 876, 915],
+        "margins": { "left": -16, "top": 59, "right": 147, "bottom": 108 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       },
       {
         "index": 5,
-        "bounds": [
-          957,
-          555,
-          1407,
-          941
-        ],
-        "margins": {
-          "left": -67,
-          "top": 43,
-          "right": 128,
-          "bottom": 82
-        },
-        "requiredMargins": {
-          "x": 61,
-          "y": 61
-        },
+        "bounds": [957, 555, 1407, 941],
+        "margins": { "left": -67, "top": 43, "right": 128, "bottom": 82 },
+        "requiredMargins": { "x": 61, "y": 61 },
         "pass": false
       }
     ]
   },
+  "strictRawVerdict": "REJECT",
   "preparedAssessment": {
     "pass": false,
     "violations": [
+      "transparent-rgb-spill",
+      "prepared-magenta-spill",
       "cell-0-doorway-aperture"
     ],
+    "matte": {
+      "pass": false,
+      "opaqueRatio": 0.2842458089192708,
+      "transparentRatio": 0.7157541910807291,
+      "transparentRgbContaminationRatio": 0.003748498823930701,
+      "maximumOpaqueRatio": 0.55
+    },
+    "spill": {
+      "pass": false,
+      "ratio": 0.00022448936629317586,
+      "maximumRatio": 0.00015,
+      "dominance": 20
+    },
     "opaqueRatio": 0.2842458089192708,
+    "commonBottomContacts": {
+      "expectedBaseline": 480,
+      "tolerance": 2,
+      "values": [480, 480, 479, 479, 479, 480],
+      "maximumDelta": 1,
+      "pass": true
+    },
+    "wall": {
+      "topology": "doorway",
+      "pass": false,
+      "aperture": {
+        "medianTransparentWidth": 63,
+        "widthRatio": 0.1390728476821192
+      },
+      "supportWidthRatio": 0.4216335540838852,
+      "thresholds": { "minimumCentralGapRatio": 0.16 }
+    },
     "cells": [
       {
         "index": 0,
@@ -257,12 +214,7 @@
           "maxY": 480,
           "area": 102399
         },
-        "margins": {
-          "left": 28,
-          "top": 147,
-          "right": 31,
-          "bottom": 31
-        },
+        "margins": { "left": 28, "top": 147, "right": 31, "bottom": 31 },
         "support": {
           "band": 17,
           "minX": 89,
@@ -278,12 +230,26 @@
           "supportWidth": 82.92,
           "suggestedCollisionHalfWidth": 36.48
         },
-        "aperture": {
-          "medianTransparentWidth": 63,
-          "widthRatio": 0.1390728476821192
+        "violations": ["cell-0-doorway-aperture"],
+        "preparedIntegrationSafe": false,
+        "pass": false,
+        "wall": {
+          "topology": "doorway",
+          "pass": false,
+          "aperture": {
+            "medianTransparentWidth": 63,
+            "widthRatio": 0.1390728476821192
+          },
+          "supportWidthRatio": 0.4216335540838852,
+          "thresholds": { "minimumCentralGapRatio": 0.16 }
         },
-        "safeToIntegrate": false,
-        "pass": false
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill",
+          "cell-0-doorway-aperture"
+        ]
       },
       {
         "index": 1,
@@ -297,12 +263,7 @@
           "maxY": 480,
           "area": 111443
         },
-        "margins": {
-          "left": 31,
-          "top": 78,
-          "right": 31,
-          "bottom": 31
-        },
+        "margins": { "left": 31, "top": 78, "right": 31, "bottom": 31 },
         "support": {
           "band": 21,
           "minX": 180,
@@ -318,8 +279,15 @@
           "supportWidth": 59.93,
           "suggestedCollisionHalfWidth": 26.37
         },
-        "safeToIntegrate": false,
-        "pass": true
+        "violations": [],
+        "preparedIntegrationSafe": false,
+        "pass": true,
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
       },
       {
         "index": 2,
@@ -333,12 +301,7 @@
           "maxY": 479,
           "area": 26780
         },
-        "margins": {
-          "left": 163,
-          "top": 77,
-          "right": 163,
-          "bottom": 32
-        },
+        "margins": { "left": 163, "top": 77, "right": 163, "bottom": 32 },
         "support": {
           "band": 21,
           "minX": 176,
@@ -354,8 +317,15 @@
           "supportWidth": 22.33,
           "suggestedCollisionHalfWidth": 9.83
         },
-        "safeToIntegrate": false,
-        "pass": true
+        "violations": [],
+        "preparedIntegrationSafe": false,
+        "pass": true,
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
       },
       {
         "index": 3,
@@ -369,12 +339,7 @@
           "maxY": 479,
           "area": 28335
         },
-        "margins": {
-          "left": 163,
-          "top": 68,
-          "right": 163,
-          "bottom": 32
-        },
+        "margins": { "left": 163, "top": 68, "right": 163, "bottom": 32 },
         "support": {
           "band": 21,
           "minX": 172,
@@ -390,8 +355,15 @@
           "supportWidth": 19.57,
           "suggestedCollisionHalfWidth": 8.61
         },
-        "safeToIntegrate": false,
-        "pass": true
+        "violations": [],
+        "preparedIntegrationSafe": false,
+        "pass": true,
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
       },
       {
         "index": 4,
@@ -405,12 +377,7 @@
           "maxY": 479,
           "area": 73243
         },
-        "margins": {
-          "left": 66,
-          "top": 135,
-          "right": 61,
-          "bottom": 32
-        },
+        "margins": { "left": 66, "top": 135, "right": 61, "bottom": 32 },
         "support": {
           "band": 18,
           "minX": 182,
@@ -426,8 +393,15 @@
           "supportWidth": 48.38,
           "suggestedCollisionHalfWidth": 21.29
         },
-        "safeToIntegrate": false,
-        "pass": true
+        "violations": [],
+        "preparedIntegrationSafe": false,
+        "pass": true,
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
       },
       {
         "index": 5,
@@ -441,12 +415,7 @@
           "maxY": 480,
           "area": 104880
         },
-        "margins": {
-          "left": 32,
-          "top": 108,
-          "right": 31,
-          "bottom": 31
-        },
+        "margins": { "left": 32, "top": 108, "right": 31, "bottom": 31 },
         "support": {
           "band": 19,
           "minX": 197,
@@ -462,9 +431,31 @@
           "supportWidth": 32.6,
           "suggestedCollisionHalfWidth": 14.34
         },
-        "safeToIntegrate": false,
-        "pass": true
+        "violations": [],
+        "preparedIntegrationSafe": false,
+        "pass": true,
+        "integrationReasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
       }
+    ]
+  },
+  "preparedIngress": {
+    "pass": false,
+    "verdict": "REJECT",
+    "policy": "Strict raw failures are never hidden. Only declared matte/padding failures may become remediated warnings, and only when preparation is byte-reproducible, every prepared check passes, and every paired negative control is caught.",
+    "remediatedRawWarnings": [],
+    "unremediableRawFailures": [
+      "literal-chroma-background",
+      "declared-12-percent-cell-padding"
+    ],
+    "preparedViolations": [
+      "transparent-rgb-spill",
+      "prepared-magenta-spill",
+      "cell-0-doorway-aperture"
     ]
   },
   "negativeControls": [
@@ -474,10 +465,11 @@
       "detected": true,
       "violations": [
         "opaque-matte",
+        "transparent-matte-coverage",
+        "transparent-rgb-spill",
         "cell-0-unsafe-border",
         "cell-0-foot-anchor-drift",
         "cell-0-collision-footprint",
-        "cell-0-doorway-aperture",
         "cell-1-unsafe-border",
         "cell-1-foot-anchor-drift",
         "cell-1-collision-footprint",
@@ -492,7 +484,8 @@
         "cell-4-collision-footprint",
         "cell-5-unsafe-border",
         "cell-5-foot-anchor-drift",
-        "cell-5-collision-footprint"
+        "cell-5-collision-footprint",
+        "cell-0-doorway-aperture"
       ]
     },
     {
@@ -500,6 +493,8 @@
       "expectedViolation": "cell-0-unsafe-border",
       "detected": true,
       "violations": [
+        "transparent-rgb-spill",
+        "prepared-magenta-spill",
         "cell-0-unsafe-border",
         "cell-0-doorway-aperture"
       ]
@@ -509,9 +504,11 @@
       "expectedViolation": "cell-0-unsafe-border",
       "detected": true,
       "violations": [
+        "transparent-rgb-spill",
+        "prepared-magenta-spill",
         "cell-0-unsafe-border",
-        "cell-0-doorway-aperture",
-        "cell-1-unsafe-border"
+        "cell-1-unsafe-border",
+        "cell-0-doorway-aperture"
       ]
     },
     {
@@ -519,8 +516,10 @@
       "expectedViolation": "cell-3-foot-anchor-drift",
       "detected": true,
       "violations": [
-        "cell-0-doorway-aperture",
-        "cell-3-foot-anchor-drift"
+        "transparent-rgb-spill",
+        "prepared-magenta-spill",
+        "cell-3-foot-anchor-drift",
+        "cell-0-doorway-aperture"
       ]
     },
     {
@@ -528,9 +527,11 @@
       "expectedViolation": "cell-4-collision-footprint",
       "detected": true,
       "violations": [
-        "cell-0-doorway-aperture",
+        "transparent-rgb-spill",
+        "prepared-magenta-spill",
         "cell-4-collision-footprint",
-        "cell-4-runtime-silhouette"
+        "cell-4-runtime-silhouette",
+        "cell-0-doorway-aperture"
       ]
     }
   ],
@@ -552,8 +553,83 @@
     "decision": "Quarantine this one-shot candidate as positive coordinated-art evidence and negative ingress evidence. Do not copy it into production atlases or runtime manifests."
   },
   "integration": {
-    "safeCells": 0,
+    "preparedSafeCells": 0,
     "totalCells": 6,
-    "note": "Five prepared cells pass the mechanical proxies and the doorway fails usable-aperture width; no cell is integration-safe while the shared raw and visual verdict remains rejected."
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-doorway",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill",
+          "cell-0-doorway-aperture"
+        ]
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "preparedIntegrationSafe": false,
+        "productionApproved": false,
+        "reasons": [
+          "unremediable raw contract failure: literal-chroma-background",
+          "unremediable raw contract failure: declared-12-percent-cell-padding",
+          "shared prepared failure: transparent-rgb-spill",
+          "shared prepared failure: prepared-magenta-spill"
+        ]
+      }
+    ],
+    "note": "No cell is prepared-integration-safe while a shared or cell-specific mechanical ingress failure remains."
   }
 }

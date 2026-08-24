@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 2,
+  "id": "environment-kit-v2",
+  "status": "quarantined-pending-independent-visual-review",
+  "created": "2026-08-24",
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "artifactId": "exec-9d1dcb65-4171-4de3-b27d-af282ec19daa",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "calls": 1,
+    "prompt": {
+      "file": "art/generation/prompts/environment-kit-v2.txt",
+      "sha256": "03ffad63d1587d3b68fad263202b181af51502fdf877965eeb2c76e48d73993d",
+      "frozenAtCommit": "53f1febde56978e3c53f57259755e4b4ac31e4ad"
+    },
+    "references": [
+      {
+        "file": "art/generation/environment-kit/candidates/environment-kit-v1.png",
+        "role": "rejected v1 composition, camera, material, and coordination reference only",
+        "sha256": "def8116cc7b1be5cffa91de6b512d19de73f3b22b9ab3047f586bda5dbf85e4e"
+      }
+    ],
+    "raw": {
+      "file": "art/generation/environment-kit/candidates/environment-kit-v2.png",
+      "sha256": "b8954bf785d6da2057744c11b1c8e47084140f9458229c4cc739fe6576f2a47e",
+      "width": 1536,
+      "height": 1024,
+      "channels": "srgb"
+    }
+  },
+  "grid": {
+    "columns": 3,
+    "rows": 2,
+    "preparedCellWidth": 512,
+    "preparedCellHeight": 512,
+    "rawSafeInset": 62,
+    "safeInset": 62,
+    "footBaseline": 446,
+    "cells": [
+      {
+        "index": 0,
+        "id": "north-wall-solid",
+        "runtimeHeight": 145,
+        "collision": "one continuous solid wall footprint with no passable center"
+      },
+      {
+        "index": 1,
+        "id": "forge-workshop",
+        "runtimeHeight": 150,
+        "collision": "compact solid footprint beneath the workshop"
+      },
+      {
+        "index": 2,
+        "id": "lantern-a",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base"
+      },
+      {
+        "index": 3,
+        "id": "lantern-b",
+        "runtimeHeight": 72,
+        "collision": "small solid ellipse centered on the post base"
+      },
+      {
+        "index": 4,
+        "id": "barricade",
+        "runtimeHeight": 78,
+        "collision": "wide shallow solid ellipse beneath the barricade"
+      },
+      {
+        "index": 5,
+        "id": "raised-clutter-bench",
+        "runtimeHeight": 95,
+        "collision": "medium solid ellipse beneath the connected workbench"
+      }
+    ]
+  },
+  "preparation": {
+    "command": "node scripts/prepare-environment-kit.mjs --input art/generation/environment-kit/candidates/environment-kit-v2.png --output art/generation/environment-kit/prepared/environment-kit-v2.png --safe-inset 62 --post-key-cleanup true",
+    "options": {
+      "safeInset": 62,
+      "postKeyCleanup": true
+    },
+    "operation": "recover exactly six large chroma-separated components, attach only nearby meaningful fragments, order them by row and centroid, key and decontaminate magenta, fit each component without upscaling into a 512px cell with a 62px inset, align contact pixels to one baseline, then repeat edge decontamination after resampling and clear transparent RGB",
+    "file": "art/generation/environment-kit/prepared/environment-kit-v2.png",
+    "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210"
+  },
+  "auditPolicy": {
+    "rawRemediableChecks": [
+      "literal-chroma-background",
+      "declared-cell-padding"
+    ],
+    "maximumPreparedOpaqueRatio": 0.55,
+    "maximumPreparedSpillRatio": 0.00015,
+    "spillDominance": 20,
+    "footBaselineTolerance": 2,
+    "wall": {
+      "topology": "solid",
+      "maximumCentralGapRatio": 0.08,
+      "minimumSupportWidthRatio": 0.28
+    },
+    "lanternPair": {
+      "indices": [2, 3],
+      "maximumHeightDeltaRatio": 0.03,
+      "maximumWidthDeltaRatio": 0.08,
+      "maximumSupportDeltaRatio": 0.12
+    }
+  },
+  "review": {
+    "evaluation": "pending-independent-visual-review",
+    "productionApproved": false,
+    "strengths": [
+      "The corrected first cell is a broad continuous masonry wall without a doorway or implied walkable opening.",
+      "The six silhouettes share one elevated camera, weathered material family, restrained ember lighting, and compact grounded contacts.",
+      "Both lanterns are matching but non-identical designs at the same authored scale, and the deterministic runtime preview preserves equal logical height."
+    ],
+    "warnings": [
+      "The generated raw backdrop is tolerant near-magenta rather than literal #ff00ff and therefore fails the strict raw contract.",
+      "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe."
+    ],
+    "decision": "Keep the candidate quarantined. Mechanical prepared-ingress success may make cells eligible for independent visual acceptance, but this record does not authorize runtime or production promotion."
+  }
+}

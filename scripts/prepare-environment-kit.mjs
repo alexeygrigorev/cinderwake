@@ -8,25 +8,38 @@ import sharp from "sharp";
 const GRID_COLUMNS = 3;
 const GRID_ROWS = 2;
 const CELL_SIZE = 512;
-const SAFE_INSET = 28;
+const DEFAULT_SAFE_INSET = 28;
 const MIN_PRIMARY_AREA = 10_000;
 const ATTACHMENT_AREA = 16;
 const ATTACHMENT_DISTANCE = 42;
 
 function parseArgs(argv) {
-  const options = {};
+  const options = { postKeyCleanup: false, safeInset: DEFAULT_SAFE_INSET };
   for (let index = 0; index < argv.length; index += 2) {
     const name = argv[index];
     const value = argv[index + 1];
     if (!name?.startsWith("--") || !value) {
       throw new Error(
-        "Usage: node scripts/prepare-environment-kit.mjs --input <raw.png> --output <prepared.png>",
+        "Usage: node scripts/prepare-environment-kit.mjs --input <raw.png> --output <prepared.png> [--safe-inset <pixels>] [--post-key-cleanup <true|false>]",
       );
     }
-    options[name.slice(2)] = value;
+    if (name === "--safe-inset") options.safeInset = Number(value);
+    else if (name === "--post-key-cleanup") {
+      if (value !== "true" && value !== "false") {
+        throw new Error("--post-key-cleanup must be true or false");
+      }
+      options.postKeyCleanup = value === "true";
+    } else options[name.slice(2)] = value;
   }
   if (!options.input || !options.output) {
     throw new Error("Both --input and --output are required");
+  }
+  if (
+    !Number.isInteger(options.safeInset) ||
+    options.safeInset < 0 ||
+    options.safeInset >= CELL_SIZE / 2
+  ) {
+    throw new Error("--safe-inset must be an integer from 0 through 255");
   }
   return options;
 }
@@ -176,6 +189,24 @@ function keyedRgba(rgb, width, height) {
   return rgba;
 }
 
+function cleanResizedRgba(rgba) {
+  const cleaned = Buffer.from(rgba);
+  for (let offset = 0; offset < cleaned.length; offset += 4) {
+    const alpha = cleaned[offset + 3];
+    if (alpha < 24) {
+      cleaned.fill(0, offset, offset + 4);
+      continue;
+    }
+    const red = cleaned[offset];
+    const green = cleaned[offset + 1];
+    const blue = cleaned[offset + 2];
+    const spill = Math.max(0, Math.min(red, blue) - green - 14);
+    cleaned[offset] = Math.max(0, Math.round(red - spill * 0.88));
+    cleaned[offset + 2] = Math.max(0, Math.round(blue - spill * 0.88));
+  }
+  return cleaned;
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   const input = path.resolve(options.input);
@@ -213,15 +244,27 @@ async function main() {
     const bottom = Math.min(info.height - 1, component.maxY + padding);
     const width = right - left + 1;
     const height = bottom - top + 1;
-    const maximum = CELL_SIZE - SAFE_INSET * 2;
+    const maximum = CELL_SIZE - options.safeInset * 2;
     const scale = Math.min(maximum / width, maximum / height, 1);
     const resizedWidth = Math.max(1, Math.round(width * scale));
     const resizedHeight = Math.max(1, Math.round(height * scale));
-    const cut = await sharp(keyed, {
+    const resized = await sharp(keyed, {
       raw: { width: info.width, height: info.height, channels: 4 },
     })
       .extract({ left, top, width, height })
       .resize(resizedWidth, resizedHeight, { kernel: sharp.kernel.lanczos3 })
+      .raw()
+      .toBuffer();
+    const cut = await sharp(
+      options.postKeyCleanup ? cleanResizedRgba(resized) : resized,
+      {
+        raw: {
+          width: resizedWidth,
+          height: resizedHeight,
+          channels: 4,
+        },
+      },
+    )
       .png({ compressionLevel: 9, adaptiveFiltering: false })
       .toBuffer();
 
@@ -230,7 +273,7 @@ async function main() {
     composites.push({
       input: cut,
       left: column * CELL_SIZE + Math.round((CELL_SIZE - resizedWidth) / 2),
-      top: row * CELL_SIZE + CELL_SIZE - SAFE_INSET - resizedHeight,
+      top: row * CELL_SIZE + CELL_SIZE - options.safeInset - resizedHeight,
     });
   }
 

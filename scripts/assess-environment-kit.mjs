@@ -7,6 +7,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
+import { format } from "prettier";
 import sharp from "sharp";
 
 const execute = promisify(execFile);
@@ -14,8 +15,8 @@ const ROOT = process.cwd();
 const CELL = 512;
 const COLUMNS = 3;
 const ROWS = 2;
-const SAFE_MARGIN = 24;
-const EXPECTED_BASELINE = 480;
+const DEFAULT_SAFE_MARGIN = 24;
+const DEFAULT_EXPECTED_BASELINE = 480;
 const ALPHA_THRESHOLD = 24;
 
 function parseArgs(argv) {
@@ -129,7 +130,7 @@ function boxGap(first, second) {
   return Math.hypot(dx, dy);
 }
 
-function analyzeRaw(data, info) {
+function analyzeRaw(data, info, grid) {
   const pixels = info.width * info.height;
   const mask = new Uint8Array(pixels);
   let literalKeyPixels = 0;
@@ -153,8 +154,10 @@ function analyzeRaw(data, info) {
       .sort((left, right) => left.centroidX - right.centroidX),
     ...primary.slice(3).sort((left, right) => left.centroidX - right.centroidX),
   ];
-  const requiredInsetX = Math.floor((info.width / COLUMNS) * 0.12);
-  const requiredInsetY = Math.floor((info.height / ROWS) * 0.12);
+  const requiredInsetX =
+    grid.rawSafeInset ?? Math.floor((info.width / COLUMNS) * 0.12);
+  const requiredInsetY =
+    grid.rawSafeInset ?? Math.floor((info.height / ROWS) * 0.12);
   const cellCompliance = ordered.map((component, index) => {
     const left = (index % COLUMNS) * (info.width / COLUMNS);
     const top = Math.floor(index / COLUMNS) * (info.height / ROWS);
@@ -211,7 +214,9 @@ function analyzeRaw(data, info) {
       value: minimumGap,
     },
     {
-      id: "declared-12-percent-cell-padding",
+      id: grid.rawSafeInset
+        ? "declared-cell-padding"
+        : "declared-12-percent-cell-padding",
       pass:
         cellCompliance.length === 6 && cellCompliance.every(({ pass }) => pass),
       value: cellCompliance.filter(({ pass }) => pass).length,
@@ -308,8 +313,18 @@ function doorwayAperture(data, width, bounds) {
   };
 }
 
-function analyzePrepared(data, info, cells) {
+function relativeDelta(first, second) {
+  return Math.abs(first - second) / ((first + second) / 2);
+}
+
+function analyzePrepared(data, info, cells, grid, policy = {}) {
   const violations = [];
+  const safeMargin = grid.safeInset ?? DEFAULT_SAFE_MARGIN;
+  const expectedBaseline = grid.footBaseline ?? DEFAULT_EXPECTED_BASELINE;
+  const baselineTolerance = policy.footBaselineTolerance ?? 2;
+  const maximumOpaqueRatio = policy.maximumPreparedOpaqueRatio ?? 0.55;
+  const spillDominance = policy.spillDominance ?? 20;
+  const maximumSpillRatio = policy.maximumPreparedSpillRatio ?? 0.00015;
   if (
     info.width !== CELL * COLUMNS ||
     info.height !== CELL * ROWS ||
@@ -318,17 +333,57 @@ function analyzePrepared(data, info, cells) {
     violations.push("prepared-dimensions");
   }
   let opaquePixels = 0;
-  for (let offset = 3; offset < data.length; offset += 4) {
-    if (data[offset] >= ALPHA_THRESHOLD) opaquePixels += 1;
+  let transparentPixels = 0;
+  let contaminatedTransparentPixels = 0;
+  let weightedSpillPixels = 0;
+  for (let offset = 0; offset < data.length; offset += 4) {
+    const red = data[offset];
+    const green = data[offset + 1];
+    const blue = data[offset + 2];
+    const alpha = data[offset + 3];
+    if (alpha < ALPHA_THRESHOLD) {
+      transparentPixels += 1;
+      if (red !== 0 || green !== 0 || blue !== 0)
+        contaminatedTransparentPixels += 1;
+      continue;
+    }
+    opaquePixels += 1;
+    if (
+      Math.min(red, blue) - green >= spillDominance &&
+      Math.abs(red - blue) <= 130
+    ) {
+      weightedSpillPixels += alpha / 255;
+    }
   }
-  if (opaquePixels / (info.width * info.height) > 0.55)
-    violations.push("opaque-matte");
+  const pixels = info.width * info.height;
+  const opaqueRatio = opaquePixels / pixels;
+  const transparentRatio = transparentPixels / pixels;
+  const transparentRgbContaminationRatio =
+    transparentPixels === 0
+      ? 1
+      : contaminatedTransparentPixels / transparentPixels;
+  const spillRatio =
+    opaquePixels === 0 ? 1 : weightedSpillPixels / opaquePixels;
+  if (opaqueRatio > maximumOpaqueRatio) violations.push("opaque-matte");
+  if (transparentRatio < 1 - maximumOpaqueRatio)
+    violations.push("transparent-matte-coverage");
+  if (transparentRgbContaminationRatio > 0)
+    violations.push("transparent-rgb-spill");
+  if (spillRatio > maximumSpillRatio) violations.push("prepared-magenta-spill");
 
   const cellEvidence = cells.map((cell, index) => {
+    const cellViolations = [];
     const bounds = cellBounds(data, info.width, index);
     if (bounds.maxX < bounds.minX) {
-      violations.push(`cell-${index}-blank`);
-      return { ...cell, bounds, pass: false };
+      const violation = `cell-${index}-blank`;
+      violations.push(violation);
+      return {
+        ...cell,
+        bounds,
+        violations: [violation],
+        preparedIntegrationSafe: false,
+        pass: false,
+      };
     }
     const width = bounds.maxX - bounds.minX + 1;
     const height = bounds.maxY - bounds.minY + 1;
@@ -338,15 +393,15 @@ function analyzePrepared(data, info, cells) {
       right: CELL - 1 - bounds.maxX,
       bottom: CELL - 1 - bounds.maxY,
     };
-    if (Math.min(...Object.values(margins)) < SAFE_MARGIN) {
-      violations.push(`cell-${index}-unsafe-border`);
+    if (Math.min(...Object.values(margins)) < safeMargin) {
+      cellViolations.push(`cell-${index}-unsafe-border`);
     }
-    if (Math.abs(bounds.maxY - EXPECTED_BASELINE) > 2) {
-      violations.push(`cell-${index}-foot-anchor-drift`);
+    if (Math.abs(bounds.maxY - expectedBaseline) > baselineTolerance) {
+      cellViolations.push(`cell-${index}-foot-anchor-drift`);
     }
     const support = supportEvidence(data, info.width, index, bounds);
     if (support.widthRatio < 0.12 || support.widthRatio > 0.88) {
-      violations.push(`cell-${index}-collision-footprint`);
+      cellViolations.push(`cell-${index}-collision-footprint`);
     }
     const runtimeScale = cell.runtimeHeight / height;
     const runtime = {
@@ -369,42 +424,143 @@ function analyzePrepared(data, info, cells) {
       runtime.silhouetteArea < 350 ||
       runtime.supportWidth < 7
     ) {
-      violations.push(`cell-${index}-runtime-silhouette`);
+      cellViolations.push(`cell-${index}-runtime-silhouette`);
     }
-    const aperture =
-      index === 0 ? doorwayAperture(data, info.width, bounds) : undefined;
-    if (aperture && aperture.widthRatio < 0.16)
-      violations.push("cell-0-doorway-aperture");
+    violations.push(...cellViolations);
     return {
       ...cell,
       bounds,
       margins,
       support,
       runtime,
-      aperture,
-      safeToIntegrate: false,
-      pass:
-        Math.min(...Object.values(margins)) >= SAFE_MARGIN &&
-        Math.abs(bounds.maxY - EXPECTED_BASELINE) <= 2 &&
-        support.widthRatio >= 0.12 &&
-        support.widthRatio <= 0.88 &&
-        runtime.width >= 20 &&
-        runtime.silhouetteArea >= 350 &&
-        runtime.supportWidth >= 7 &&
-        (!aperture || aperture.widthRatio >= 0.16),
+      violations: cellViolations,
+      preparedIntegrationSafe: false,
+      pass: cellViolations.length === 0,
     };
   });
+
+  const wallCell = cellEvidence[0];
+  let wall;
+  if (wallCell?.bounds?.maxX >= wallCell?.bounds?.minX) {
+    const aperture = doorwayAperture(data, info.width, wallCell.bounds);
+    const topology = policy.wall?.topology ?? "doorway";
+    const maximumCentralGapRatio = policy.wall?.maximumCentralGapRatio ?? 0.08;
+    const minimumCentralGapRatio = policy.wall?.minimumCentralGapRatio ?? 0.16;
+    const minimumSupportWidthRatio =
+      policy.wall?.minimumSupportWidthRatio ?? 0.12;
+    const topologyPass =
+      topology === "solid"
+        ? aperture.widthRatio <= maximumCentralGapRatio &&
+          wallCell.support.widthRatio >= minimumSupportWidthRatio
+        : aperture.widthRatio >= minimumCentralGapRatio;
+    const violation =
+      topology === "solid"
+        ? "cell-0-solid-wall-continuity"
+        : "cell-0-doorway-aperture";
+    if (!topologyPass) {
+      violations.push(violation);
+      wallCell.violations.push(violation);
+      wallCell.pass = false;
+    }
+    wall = {
+      topology,
+      pass: topologyPass,
+      aperture,
+      supportWidthRatio: wallCell.support.widthRatio,
+      thresholds:
+        topology === "solid"
+          ? { maximumCentralGapRatio, minimumSupportWidthRatio }
+          : { minimumCentralGapRatio },
+    };
+    wallCell.wall = wall;
+  }
+
+  let lanternPair;
+  if (policy.lanternPair) {
+    const [firstIndex, secondIndex] = policy.lanternPair.indices;
+    const first = cellEvidence[firstIndex];
+    const second = cellEvidence[secondIndex];
+    const heightDeltaRatio = relativeDelta(
+      first.bounds.maxY - first.bounds.minY + 1,
+      second.bounds.maxY - second.bounds.minY + 1,
+    );
+    const widthDeltaRatio = relativeDelta(
+      first.bounds.maxX - first.bounds.minX + 1,
+      second.bounds.maxX - second.bounds.minX + 1,
+    );
+    const supportDeltaRatio = relativeDelta(
+      first.support.width,
+      second.support.width,
+    );
+    const pass =
+      heightDeltaRatio <= policy.lanternPair.maximumHeightDeltaRatio &&
+      widthDeltaRatio <= policy.lanternPair.maximumWidthDeltaRatio &&
+      supportDeltaRatio <= policy.lanternPair.maximumSupportDeltaRatio;
+    lanternPair = {
+      indices: policy.lanternPair.indices,
+      pass,
+      heightDeltaRatio,
+      widthDeltaRatio,
+      supportDeltaRatio,
+      thresholds: {
+        maximumHeightDeltaRatio: policy.lanternPair.maximumHeightDeltaRatio,
+        maximumWidthDeltaRatio: policy.lanternPair.maximumWidthDeltaRatio,
+        maximumSupportDeltaRatio: policy.lanternPair.maximumSupportDeltaRatio,
+      },
+    };
+    if (!pass) {
+      const violation = "shared-lantern-scale";
+      violations.push(violation);
+      for (const cell of [first, second]) {
+        cell.violations.push(violation);
+        cell.pass = false;
+      }
+    }
+  }
+
+  const bottomContacts = {
+    expectedBaseline,
+    tolerance: baselineTolerance,
+    values: cellEvidence.map(({ bounds }) => bounds.maxY),
+  };
+  bottomContacts.maximumDelta = Math.max(
+    ...bottomContacts.values.map((value) =>
+      Math.abs(value - bottomContacts.expectedBaseline),
+    ),
+  );
+  bottomContacts.pass = bottomContacts.maximumDelta <= bottomContacts.tolerance;
+
   return {
     pass: violations.length === 0,
     violations: [...new Set(violations)],
-    opaqueRatio: opaquePixels / (info.width * info.height),
+    matte: {
+      pass:
+        opaqueRatio <= maximumOpaqueRatio &&
+        transparentRatio >= 1 - maximumOpaqueRatio &&
+        transparentRgbContaminationRatio === 0,
+      opaqueRatio,
+      transparentRatio,
+      transparentRgbContaminationRatio,
+      maximumOpaqueRatio,
+    },
+    spill: {
+      pass: spillRatio <= maximumSpillRatio,
+      ratio: spillRatio,
+      maximumRatio: maximumSpillRatio,
+      dominance: spillDominance,
+    },
+    opaqueRatio,
+    commonBottomContacts: bottomContacts,
+    wall,
+    lanternPair,
     cells: cellEvidence,
   };
 }
 
-function mutatePrepared(source, id) {
+function mutatePrepared(source, id, grid) {
   const data = Buffer.from(source);
   const width = CELL * COLUMNS;
+  const expectedBaseline = grid.footBaseline ?? DEFAULT_EXPECTED_BASELINE;
   if (id === "opaque-gray-matte") {
     for (let offset = 0; offset < data.length; offset += 4) {
       if (data[offset + 3] >= ALPHA_THRESHOLD) continue;
@@ -452,18 +608,68 @@ function mutatePrepared(source, id) {
     const cellIndex = 4;
     const offsetX = (cellIndex % COLUMNS) * CELL;
     const offsetY = Math.floor(cellIndex / COLUMNS) * CELL;
-    for (let y = EXPECTED_BASELINE - 24; y <= EXPECTED_BASELINE; y += 1) {
+    for (let y = expectedBaseline - 24; y < CELL; y += 1) {
       for (let x = 0; x < CELL; x += 1) {
         const offset = ((offsetY + y) * width + offsetX + x) * 4;
-        data[offset + 3] = 0;
+        data.fill(0, offset, offset + 4);
       }
     }
-    for (let y = EXPECTED_BASELINE - 24; y <= EXPECTED_BASELINE; y += 1) {
+    for (let y = expectedBaseline - 24; y <= expectedBaseline; y += 1) {
       const offset = ((offsetY + y) * width + offsetX + 256) * 4;
       data[offset] = 80;
       data[offset + 1] = 60;
       data[offset + 2] = 40;
       data[offset + 3] = 255;
+    }
+  } else if (id === "lantern-scale-mismatch") {
+    const original = Buffer.from(data);
+    const cellIndex = 3;
+    const offsetX = (cellIndex % COLUMNS) * CELL;
+    const offsetY = Math.floor(cellIndex / COLUMNS) * CELL;
+    const bounds = cellBounds(original, width, cellIndex);
+    const scale = 0.72;
+    const sourceWidth = bounds.maxX - bounds.minX + 1;
+    const sourceHeight = bounds.maxY - bounds.minY + 1;
+    const targetWidth = Math.max(1, Math.round(sourceWidth * scale));
+    const targetHeight = Math.max(1, Math.round(sourceHeight * scale));
+    const targetLeft = Math.round((CELL - targetWidth) / 2);
+    const targetTop = bounds.maxY - targetHeight + 1;
+    for (let y = 0; y < CELL; y += 1) {
+      const start = ((offsetY + y) * width + offsetX) * 4;
+      data.fill(0, start, start + CELL * 4);
+    }
+    for (let y = 0; y < targetHeight; y += 1) {
+      for (let x = 0; x < targetWidth; x += 1) {
+        const sourceX =
+          bounds.minX + Math.min(sourceWidth - 1, Math.floor(x / scale));
+        const sourceY =
+          bounds.minY + Math.min(sourceHeight - 1, Math.floor(y / scale));
+        const sourceOffset =
+          ((offsetY + sourceY) * width + offsetX + sourceX) * 4;
+        const targetOffset =
+          ((offsetY + targetTop + y) * width + offsetX + targetLeft + x) * 4;
+        original.copy(data, targetOffset, sourceOffset, sourceOffset + 4);
+      }
+    }
+  } else if (id === "solid-wall-center-gap") {
+    const bounds = cellBounds(data, width, 0);
+    const startX = Math.round(bounds.minX + (bounds.maxX - bounds.minX) * 0.4);
+    const endX = Math.round(bounds.minX + (bounds.maxX - bounds.minX) * 0.6);
+    const startY = Math.round(bounds.minY + (bounds.maxY - bounds.minY) * 0.48);
+    const endY = Math.round(bounds.minY + (bounds.maxY - bounds.minY) * 0.72);
+    for (let y = startY; y <= endY; y += 1) {
+      for (let x = startX; x <= endX; x += 1) {
+        data.fill(0, (y * width + x) * 4, (y * width + x) * 4 + 4);
+      }
+    }
+  } else if (id === "magenta-edge-spill") {
+    let painted = 0;
+    for (let offset = 0; offset < data.length && painted < 3000; offset += 4) {
+      if (data[offset + 3] < ALPHA_THRESHOLD) continue;
+      data[offset] = 230;
+      data[offset + 1] = 10;
+      data[offset + 2] = 230;
+      painted += 1;
     }
   }
   return data;
@@ -487,6 +693,7 @@ async function writeEvidence(
   preparedInfo,
   assessment,
   controls,
+  grid,
 ) {
   await fs.mkdir(output, { recursive: true });
   const floor = await sharp(
@@ -538,7 +745,7 @@ async function writeEvidence(
 
   const mutationComposites = [];
   for (let index = 0; index < controls.length; index += 1) {
-    const mutation = mutatePrepared(preparedData, controls[index].id);
+    const mutation = mutatePrepared(preparedData, controls[index].id, grid);
     const image = await sharp(mutation, { raw: preparedInfo })
       .resize(384, 256)
       .flatten({ background: "#151116" })
@@ -600,13 +807,26 @@ async function main() {
   const second = path.join(temp, "second.png");
   try {
     for (const output of [first, second]) {
-      await execute(process.execPath, [
+      const preparationArgs = [
         path.join(ROOT, "scripts/prepare-environment-kit.mjs"),
         "--input",
         rawPath,
         "--output",
         output,
-      ]);
+      ];
+      if (record.preparation.options?.safeInset !== undefined) {
+        preparationArgs.push(
+          "--safe-inset",
+          String(record.preparation.options.safeInset),
+        );
+      }
+      if (record.preparation.options?.postKeyCleanup !== undefined) {
+        preparationArgs.push(
+          "--post-key-cleanup",
+          String(record.preparation.options.postKeyCleanup),
+        );
+      }
+      await execute(process.execPath, preparationArgs);
     }
     const [firstBytes, secondBytes] = await Promise.all([
       fs.readFile(first),
@@ -632,11 +852,14 @@ async function main() {
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const rawAssessment = analyzeRaw(raw.data, raw.info);
+  const policy = record.auditPolicy ?? {};
+  const rawAssessment = analyzeRaw(raw.data, raw.info, record.grid);
   const preparedAssessment = analyzePrepared(
     prepared.data,
     prepared.info,
     record.grid.cells,
+    record.grid,
+    policy,
   );
   const controlDefinitions = [
     { id: "opaque-gray-matte", expectedViolation: "opaque-matte" },
@@ -651,12 +874,32 @@ async function main() {
       expectedViolation: "cell-4-collision-footprint",
     },
   ];
+  if (policy.lanternPair) {
+    controlDefinitions.push({
+      id: "lantern-scale-mismatch",
+      expectedViolation: "shared-lantern-scale",
+    });
+  }
+  if (policy.wall?.topology === "solid") {
+    controlDefinitions.push({
+      id: "solid-wall-center-gap",
+      expectedViolation: "cell-0-solid-wall-continuity",
+    });
+  }
+  if (policy.maximumPreparedSpillRatio !== undefined) {
+    controlDefinitions.push({
+      id: "magenta-edge-spill",
+      expectedViolation: "prepared-magenta-spill",
+    });
+  }
   const negativeControls = controlDefinitions.map((control) => {
-    const mutated = mutatePrepared(prepared.data, control.id);
+    const mutated = mutatePrepared(prepared.data, control.id, record.grid);
     const assessment = analyzePrepared(
       mutated,
       prepared.info,
       record.grid.cells,
+      record.grid,
+      policy,
     );
     return {
       ...control,
@@ -665,18 +908,71 @@ async function main() {
     };
   });
   const controlsPass = negativeControls.every(({ detected }) => detected);
-  const expectedQuarantine =
-    (!rawAssessment.pass || !preparedAssessment.pass) &&
-    record.review.evaluation === "rejected" &&
-    record.review.productionApproved === false &&
+  const failedRawChecks = rawAssessment.checks
+    .filter(({ pass }) => !pass)
+    .map(({ id }) => id);
+  const remediableRawChecks = new Set(policy.rawRemediableChecks ?? []);
+  const remediatedRawWarnings = failedRawChecks.filter((id) =>
+    remediableRawChecks.has(id),
+  );
+  const unremediableRawFailures = failedRawChecks.filter(
+    (id) => !remediableRawChecks.has(id),
+  );
+  const preparedIngressPass =
+    unremediableRawFailures.length === 0 &&
+    preparedAssessment.pass &&
     controlsPass;
+  const expectedEvaluation = preparedIngressPass
+    ? "pending-independent-visual-review"
+    : "rejected";
+  const dispositionMatchesRecord =
+    record.review.evaluation === expectedEvaluation &&
+    record.review.productionApproved === false;
+
+  const preparedSharedViolations = preparedAssessment.violations.filter(
+    (violation) =>
+      !preparedAssessment.cells.some((cell) =>
+        cell.violations.includes(violation),
+      ),
+  );
+  for (const cell of preparedAssessment.cells) {
+    const reasons = [
+      ...unremediableRawFailures.map(
+        (id) => `unremediable raw contract failure: ${id}`,
+      ),
+      ...preparedSharedViolations.map((id) => `shared prepared failure: ${id}`),
+      ...cell.violations,
+      ...(controlsPass ? [] : ["paired negative-control suite failed"]),
+    ];
+    cell.preparedIntegrationSafe = preparedIngressPass && cell.pass;
+    cell.integrationReasons = cell.preparedIntegrationSafe
+      ? [
+          "deterministic prepared-ingress checks pass; independent visual acceptance is still required",
+        ]
+      : [...new Set(reasons)];
+  }
+  const preparedSafeCells = preparedAssessment.cells.filter(
+    ({ preparedIntegrationSafe }) => preparedIntegrationSafe,
+  ).length;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     id: record.id,
-    status: expectedQuarantine ? "rejected-as-recorded" : "audit-failed",
+    status: dispositionMatchesRecord
+      ? preparedIngressPass
+        ? "prepared-ingress-pass-quarantined"
+        : "rejected-as-recorded"
+      : "audit-failed",
     promotionApproved: false,
     sources: {
       record: path.relative(ROOT, options.record),
+      generation: {
+        tool: record.generation.tool,
+        artifactId: record.generation.artifactId,
+        generationDirectoryId: record.generation.generationDirectoryId,
+        calls: record.generation.calls,
+        prompt: record.generation.prompt,
+        references: record.generation.references,
+      },
       raw: { file: record.generation.raw.file, sha256: sha256(rawBytes) },
       prepared: {
         file: record.preparation.file,
@@ -693,13 +989,34 @@ async function main() {
     },
     deterministicPreparation: { pass: true, reproductions: 2 },
     rawAssessment,
+    strictRawVerdict: rawAssessment.pass ? "PASS" : "REJECT",
     preparedAssessment,
+    preparedIngress: {
+      pass: preparedIngressPass,
+      verdict: preparedIngressPass ? "PASS" : "REJECT",
+      policy:
+        "Strict raw failures are never hidden. Only declared matte/padding failures may become remediated warnings, and only when preparation is byte-reproducible, every prepared check passes, and every paired negative control is caught.",
+      remediatedRawWarnings,
+      unremediableRawFailures,
+      preparedViolations: preparedAssessment.violations,
+    },
     negativeControls,
     visualReview: record.review,
     integration: {
-      safeCells: 0,
+      preparedSafeCells,
       totalCells: record.grid.cells.length,
-      note: "Five prepared cells pass the mechanical proxies and the doorway fails usable-aperture width; no cell is integration-safe while the shared raw and visual verdict remains rejected.",
+      cells: preparedAssessment.cells.map(
+        ({ index, id, preparedIntegrationSafe, integrationReasons }) => ({
+          index,
+          id,
+          preparedIntegrationSafe,
+          productionApproved: false,
+          reasons: integrationReasons,
+        }),
+      ),
+      note: preparedIngressPass
+        ? "Prepared-safe means eligible for independent visual acceptance only. This audit does not authorize production or runtime promotion."
+        : "No cell is prepared-integration-safe while a shared or cell-specific mechanical ingress failure remains.",
     },
   };
 
@@ -710,15 +1027,16 @@ async function main() {
     prepared.info,
     preparedAssessment,
     negativeControls,
+    record.grid,
   );
   await fs.writeFile(
     path.join(options.output, "report.json"),
-    `${JSON.stringify(report, null, 2)}\n`,
+    await format(JSON.stringify(report), { parser: "json" }),
   );
   const cellRows = preparedAssessment.cells
     .map(
       (cell) =>
-        `<tr><td>${escapeHtml(cell.id)}</td><td>${cell.bounds.maxX - cell.bounds.minX + 1}×${cell.bounds.maxY - cell.bounds.minY + 1}</td><td>${cell.runtime.width}×${cell.runtime.height}</td><td>${cell.runtime.supportWidth}</td><td class="${cell.pass ? "pass" : "fail"}">${cell.pass ? "PASS" : "FAIL"}</td><td>REJECTED</td></tr>`,
+        `<tr><td>${escapeHtml(cell.id)}</td><td>${cell.bounds.maxX - cell.bounds.minX + 1}×${cell.bounds.maxY - cell.bounds.minY + 1}</td><td>${cell.runtime.width}×${cell.runtime.height}</td><td>${cell.runtime.supportWidth}</td><td class="${cell.pass ? "pass" : "fail"}">${cell.pass ? "PASS" : "FAIL"}</td><td class="${cell.preparedIntegrationSafe ? "pass" : "fail"}">${cell.preparedIntegrationSafe ? "SAFE FOR VISUAL REVIEW" : "REJECT"}</td></tr>`,
     )
     .join("");
   const rawRows = rawAssessment.checks
@@ -733,16 +1051,24 @@ async function main() {
         `<li class="${control.detected ? "pass" : "fail"}">${control.detected ? "CAUGHT" : "MISSED"}: ${escapeHtml(control.id)} → ${escapeHtml(control.expectedViolation)}</li>`,
     )
     .join("");
-  const failures = record.review.failures
-    .map((failure) => `<li>${escapeHtml(failure)}</li>`)
+  const reviewNotes = [
+    ...(record.review.failures ?? []),
+    ...(record.review.warnings ?? []),
+  ]
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
     .join("");
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cinderwake environment-kit candidate audit</title><style>body{max-width:1100px;margin:2rem auto;padding:0 1rem;background:#100d0e;color:#eadfce;font:16px/1.5 system-ui}img{max-width:100%;height:auto;border:1px solid #5e4741}code{color:#efbd70}.pass{color:#9ed8aa}.fail,.reject{color:#ef8d83}table{border-collapse:collapse;width:100%}th,td{padding:.5rem;border:1px solid #5e4741;text-align:left}figure{margin:1.5rem 0}figcaption{color:#bba99d}</style></head><body><h1>Environment-kit candidate v1</h1><p class="reject"><strong>REJECTED / QUARANTINED.</strong> The art is materially more coordinated than the current mixed scene, but the raw raster violates the frozen chroma, cell-padding, shared-scale, and repeatable-wall requirements. No cell is safe to integrate independently because all six share one rejected source contract.</p><p>Raw <code>${report.sources.raw.sha256}</code><br>Prepared <code>${report.sources.prepared.sha256}</code><br>Built-in artifact <code>${escapeHtml(record.generation.artifactId)}</code></p><h2>Raw contract</h2><ul>${rawRows}</ul><h2>Prepared mechanics and runtime scale</h2><p>The deterministic recovery reproduces byte-identically. Five cells pass the safe-border, common-foot, silhouette, and contact-footprint proxies; the doorway fails the minimum usable-aperture proxy at its narrowed arch. These checks prove recoverability and expose collision ambiguity; they do not grant production approval.</p><table><thead><tr><th>Cell</th><th>Prepared ink</th><th>Runtime silhouette</th><th>Runtime support width</th><th>Mechanical</th><th>Integration</th></tr></thead><tbody>${cellRows}</tbody></table><figure><a href="runtime-scale-contact-sheet.png"><img src="runtime-scale-contact-sheet.png" alt="Six candidate components shown at their declared runtime heights on the current floor"></a><figcaption>Runtime-scale comparison on the current floor. Independent per-component scaling repairs presentation size, but it cannot make the raw shared-scale claim true.</figcaption></figure><figure><a href="prepared-cuts-contact-sheet.png"><img src="prepared-cuts-contact-sheet.png" alt="Deterministically prepared three by two component cuts"></a><figcaption>Prepared transparent cuts, flattened only for this review image.</figcaption></figure><h2>Visual rejection</h2><ul>${failures}</ul><h2>Paired negative controls</h2><ul>${controls}</ul><figure><a href="negative-controls-contact-sheet.png"><img src="negative-controls-contact-sheet.png" alt="Five deliberately damaged environment kit atlases"></a><figcaption>Opaque matte, border bleed, cross-cell bridge, floating foot, and needle-footprint mutations. The report evaluates mutated pixels through the same prepared assessor.</figcaption></figure><p>${escapeHtml(record.review.decision)}</p></body></html>`;
-  await fs.writeFile(path.join(options.output, "index.html"), html);
+  const rawVerdictClass = rawAssessment.pass ? "pass" : "fail";
+  const ingressVerdictClass = preparedIngressPass ? "pass" : "fail";
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cinderwake ${escapeHtml(record.id)} audit</title><style>body{max-width:1100px;margin:2rem auto;padding:0 1rem;background:#100d0e;color:#eadfce;font:16px/1.5 system-ui}img{max-width:100%;height:auto;border:1px solid #5e4741}code{color:#efbd70}.pass{color:#9ed8aa}.fail,.reject{color:#ef8d83}table{border-collapse:collapse;width:100%}th,td{padding:.5rem;border:1px solid #5e4741;text-align:left}figure{margin:1.5rem 0}figcaption{color:#bba99d}</style></head><body><h1>${escapeHtml(record.id)}</h1><p><strong class="${rawVerdictClass}">Strict raw contract: ${report.strictRawVerdict}.</strong> <strong class="${ingressVerdictClass}">Deterministic prepared ingress: ${report.preparedIngress.verdict}.</strong> Production promotion remains prohibited; prepared-safe cells require independent visual acceptance.</p><p>Raw <code>${report.sources.raw.sha256}</code><br>Prepared <code>${report.sources.prepared.sha256}</code><br>Built-in artifact <code>${escapeHtml(record.generation.artifactId)}</code></p><h2>Strict raw contract</h2><ul>${rawRows}</ul><p>Only declared chroma/padding failures may be remediated warnings. All other raw failures block ingress.</p><h2>Prepared mechanics and runtime scale</h2><p>Preparation reproduced byte-identically twice. The same assessor checks transparent matte, spill, safe borders, common contacts, collision proxies, runtime silhouettes, the configured wall topology, and matching lantern scale.</p><table><thead><tr><th>Cell</th><th>Prepared ink</th><th>Runtime silhouette</th><th>Runtime support width</th><th>Mechanical</th><th>Prepared integration</th></tr></thead><tbody>${cellRows}</tbody></table><figure><a href="runtime-scale-contact-sheet.png"><img src="runtime-scale-contact-sheet.png" alt="Six candidate components at declared runtime heights on the current floor"></a><figcaption>Runtime-scale silhouettes and contacts on the current game floor.</figcaption></figure><figure><a href="prepared-cuts-contact-sheet.png"><img src="prepared-cuts-contact-sheet.png" alt="Deterministically prepared three by two component cuts"></a><figcaption>Prepared transparent cuts, flattened only for review.</figcaption></figure><h2>Recorded review status</h2><ul>${reviewNotes}</ul><h2>Paired negative controls</h2><ul>${controls}</ul><figure><a href="negative-controls-contact-sheet.png"><img src="negative-controls-contact-sheet.png" alt="Deliberately damaged environment kit atlases"></a><figcaption>${negativeControls.length} mutations evaluated through the same prepared assessor.</figcaption></figure><p>${escapeHtml(record.review.decision)}</p></body></html>`;
+  await fs.writeFile(
+    path.join(options.output, "index.html"),
+    await format(html, { parser: "html" }),
+  );
 
-  if (!expectedQuarantine)
-    throw new Error("Environment-kit quarantine audit did not reproduce");
+  if (!dispositionMatchesRecord)
+    throw new Error("Environment-kit recorded disposition did not reproduce");
   process.stdout.write(
-    `Environment kit rejected reproducibly: raw ${rawAssessment.checks.filter(({ pass }) => pass).length}/${rawAssessment.checks.length} checks pass, prepared ${preparedAssessment.cells.filter(({ pass }) => pass).length}/6 cells mechanically pass, ${negativeControls.filter(({ detected }) => detected).length}/${negativeControls.length} bad controls caught, 0/6 cells integration-safe.\n`,
+    `${record.id}: strict raw ${report.strictRawVerdict}, prepared ingress ${report.preparedIngress.verdict}; ${preparedAssessment.cells.filter(({ pass }) => pass).length}/${record.grid.cells.length} cells mechanically pass, ${negativeControls.filter(({ detected }) => detected).length}/${negativeControls.length} bad controls caught, ${preparedSafeCells}/${record.grid.cells.length} cells prepared-integration-safe, production promotion disabled.\n`,
   );
 }
 
