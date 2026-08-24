@@ -73,6 +73,10 @@ export class CanvasRenderer {
     const openingHorizontalBias =
       (threshold?.side === "east" ? 4 : threshold?.side === "west" ? -4 : 0) *
       openingBiasStrength;
+    // Cover-fit landscape viewports trim the top and bottom of the 16:9
+    // render. Frame the opening slightly north so its full forge roof remains
+    // in the shared safe area, then fade the bias after leaving room zero.
+    const openingVerticalBias = -20 * openingBiasStrength;
     const mapWidth = state.map.width * TILE_PIXELS;
     const mapHeight = state.map.height * TILE_PIXELS;
     const clampedX =
@@ -90,7 +94,10 @@ export class CanvasRenderer {
         ? mapHeight / 2
         : Math.max(
             VIEW_HEIGHT / 2,
-            Math.min(mapHeight - VIEW_HEIGHT / 2, targetY),
+            Math.min(
+              mapHeight - VIEW_HEIGHT / 2,
+              targetY + openingVerticalBias,
+            ),
           );
     return { x: clampedX, y: clampedY, zoom: 1 };
   }
