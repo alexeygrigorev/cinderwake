@@ -922,12 +922,20 @@ async function main() {
     unremediableRawFailures.length === 0 &&
     preparedAssessment.pass &&
     controlsPass;
-  const expectedEvaluation = preparedIngressPass
-    ? "pending-independent-visual-review"
-    : "rejected";
-  const dispositionMatchesRecord =
-    record.review.evaluation === expectedEvaluation &&
+  const visualTrialApproved =
+    preparedIngressPass &&
+    record.review.evaluation === "pass-for-controlled-runtime-integration" &&
+    record.review.productionApproved === true;
+  const pendingVisualReview =
+    preparedIngressPass &&
+    record.review.evaluation === "pending-independent-visual-review" &&
     record.review.productionApproved === false;
+  const recordedRejection =
+    !preparedIngressPass &&
+    record.review.evaluation === "rejected" &&
+    record.review.productionApproved === false;
+  const dispositionMatchesRecord =
+    visualTrialApproved || pendingVisualReview || recordedRejection;
 
   const preparedSharedViolations = preparedAssessment.violations.filter(
     (violation) =>
@@ -946,9 +954,13 @@ async function main() {
     ];
     cell.preparedIntegrationSafe = preparedIngressPass && cell.pass;
     cell.integrationReasons = cell.preparedIntegrationSafe
-      ? [
-          "deterministic prepared-ingress checks pass; independent visual acceptance is still required",
-        ]
+      ? visualTrialApproved
+        ? [
+            "deterministic prepared ingress and independent visual review authorize a controlled runtime integration trial",
+          ]
+        : [
+            "deterministic prepared-ingress checks pass; independent visual acceptance is still required",
+          ]
       : [...new Set(reasons)];
   }
   const preparedSafeCells = preparedAssessment.cells.filter(
@@ -958,11 +970,13 @@ async function main() {
     schemaVersion: 2,
     id: record.id,
     status: dispositionMatchesRecord
-      ? preparedIngressPass
-        ? "prepared-ingress-pass-quarantined"
-        : "rejected-as-recorded"
+      ? visualTrialApproved
+        ? "controlled-runtime-integration-approved"
+        : preparedIngressPass
+          ? "prepared-ingress-pass-quarantined"
+          : "rejected-as-recorded"
       : "audit-failed",
-    promotionApproved: false,
+    promotionApproved: visualTrialApproved,
     sources: {
       record: path.relative(ROOT, options.record),
       generation: {
@@ -1010,13 +1024,15 @@ async function main() {
           index,
           id,
           preparedIntegrationSafe,
-          productionApproved: false,
+          productionApproved: visualTrialApproved && preparedIntegrationSafe,
           reasons: integrationReasons,
         }),
       ),
-      note: preparedIngressPass
-        ? "Prepared-safe means eligible for independent visual acceptance only. This audit does not authorize production or runtime promotion."
-        : "No cell is prepared-integration-safe while a shared or cell-specific mechanical ingress failure remains.",
+      note: visualTrialApproved
+        ? "The reviewed prepared cells are approved only for a controlled runtime integration trial; finished-scene acceptance still requires fresh gameplay screenshots."
+        : preparedIngressPass
+          ? "Prepared-safe means eligible for independent visual acceptance only. This audit does not authorize production or runtime promotion."
+          : "No cell is prepared-integration-safe while a shared or cell-specific mechanical ingress failure remains.",
     },
   };
 
@@ -1059,7 +1075,7 @@ async function main() {
     .join("");
   const rawVerdictClass = rawAssessment.pass ? "pass" : "fail";
   const ingressVerdictClass = preparedIngressPass ? "pass" : "fail";
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cinderwake ${escapeHtml(record.id)} audit</title><style>body{max-width:1100px;margin:2rem auto;padding:0 1rem;background:#100d0e;color:#eadfce;font:16px/1.5 system-ui}img{max-width:100%;height:auto;border:1px solid #5e4741}code{color:#efbd70}.pass{color:#9ed8aa}.fail,.reject{color:#ef8d83}table{border-collapse:collapse;width:100%}th,td{padding:.5rem;border:1px solid #5e4741;text-align:left}figure{margin:1.5rem 0}figcaption{color:#bba99d}</style></head><body><h1>${escapeHtml(record.id)}</h1><p><strong class="${rawVerdictClass}">Strict raw contract: ${report.strictRawVerdict}.</strong> <strong class="${ingressVerdictClass}">Deterministic prepared ingress: ${report.preparedIngress.verdict}.</strong> Production promotion remains prohibited; prepared-safe cells require independent visual acceptance.</p><p>Raw <code>${report.sources.raw.sha256}</code><br>Prepared <code>${report.sources.prepared.sha256}</code><br>Built-in artifact <code>${escapeHtml(record.generation.artifactId)}</code></p><h2>Strict raw contract</h2><ul>${rawRows}</ul><p>Only declared chroma/padding failures may be remediated warnings. All other raw failures block ingress.</p><h2>Prepared mechanics and runtime scale</h2><p>Preparation reproduced byte-identically twice. The same assessor checks transparent matte, spill, safe borders, common contacts, collision proxies, runtime silhouettes, the configured wall topology, and matching lantern scale.</p><table><thead><tr><th>Cell</th><th>Prepared ink</th><th>Runtime silhouette</th><th>Runtime support width</th><th>Mechanical</th><th>Prepared integration</th></tr></thead><tbody>${cellRows}</tbody></table><figure><a href="runtime-scale-contact-sheet.png"><img src="runtime-scale-contact-sheet.png" alt="Six candidate components at declared runtime heights on the current floor"></a><figcaption>Runtime-scale silhouettes and contacts on the current game floor.</figcaption></figure><figure><a href="prepared-cuts-contact-sheet.png"><img src="prepared-cuts-contact-sheet.png" alt="Deterministically prepared three by two component cuts"></a><figcaption>Prepared transparent cuts, flattened only for review.</figcaption></figure><h2>Recorded review status</h2><ul>${reviewNotes}</ul><h2>Paired negative controls</h2><ul>${controls}</ul><figure><a href="negative-controls-contact-sheet.png"><img src="negative-controls-contact-sheet.png" alt="Deliberately damaged environment kit atlases"></a><figcaption>${negativeControls.length} mutations evaluated through the same prepared assessor.</figcaption></figure><p>${escapeHtml(record.review.decision)}</p></body></html>`;
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cinderwake ${escapeHtml(record.id)} audit</title><style>body{max-width:1100px;margin:2rem auto;padding:0 1rem;background:#100d0e;color:#eadfce;font:16px/1.5 system-ui}img{max-width:100%;height:auto;border:1px solid #5e4741}code{color:#efbd70}.pass{color:#9ed8aa}.fail,.reject{color:#ef8d83}table{border-collapse:collapse;width:100%}th,td{padding:.5rem;border:1px solid #5e4741;text-align:left}figure{margin:1.5rem 0}figcaption{color:#bba99d}</style></head><body><h1>${escapeHtml(record.id)}</h1><p><strong class="${rawVerdictClass}">Strict raw contract: ${report.strictRawVerdict}.</strong> <strong class="${ingressVerdictClass}">Deterministic prepared ingress: ${report.preparedIngress.verdict}.</strong> ${visualTrialApproved ? "Independent visual review authorizes a controlled runtime integration trial; finished-scene approval remains pending." : "Production promotion remains prohibited; prepared-safe cells require independent visual acceptance."}</p><p>Raw <code>${report.sources.raw.sha256}</code><br>Prepared <code>${report.sources.prepared.sha256}</code><br>Built-in artifact <code>${escapeHtml(record.generation.artifactId)}</code></p><h2>Strict raw contract</h2><ul>${rawRows}</ul><p>Only declared chroma/padding failures may be remediated warnings. All other raw failures block ingress.</p><h2>Prepared mechanics and runtime scale</h2><p>Preparation reproduced byte-identically twice. The same assessor checks transparent matte, spill, safe borders, common contacts, collision proxies, runtime silhouettes, the configured wall topology, and matching lantern scale.</p><table><thead><tr><th>Cell</th><th>Prepared ink</th><th>Runtime silhouette</th><th>Runtime support width</th><th>Mechanical</th><th>Prepared integration</th></tr></thead><tbody>${cellRows}</tbody></table><figure><a href="runtime-scale-contact-sheet.png"><img src="runtime-scale-contact-sheet.png" alt="Six candidate components at declared runtime heights on the current floor"></a><figcaption>Runtime-scale silhouettes and contacts on the current game floor.</figcaption></figure><figure><a href="prepared-cuts-contact-sheet.png"><img src="prepared-cuts-contact-sheet.png" alt="Deterministically prepared three by two component cuts"></a><figcaption>Prepared transparent cuts, flattened only for review.</figcaption></figure><h2>Recorded review status</h2><ul>${reviewNotes}</ul><h2>Paired negative controls</h2><ul>${controls}</ul><figure><a href="negative-controls-contact-sheet.png"><img src="negative-controls-contact-sheet.png" alt="Deliberately damaged environment kit atlases"></a><figcaption>${negativeControls.length} mutations evaluated through the same prepared assessor.</figcaption></figure><p>${escapeHtml(record.review.decision)}</p></body></html>`;
   await fs.writeFile(
     path.join(options.output, "index.html"),
     await format(html, { parser: "html" }),
@@ -1068,7 +1084,7 @@ async function main() {
   if (!dispositionMatchesRecord)
     throw new Error("Environment-kit recorded disposition did not reproduce");
   process.stdout.write(
-    `${record.id}: strict raw ${report.strictRawVerdict}, prepared ingress ${report.preparedIngress.verdict}; ${preparedAssessment.cells.filter(({ pass }) => pass).length}/${record.grid.cells.length} cells mechanically pass, ${negativeControls.filter(({ detected }) => detected).length}/${negativeControls.length} bad controls caught, ${preparedSafeCells}/${record.grid.cells.length} cells prepared-integration-safe, production promotion disabled.\n`,
+    `${record.id}: strict raw ${report.strictRawVerdict}, prepared ingress ${report.preparedIngress.verdict}; ${preparedAssessment.cells.filter(({ pass }) => pass).length}/${record.grid.cells.length} cells mechanically pass, ${negativeControls.filter(({ detected }) => detected).length}/${negativeControls.length} bad controls caught, ${preparedSafeCells}/${record.grid.cells.length} cells prepared-integration-safe, ${visualTrialApproved ? "controlled runtime integration approved" : "production promotion disabled"}.\n`,
   );
 }
 

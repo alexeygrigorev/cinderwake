@@ -107,8 +107,23 @@
     }
   },
   "review": {
-    "evaluation": "pending-independent-visual-review",
-    "productionApproved": false,
+    "evaluation": "pass-for-controlled-runtime-integration",
+    "productionApproved": true,
+    "rating": 7.5,
+    "scope": "prepared six-cell kit at calibrated runtime scale; finished opening scene remains unapproved",
+    "reviewedAtCommit": "b7e49e1",
+    "reviewedEvidence": {
+      "file": "art/generation/environment-kit/evidence/environment-kit-v2/runtime-scale-contact-sheet.png",
+      "sha256": "cb5a8df6b4eea3925334bb37b732f4624900325e7812e07818460eb95ff8e4e9"
+    },
+    "cellVerdicts": {
+      "north-wall-solid": "pass",
+      "forge-workshop": "pass",
+      "lantern-a": "pass",
+      "lantern-b": "pass",
+      "barricade": "pass",
+      "raised-clutter-bench": "pass"
+    },
     "strengths": [
       "The corrected first cell is a broad continuous masonry wall without a doorway or implied walkable opening.",
       "The six silhouettes share one elevated camera, weathered material family, restrained ember lighting, and compact grounded contacts.",
@@ -117,10 +132,10 @@
     "warnings": [
       "The generated raw backdrop is tolerant near-magenta rather than literal #ff00ff and therefore fails the strict raw contract.",
       "Several raw objects miss the requested 62-pixel equal-cell inset; deterministic preparation must prove that this is fully remediated before any cell can be considered ingress-safe.",
-      "The first independent review passed the source kit at 7.5/10 for a controlled trial but found the initial declared runtime sizes miniature beside the 118px player. The declared heights now use its recommended bands and require a second exact contact-sheet review before runtime promotion.",
+      "The first independent review passed the source kit at 7.5/10 for a controlled trial but found the initial declared runtime sizes miniature beside the 118px player. The second independent review passed all six calibrated silhouettes against the exact production-floor contact sheet.",
       "The wall must be a single centered feature with retained tile-backed outer facades; it must never be stretched or visibly repeated.",
       "Runtime collision must follow the visible composite masses rather than the audit's narrow alpha-support proxy."
     ],
-    "decision": "Keep the candidate quarantined while the rescaled runtime contact sheet receives a second independent visual review. The first review authorizes a controlled integration trial only at wall 165-180px, forge 185-205px, identical lanterns 110-125px, barricade 80-95px, and bench 95-110px."
+    "decision": "Authorize promotion of the deterministic prepared bytes only for a controlled runtime integration trial at wall 172px, forge 195px, identical lanterns 118px, barricade 88px, and bench 103px. Finished-scene acceptance still requires fresh portrait and landscape gameplay review with actors, collision, sprite light pools, and HUD."
   }
 }
