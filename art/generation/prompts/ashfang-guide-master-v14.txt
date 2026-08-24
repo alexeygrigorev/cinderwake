@@ -1,0 +1,24 @@
+Transform the first attached reviewed quadruped pose-layout guide into exactly one original, production-quality Cinderwake Ashfang idle master. Use the guide only for its elevated diagonal body axis, head-right/tail-upper-left composition, four limb-corridor centers, four paw-center positions, open magenta gaps, two-near-paw support row, occupied envelope, and contact baseline. Do not copy its flat diagram colors, oval body, rectangular or stilt-like limbs, uniform widths, simple circles, facial marks, or silhouette. Build a fresh natural animal around the four routes; there is no exact contour lock.
+
+Use the second attached accepted Stonekin source only for Cinderwake's broad matte painterly value hierarchy, approximately 55-degree elevated gameplay camera, warm upper-left light, cool lower-right separation, charcoal/ochre/ember palette, crisp runtime silhouette, and stable native-runtime detail density. Do not copy Stonekin anatomy, humanoid stance, equipment, armor shapes, proportions, grid, repeated figures, or sheet layout.
+
+No Ashfang candidate, production Ashfang sprite, anatomy blockout, or rejected identity-master image is attached or may be reconstructed. Design a new living heavy volcanic rock-hound from text: low broad raised rib cage, muscular shoulders, slightly narrower hips, short organically tapered jointed legs, broad three-claw paws, compact wedge skull, swept basalt ear-horns, modest dorsal armor, sparse filled ember vents, and a muscular hooked tail held clear of the ground. Shoulders and hips flow into bent elbows and hocks. No tubes, rings, straight columns, shell torso, paddle tail, prone side view, crawl, attack, or dead pose.
+
+Output one creature in one quiet east-facing pose on one square canvas—not a sheet, turnaround, concept page, or set of options. Preserve the guide's unmistakable elevated perspective: the foreshortened head points screen-right and slightly down; the tail ends upper-left; top planes of skull, both shoulders, ribs, spine, both hips, all four upper limbs, and all four paws are visible.
+
+Exactly four complete independent body-to-paw routes and exactly four terminal paws are mandatory at 128 pixels. Naturalize each guide corridor without moving or hiding its route:
+
+1. far hind hip to bent hock to short lower leg to three-claw paw at upper-left;
+2. near hind hip to bent hock to short lower leg to three-claw paw at lower-left;
+3. far fore shoulder outside the chest to bent elbow to short lower leg to three-claw paw at upper-right;
+4. near fore shoulder to bent elbow to short lower leg to three-claw paw at lower-right.
+
+Keep a continuous magenta gap around each route and between each lower limb and the belly. Both far-side roots remain visible. Both diagonal pairs are labelable. The two near paws share the lowest support row; far paws sit higher. No merged or hidden root, occluded leg, detached paw, fifth limb, central support paw, straight column, tail contact, or floating claw. Exaggerate route separation for gameplay readability.
+
+Match the guide's compact placement: all foreground including tail and claws occupies 60–64 percent of canvas width and 58–63 percent of canvas height, centered horizontally, with the lowest near-paw contacts near 78 percent canvas height. Leave clean background beneath all paws and around every boundary. The future 128-pixel actor must be 72–86 pixels tall and at most 1.5 times as wide as tall.
+
+Render eight to twelve broad filled matte planes across the head, shoulders, ribs, flank, hips, all four limb routes, paws, and tail. Use charcoal, black iron-bark, muted ochre top planes, one broad cool-slate far-side separation, two or three short filled ember vents, and one small non-blooming eye. Major boundaries remain several pixels thick and distinct at 128 pixels. No low-contrast empty wash, grain, scratches, tiny scales, stipple, microfacets, thin rim network, silver tracing, cyan outline, joint rings, thin glowing cracks, plastic gloss, muddy gradient, blur, thick comic outline, or photoreal microdetail.
+
+Outside the creature use one flat literal RGB #ff00ff field, every background pixel exactly red 255, green 0, blue 255. No floor, shadow, ground wash, texture, gradient, pink spill, smoke, dust, bloom, particles, action effect, scenery, architecture, prop, text, title, UI, border, grid, label, guide mark, second pose, second creature, or duplicate body.
+
+Before finalizing, inspect at 128 pixels and reject the image unless the guide's four routes, four paws, gaps, diagonals, support row, camera, envelope, and baseline are all visibly preserved while every guide shape has become fresh natural Ashfang anatomy in the accepted Cinderwake material language.
