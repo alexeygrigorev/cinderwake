@@ -4,28 +4,29 @@
   "verdict": "REJECT",
   "reviewedAt": "2026-08-24",
   "reviewer": "independent visual-audit agent",
-  "reviewerTask": "/root/fresh_visual_acceptance",
-  "scope": "The exact 16-image public-route matrix: three selection screens and initial gameplay in desktop, narrow desktop, phone landscape, and phone portrait, reviewed at original resolution after machine gates passed.",
+  "reviewerTask": "/root/fresh_collision_visual_review",
+  "scope": "The exact 16-image public-route matrix: unchanged reviewed selection screens plus the four changed initial-gameplay screens in desktop, narrow desktop, phone landscape, and phone portrait. The changed gameplay PNGs were independently reviewed at original resolution after machine gates passed.",
   "contractSha256": "9943223e46752cfa420348d649126fc5d51ae6e706f219fc23cb9ede414219d2",
-  "snapshotSetSha256": "7f66678a0a1f0e586d3ef2bff066f8464fbdf9c8913a2e53261c288e46d455c7",
+  "snapshotSetSha256": "b1c83c89e920fdc95012b5479cf4b64ac14cec1852224781516e79afaec653ed",
   "measurements": {
-    "overallVisualRatingOutOf10": 5.5,
+    "overallVisualRatingOutOf10": 7.8,
     "gameplayProfilesReviewed": 4,
     "environmentGridSalienceMean": 0.3593,
     "environmentGridSalienceMaximum": 0.3708,
     "environmentGridMutationSalience": 0.5514
   },
   "resolvedFindings": [
-    "The opening now has a bounded entrance and a readable approach instead of an unbounded empty field.",
-    "The portrait objective compass remains clear of the forge and Rift Hexer.",
-    "The continuous floor removes the former hard checkerboard, while the screen gate now measures its CSS-scaled periodic seam rather than only source-tile joins."
+    "The authored workshop, lanterns, crates, floor, and actors now establish a recognizably Diablo-like dark-gothic scene rather than an empty test arena.",
+    "The former Hexer/Vanguard/workshop overlap is resolved: Vanguard, Stonekin, and Ashfang have clean silhouettes in all four gameplay profiles.",
+    "The workshop apron, southern lane, and gap between the two opening monsters read as honestly navigable, matching the solid collision and real input tests.",
+    "Touch controls remain clear of the encounter in portrait and landscape, and the narrow-desktop composition balances the landmark and actors cleanly."
   ],
   "rejectedFindings": [
-    "The opening-room collage is mechanically legible but still reads as assembled rather than as a coherent scene: its entrance, lanterns, forge, barricade, and scattered details do not yet tell one clear spatial story.",
-    "Forge, wall, structures, props, actors, enemies, and controls still disagree in camera perspective, rendering sharpness, lighting, outline treatment, and apparent scale.",
-    "The periodic floor seam remains visible at page CSS scale, making the ground feel tiled even though the source-scale checkerboard is gone.",
-    "Ashfang still reads as a dead or prone flaming carcass rather than a live threat; its isolated pose master remains a production REJECT. The orange mound/coil behind it also reads as a raised obstacle despite ground-detail metadata, weakening collision affordance.",
-    "The encounter remains evenly gray, static, and low-depth. Mobile labels remain fine at phone size, landscape makes the cluster small, and the compass lacks a strong visual relationship to its target."
+    "Ashfang still reads more like a prone corpse than a living combatant; its thin health line carries too much of the active-threat meaning.",
+    "The solid black gate bays above and to the right of the workshop remain conspicuous rectangular seams and look like unfinished tile cutouts.",
+    "Character sprites remain softer and more haloed than the crisp high-frequency workshop art.",
+    "Wide desktop and phone-landscape compositions leave too much inactive rocky ground while concentrating authored complexity in one upper-center cluster.",
+    "Plain floating enemy health lines are stylistically unfinished beside the ornate sprite-based world and HUD, and mobile framing still clips authored lantern/workshop edges."
   ],
   "promotionRule": "This rejection applies only while both the contract and ordered screenshot-set hashes match. Any pixel or contract change invalidates it and returns the gallery to candidate; no machine metric can override a matching rejection."
 }
