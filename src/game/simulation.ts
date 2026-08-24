@@ -6,6 +6,7 @@ import {
   updateCityInteractionContext,
 } from "./city";
 import {
+  CITY_DISCOVERY_INTERACTION_RADIUS,
   createEmbercrossMap,
   isEmbercrossMap,
   nearbyEmbercrossNpcId,
@@ -1224,7 +1225,8 @@ function checkExit(state: GameState): void {
   const landmark = wildernessCityLandmarkAnchor(state.map);
   if (
     state.city.locationPhase === "undiscovered" &&
-    distanceSquared(landmark, state.player.position) <= 720 * 720
+    distanceSquared(landmark, state.player.position) <=
+      CITY_DISCOVERY_INTERACTION_RADIUS * CITY_DISCOVERY_INTERACTION_RADIUS
   ) {
     const discovered = transitionCityProgression(state.city, {
       type: "discover_city",

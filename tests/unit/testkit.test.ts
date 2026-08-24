@@ -6,6 +6,7 @@ import {
   tileCenter,
   totalFloorCount,
 } from "../../src/game/dungeon";
+import { wildernessCityLandmarkAnchor } from "../../src/game/cityWorld";
 import {
   navigationPointWalkable,
   navigationSegmentWalkable,
@@ -49,6 +50,30 @@ describe("deterministic fixtures", () => {
     expect(canonicalJson(first)).toBe(canonicalJson(second));
     expect(canonicalState(first)).toEqual(JSON.parse(canonicalJson(first)));
     expect(stateHash(first)).toBe(stateHash(second));
+  });
+
+  it("places a production fixture on a safe reproducible approach to the city sign", () => {
+    const first = worldFromScenario(
+      BUILTIN_SCENARIOS["production-city-route"]!,
+    );
+    const second = worldFromScenario(
+      BUILTIN_SCENARIOS["production-city-route"]!,
+    );
+    const landmark = wildernessCityLandmarkAnchor(first.map);
+    const distance = Math.hypot(
+      landmark.x - first.player.position.x,
+      landmark.y - first.player.position.y,
+    );
+
+    expect(first).toEqual(second);
+    expect(first.map.rooms.length).toBeGreaterThan(0);
+    expect(distance).toBeGreaterThan(720);
+    expect(distance).toBeLessThan(6 * 1024);
+    expect(
+      buildSceneryLayout(first.map).some(
+        ({ id }) => id === "landmark:embercross:road-sign",
+      ),
+    ).toBe(true);
   });
 
   it("restores an exact internal snapshot without lossy tile conversion", () => {
@@ -235,6 +260,10 @@ describe("deterministic fixtures", () => {
     [
       "unsupported generated dimensions",
       { map: { mode: "generated", width: 8, height: 6 } },
+    ],
+    [
+      "city landmark placement on an explicit map",
+      { player: { placement: "city-landmark-approach" } },
     ],
   ])("rejects ScenarioV1 with %s", (_label, patch) => {
     const base = structuredClone(BUILTIN_SCENARIOS["animation-idle"]!) as any;

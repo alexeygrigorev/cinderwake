@@ -10,6 +10,10 @@ import type { DungeonMap, Vec2 } from "./types";
 
 export const EMBERCROSS_MAP_WIDTH = 32;
 export const EMBERCROSS_MAP_HEIGHT = 30;
+// Pointer navigation deliberately stops at the center of the nearest safe
+// cardinal cell beside the solid sign. Include that 1-tile approach plus a
+// small simulation-rounding margin so a visibly completed route responds.
+export const CITY_DISCOVERY_INTERACTION_RADIUS = 1152;
 
 function embercrossRows(): string[] {
   return Array.from({ length: EMBERCROSS_MAP_HEIGHT }, (_, y) => {

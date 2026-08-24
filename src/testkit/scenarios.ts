@@ -13,6 +13,7 @@ import {
   isFloor,
   tileCenter,
 } from "../game/dungeon";
+import { wildernessCityLandmarkAnchor } from "../game/cityWorld";
 import {
   findNavigationRoute,
   navigationSegmentWalkable,
@@ -136,6 +137,7 @@ export interface ScenarioV1 {
     | { mode: "generated"; width?: number; height?: number }
     | { mode: "explicit"; rows: string[] };
   player?: {
+    placement?: "city-landmark-approach";
     tile?: VecTuple;
     previousTile?: VecTuple;
     velocity?: VecTuple;
@@ -177,6 +179,31 @@ function positionFromTile(tile: VecTuple): Vec2 {
     x: Math.round((tile[0] + 0.5) * 1024),
     y: Math.round((tile[1] + 0.5) * 1024),
   };
+}
+
+function playerPositionFromScenario(
+  input: ScenarioV1,
+  map: GameState["map"],
+  radius: number,
+): Vec2 {
+  if (input.player?.tile) return positionFromTile(input.player.tile);
+  const spawn = tileCenter(map.spawn);
+  if (input.player?.placement !== "city-landmark-approach") return spawn;
+  const route = findNavigationRoute(
+    map,
+    sceneryCollisions(map),
+    spawn,
+    wildernessCityLandmarkAnchor(map),
+    radius,
+  );
+  if (route.length === 0)
+    throw new Error(
+      "Scenario.player.placement has no safe route to the city landmark",
+    );
+  // Start four safe route cells before the nearest reachable sign approach.
+  // This preserves a visible production-input journey while keeping the
+  // liveness check short enough to fail quickly in CI.
+  return { ...route[Math.max(0, route.length - 4)]! };
 }
 
 function vectorFromTuple(tuple: VecTuple | undefined, fallback: Vec2): Vec2 {
@@ -704,6 +731,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
     assertKnownKeys(
       scenario.player,
       [
+        "placement",
         "tile",
         "previousTile",
         "velocity",
@@ -727,6 +755,26 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       ],
       "Scenario.player",
     );
+    if (
+      scenario.player.placement !== undefined &&
+      scenario.player.placement !== "city-landmark-approach"
+    )
+      throw new Error("Scenario.player.placement is invalid");
+    if (
+      scenario.player.placement !== undefined &&
+      (scenario.player.tile !== undefined ||
+        scenario.player.previousTile !== undefined)
+    )
+      throw new Error(
+        "Scenario.player.placement cannot be combined with tile positions",
+      );
+    if (
+      scenario.player.placement === "city-landmark-approach" &&
+      scenario.map?.mode !== "generated"
+    )
+      throw new Error(
+        "Scenario.player city-landmark-approach requires a generated map",
+      );
     for (const field of ["tile", "previousTile", "velocity", "facing"] as const)
       if (scenario.player[field])
         assertTuple(scenario.player[field], `Scenario.player.${field}`);
@@ -1052,9 +1100,8 @@ export function worldFromScenario(input: ScenarioV1): GameState {
       : explicitDungeon(input.map.rows);
   const archetype = ARCHETYPES[input.classId];
   const tick = input.tick ?? 0;
-  const position = input.player?.tile
-    ? positionFromTile(input.player.tile)
-    : tileCenter(map.spawn);
+  const playerRadius = input.player?.radius ?? 320;
+  const position = playerPositionFromScenario(input, map, playerRadius);
   const maxHealth = input.player?.maxHealth ?? archetype.health;
   const rng = createRngStreams(input.seed);
   for (const name of Object.keys(input.rng ?? {}) as Array<keyof RngStreams>) {
@@ -1081,7 +1128,7 @@ export function worldFromScenario(input: ScenarioV1): GameState {
         : { ...position },
       velocity: vectorFromTuple(input.player?.velocity, { x: 0, y: 0 }),
       facing: vectorFromTuple(input.player?.facing, { x: 1024, y: 0 }),
-      radius: input.player?.radius ?? 320,
+      radius: playerRadius,
       health: input.player?.health ?? maxHealth,
       maxHealth,
       armor: input.player?.armor ?? archetype.armor,
@@ -1808,6 +1855,17 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     player: { tile: [26, 6] },
     monsters: [],
     camera: { mode: "smooth", centerTile: [4, 6] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "production-city-route": {
+    schemaVersion: 1,
+    id: "production-city-route",
+    seed: "quality-production-city-route-01",
+    classId: "vanguard",
+    map: { mode: "generated" },
+    player: { placement: "city-landmark-approach" },
+    monsters: [],
+    exitUnlocked: true,
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "temporal-city-entry": {

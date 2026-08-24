@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { EMBERCROSS_CITY } from "../../src/game/city";
 import {
   buildEmbercrossScenery,
+  CITY_DISCOVERY_INTERACTION_RADIUS,
   cityNpcWorldAnchor,
   createEmbercrossMap,
   isEmbercrossMap,
@@ -11,6 +12,7 @@ import {
 } from "../../src/game/cityWorld";
 import { TILE_PIXELS, UNITS_PER_TILE } from "../../src/game/constants";
 import { generateDungeon, isFloor, tileCenter } from "../../src/game/dungeon";
+import { findStateNavigationRoute } from "../../src/game/navigation";
 import {
   buildSceneryLayout,
   overlapsScenery,
@@ -20,6 +22,7 @@ import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
+  BUILTIN_SCENARIOS,
   createRunScenario,
   worldFromScenario,
 } from "../../src/testkit/scenarios";
@@ -111,6 +114,31 @@ describe("deterministic Embercross world", () => {
       expect(landmark).not.toEqual(map.exit);
       expect(landmark).not.toEqual(map.spawn);
     }
+  });
+
+  it("discovers the city from the click route's nearest safe sign approach", () => {
+    const state = worldFromScenario(
+      BUILTIN_SCENARIOS["production-city-route"]!,
+    );
+    const landmark = wildernessCityLandmarkAnchor(state.map);
+    const route = findStateNavigationRoute(
+      state,
+      state.player.position,
+      landmark,
+      state.player.radius,
+    );
+    const approach = route.at(-1)!;
+    const distance = Math.hypot(
+      landmark.x - approach.x,
+      landmark.y - approach.y,
+    );
+    expect(distance).toBeLessThanOrEqual(CITY_DISCOVERY_INTERACTION_RADIUS);
+
+    state.player.position = { ...approach };
+    state.player.previousPosition = { ...approach };
+    stepGame(state, EMPTY_INPUT);
+
+    expect(state.city.locationPhase).toBe("discovered");
   });
 
   it("requires discovery before the gate and enters the city without ending the run", () => {
