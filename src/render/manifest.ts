@@ -761,8 +761,8 @@ export function buildRenderManifest(
       monster.animation.startedAtTick,
     );
     const dimensions = {
-      ashfang: { width: 128, height: 108 },
-      hexer: { width: 102, height: 112 },
+      ashfang: { width: 128, height: 128 },
+      hexer: { width: 112, height: 112 },
       stonekin: { width: 128, height: 128 },
     }[monster.kind];
     const eliteScale = monster.elite ? 1.16 : 1;

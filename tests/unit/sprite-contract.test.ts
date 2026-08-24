@@ -471,6 +471,30 @@ describe("sprite atlas quality contract", () => {
     }
   });
 
+  it("preserves every actor source-cell aspect ratio at runtime", () => {
+    for (const scenarioId of [
+      "temporal-vanguard-primary",
+      "temporal-ranger-primary",
+      "temporal-arcanist-primary",
+      "temporal-ashfang-attack",
+      "temporal-hexer-attack",
+      "temporal-stonekin-attack",
+    ]) {
+      const manifest = buildRenderManifest(
+        worldFromScenario(BUILTIN_SCENARIOS[scenarioId]!),
+        CAMERA,
+      );
+      for (const actor of manifest.drawCalls.filter(
+        ({ type }) => type === "player" || type === "monster",
+      )) {
+        const sourceAspect = actor.sourceRect.width / actor.sourceRect.height;
+        const destinationAspect =
+          actor.destinationRect.width / actor.destinationRect.height;
+        expect(destinationAspect, actor.entityId).toBeCloseTo(sourceAspect, 6);
+      }
+    }
+  });
+
   it("keeps directional hero scenarios on their authored banks through action recovery", () => {
     const cases = [
       {

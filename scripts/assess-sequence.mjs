@@ -446,8 +446,8 @@ for (const point of points) {
       ? "projectile"
       : "loot";
   const monsterDimensions = {
-    ashfang: { width: 128, height: 108 },
-    hexer: { width: 102, height: 112 },
+    ashfang: { width: 128, height: 128 },
+    hexer: { width: 112, height: 112 },
     stonekin: { width: 128, height: 128 },
   };
   const expectedDimensions =
