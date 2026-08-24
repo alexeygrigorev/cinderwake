@@ -72,11 +72,11 @@ normalized before-to-down RMSE from `0.0531` to `0.0801`.
 
 The exact Tess reference hashes are:
 
-| Profile/state | SHA-256 |
-| --- | --- |
-| Portrait before | `1ce752f843c2fa1cdc7d53bebec65a5e99681ab3d0db921eae64b141fd3fe3df` |
-| Portrait pointer-down | `e5aec4b9634760d1f1828334f5dea5241ac2df13c2a0708e308f762fa8597d35` |
-| Landscape before | `5fce335c7cd028c58f1c8634e695f5c301cfbbe1989c1f918d83180cc98f61da` |
+| Profile/state          | SHA-256                                                            |
+| ---------------------- | ------------------------------------------------------------------ |
+| Portrait before        | `1ce752f843c2fa1cdc7d53bebec65a5e99681ab3d0db921eae64b141fd3fe3df` |
+| Portrait pointer-down  | `e5aec4b9634760d1f1828334f5dea5241ac2df13c2a0708e308f762fa8597d35` |
+| Landscape before       | `5fce335c7cd028c58f1c8634e695f5c301cfbbe1989c1f918d83180cc98f61da` |
 | Landscape pointer-down | `59cc87c77d79c2ed448cfafe453acf05dc0b88daf7b1dfb8d7439e2570dbae6f` |
 
 This acceptance is hash-bound to the atlas, three extracted components, and
