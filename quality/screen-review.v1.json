@@ -5,27 +5,27 @@
   "reviewedAt": "2026-08-24",
   "reviewer": "independent visual-audit agent",
   "reviewerTask": "/root/fresh_visual_acceptance",
-  "scope": "The four changed public-route gameplay screens in desktop, narrow desktop, phone landscape, and phone portrait, reviewed at original resolution after machine gates passed. Unchanged selection screens remain part of the ordered hash so any unrelated pixel change invalidates this record.",
+  "scope": "The exact 16-image public-route matrix: three selection screens and initial gameplay in desktop, narrow desktop, phone landscape, and phone portrait, reviewed at original resolution after machine gates passed.",
   "contractSha256": "9943223e46752cfa420348d649126fc5d51ae6e706f219fc23cb9ede414219d2",
-  "snapshotSetSha256": "c359c844223fcf6699c2621edf0d1a91d210ea6c6b3e3a353c238b4e21c1ee14",
+  "snapshotSetSha256": "7f66678a0a1f0e586d3ef2bff066f8464fbdf9c8913a2e53261c288e46d455c7",
   "measurements": {
-    "overallVisualRatingOutOf10": 5,
+    "overallVisualRatingOutOf10": 5.5,
     "gameplayProfilesReviewed": 4,
     "environmentGridSalienceMean": 0.3593,
     "environmentGridSalienceMaximum": 0.3708,
     "environmentGridMutationSalience": 0.5514
   },
   "resolvedFindings": [
-    "The organic floor substantially removes the prior checkerboard and hard cell seams.",
-    "The portrait objective compass no longer overlaps the forge or Hexer.",
-    "The quieter floor slightly improves actor-to-terrain contrast, and no major actor-to-actor clipping remains in the four static frames."
+    "The opening now has a bounded entrance and a readable approach instead of an unbounded empty field.",
+    "The portrait objective compass remains clear of the forge and Rift Hexer.",
+    "The continuous floor removes the former hard checkerboard, while the screen gate now measures its CSS-scaled periodic seam rather than only source-tile joins."
   ],
   "rejectedFindings": [
-    "The opening remains an unbounded empty field containing one forge and scattered props rather than a coherent room, corridor, entrance, or layered encounter space.",
-    "Forge, actors, enemies, props, and controls still disagree in perspective, rendering sharpness, lighting, outline treatment, and apparent scale.",
-    "The actor arrangement reads as a static vertical display without a clear threat direction, environmental story, lighting focus, or memorable opening beat.",
-    "Ashfang reads as a dead or prone flaming carcass; Stonekin is overly dominant and Hexer partly merges into the forge.",
-    "Mobile labels and ornate controls remain difficult to read at phone size, and the compass still lacks a clear visual relationship to its target."
+    "The opening-room collage is mechanically legible but still reads as assembled rather than as a coherent scene: its entrance, lanterns, forge, barricade, and scattered details do not yet tell one clear spatial story.",
+    "Forge, wall, structures, props, actors, enemies, and controls still disagree in camera perspective, rendering sharpness, lighting, outline treatment, and apparent scale.",
+    "The periodic floor seam remains visible at page CSS scale, making the ground feel tiled even though the source-scale checkerboard is gone.",
+    "Ashfang still reads as a dead or prone flaming carcass rather than a live threat; its isolated pose master remains a production REJECT. The orange mound/coil behind it also reads as a raised obstacle despite ground-detail metadata, weakening collision affordance.",
+    "The encounter remains evenly gray, static, and low-depth. Mobile labels remain fine at phone size, landscape makes the cluster small, and the compass lacks a strong visual relationship to its target."
   ],
   "promotionRule": "This rejection applies only while both the contract and ordered screenshot-set hashes match. Any pixel or contract change invalidates it and returns the gallery to candidate; no machine metric can override a matching rejection."
 }

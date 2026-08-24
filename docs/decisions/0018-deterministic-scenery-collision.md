@@ -26,22 +26,32 @@ ground. The shared movement solver tests these footprints for both the player
 and monsters and retains axis-by-axis movement, allowing natural sliding along
 an obstacle instead of stopping all motion.
 
-Low rubble is explicitly classified as passable ground clutter. Every other
-currently placed prop is solid. Adding a scenery name therefore requires an
-explicit collision profile or an explicit `null` pass-through decision.
+Every raised structure, prop, and rubble pile is solid. Only an explicitly
+flat decal may use the pass-through policy; a visually decal-like asset with a
+raised contact base remains solid. Adding a scenery name therefore requires an
+explicit collision profile, while the `null` pass-through decision is reserved
+for declared flat decals.
+
+The opening composition also has a bounded entrance and approach rather than
+an unbounded prop field. Its floor quality gate samples the composed browser
+screen at the actual CSS scale and rejects a periodic seam at that displayed
+period, not merely a source-atlas join. This keeps the visual metric honest
+when responsive scaling makes a subtle source seam conspicuous.
 
 ## Testing consequence
 
-Unit and browser tests verify six contracts:
+Unit and browser tests verify seven contracts:
 
 1. snapshot restoration derives byte-equivalent semantic placement;
 2. visible scene object IDs, tiles, anchors, solid/passable tags, and ellipse
    measurements match collision placement;
 3. generated spawn and exit centers remain clear across varied seeds;
 4. a player cannot enter a building base but can move tangentially beside it;
-5. monster movement cannot enter a solid prop, while rubble remains explicitly
-   passable.
-6. a real keyboard-driven browser run starts from an injected state beside the
+5. monster movement cannot enter a raised prop or rubble pile, while declared
+   flat decals remain passable;
+6. a raised-decal mutation is rejected rather than inheriting flat-decal
+   pass-through;
+7. a real keyboard-driven browser run starts from an injected state beside the
    manifested forge footprint, samples every approach tick, proves no overlap,
    and then proves tangential sliding still works.
 
