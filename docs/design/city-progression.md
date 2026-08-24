@@ -1,0 +1,129 @@
+# Embercross: wilderness-to-city progression
+
+Status: domain contract implemented; world map, sprites, simulation adapter, and UI integration pending.
+
+## Player experience
+
+The run begins in the wilderness. Embercross is neither visible on the map nor available as a fast-travel destination. The first path through the game is:
+
+1. Survive the opening wilderness encounter.
+2. Follow environmental clues to `landmark:embercross:road-sign`.
+3. Discover Embercross and reveal its direction, without teleporting there.
+4. Travel to `gate:embercross:south` through a second wilderness section.
+5. Enter a safe, persistent city scene.
+6. Walk to a visible NPC and interact by tapping the NPC or a context button.
+
+This makes the city something the player earns and finds. Discovery, gate arrival, and entry are separate facts so tests can begin at any one of those boundaries.
+
+## Why the city starts as a pure domain model
+
+`src/game/city.ts` does not read the DOM, render sprites, consult wall-clock time, or draw randomness. Given the same JSON state and command it returns the same next state and receipt. That separation contributes directly to the project goal: an agent can construct “the player is at the merchant with two pelts” without replaying the wilderness, execute a transaction, and inspect a complete machine-readable result.
+
+Expected gameplay rejections are also results, not exceptions. A rejected transaction returns the original state object and a stable error code. Malformed snapshots do throw during restoration, because accepting incomplete state would make scenario tests misleading.
+
+## Stable content
+
+City: `city:embercross` (Embercross)
+
+Buildings and residents:
+
+| Building                        | NPC                                   | Role          | Actions                        |
+| ------------------------------- | ------------------------------------- | ------------- | ------------------------------ |
+| `building:embercross:market`    | `npc:embercross:mara` (Mara Vale)     | Merchant      | Buy tonics, sell Ashfang pelts |
+| `building:embercross:tavern`    | `npc:embercross:oren` (Oren)          | Tavern keeper | Eat stew                       |
+| `building:embercross:tavern`    | `npc:embercross:tess` (Tess)          | Innkeeper     | Sleep until dawn               |
+| `building:embercross:infirmary` | `npc:embercross:ileya` (Sister Ileya) | Healer        | Restore health                 |
+
+The IDs are persistence and test contracts. Display names can change without invalidating saved state; IDs must not be silently renamed.
+
+Every NPC includes coarse tile placement and the same mobile interaction contract:
+
+- 48 CSS pixel minimum tap target;
+- tap the NPC or a context button;
+- an approach stop distance smaller than the interaction radius;
+- a thumb-reachable bottom sheet;
+- explicit confirmation for anything that spends gold or time.
+
+The context button is important when a character sprite is partly occluded by a crowd or building. It must identify the nearby NPC with a portrait sprite and action, rather than relying on tiny text alone.
+
+## Progression state machine
+
+```text
+undiscovered
+  -- road-sign discovery --> discovered
+  -- no direct transition --> inside
+
+discovered
+  -- reach south gate --> at_gate
+
+at_gate
+  -- enter south gate --> inside
+```
+
+Each accepted transition records its simulation tick and appends a stable event. A command with a tick older than the city state is rejected. The timestamps make progression observable in replays and prevent state from appearing to travel backward in time.
+
+The runtime should derive progression signals from deterministic trigger footprints:
+
+- overlap with the road-sign discovery trigger;
+- overlap with the south-gate arrival trigger;
+- explicit tap/confirm at the gate, followed by scene transition.
+
+Walking near the city boundary must not implicitly discover or enter it. The landmark and gate should both be visually unmistakable sprite compositions, with trigger areas contained inside the visible footprint.
+
+## Service rules
+
+All services require the traveler to be inside the city, close to the correct NPC, and not currently threatened. Quantities are integral and bounded to 1–20. Tavern, inn, and healer actions have quantity one.
+
+| Action ID                    | Cost / proceeds                         | Preconditions                      | State change                                                                           |
+| ---------------------------- | --------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------- |
+| `merchant:buy-tonic`         | 18 gold each                            | Player funds and merchant stock    | Player gold decreases, tonic count increases, merchant cash increases, stock decreases |
+| `merchant:sell-ashfang-pelt` | 9 gold each to player                   | Player inventory and merchant cash | Pelt quantity decreases, player gold increases, merchant cash decreases                |
+| `tavern:eat-stew`            | 6 gold                                  | Hunger above zero                  | Hunger drops by up to 45; health restores by up to 15                                  |
+| `inn:sleep-until-dawn`       | 20 gold                                 | Fatigued or injured                | Health and fatigue restore; hunger rises by 25; world time advances to the next 07:00  |
+| `healer:restore-health`      | max(6, 3 per started 10 missing health) | Health below maximum               | Health restores to maximum                                                             |
+
+Each accepted service appends a receipt with a deterministic sequence ID, the exact unit and total price, and every state delta. Receipts are intended for UI confirmation, replay assertions, economy audits, and future save migrations.
+
+## Scenario and reproducibility contract
+
+`CityStateV1` is composed only of JSON data. `restoreCityState` validates and clones an exact state; it does not fill omitted values. This supports precise scenarios such as:
+
+- city undiscovered with the player at the road sign;
+- city discovered but gate not yet reached;
+- player inside and near Mara with specified stock, funds, and inventory;
+- player threatened while a service panel is open;
+- player injured beside the healer;
+- player at the inn at an arbitrary time of day.
+
+A scenario runner should store the city state beside `GameState`, not hide it in UI state. State capture should include the current city location phase, interaction context, NPC stock, traveler needs, events, and receipts. Replaying a command from a captured snapshot must produce byte-equivalent JSON.
+
+## Runtime integration points
+
+The domain deliberately does not edit current shared state yet. Integration needs these focused changes:
+
+1. **Save/scenario schema:** add `city: CityStateV1` to the next game-state schema version and expose it through arbitrary-state scenario loading, strict snapshot restoration, hashing, and replay capture.
+2. **World progression:** place a visible road-sign trigger and gate trigger in a deterministic wilderness route. Convert their overlaps into `transitionCityProgression` signals.
+3. **Scene selection:** load an Embercross map after accepted gate entry. Restore the prior wilderness state or a stable exit anchor when leaving.
+4. **Player adapter:** copy player gold, health, maximum health, and tonics into the city traveler projection, then apply receipt deltas atomically. Add inventory, hunger, and fatigue to the versioned game schema rather than storing them only in UI.
+5. **Proximity adapter:** derive `nearbyNpcId` from deterministic NPC interaction circles and `threatened` from hostile combat state. Feed those facts through `updateCityInteractionContext`.
+6. **Input/UI:** ground taps continue to mean movement. Tapping an NPC should approach it; only the explicit context action opens the bottom sheet. Buying, selling, eating, sleeping, and healing each need a confirm button and a visible result state.
+7. **Rendering:** buildings, doors, counters, beds, food, signs, residents, selection states, and interaction feedback all require authored sprites in the established art style. Collision footprints must be visibly contained by the opaque bases of buildings and objects.
+
+## Test and visual acceptance criteria
+
+The unit suite covers state progression, each service, rejection without mutation, stable mobile affordances, strict restoration, and identical commands from JSON-restored arbitrary state.
+
+Runtime integration is not accepted until browser and temporal tests add the following evidence:
+
+- A production input sequence discovers the sign, reaches the gate, and enters the city; observer state and frames agree at every transition.
+- Ground tap, NPC tap, and service confirmation are distinct mobile gestures. Tapping empty ground never attacks or opens a service.
+- Every action button changes the expected state or returns a visible rejection; no inert controls.
+- NPC approach stops inside interaction range without walking through the NPC, counter, doorway, or building.
+- The service panel remains usable in portrait and landscape with at least 48 CSS pixel targets and no clipped confirm button.
+- City sprites render at uniform aspect ratio and sufficient device-pixel backing resolution. No NPC, building, or prop is stretched.
+- Walking characters face and animate in their movement direction while the camera and city scenery scroll coherently.
+- A frame sequence shows stable NPC feet and building anchors with no one-frame jumps, crop changes, or sprite-cell leakage.
+- Each solid footprint is legible from the visible sprite. A blocked movement attempt shows immediate sprite-based contact feedback at the visible obstacle.
+- Tavern eating, inn sleep, healing, buying, and selling each have before/action/after frame sequences plus machine-readable receipts.
+
+Visual captures should use stable city scenarios rather than replaying discovery for every assertion. The complete wilderness-to-city route remains one end-to-end production-gesture test; narrower service tests start from exact city JSON states.
