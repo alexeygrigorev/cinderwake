@@ -76,6 +76,7 @@ interface ScenarioV1 {
   eventLog?: GameEvent[];
   metrics?: Partial<GameMetrics>;
   settings?: { ai?: boolean; autoPickup?: boolean; cameraFollow?: boolean };
+  city?: CityStateV1; // exact override; no partial city patching
 }
 
 interface AnimationSpec {
@@ -88,6 +89,8 @@ interface AnimationSpec {
 The auxiliary `PendingAttackSpec`, `ProjectileSpec`, `EffectSpec`, event, metrics, and RNG fields mirror their serializable engine types; the authoritative TypeScript definition is [`src/testkit/scenarios.ts`](../src/testkit/scenarios.ts). A complete injected example is [`public/scenarios/arbitrary-state.json`](../public/scenarios/arbitrary-state.json).
 
 Decimal tile coordinates are allowed for exact range boundaries. Tile values are converted to integer world coordinates during construction; raw velocity, facing, radius, damage range, and other vectors use integer world units. Generated maps may omit monsters to receive the standard seeded population. An explicit empty `monsters: []` means no monsters.
+
+ScenarioV1 remains version 1, but it now constructs GameState schema version 2. Omitting `city` calls `createInitialCityState({ tick: scenario.tick ?? 0 })`, which starts with Embercross undiscovered; supplying `city` requires a complete valid `CityStateV1`, clones it exactly, and requires its tick not to exceed the game tick. Full GameState v2 snapshots must contain a valid city and never receive missing-field defaults. The snapshot loader has one explicit compatibility path for historical GameState v1 captures: it adds an undiscovered initial city at the captured game tick. A v1 snapshot that already contains a `city` field is ambiguous and rejected.
 
 ## Example: exact combat and loot state
 

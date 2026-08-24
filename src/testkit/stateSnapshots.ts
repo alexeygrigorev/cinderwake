@@ -1,4 +1,5 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
+import { createInitialCityState, restoreCityState } from "../game/city";
 import { isFloor } from "../game/dungeon";
 import { navigationSegmentWalkable } from "../game/navigation";
 import {
@@ -31,6 +32,7 @@ const EVENT_TYPES = new Set<GameEventType>([
   "loot_picked",
   "player_damaged",
   "player_died",
+  "movement_blocked",
   "exit_unlocked",
   "run_won",
 ]);
@@ -157,12 +159,14 @@ function assertActorPathWalkable(
  * restore every internal field without lossy tile conversion.
  */
 export function stateFromSnapshot(input: unknown): GameState {
-  const root = record(input, "state");
-  if (root.schemaVersion !== 1)
-    throw new Error("Only GameState schemaVersion 1 is supported");
+  const suppliedRoot = record(input, "state");
+  const migratedInput = migrateLegacyGameStateV1(suppliedRoot);
+  const root = record(migratedInput, "state");
+  if (root.schemaVersion !== 2)
+    throw new Error("Only GameState schemaVersion 1 or 2 is supported");
   string(root.scenarioId, "state.scenarioId");
   string(root.seed, "state.seed");
-  nonNegative(root.tick, "state.tick");
+  const gameTick = nonNegative(root.tick, "state.tick");
   if (root.tickRate !== 60) throw new Error("state.tickRate must be 60");
   if (!new Set(["playing", "won", "lost"]).has(root.phase as string))
     throw new Error("state.phase is invalid");
@@ -338,8 +342,11 @@ export function stateFromSnapshot(input: unknown): GameState {
   boolean(settings.autoPickup, "state.settings.autoPickup");
   boolean(settings.cameraFollow, "state.settings.cameraFollow");
   boolean(root.exitUnlocked, "state.exitUnlocked");
+  const city = restoreCityState(root.city);
+  if (city.tick > gameTick)
+    throw new Error("state.city.tick must not exceed state.tick");
 
-  const clone = structuredClone(input) as GameState;
+  const clone = structuredClone(migratedInput) as unknown as GameState;
   const scenery = sceneryCollisions(clone.map);
   assertActorPathWalkable(clone, scenery, clone.player, "state.player");
   clone.monsters.forEach((monster, index) =>
@@ -354,4 +361,24 @@ export function stateFromSnapshot(input: unknown): GameState {
     assertActorOnFloor(clone, loot.position, `state.loot[${index}].position`),
   );
   return clone;
+}
+
+/**
+ * The sole GameState v1→v2 migration. Historical v1 snapshots predate city
+ * progression, so they deterministically receive an undiscovered city whose
+ * city clock starts at the captured game tick. GameState v2 snapshots never
+ * receive defaults: a missing or malformed `city` is rejected above.
+ */
+function migrateLegacyGameStateV1(
+  root: Record<string, unknown>,
+): Record<string, unknown> {
+  if (root.schemaVersion !== 1) return root;
+  if (root.city !== undefined)
+    throw new Error("Legacy GameState schemaVersion 1 must not contain city");
+  const tick = nonNegative(root.tick, "state.tick");
+  return {
+    ...structuredClone(root),
+    schemaVersion: 2,
+    city: createInitialCityState({ tick }),
+  };
 }

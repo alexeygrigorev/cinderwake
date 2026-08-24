@@ -99,9 +99,9 @@ A scenario runner should store the city state beside `GameState`, not hide it in
 
 ## Runtime integration points
 
-The domain deliberately does not edit current shared state yet. Integration needs these focused changes:
+The pure domain is integrated into versioned shared state. Remaining runtime work uses these focused integration points:
 
-1. **Save/scenario schema:** add `city: CityStateV1` to the next game-state schema version and expose it through arbitrary-state scenario loading, strict snapshot restoration, hashing, and replay capture.
+1. **Save/scenario schema (complete):** GameState v2 requires `city: CityStateV1`; ScenarioV1 accepts an exact override; canonical capture, hashes, replay restoration, and the documented legacy-v1 migration include it.
 2. **World progression:** place a visible road-sign trigger and gate trigger in a deterministic wilderness route. Convert their overlaps into `transitionCityProgression` signals.
 3. **Scene selection:** load an Embercross map after accepted gate entry. Restore the prior wilderness state or a stable exit anchor when leaving.
 4. **Player adapter:** copy player gold, health, maximum health, and tonics into the city traveler projection, then apply receipt deltas atomically. Add inventory, hunger, and fatigue to the versioned game schema rather than storing them only in UI.

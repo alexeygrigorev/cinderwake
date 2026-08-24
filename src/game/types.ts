@@ -1,3 +1,5 @@
+import type { CityStateV1 } from "./city";
+
 export type CharacterClass = "vanguard" | "ranger" | "arcanist";
 export type MonsterKind = "ashfang" | "hexer" | "stonekin";
 export type LootKind = "gold" | "tonic" | "weapon";
@@ -171,7 +173,7 @@ export interface WorldSettings {
 }
 
 export interface GameState {
-  schemaVersion: 1;
+  schemaVersion: 2;
   scenarioId: string;
   seed: string;
   tick: number;
@@ -191,6 +193,7 @@ export interface GameState {
   eventLog: GameEvent[];
   metrics: GameMetrics;
   settings: WorldSettings;
+  city: CityStateV1;
 }
 
 export interface InputState {

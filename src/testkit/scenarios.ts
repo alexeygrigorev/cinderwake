@@ -1,4 +1,9 @@
 import { ARCHETYPES, MONSTERS } from "../game/content";
+import {
+  createInitialCityState,
+  restoreCityState,
+  type CityStateV1,
+} from "../game/city";
 import { TILE_PIXELS, UNITS_PER_TILE } from "../game/constants";
 import {
   explicitDungeon,
@@ -161,6 +166,8 @@ export interface ScenarioV1 {
   eventLog?: GameEvent[];
   metrics?: Partial<GameMetrics>;
   settings?: { ai?: boolean; autoPickup?: boolean; cameraFollow?: boolean };
+  /** Exact CityStateV1 override. Omit to start undiscovered in Embercross. */
+  city?: CityStateV1;
 }
 
 function positionFromTile(tile: VecTuple): Vec2 {
@@ -607,6 +614,7 @@ const EVENT_TYPES = [
   "loot_picked",
   "player_damaged",
   "player_died",
+  "movement_blocked",
   "exit_unlocked",
   "run_won",
 ];
@@ -636,6 +644,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       "eventLog",
       "metrics",
       "settings",
+      "city",
     ],
     "Scenario",
   );
@@ -679,6 +688,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       assertTuple(scenario.camera.centerTile, "Camera center tile");
   }
   assertSafeNumbers(scenario);
+  if (scenario.city !== undefined) restoreCityState(scenario.city);
 
   const ids = new Set<string>(["player"]);
   const registerId = (id: string | undefined): void => {
@@ -1049,7 +1059,7 @@ export function worldFromScenario(input: ScenarioV1): GameState {
   }
 
   const state: GameState = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     scenarioId: input.id,
     seed: input.seed,
     tick,
@@ -1104,7 +1114,14 @@ export function worldFromScenario(input: ScenarioV1): GameState {
       autoPickup: input.settings?.autoPickup ?? true,
       cameraFollow: input.settings?.cameraFollow ?? true,
     },
+    city:
+      input.city === undefined
+        ? createInitialCityState({ tick })
+        : restoreCityState(input.city),
   };
+  if (state.city.tick > state.tick) {
+    throw new Error("Scenario city tick must not exceed the game tick");
+  }
 
   const monsterSpecs =
     input.monsters ??
