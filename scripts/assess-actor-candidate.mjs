@@ -866,6 +866,18 @@ function htmlReport(report) {
         `<li><strong>${escapeHtml(control.id)}</strong>: ${control.detected ? "caught" : "MISSED"} (${escapeHtml(control.violations.join(", "))})</li>`,
     )
     .join("");
+  const mechanicalViolations = report.assessment.violations
+    .map(
+      (violation) =>
+        `<li><code>${escapeHtml(violation.code)}</code>: ${escapeHtml(JSON.stringify(violation))}</li>`,
+    )
+    .join("");
+  const recordedReasons = (report.recordedArtEvaluation.reasons ?? [])
+    .map(
+      (reason) =>
+        `<li><code>${escapeHtml(reason.code)}</code>: ${escapeHtml(reason.detail)}</li>`,
+    )
+    .join("");
   return `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Actor candidate calibration</title>
@@ -878,7 +890,7 @@ function htmlReport(report) {
 <figure><a href="scale-comparison.png"><img src="scale-comparison.png" alt="Ashfang candidate beside production actors at one logical scale"></a><figcaption>Same-scale first-idle comparison. Visual acceptance remains human or vision-model review.</figcaption></figure>
 <h2>Every prepared cell</h2><table><thead><tr><th>Cell</th><th>row/column</th><th>ink px</th><th>ink bbox</th><th>ground offset</th><th>safe bounds</th></tr></thead><tbody>${cellRows}</tbody></table>
 <h2>Deterministic negative controls</h2><ul>${controls}</ul>
-<h2>Verdict boundary</h2><p>The primary idle/walk calibration passes. The immutable trial is nevertheless rejected for production because its recorded visual review found an airborne attack pose and an oversized ground-burst effect. Preparation cannot repair authored phase meaning.</p>
+<h2>Verdict boundary</h2><p>Mechanical assessment: <strong>${escapeHtml(report.status)}</strong>. Recorded raw/art verdict: <strong>${escapeHtml(report.recordedArtVerdict)}</strong>. Recorded prepared verdict: <strong>${escapeHtml(report.recordedPreparationVerdict)}</strong>. Mechanical success never implies visual or production approval.</p>${mechanicalViolations ? `<h3>Mechanical violations</h3><ul>${mechanicalViolations}</ul>` : "<p>No mechanical violations were measured.</p>"}${recordedReasons ? `<h3>Recorded raw/art reasons</h3><ul>${recordedReasons}</ul>` : ""}<p>${escapeHtml(report.recordedArtEvaluation.notes)}</p>
 </body></html>`;
 }
 
@@ -899,6 +911,7 @@ async function recordedVerdict(options) {
     trialId: trial.id,
     evaluation: trial.evaluation.status,
     preparation: trial.preparation.status,
+    evaluationRecord: trial.evaluation,
   };
 }
 
@@ -939,6 +952,7 @@ async function run() {
     },
     recordedArtVerdict: verdict.evaluation,
     recordedPreparationVerdict: verdict.preparation,
+    recordedArtEvaluation: verdict.evaluationRecord,
     profile: {
       id: options.profileId,
       acceptanceBrief: options.acceptanceBrief,

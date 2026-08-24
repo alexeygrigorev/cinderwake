@@ -378,6 +378,56 @@
         "status": "rejected",
         "notes": "Preparation can repair the key, cut, scale, and anchors but cannot restore the original clip roles or remove invented effects without changing authored art."
       }
+    },
+    {
+      "id": "ashfang-primary-v5-2026-08-24",
+      "actorId": "ashfang",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/ashfang-primary-trial-v5.txt",
+      "candidateFile": "art/generation/candidates/ashfang-primary-trial-v5.png",
+      "candidateSha256": "1bb29338c313464e70ebcb5f31864844621379c6f18c2bf66fc64bd8a89a7c14",
+      "referenceFiles": [
+        {
+          "file": "art/source/actors/ashfang-source.png",
+          "sha256": "bfe2ec6c9e7cbfbad1ac24878ad646cf5b8e42e7a045ddb3ff87ed3f96772629"
+        },
+        {
+          "file": "art/source/actors/ashfang-directions-source.png",
+          "sha256": "952b82482a28e01d2be2240af1023dfaa7cafac277805bf7ee041be269055d01"
+        },
+        {
+          "file": "art/source/actors/stonekin-source.png",
+          "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI image generation tool",
+        "artifactId": "exec-17c0fd6f-5c60-4c53-9eca-837fb3981ed0.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized to the ActorAtlasV2 1024x1024 ingress grid before cell analysis."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background contains a graded hot-pink field rather than the requested literal flat #ff00ff key, so raw source ingress remains rejected."
+          }
+        ],
+        "notes": "The raw file is quarantined because it fails the strict chroma contract. Compared with v2-v4, its sixteen visible poses preserve the requested compact elevated camera, planted locomotion, restrained contact effects, and living-predator silhouette closely enough to justify deterministic preparation and mechanical assessment. That assessment fails the unchanged height and transition limits, so no independent production review or later-family generation is authorized."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/ashfang-primary-trial-v5.png --output art/generation/prepared/ashfang-primary-trial-v5.png",
+        "file": "art/generation/prepared/ashfang-primary-trial-v5.png",
+        "sha256": "ea539ce7608094e1fa234fa5ac4cae25424439fb133bad5c164d0c52292f7e93",
+        "status": "rejected",
+        "notes": "Deterministic keying, decontamination, shared scaling, and fixed-foot placement are reproducible, and all three assessor mutations are caught. The unchanged calibration gate nevertheless rejects the prepared candidate: projected idle height is 66-69 px with a 67 px median instead of 72 px minimum and 76-86 px median, while the 67/77 px idle-walk median delta is 10 px instead of at most 8. It cannot seed the other five Ashfang families or production."
+      }
     }
   ]
 }
