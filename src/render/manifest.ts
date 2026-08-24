@@ -220,8 +220,8 @@ export function compareEntityPaintOrder(
  * the unreadable fully merged body core is separated.
  */
 export const MELEE_PRESENTATION_INK_FRACTION = {
-  ashfang: { lateral: 0.44, vertical: 0.5 },
-  stonekin: { lateral: 0.46, vertical: 0.52 },
+  ashfang: 0.5,
+  stonekin: 0.52,
 } as const;
 
 export function meleePresentationOffset(
@@ -231,12 +231,8 @@ export function meleePresentationOffset(
   monsterKind: keyof typeof MELEE_PRESENTATION_INK_FRACTION,
   renderedCellWidth: number,
 ): Vec2 {
-  const profile = MELEE_PRESENTATION_INK_FRACTION[monsterKind];
   const minimumDistance =
-    renderedCellWidth *
-    (Math.abs(monsterFacing.y) > Math.abs(monsterFacing.x)
-      ? profile.vertical
-      : profile.lateral);
+    renderedCellWidth * MELEE_PRESENTATION_INK_FRACTION[monsterKind];
   const deltaX = monsterAnchor.x - playerAnchor.x;
   const deltaY = monsterAnchor.y - playerAnchor.y;
   const distance = Math.hypot(deltaX, deltaY);

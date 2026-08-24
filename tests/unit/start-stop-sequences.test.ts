@@ -230,6 +230,20 @@ describe("current-runtime start/stop sequence fixtures", () => {
     expect(control.detected).toBe(true);
   });
 
+  it("rejects missing or incorrect declared presentation offsets", async () => {
+    const { stdout } = await run(process.execPath, [
+      assessor,
+      "--self-test-presentation-offset",
+    ]);
+    const control = JSON.parse(stdout);
+
+    expect(control.expectedCheck).toBe("stateManifestContract");
+    expect(control.baseline.pass).toBe(true);
+    expect(control.missingOffset.pass).toBe(false);
+    expect(control.incorrectOffset.pass).toBe(false);
+    expect(control.detected).toBe(true);
+  });
+
   it("rejects logical close-up coordinates used directly on a physical backing", async () => {
     const { stdout } = await run(process.execPath, [
       capture,

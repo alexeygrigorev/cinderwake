@@ -14,10 +14,24 @@ test("gates ordered Ashfang windup, contact, and recovery without moving simulat
   page,
 }) => {
   const captures = await page.evaluate(() =>
-    window.__GAME_TEST__!.captureSequence([0, 1, 8, 22], { render: true }),
+    window.__GAME_TEST__!.captureSequence([0, 1, 8, 18, 27], { render: true }),
   );
+  const lifecycle = [
+    { id: "idle-before", clip: "idle", frame: 0, phase: 0, start: 0, lock: 0 },
+    { id: "windup", clip: "attack", frame: 0, phase: 0, start: 0, lock: 26 },
+    { id: "contact", clip: "attack", frame: 1, phase: 0.2, start: 0, lock: 26 },
+    {
+      id: "recovery",
+      clip: "attack",
+      frame: 4,
+      phase: 0.8,
+      start: 0,
+      lock: 26,
+    },
+    { id: "idle-after", clip: "idle", frame: 0, phase: 0, start: 26, lock: 26 },
+  ] as const;
   const frames: CombatSequenceFrame[] = captures.map((capture, index) => ({
-    id: ["windup", "windup-next", "contact", "recovery"][index]!,
+    id: lifecycle[index]!.id,
     manifest: capture.manifest,
     requiredEffectOwnerIds: capture.tick === 8 ? ["player"] : [],
   }));
@@ -34,6 +48,28 @@ test("gates ordered Ashfang windup, contact, and recovery without moving simulat
     )!;
     expect(monster.worldAnchor).toEqual(initialMonster);
   }
+  captures.forEach((capture, index) => {
+    const expected = lifecycle[index]!;
+    const monster = capture.manifest.drawCalls.find(
+      ({ type }) => type === "monster",
+    )!;
+    expect(
+      {
+        clip: monster.clip,
+        frame: monster.frameIndex,
+        phase: monster.visualPhase,
+        start: monster.clipStartedAtTick,
+        lock: monster.clipLockedUntilTick,
+      },
+      expected.id,
+    ).toEqual({
+      clip: expected.clip,
+      frame: expected.frame,
+      phase: expected.phase,
+      start: expected.start,
+      lock: expected.lock,
+    });
+  });
   expect(
     assessment.frames[2]!.assessment.evidence.attachedEffects,
   ).toContainEqual(
@@ -45,12 +81,11 @@ test("gates ordered Ashfang windup, contact, and recovery without moving simulat
   );
 });
 
-test("keeps Ashfang contact readable in all four cardinal presentations", async ({
+test("keeps ordered Ashfang lifecycle strips readable in all four cardinal presentations", async ({
   page,
 }) => {
-  const manifests = await page.evaluate(() => {
+  const strips = await page.evaluate(() => {
     const bridge = window.__GAME_TEST__!;
-    bridge.step(8, { render: true });
     const base = bridge.snapshot();
     const directions = [
       { id: "east", dx: 614, dy: 0, fx: -1024, fy: 0 },
@@ -68,20 +103,63 @@ test("keeps Ashfang contact readable in all four cardinal presentations", async 
       monster.previousPosition = { ...monster.position };
       monster.facing = { x: direction.fx, y: direction.fy };
       bridge.loadState(state);
-      return { id: direction.id, manifest: bridge.render() };
+      return {
+        id: direction.id,
+        captures: bridge.captureSequence([0, 1, 8, 18, 27], { render: true }),
+      };
     });
   });
 
-  for (const { id, manifest } of manifests) {
-    const assessment = assessCombatReadability(manifest, {
-      requiredEffectOwnerIds: ["player"],
-    });
+  for (const { id, captures } of strips) {
+    const assessment = assessCombatSequence(
+      captures.map((capture) => ({
+        id: `${id}-${capture.tick}`,
+        manifest: capture.manifest,
+        requiredEffectOwnerIds: capture.tick === 8 ? ["player"] : [],
+      })),
+    );
     expect(assessment.violations, id).toEqual([]);
     expect(
-      assessment.evidence.actorPairs[0]!.anchorDistance,
+      captures.map((capture) => {
+        const monster = capture.manifest.drawCalls.find(
+          ({ type }) => type === "monster",
+        )!;
+        return {
+          clip: monster.clip,
+          frame: monster.frameIndex,
+          phase: monster.visualPhase,
+          start: monster.clipStartedAtTick,
+          lock: monster.clipLockedUntilTick,
+        };
+      }),
       id,
-    ).toBeGreaterThanOrEqual(50);
+    ).toEqual([
+      { clip: "idle", frame: 0, phase: 0, start: 0, lock: 0 },
+      { clip: "attack", frame: 0, phase: 0, start: 0, lock: 26 },
+      { clip: "attack", frame: 1, phase: 0.2, start: 0, lock: 26 },
+      { clip: "attack", frame: 4, phase: 0.8, start: 0, lock: 26 },
+      { clip: "idle", frame: 0, phase: 0, start: 26, lock: 26 },
+    ]);
   }
+});
+
+test("does not snap presentation spacing across an abrupt cardinal facing change", async ({
+  page,
+}) => {
+  const manifests = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.step(8, { render: true });
+    const state = bridge.snapshot();
+    const first = bridge.render();
+    state.monsters[0]!.facing = { x: 0, y: -1024 };
+    bridge.loadState(state);
+    return [first, bridge.render()];
+  });
+  expect(
+    assessCombatSequence(
+      manifests.map((manifest, index) => ({ id: `facing-${index}`, manifest })),
+    ).violations,
+  ).toEqual([]);
 });
 
 test("uses the same presentation-only contract for Stonekin and mobile play", async ({
@@ -213,6 +291,22 @@ test("rejects missing or detached evidence, stacking, dominant UI, foreground ef
   )!.zOrder = monster.zOrder + 1;
   expect(assessCombatReadability(foregroundEffect).violations).toContain(
     `combat:attached-effect-depth:${effect.entityId}`,
+  );
+
+  const duplicatedActor = structuredClone(contact);
+  duplicatedActor.drawCalls.push(structuredClone(monster));
+  expect(assessCombatReadability(duplicatedActor).violations).toContain(
+    `combat:duplicate-actor:${monster.entityId}`,
+  );
+
+  const rearCoversFront = structuredClone(contact);
+  const rearMonster = rearCoversFront.drawCalls.find(
+    ({ entityId }) => entityId === monster.entityId,
+  )!;
+  rearMonster.footAnchor.y = player.footAnchor.y - 1;
+  rearMonster.zOrder = player.zOrder + 1;
+  expect(assessCombatReadability(rearCoversFront).violations).toContain(
+    `combat:actor-depth-order:${monster.entityId}`,
   );
 
   const snapped = structuredClone(captures.slice(0, 2));

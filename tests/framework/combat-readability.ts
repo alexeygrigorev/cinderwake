@@ -96,6 +96,14 @@ export function assessCombatReadability(
   const actors = manifest.drawCalls.filter(({ type }) =>
     ["player", "monster", "npc"].includes(type),
   );
+  for (const actor of actors) {
+    if (
+      manifest.drawCalls.filter(({ entityId }) => entityId === actor.entityId)
+        .length > 1 &&
+      !violations.includes(`combat:duplicate-actor:${actor.entityId}`)
+    )
+      violations.push(`combat:duplicate-actor:${actor.entityId}`);
+  }
   const actorPairs: CombatReadabilityEvidence["actorPairs"] = [];
   if (!player) violations.push("combat:missing-player");
   else {

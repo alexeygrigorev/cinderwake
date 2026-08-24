@@ -28,6 +28,11 @@ if (timelineFile === "--self-test-directional-screen-motion") {
   console.log(JSON.stringify(control));
   process.exit(control.detected ? 0 : 1);
 }
+if (timelineFile === "--self-test-presentation-offset") {
+  const control = presentationOffsetNegativeControl();
+  console.log(JSON.stringify(control));
+  process.exit(control.detected ? 0 : 1);
+}
 if (!timelineFile)
   throw new Error(
     "Usage: node scripts/assess-sequence.mjs <render-manifest-timeline.json> [output.json]",
@@ -211,6 +216,46 @@ function close(a, b, tolerance = 0.000001) {
   return (
     Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) <= tolerance
   );
+}
+
+function screenAnchorMatchesProjection(actor, expectedScreen) {
+  const offset = actor.presentationOffset ?? { x: 0, y: 0 };
+  return (
+    Number.isFinite(offset.x) &&
+    Number.isFinite(offset.y) &&
+    close(actor.screenAnchor.x, expectedScreen.x + offset.x) &&
+    close(actor.screenAnchor.y, expectedScreen.y + offset.y)
+  );
+}
+
+function presentationOffsetNegativeControl() {
+  const expectedScreen = { x: 100, y: 200 };
+  const baseline = {
+    screenAnchor: { x: 110, y: 196 },
+    presentationOffset: { x: 10, y: -4 },
+  };
+  const missingOffset = { screenAnchor: { ...baseline.screenAnchor } };
+  const incorrectOffset = {
+    screenAnchor: { ...baseline.screenAnchor },
+    presentationOffset: { x: 9, y: -4 },
+  };
+  const baselinePass = screenAnchorMatchesProjection(baseline, expectedScreen);
+  const missingOffsetPass = screenAnchorMatchesProjection(
+    missingOffset,
+    expectedScreen,
+  );
+  const incorrectOffsetPass = screenAnchorMatchesProjection(
+    incorrectOffset,
+    expectedScreen,
+  );
+  return {
+    id: "declared-presentation-offset",
+    expectedCheck: "stateManifestContract",
+    baseline: { pass: baselinePass },
+    missingOffset: { pass: missingOffsetPass },
+    incorrectOffset: { pass: incorrectOffsetPass },
+    detected: baselinePass && !missingOffsetPass && !incorrectOffsetPass,
+  };
 }
 
 function projectedDimensions(dimensions, camera) {
@@ -495,6 +540,7 @@ if (profile === "start-stop") {
 
 let stateHashMismatches = 0;
 let manifestContractErrors = 0;
+const stateManifestContractFrames = [];
 let artifactIntegrityErrors = 0;
 let closeupCropContractErrors = 0;
 for (const observation of observations) {
@@ -535,10 +581,12 @@ for (const observation of observations) {
     closeupCropContractErrors += 1;
 }
 for (const point of points) {
+  const manifestErrorsBeforeFrame = manifestContractErrors;
   const { actor, entity, manifest, mask } = point;
   const definition = clipDefinitions[actor.clip];
   if (!entity) {
     manifestContractErrors += 1;
+    stateManifestContractFrames.push({ tick: point.tick, pass: false });
     continue;
   }
   if (
@@ -676,13 +724,17 @@ for (const point of points) {
     !close(actor.worldAnchor.y, expectedWorld.y) ||
     !close(actor.facing.x, expectedFacing.x) ||
     !close(actor.facing.y, expectedFacing.y) ||
-    !close(actor.screenAnchor.x, expectedScreen.x) ||
-    !close(actor.screenAnchor.y, expectedScreen.y) ||
+    !screenAnchorMatchesProjection(actor, expectedScreen) ||
     !close(actor.footAnchor.x, actor.screenAnchor.x) ||
     !close(actor.footAnchor.y, actor.screenAnchor.y) ||
     !close(actor.visualPhase, expectedVisualPhase)
   )
     manifestContractErrors += 1;
+
+  stateManifestContractFrames.push({
+    tick: point.tick,
+    pass: manifestContractErrors === manifestErrorsBeforeFrame,
+  });
 
   const maskFile = point.files?.maskName;
   if (
@@ -1057,6 +1109,7 @@ const measurements = {
   cameraAccelerationPeak: maximum(cameraAccelerations),
   stateHashMismatches,
   manifestContractErrors,
+  stateManifestContractFrames,
   artifactIntegrityErrors,
   closeupCropContractErrors,
   renderSignatureMismatches,
