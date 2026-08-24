@@ -1,0 +1,22 @@
+Create exactly one new isolated Cinderwake Ashfang in one quiet east-facing idle pose on a square canvas. The attached Stonekin source is the only image reference. Use it only for the elevated gameplay camera, broad matte painterly value groups, warm upper-left light, cool lower-right separation, and native-runtime visual density. Do not copy its humanoid anatomy, equipment, armor shapes, pose, proportions, grid, repeated figures, or sheet layout.
+
+Do not use or reconstruct any earlier Ashfang image, candidate, blockout, guide, stencil, or silhouette. Design a fresh natural animal from text: a living heavy volcanic rock-hound with a low broad raised rib cage, muscular shoulders, slightly narrower hips, short tapered jointed legs, broad three-claw paws, compact wedge skull, swept basalt ear-horns, modest dorsal plates, sparse filled ember vents, and a muscular hooked tail held clear of the ground. Organic shoulders and hips flow into bent elbows and hocks. No tubes, ring joints, stilts, shell torso, paddle tail, prone side profile, crawl, attack, or dead pose.
+
+The camera is an unmistakable approximately 55-degree elevated three-quarter view. The foreshortened head points screen-right and slightly down; the tail ends upper-left. The body axis runs diagonally across the canvas so top planes of the skull, both shoulders, ribs, spine, both hips, all four upper limbs, and all four paws are clearly visible.
+
+The highest-priority requirement is exactly four complete independently visible body-to-paw chains and exactly four paw terminals at 128 pixels. Exaggerate separation for gameplay readability rather than hiding anatomically valid far limbs. Arrange them as:
+
+1. far hind hip → hock → short lower leg → three-claw paw at upper-left;
+2. near hind hip → hock → short lower leg → three-claw paw at lower-left;
+3. far fore shoulder outside the chest → elbow → short lower leg → three-claw paw at upper-right;
+4. near fore shoulder → elbow → short lower leg → three-claw paw at lower-right.
+
+Keep a continuous magenta corridor around each complete chain and between every lower limb and the belly. Both far-side roots must remain visible. Both diagonal pairs—near fore plus far hind, and far fore plus near hind—must be labelable without guessing. Put the two near paws on one balanced lowest support row; far paws sit visibly higher. No merged or hidden root, occluded leg, detached paw, fifth limb, central support paw, straight column, tail contact, or floating claw.
+
+Foreground including tail and claws occupies 60–64 percent of canvas width and 58–63 percent of canvas height. Center the support footprint. Lowest near-paw contacts are at approximately 78 percent of canvas height, with clean background beneath every paw and around every boundary. The future 128-pixel actor must be 72–86 pixels tall and no more than 1.5 times as wide as tall. Recompose the animal to meet the envelope; do not crop or stretch it.
+
+Use eight to twelve broad filled matte planes across head, shoulders, ribs, flank, hips, all four limb chains, paws, and tail. Use charcoal, black iron-bark, muted ochre top planes, one broad cool-slate far-side plane, two or three short filled ember vents, and one small non-blooming eye. Major adjacent planes must remain several pixels thick and clearly different at 128 pixels. No empty low-contrast wash, grain, scratches, tiny scales, pores, stipple, microfacets, thin rim network, silver tracing, cyan outline, joint rings, thin glowing cracks, plastic gloss, muddy gradient, blur, thick comic outline, detached spikes, or photoreal microdetail.
+
+Outside the creature use one flat literal RGB #ff00ff field: every background pixel exactly red 255, green 0, blue 255. No floor, contact or cast shadow, ground wash, gradient, texture, pink spill, smoke, dust, bloom, particles, action effect, scenery, architecture, prop, text, title, UI, border, grid, label, sheet, second pose, second creature, or duplicate body.
+
+Before finalizing, inspect the image at 128 pixels. Reject it yourself unless it simultaneously shows one natural heavy elevated Ashfang, exactly four independently traceable organic routes and four paws in the declared positions, both diagonals, two-near-paw support, clean gaps, the requested envelope, stable broad internal contrast, literal magenta only outside the creature, and no forbidden content.
