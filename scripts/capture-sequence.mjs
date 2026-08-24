@@ -84,6 +84,8 @@ const action = option("action", defaultAction);
 const trackedEntityId = option("track", "player");
 const stateFile = option("state-file", null);
 const commandsFile = option("commands-file", null);
+const paintMaskId = option("paint-mask", null);
+const allowAssessmentFailure = option("allow-assessment-failure", "false") === "true";
 const frameCount = Number(option("frames", "16"));
 const step = Number(option("step", "2"));
 const subframes = Number(option("subframes", "1"));
@@ -295,7 +297,7 @@ try {
   let lastAnchor = null;
   const captureDisplayFrame = async (interpolationAlpha) => {
     const item = await page.evaluate(
-      ({ entityId, interpolationAlpha, lastAnchor }) => {
+      ({ entityId, interpolationAlpha, lastAnchor, paintMaskId }) => {
         window.__GAME_TEST__.render({ interpolationAlpha });
         const snapshot = window.__GAME_TEST__.snapshot();
         const manifest = window.__GAME_TEST__.renderManifest();
@@ -358,9 +360,11 @@ try {
           manifest,
           frame: window.__GAME_TEST__.captureFrame(),
           closeup: cropCanvas.toDataURL("image/png"),
-          mask: tracked
-            ? window.__GAME_TEST__.captureEntityMask(entityId)
-            : null,
+          mask: paintMaskId
+            ? window.__GAME_TEST__.capturePaintMask(paintMaskId)
+            : tracked
+              ? window.__GAME_TEST__.captureEntityMask(entityId)
+              : null,
           anchor: tracked?.footAnchor ?? null,
           crop: {
             x: cropX,
@@ -377,7 +381,7 @@ try {
           },
         };
       },
-      { entityId: trackedEntityId, interpolationAlpha, lastAnchor },
+      { entityId: trackedEntityId, interpolationAlpha, lastAnchor, paintMaskId },
     );
     if (item.anchor) lastAnchor = item.anchor;
     const pageFrame = await page.locator(".game").screenshot({
@@ -590,7 +594,7 @@ try {
   const assessmentCode = await new Promise((resolve) =>
     assessment.on("exit", resolve),
   );
-  if (assessmentCode !== 0)
+  if (assessmentCode !== 0 && !allowAssessmentFailure)
     throw new Error(`Sequence assessment failed with code ${assessmentCode}`);
   const analysis = JSON.parse(
     await fs.readFile(path.join(output, "animation-analysis.json"), "utf8"),
