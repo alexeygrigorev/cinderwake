@@ -73,7 +73,7 @@ const [
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
   ),
-  readJson("quality-results/actor-pose/ashfang-idle-master-v1/report.json"),
+  readJson("quality-results/actor-pose/ashfang-idle-master-v2/report.json"),
 ]);
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
@@ -196,10 +196,15 @@ const reports = [
   {
     id: "pose",
     title: "Ashfang isolated idle-pose audit",
-    href: "actor-pose/ashfang-idle-master-v1/",
-    status: pose?.status === "rejected" ? "rejected" : "missing",
+    href: "actor-pose/ashfang-idle-master-v2/",
+    status:
+      pose?.status === "rejected" && pose.visualReview?.hashesMatch
+        ? "rejected"
+        : pose
+          ? "failed"
+          : "missing",
     summary: pose
-      ? "REJECTED isolated-pose evidence: this single master is diagnostic only and cannot seed follow-up poses or count as production approval."
+      ? `V2 is reproducibly rejected at ${pose.assessment.runtime.bounds.width}×${pose.assessment.runtime.bounds.height} runtime pixels with the exact ${pose.expectation.actualViolationCodes.join(", ")} violation set, ${pose.negativeControls.filter(({ detected }) => detected).length}/${pose.negativeControls.length} mutations caught, and a matching exact-hash independent visual veto. It cannot seed follow-up poses.`
       : "No isolated Ashfang pose-audit report was generated.",
   },
   {

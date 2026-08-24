@@ -29,3 +29,12 @@ The `{actor}-reactions-source.png` sheet contains four articulated hurt/recoil p
 The `{actor}-direction-actions-source.png` sheet contains north attack, north ability, south attack, and south ability rows. The `{actor}-direction-reactions-source.png` sheet contains north hurt, north collapse, south hurt, and south collapse rows. These banks prevent a one-shot action from rotating a north/south-facing body to the east silhouette and back.
 
 The identity, costume, equipment, camera, scale, lighting, and foot baseline must not change between cells or source families. Preparation can repair raster mechanics; it cannot manufacture a missing gait, correct an action’s phase order, remove a conceptually oversized effect, or resolve identity drift. The build reads `ActorAtlasV2` metadata, performs the declared square-to-1024 ingress normalization defensively, removes chroma and cross-cell fragments, normalizes all six sheets together, and downsamples them into fixed 128 × 128 runtime cells in a 1024 × 2560 atlas. This preserves the 256 × 256 contract grid while reducing decoded mobile memory. Two final rows remain reserved. Runtime animation needs only the semantic sprite ID, clip name, and facing bucket.
+
+Separately generated poses use `CinderwakeIsolatedPoseAssemblyV1`. Their exact
+phase prompts must share one byte-identical identity/camera/material/framing
+prefix and one ordered reference set. All isolated cells are measured in the
+same 1024-pixel coordinate space, receive one derived uniform scale, and use
+the same bottom-center anchor; per-cell scale or transform exceptions are
+forbidden. A source hash and mechanical pass cannot approve style, anatomy,
+support ownership, weight transfer, or loop closure. Those remain six fixed
+independent visual-review axes plus runtime temporal evidence.
