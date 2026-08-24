@@ -28,8 +28,12 @@ separately generated poses:
    cap it at the canonical 1024→256 canvas factor `0.25`, then apply that exact
    scale to every isolated cell. The assembler may shrink an oversized set but
    never magnify away the authored canvas framing.
-4. Ground every placement box on the contract-derived source anchor `(128,
-232)` and retain the `(10, 8, 236, 224)` safe region.
+4. After keying and compositing, align the final visible support rather than the
+   rectangular placement box: ink bottom is source Y `231`, and the centroid
+   of the lowest eight source pixels is alpha-weighted and within `0.5` pixels
+   of anchor X `128`. If contact alignment would cross the `(10, 8, 236, 224)`
+   safe region, shrink the one shared scale for every isolated cell and render
+   them again; do not reject a fit that a smaller common scale can represent.
 5. Reject every cell-local scale, resize, or transform field. Inherited cells
    come from an exact-hash base sheet and retain identical decoded pixels.
 6. Bind each isolated cell to its raw image, phase prompt, generation artifact,
@@ -47,8 +51,10 @@ row whose common scale is still inconsistent with inherited rows.
 
 `npm run art:pose:assembly:check` constructs a temporary primary sheet from 12
 inherited cells and four isolated 1024-pixel poses, builds it twice, proves byte
-identity and one shared scale/anchor, and compares inherited pixels to their
-base cells. Sixteen named mutations cover missing and duplicate cells,
+identity, one shared scale, visible-bottom grounding, alpha-weighted
+bottom-contact centering, and common-scale shrink for an asymmetric support,
+then compares inherited pixels to their base cells. Sixteen named
+mutations cover missing and duplicate cells,
 undersized raw input, stale actor/style/base/raw/prompt/prefix/reference hashes,
 non-magenta base margins, forbidden per-cell scale and transform, reordered
 references, stale prepared bytes, and stale visual review.
@@ -57,6 +63,13 @@ The first new identity master, Ashfang v2, is deliberately not assembled. Its
 compact living posture is useful direction, but both exact mechanical and
 independent visual reviews reject it before follow-up generation because it is
 oversized and exposes only three readable paws.
+
+Ashfang v3 proves the opposite disagreement is also safe: canonical framing,
+grounding, contact, runtime dimensions, and all mechanical controls pass, but
+an exact-hash independent review rejects the shallow viewpoint, mismatched
+mass, missing fourth paw, and undefined diagonal support. A mechanically green
+trial therefore requires a matching visual veto to verify its recorded
+rejection; without that review, the audit exits nonzero.
 
 ## Consequence
 

@@ -39,9 +39,10 @@ When complete-sheet generation collapses pose semantics, use the
 manifest-driven isolated-pose path documented in
 `art/generation/assemblies/README.md`. It normalizes every raw pose to the same
 1024-pixel source space, derives one uniform scale over all isolated cells,
-grounds them on the shared source anchor, forbids cell-local transforms, and
-retains exact prompt/reference/artifact hashes. Inherited cells are copied from
-one exact-hash base sheet. Mechanical assembly remains `UNREVIEWED` until a
+aligns the final keyed bottom and lowest support-band centroid to the shared
+source anchor, forbids cell-local transforms, and retains exact
+prompt/reference/artifact hashes. Inherited cells are copied from one
+exact-hash base sheet. Mechanical assembly remains `UNREVIEWED` until a
 matching six-axis visual record exists, and the complete candidate/atlas/
 temporal gates must still prove compatibility with inherited rows.
 

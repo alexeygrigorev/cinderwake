@@ -144,8 +144,15 @@ Fresh identity masters use `--preserve-framing`: the scale is capped at the
 canonical 1024→256 factor and only shrinks further to respect the safe box, so
 the generator's declared canvas occupancy remains measurable. Historical v1/v2
 records omit the flag and retain their exact legacy safe-fit bytes. Neither
-mode stretches a wide creature to manufacture the desired height. Audit a
-recorded trial with:
+mode stretches a wide creature to manufacture the desired height. Fresh poses
+are aligned from the final keyed pixels rather than their pre-key placement
+box: the visible bottom lands at source Y 231 and the alpha-weighted centroid of
+the lowest eight source pixels lands within half a pixel of source X 128. If
+that contact translation would leave the safe box, preparation shrinks the pose
+rather than rejecting an otherwise valid framing. The isolated assembler
+repeats the same operation at one shared scale over the whole generated row,
+preventing matte cleanup or asymmetrical paws from introducing a hidden pivot
+jump. Audit a recorded trial with:
 
 ```bash
 npm run art:pose:audit
@@ -173,6 +180,16 @@ the exact raw, prepared, pose-evidence, and runtime-comparison hashes also sees
 only three trackable paws, a side-dominant camera, oversized gameplay scale,
 and glossy detail noise. Those findings prohibit generating walk phases from
 v2; the assembler is not a license to multiply a rejected identity master.
+
+Ashfang east-idle master v3 separates those two boundaries explicitly. At the
+canonical 0.25 canvas scale, keyed-pixel alignment yields 78 × 78 runtime ink,
+exact visible-bottom grounding, an alpha-weighted runtime contact offset of
+-0.03 pixels, no mechanical violations, and 5/5 detected controls. That green
+geometry cannot authorize art. Independent exact-hash review still rejects the
+shallow camera, narrow mass, noisy plate highlights, missing far forepaw, and
+ambiguous diagonal support ownership. The mechanically green/no-review mutation
+must fail, so a manifest claim alone cannot convert v3 into a reviewed
+rejection or a walk-generation seed.
 
 ## Mobile selection scenes
 

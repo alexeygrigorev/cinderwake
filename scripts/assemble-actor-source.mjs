@@ -289,7 +289,14 @@ async function alphaBounds(buffer, label) {
   let bottom = -1;
   for (let y = 0; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
-      if (data[(y * info.width + x) * 4 + 3] < 24) continue;
+      const offset = (y * info.width + x) * 4;
+      if (
+        Math.min(
+          data[offset + 3],
+          keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+        ) < 24
+      )
+        continue;
       left = Math.min(left, x);
       top = Math.min(top, y);
       right = Math.max(right, x);
@@ -303,6 +310,63 @@ async function alphaBounds(buffer, label) {
     width: right - left + 1,
     height: bottom - top + 1,
   };
+}
+
+async function contactEvidence(buffer, bounds) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const firstY = Math.max(bounds.top, bounds.top + bounds.height - 8);
+  const lastY = bounds.top + bounds.height - 1;
+  let pixels = 0;
+  let alphaWeight = 0;
+  let weightedX = 0;
+  for (let y = firstY; y <= lastY; y += 1) {
+    for (let x = bounds.left; x < bounds.left + bounds.width; x += 1) {
+      const offset = (y * info.width + x) * 4;
+      const alpha = Math.min(
+        data[offset + 3],
+        keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+      );
+      if (alpha < 24) continue;
+      pixels += 1;
+      alphaWeight += alpha;
+      weightedX += x * alpha;
+    }
+  }
+  assert(pixels > 0, "prepared pose has no bottom-band contact");
+  return {
+    firstY,
+    lastY,
+    pixels,
+    alphaWeight,
+    centroidX: weightedX / alphaWeight,
+  };
+}
+
+function fitsSafeBounds(bounds, safeBounds) {
+  return (
+    bounds.left >= safeBounds.x &&
+    bounds.top >= safeBounds.y &&
+    bounds.left + bounds.width <= safeBounds.x + safeBounds.width &&
+    bounds.top + bounds.height <= safeBounds.y + safeBounds.height
+  );
+}
+
+function safeScaleCorrection(bounds, safeBounds, anchor) {
+  const availableLeft = anchor.x - safeBounds.x;
+  const availableRight = safeBounds.x + safeBounds.width - anchor.x;
+  const availableTop = anchor.y - safeBounds.y;
+  const usedLeft = Math.max(1, anchor.x - bounds.left);
+  const usedRight = Math.max(1, bounds.left + bounds.width - anchor.x);
+  const usedTop = Math.max(1, anchor.y - bounds.top);
+  return Math.min(
+    1,
+    availableLeft / usedLeft,
+    availableRight / usedRight,
+    availableTop / usedTop,
+  );
 }
 
 async function validateContract(contractRecord) {
@@ -727,7 +791,7 @@ async function run() {
   );
   const canonicalIsolatedCanvasScale =
     contract.source.cellWidth / contract.source.pixelWidth;
-  const sharedScale = Math.min(
+  let sharedScale = Math.min(
     safeInkBounds.width / maximumCleanedWidth,
     safeInkBounds.height / maximumCleanedHeight,
     canonicalIsolatedCanvasScale,
@@ -737,40 +801,85 @@ async function run() {
     "shared scale is invalid",
   );
 
-  const renderedIsolated = new Map();
-  for (const cell of isolatedCells) {
-    const width = Math.max(1, Math.round(cell.rawBounds.width * sharedScale));
-    const height = Math.max(1, Math.round(cell.rawBounds.height * sharedScale));
+  const renderIsolatedCell = async (cell, scale) => {
+    const width = Math.max(1, Math.round(cell.rawBounds.width * scale));
+    const height = Math.max(1, Math.round(cell.rawBounds.height * scale));
     const sprite = await sharp(cell.cleaned)
       .extract(cell.rawBounds)
       .resize(width, height, { fit: "fill", kernel: "lanczos3" })
       .png()
       .toBuffer();
-    const left = Math.round(footAnchor.x - width / 2);
-    const top = footAnchor.y - height;
-    assert(
-      left >= safeInkBounds.x &&
-        top >= safeInkBounds.y &&
-        left + width <= safeInkBounds.x + safeInkBounds.width &&
-        top + height <= safeInkBounds.y + safeInkBounds.height,
-      `cell ${cell.index} prepared pose leaves source-space safe bounds`,
+    const compose = (placementLeft, placementTop) =>
+      sharp({
+        create: {
+          width: contract.source.cellWidth,
+          height: contract.source.cellHeight,
+          channels: 4,
+          background: MAGENTA,
+        },
+      })
+        .composite([{ input: sprite, left: placementLeft, top: placementTop }])
+        .png({ compressionLevel: 9 })
+        .toBuffer();
+    let left = Math.round(footAnchor.x - width / 2);
+    let top = footAnchor.y - height;
+    let buffer = await compose(left, top);
+    let preparedBounds = await alphaBounds(
+      buffer,
+      `cell ${cell.index} prepared pose`,
     );
-    const buffer = await sharp({
-      create: {
-        width: contract.source.cellWidth,
-        height: contract.source.cellHeight,
-        channels: 4,
-        background: MAGENTA,
-      },
-    })
-      .composite([{ input: sprite, left, top }])
-      .png({ compressionLevel: 9 })
-      .toBuffer();
-    renderedIsolated.set(cell.index, {
+    left += Math.round(
+      footAnchor.x - (preparedBounds.left + preparedBounds.width / 2),
+    );
+    top += footAnchor.y - (preparedBounds.top + preparedBounds.height);
+    buffer = await compose(left, top);
+    preparedBounds = await alphaBounds(
+      buffer,
+      `cell ${cell.index} aligned prepared pose`,
+    );
+    const support = await contactEvidence(buffer, preparedBounds);
+    left += Math.round(footAnchor.x - support.centroidX);
+    buffer = await compose(left, top);
+    preparedBounds = await alphaBounds(
+      buffer,
+      `cell ${cell.index} contact-aligned prepared pose`,
+    );
+    return {
       ...cell,
       buffer,
-      preparedBounds: { left, top, width, height },
-    });
+      placementBounds: { left, top, width, height },
+      preparedBounds,
+      preparedContact: await contactEvidence(buffer, preparedBounds),
+    };
+  };
+  let renderedCells = await Promise.all(
+    isolatedCells.map((cell) => renderIsolatedCell(cell, sharedScale)),
+  );
+  for (
+    let attempt = 0;
+    renderedCells.some(
+      ({ preparedBounds }) => !fitsSafeBounds(preparedBounds, safeInkBounds),
+    );
+    attempt += 1
+  ) {
+    assert(attempt < 8, "unable to fit contact-aligned poses in safe bounds");
+    const correction = Math.min(
+      ...renderedCells.map(({ preparedBounds }) =>
+        safeScaleCorrection(preparedBounds, safeInkBounds, footAnchor),
+      ),
+    );
+    sharedScale *= correction < 1 ? correction * 0.995 : 0.99;
+    renderedCells = await Promise.all(
+      isolatedCells.map((cell) => renderIsolatedCell(cell, sharedScale)),
+    );
+  }
+  const renderedIsolated = new Map();
+  for (const rendered of renderedCells) {
+    assert(
+      fitsSafeBounds(rendered.preparedBounds, safeInkBounds),
+      `cell ${rendered.index} prepared pose leaves source-space safe bounds`,
+    );
+    renderedIsolated.set(rendered.index, rendered);
   }
 
   const inheritedBuffers = new Map();
@@ -880,7 +989,14 @@ async function run() {
           normalizedDimensions: rendered.normalizedInput,
         },
         rawBounds: rendered.rawBounds,
+        placementBounds: rendered.placementBounds,
         preparedBounds: rendered.preparedBounds,
+        contact: {
+          ...rendered.preparedContact,
+          centroidOffsetFromAnchor: Number(
+            (rendered.preparedContact.centroidX - footAnchor.x).toFixed(6),
+          ),
+        },
       };
     });
   const report = {

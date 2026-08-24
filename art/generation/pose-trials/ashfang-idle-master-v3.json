@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeIsolatedActorPoseTrialV1",
+  "id": "ashfang-east-idle-master-v3-2026-08-24",
+  "actorId": "ashfang",
+  "pose": "east-idle-master",
+  "styleBrief": "art/style-bible.md",
+  "actorContract": "art/actor-atlas-v1.json",
+  "promptFile": "art/generation/prompts/ashfang-idle-master-v3.txt",
+  "candidateFile": "art/generation/candidates/ashfang-idle-master-v3.png",
+  "candidateSha256": "e29416ddc7e4775d0207a93bbe794b0c067acc3b64e089feadb46512de727726",
+  "referenceFiles": [
+    {
+      "file": "art/generation/candidates/ashfang-idle-master-v2.png",
+      "role": "edit target for the compact living posture and centered support base",
+      "sha256": "af0850b3898b9c7a4412545ec01752bf72bd8269dddbd643edb22c4adb73cb10"
+    },
+    {
+      "file": "art/generation/prepared/ashfang-primary-trial-v7.png",
+      "role": "latest accepted species-identity direction and game-world silhouette",
+      "sha256": "bc0d6bd4c32e9d295361bdfe1e450162f3ab56fc89cef4ffa0615ce2f4de4acf"
+    },
+    {
+      "file": "art/source/actors/stonekin-source.png",
+      "role": "elevated world camera, matte material density, and gameplay scale only",
+      "sha256": "3d68ad28f34c1ebae30cddcc8f2bf1429815044307506a58afc88883cb6fce6c"
+    }
+  ],
+  "generation": {
+    "tool": "OpenAI built-in image generation tool",
+    "generationDirectoryId": "01a02dcd-cf62-7e51-866f-f0708dd12afc",
+    "artifactId": "exec-c7bd235f-8628-47e6-8e20-c0c830da7a08.png",
+    "rawDimensions": "1254x1254",
+    "requestedAssetCount": 1,
+    "returnedAssetCount": 1
+  },
+  "semanticReview": {
+    "passed": [
+      "exactly one creature and one quiet east-facing idle pose",
+      "compact raised torso remains visibly alive and weight-bearing",
+      "authored width, height, and foot baseline comply closely enough for canonical framing to remain measurable",
+      "support footprint remains centered beneath the gameplay body",
+      "no scenery, detached effect, text, UI, floor, or cast shadow"
+    ],
+    "failed": [
+      {
+        "code": "fourth-limb-occluded",
+        "detail": "Three paws are clearly trackable, but the far-side fourth leg and foot remain swallowed by the chest and near foreleg mass."
+      },
+      {
+        "code": "diagonal-support-unavailable",
+        "detail": "The absent fourth visible contact prevents unambiguous near-fore/far-hind versus far-fore/near-hind support ownership in later walk phases."
+      },
+      {
+        "code": "camera-side-dominant",
+        "detail": "More top planes are visible than in production, but the long head and torso still read primarily as a side silhouette rather than the requested 55-degree gameplay view."
+      },
+      {
+        "code": "gloss-and-highlight-density",
+        "detail": "Silver plate rims and cool edge accents remain denser and glossier than the restrained matte Cinderwake actor target."
+      },
+      {
+        "code": "nonliteral-chroma",
+        "detail": "The generated magenta background is visibly graded rather than one flat literal #ff00ff value."
+      }
+    ]
+  },
+  "evaluation": {
+    "status": "rejected",
+    "notes": "Canonical framing appears to repair v2's artificial safe-fit scale problem, but v3 is still visually unfit to seed gait because only three paws remain readable."
+  },
+  "preparation": {
+    "tool": "scripts/prepare-actor-pose.mjs",
+    "command": "node scripts/prepare-actor-pose.mjs --input art/generation/candidates/ashfang-idle-master-v3.png --output art/generation/prepared/ashfang-idle-master-v3.png --preserve-framing",
+    "preserveFraming": true,
+    "file": "art/generation/prepared/ashfang-idle-master-v3.png",
+    "sha256": "7ca8fa8b6e9fd2d11fd3c7b1291f00bd781b8f741c2fd46bff32294ae02efab5",
+    "status": "rejected",
+    "notes": "Canonical framing applies exact 0.25 scale to the 613x629 normalized ink, producing a 153x157 source placement box and 152x155 visible ink with its measured bottom at the declared anchor. The alpha-weighted lowest eight source pixels are deterministically centered to 0.113 px from anchor X. Raster preparation cannot reveal a missing fourth paw or correct authored camera and material decisions."
+  },
+  "visualReview": {
+    "verdict": "REJECT",
+    "reviewer": "/root/review_idle_master_v3",
+    "reviewedRawSha256": "e29416ddc7e4775d0207a93bbe794b0c067acc3b64e089feadb46512de727726",
+    "reviewedPreparedSha256": "7ca8fa8b6e9fd2d11fd3c7b1291f00bd781b8f741c2fd46bff32294ae02efab5",
+    "reviewedPoseEvidenceSha256": "be5b5ec689e7791a75e62486c51e97366f082215a57a39bf267d64dc58144bbf",
+    "reviewedRuntimeComparisonSha256": "3fbba71bc9e85f5e9531362b5cb93a6d666c84eeeee3e694887fd17ba1b61963",
+    "acceptedAxes": [
+      "recognizable Ashfang-family armor, magma fissures, dorsal spikes, and curled tail",
+      "alert crouched living-predator posture",
+      "head, tail, ember core, and overall silhouette remain legible at 128px runtime scale"
+    ],
+    "rejectedAxes": [
+      "approximately 55-degree elevated gameplay viewpoint",
+      "common gameplay mass and proportions",
+      "all four limbs and feet independently readable",
+      "neutral four-contact support footprint",
+      "explicit diagonal support ownership",
+      "restrained matte detail without runtime highlight noise"
+    ]
+  },
+  "mechanicalTargets": {
+    "runtimeHeightMinimum": 72,
+    "runtimeHeightMaximum": 86,
+    "runtimeAspectRatioMaximum": 1.5,
+    "sourceFootInkY": 231,
+    "runtimeContactBandHeight": 4,
+    "runtimeContactCentroidOffsetMaximum": 4,
+    "runtimeAnchorMustIntersectContactSpan": true,
+    "collisionRadiusWorldUnits": 300,
+    "unitsPerTile": 1024,
+    "tilePixels": 48,
+    "expectedAssessment": "pass",
+    "expectedViolationCodes": []
+  },
+  "recommendation": "Do not generate walk phases. V4 should edit only anatomy/camera/material: reveal the far fore paw as a separate upper-right contact, strengthen the overhead view, and reduce metallic rim noise while preserving v3's exact canvas occupancy and centered baseline."
+}

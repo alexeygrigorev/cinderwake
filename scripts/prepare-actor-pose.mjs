@@ -164,7 +164,14 @@ async function alphaBounds(buffer, label) {
   let bottom = -1;
   for (let y = 0; y < info.height; y += 1) {
     for (let x = 0; x < info.width; x += 1) {
-      if (data[(y * info.width + x) * 4 + 3] < 24) continue;
+      const offset = (y * info.width + x) * 4;
+      if (
+        Math.min(
+          data[offset + 3],
+          keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+        ) < 24
+      )
+        continue;
       left = Math.min(left, x);
       top = Math.min(top, y);
       right = Math.max(right, x);
@@ -180,6 +187,63 @@ async function alphaBounds(buffer, label) {
   };
 }
 
+async function contactEvidence(buffer, bounds) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const firstY = Math.max(bounds.top, bounds.top + bounds.height - 8);
+  const lastY = bounds.top + bounds.height - 1;
+  let pixels = 0;
+  let alphaWeight = 0;
+  let weightedX = 0;
+  for (let y = firstY; y <= lastY; y += 1) {
+    for (let x = bounds.left; x < bounds.left + bounds.width; x += 1) {
+      const offset = (y * info.width + x) * 4;
+      const alpha = Math.min(
+        data[offset + 3],
+        keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+      );
+      if (alpha < 24) continue;
+      pixels += 1;
+      alphaWeight += alpha;
+      weightedX += x * alpha;
+    }
+  }
+  if (pixels === 0) throw new Error("Prepared pose has no bottom-band contact");
+  return {
+    firstY,
+    lastY,
+    pixels,
+    alphaWeight,
+    centroidX: weightedX / alphaWeight,
+  };
+}
+
+function fitsSafeBounds(bounds) {
+  return (
+    bounds.left >= safeBounds.x &&
+    bounds.top >= safeBounds.y &&
+    bounds.left + bounds.width <= safeBounds.x + safeBounds.width &&
+    bounds.top + bounds.height <= safeBounds.y + safeBounds.height
+  );
+}
+
+function safeScaleCorrection(bounds) {
+  const availableLeft = footAnchor.x - safeBounds.x;
+  const availableRight = safeBounds.x + safeBounds.width - footAnchor.x;
+  const availableTop = footAnchor.y - safeBounds.y;
+  const usedLeft = Math.max(1, footAnchor.x - bounds.left);
+  const usedRight = Math.max(1, bounds.left + bounds.width - footAnchor.x);
+  const usedTop = Math.max(1, footAnchor.y - bounds.top);
+  return Math.min(
+    1,
+    availableLeft / usedLeft,
+    availableRight / usedRight,
+    availableTop / usedTop,
+  );
+}
+
 async function run() {
   const options = parseArguments(process.argv.slice(2));
   const keyed = await normalizedKeyedInput(options.input);
@@ -188,39 +252,91 @@ async function run() {
   const maximumScale = options.preserveFraming
     ? cellSize / normalizedInputSize
     : 1;
-  const scale = Math.min(
+  let scale = Math.min(
     safeBounds.width / inputBounds.width,
     safeBounds.height / inputBounds.height,
     maximumScale,
   );
-  const width = Math.max(1, Math.round(inputBounds.width * scale));
-  const height = Math.max(1, Math.round(inputBounds.height * scale));
-  const sprite = await sharp(cleaned)
-    .extract(inputBounds)
-    .resize(width, height, { fit: "fill", kernel: "lanczos3" })
-    .png()
-    .toBuffer();
-  const left = Math.round(footAnchor.x - width / 2);
-  const top = footAnchor.y - height;
-  if (
-    left < safeBounds.x ||
-    top < safeBounds.y ||
-    left + width > safeBounds.x + safeBounds.width ||
-    top + height > safeBounds.y + safeBounds.height
-  )
+  const renderAtScale = async (attemptScale) => {
+    const width = Math.max(1, Math.round(inputBounds.width * attemptScale));
+    const height = Math.max(1, Math.round(inputBounds.height * attemptScale));
+    const sprite = await sharp(cleaned)
+      .extract(inputBounds)
+      .resize(width, height, { fit: "fill", kernel: "lanczos3" })
+      .png()
+      .toBuffer();
+    const compose = (placementLeft, placementTop) =>
+      sharp({
+        create: {
+          width: cellSize,
+          height: cellSize,
+          channels: 4,
+          background: magenta,
+        },
+      })
+        .composite([{ input: sprite, left: placementLeft, top: placementTop }])
+        .png({ compressionLevel: 9, palette: true, quality: 100 })
+        .toBuffer();
+    let left = Math.round(footAnchor.x - width / 2);
+    let top = footAnchor.y - height;
+    let outputBuffer = await compose(left, top);
+    let preparedInkBounds = await alphaBounds(
+      outputBuffer,
+      "prepared isolated pose",
+    );
+    if (options.preserveFraming) {
+      left += Math.round(
+        footAnchor.x - (preparedInkBounds.left + preparedInkBounds.width / 2),
+      );
+      top += footAnchor.y - (preparedInkBounds.top + preparedInkBounds.height);
+      outputBuffer = await compose(left, top);
+      preparedInkBounds = await alphaBounds(
+        outputBuffer,
+        "aligned prepared isolated pose",
+      );
+      const support = await contactEvidence(outputBuffer, preparedInkBounds);
+      left += Math.round(footAnchor.x - support.centroidX);
+      outputBuffer = await compose(left, top);
+      preparedInkBounds = await alphaBounds(
+        outputBuffer,
+        "contact-aligned prepared isolated pose",
+      );
+    }
+    return {
+      width,
+      height,
+      left,
+      top,
+      outputBuffer,
+      preparedInkBounds,
+      preparedContact: await contactEvidence(outputBuffer, preparedInkBounds),
+    };
+  };
+  let rendered = await renderAtScale(scale);
+  for (
+    let attempt = 0;
+    options.preserveFraming && !fitsSafeBounds(rendered.preparedInkBounds);
+    attempt += 1
+  ) {
+    if (attempt >= 8)
+      throw new Error("Unable to fit contact-aligned pose in safe bounds");
+    const correction = safeScaleCorrection(rendered.preparedInkBounds);
+    scale *= correction < 1 ? correction * 0.995 : 0.99;
+    rendered = await renderAtScale(scale);
+  }
+  const {
+    width,
+    height,
+    left,
+    top,
+    outputBuffer,
+    preparedInkBounds,
+    preparedContact,
+  } = rendered;
+  if (!fitsSafeBounds(preparedInkBounds))
     throw new Error("Prepared pose leaves source-cell safe bounds");
   await fs.mkdir(path.dirname(options.output), { recursive: true });
-  await sharp({
-    create: {
-      width: cellSize,
-      height: cellSize,
-      channels: 4,
-      background: magenta,
-    },
-  })
-    .composite([{ input: sprite, left, top }])
-    .png({ compressionLevel: 9, palette: true, quality: 100 })
-    .toFile(options.output);
+  await fs.writeFile(options.output, outputBuffer);
   console.log(
     JSON.stringify(
       {
@@ -234,7 +350,14 @@ async function run() {
           : "legacy-safe-fit",
         maximumScale,
         uniformScale: Number(scale.toFixed(6)),
-        preparedBounds: { left, top, width, height },
+        placementBounds: { left, top, width, height },
+        preparedBounds: preparedInkBounds,
+        contact: {
+          ...preparedContact,
+          centroidOffsetFromAnchor: Number(
+            (preparedContact.centroidX - footAnchor.x).toFixed(6),
+          ),
+        },
         footAnchor,
         safeBounds,
       },

@@ -177,16 +177,65 @@ async function main() {
     const isolatedSources = new Map();
     for (const index of ISOLATED_INDEXES) {
       const posePath = path.join(directory, `raw-pose-${index}.png`);
-      await sharp(basePath)
-        .extract({
-          left: (index % 4) * 256,
-          top: Math.floor(index / 4) * 256,
-          width: 256,
-          height: 256,
+      if (index === 7) {
+        const rectangle = async (width, height, background) =>
+          sharp({ create: { width, height, channels: 4, background } })
+            .png()
+            .toBuffer();
+        await sharp({
+          create: {
+            width: 1024,
+            height: 1024,
+            channels: 4,
+            background: { r: 255, g: 0, b: 255, alpha: 1 },
+          },
         })
-        .resize(1024, 1024, { kernel: "nearest" })
-        .png({ compressionLevel: 9, palette: true, quality: 100 })
-        .toFile(posePath);
+          .composite([
+            {
+              input: await rectangle(880, 620, {
+                r: 40,
+                g: 34,
+                b: 42,
+                alpha: 1,
+              }),
+              left: 60,
+              top: 120,
+            },
+            {
+              input: await rectangle(40, 160, {
+                r: 34,
+                g: 28,
+                b: 36,
+                alpha: 1,
+              }),
+              left: 60,
+              top: 740,
+            },
+            {
+              input: await rectangle(120, 160, {
+                r: 34,
+                g: 28,
+                b: 36,
+                alpha: 0.2,
+              }),
+              left: 100,
+              top: 740,
+            },
+          ])
+          .png({ compressionLevel: 9, palette: true, quality: 100 })
+          .toFile(posePath);
+      } else {
+        await sharp(basePath)
+          .extract({
+            left: (index % 4) * 256,
+            top: Math.floor(index / 4) * 256,
+            width: 256,
+            height: 256,
+          })
+          .resize(1024, 1024, { kernel: "nearest" })
+          .png({ compressionLevel: 9, palette: true, quality: 100 })
+          .toFile(posePath);
+      }
       const promptPath = path.join(directory, `prompt-${index}.txt`);
       await fs.writeFile(
         promptPath,
@@ -275,8 +324,8 @@ async function main() {
     const sharedScale = first.report.assembly.sharedIsolatedPoseScale;
     assert(
       first.report.assembly.canonicalIsolatedCanvasScale === 0.25 &&
-        sharedScale <= first.report.assembly.canonicalIsolatedCanvasScale,
-      "isolated-pose assembly enlarged authored 1024px canvas framing",
+        sharedScale < 0.2,
+      "isolated-pose assembly did not shrink its one shared scale for asymmetric support",
     );
     assert(
       isolatedReports.every(
@@ -291,6 +340,12 @@ async function main() {
           first.report.assembly.footAnchor.y,
       ),
       "isolated poses were not grounded on the shared source foot anchor",
+    );
+    assert(
+      isolatedReports.every(
+        ({ contact }) => Math.abs(contact.centroidOffsetFromAnchor) <= 0.5,
+      ),
+      "isolated poses were not centered over the shared contact anchor",
     );
     for (const index of Array.from({ length: 16 }, (_, value) => value).filter(
       (index) => !ISOLATED_INDEXES.includes(index),

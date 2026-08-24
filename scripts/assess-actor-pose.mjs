@@ -682,12 +682,22 @@ async function run() {
   const expectedViolationCodes = [
     ...trial.mechanicalTargets.expectedViolationCodes,
   ].sort();
-  const expectedMechanicalRejection =
-    !assessment.pass &&
+  const expectedMechanicalAssessment =
+    trial.mechanicalTargets.expectedAssessment ?? "fail";
+  if (!new Set(["pass", "fail"]).has(expectedMechanicalAssessment))
+    throw new Error(
+      "mechanicalTargets.expectedAssessment must be pass or fail",
+    );
+  const exactViolationSetMatch =
     actualViolationCodes.length === expectedViolationCodes.length &&
     actualViolationCodes.every(
       (code, index) => code === expectedViolationCodes[index],
     );
+  const expectedMechanicalOutcomeMet =
+    exactViolationSetMatch &&
+    (expectedMechanicalAssessment === "pass"
+      ? assessment.pass && expectedViolationCodes.length === 0
+      : !assessment.pass && expectedViolationCodes.length > 0);
   const controlsPass = negativeControlsResult.every(({ detected }) => detected);
   await fs.mkdir(options.output, { recursive: true });
   const poseEvidencePath = path.join(options.output, "pose-evidence.png");
@@ -725,10 +735,18 @@ async function run() {
     Array.isArray(recordedVisualReview.rejectedAxes) &&
     recordedVisualReview.rejectedAxes.length > 0,
   );
+  const visualReviewRequired = expectedMechanicalAssessment === "pass";
+  const visualReviewSatisfied = recordedVisualReview
+    ? visualReviewHashesMatch
+    : !visualReviewRequired;
   const report = {
     schemaVersion: 1,
     contract: "CinderwakeIsolatedActorPoseAssessmentV1",
-    status: expectedMechanicalRejection ? "rejected" : "unexpected",
+    status: "rejected",
+    verificationStatus:
+      expectedMechanicalOutcomeMet && controlsPass && visualReviewSatisfied
+        ? "pass"
+        : "fail",
     trial: {
       id: trial.id,
       actorId: trial.actorId,
@@ -768,9 +786,13 @@ async function run() {
     },
     assessment,
     expectation: {
+      expectedAssessment: expectedMechanicalAssessment,
       expectedViolationCodes,
       actualViolationCodes,
-      exactViolationSetMatch: expectedMechanicalRejection,
+      exactViolationSetMatch,
+      mechanicalOutcomeMet: expectedMechanicalOutcomeMet,
+      visualReviewRequired,
+      visualReviewSatisfied,
     },
     visualReview: recordedVisualReview
       ? {
@@ -788,16 +810,12 @@ async function run() {
     ),
     fs.writeFile(path.join(options.output, "index.html"), htmlReport(report)),
   ]);
-  if (
-    !expectedMechanicalRejection ||
-    !controlsPass ||
-    (recordedVisualReview && !visualReviewHashesMatch)
-  )
+  if (!expectedMechanicalOutcomeMet || !controlsPass || !visualReviewSatisfied)
     throw new Error(
-      `Pose assessment contract failed: expected-rejection=${expectedMechanicalRejection}, controls=${controlsPass}, visual-review=${recordedVisualReview ? visualReviewHashesMatch : "not-recorded"}`,
+      `Pose assessment contract failed: expected-mechanical=${expectedMechanicalAssessment}, mechanical-outcome=${expectedMechanicalOutcomeMet}, exact-violations=${exactViolationSetMatch}, controls=${controlsPass}, visual-review=${recordedVisualReview ? visualReviewHashesMatch : visualReviewRequired ? "required-but-missing" : "not-required"}`,
     );
   console.log(
-    `Isolated Ashfang idle master rejected reproducibly: runtime ${assessment.runtime.bounds.width}x${assessment.runtime.bounds.height}, aspect ${assessment.runtime.bounds.aspectRatio}; ${negativeControlsResult.length}/${negativeControlsResult.length} controls caught. No production asset changed.`,
+    `Isolated Ashfang idle master rejected reproducibly: mechanical ${assessment.pass ? "pass" : "fail"}, runtime ${assessment.runtime.bounds.width}x${assessment.runtime.bounds.height}, aspect ${assessment.runtime.bounds.aspectRatio}; ${negativeControlsResult.length}/${negativeControlsResult.length} controls caught. No production asset changed.`,
   );
 }
 

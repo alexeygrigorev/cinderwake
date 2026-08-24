@@ -73,7 +73,7 @@ const [
   readJson(
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
   ),
-  readJson("quality-results/actor-pose/ashfang-idle-master-v2/report.json"),
+  readJson("quality-results/actor-pose/ashfang-idle-master-v3/report.json"),
 ]);
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
@@ -196,15 +196,17 @@ const reports = [
   {
     id: "pose",
     title: "Ashfang isolated idle-pose audit",
-    href: "actor-pose/ashfang-idle-master-v2/",
+    href: "actor-pose/ashfang-idle-master-v3/",
     status:
-      pose?.status === "rejected" && pose.visualReview?.hashesMatch
+      pose?.status === "rejected" &&
+      pose.verificationStatus === "pass" &&
+      pose.visualReview?.hashesMatch
         ? "rejected"
         : pose
           ? "failed"
           : "missing",
     summary: pose
-      ? `V2 is reproducibly rejected at ${pose.assessment.runtime.bounds.width}×${pose.assessment.runtime.bounds.height} runtime pixels with the exact ${pose.expectation.actualViolationCodes.join(", ")} violation set, ${pose.negativeControls.filter(({ detected }) => detected).length}/${pose.negativeControls.length} mutations caught, and a matching exact-hash independent visual veto. It cannot seed follow-up poses.`
+      ? `V3 passes the mechanical ${pose.assessment.runtime.bounds.width}×${pose.assessment.runtime.bounds.height} runtime envelope with exact grounding and centered support, and catches ${pose.negativeControls.filter(({ detected }) => detected).length}/${pose.negativeControls.length} mutations. Its matching exact-hash independent visual veto still rejects the shallow camera, three-readable-paw anatomy, ambiguous diagonal support, and mismatched mass, so it cannot seed follow-up poses.`
       : "No isolated Ashfang pose-audit report was generated.",
   },
   {
