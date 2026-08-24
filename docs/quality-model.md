@@ -2,23 +2,24 @@
 
 Quality is assessed at declared scenarios and frame ranges, not by a vague claim that the game “feels good.” Automated checks establish repeatable invariants; an agent or human reviews the retained visual artifacts for gestalt that metrics cannot faithfully capture.
 
-| Area                  | Acceptance criterion                                                                                                                                                                  | Automated evidence                                | Visual judgment                                                         |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
-| Movement smoothness   | At 60 Hz, each sustained tick changes position by the declared integer `moveSpeed`; direction changes have no unexplained displacement spike; normalized diagonal speed is within 1%. | snapshots, velocity/position deltas, frame strip  | apparent smooth travel and responsive starts/stops                      |
-| Animation naturalness | State transitions begin on declared ticks; looping cadence is stable; no repeated/skipped frame except explicitly authored holds; attack wind-up/active/recover order is valid.       | animation phase/frame sequence, manifest          | motion reads as intentional, weighty, and not robotic                   |
-| Non-jumpiness         | Consecutive root/anchor positions do not exceed the maximum motion implied by velocity plus declared dash/knockback; camera discontinuities only occur at documented snaps.           | consecutive manifests/snapshots                   | no visible teleport, jitter, or one-frame pose pop                      |
-| Pivot / foot anchor   | A camera-tracked grounded actor has no more than 0.25 logical pixels of screen-anchor range; horizontal flips preserve the declared world anchor.                                     | manifest anchor vs transform                      | feet look planted rather than sliding/floating                          |
-| Clipping              | Source rectangles are inside sprite-sheet bounds; destination rectangles are finite; intended scene clipping is limited to viewport boundaries.                                       | manifest rectangle bounds, screenshot edge checks | no chopped heads/weapons or accidental layer cuts                       |
-| Proportionality       | Each archetype/enemy remains within its authored width/height and aspect-ratio tolerance (normally ±2%); scale never becomes zero/negative.                                           | manifest dimensions/scale                         | silhouette and weapon size look believable across poses                 |
-| Camera                | Camera follows its declared target smoothly, stays clamped to map bounds, and preserves viewport framing; target screen offset stays within configured dead-zone.                     | camera snapshots and strip                        | no nausea-inducing lurch, late catch-up, or revealing void outside map  |
-| Input-to-action       | A command accepted on tick N changes the appropriate state no later than N+1, subject only to explicit cooldown/buffer rules.                                                         | command tape correlated with snapshots            | controls feel immediate and directionally faithful                      |
-| State transitions     | Health, death, pickup, cooldown, victory, and loss transitions occur once, in valid order, and freeze/continue only as specified.                                                     | invariant tests and replay snapshots              | feedback is readable: hit, death, pickup, win/loss are visually clear   |
-| Screenshots           | Baseline scenarios render after assets settle, at pinned viewport/DPR; image diff stays within approved threshold and no unexpected blank/transparent regions appear.                 | pixel diff, alpha/region checks, manifest         | composition, contrast, readability, and style coherence                 |
-| Live-loop liveness    | The ordinary route advances at 60 Hz under wall-clock time without a stepping bridge; presentation samples remain frequent and monotonically change.                                  | observe-only rAF samples and canonical tick delta | no frozen launch, animation stall, or delayed first response            |
-| Device-safe encounter | The first three threats are wholly inside the unobstructed viewport after the real CSS canvas crop and do not deeply stack.                                                           | device-space projected manifest bounds            | opening reads as an encounter rather than clipped scenery               |
-| World-UI attachment   | A monster health bar is centered and 2–4 logical pixels above the current frame's actual alpha-ink top.                                                                               | alpha-derived world-UI manifest geometry          | bars clearly belong to bodies instead of floating as debris             |
-| Isolated-pose scale   | Every separately generated pose is normalized in the 1024-pixel source space, receives one shared scale, and ends on the fixed source anchor; no cell-local transform is permitted.   | assembly report, exact hashes, 16 mutations       | identity, camera, anatomy, support ownership, and weight transfer agree |
-| Topology-locked paint | A surface-only edit has the exact reviewed keyed silhouette after deterministic stencil preparation; translation or best alignment never excuses a changed contour.                   | exact mask diff, stencil report, named mutations  | internal materials preserve limb ownership and read naturally at scale  |
+| Area                   | Acceptance criterion                                                                                                                                                                  | Automated evidence                                 | Visual judgment                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
+| Movement smoothness    | At 60 Hz, each sustained tick changes position by the declared integer `moveSpeed`; direction changes have no unexplained displacement spike; normalized diagonal speed is within 1%. | snapshots, velocity/position deltas, frame strip   | apparent smooth travel and responsive starts/stops                      |
+| Animation naturalness  | State transitions begin on declared ticks; looping cadence is stable; no repeated/skipped frame except explicitly authored holds; attack wind-up/active/recover order is valid.       | animation phase/frame sequence, manifest           | motion reads as intentional, weighty, and not robotic                   |
+| Non-jumpiness          | Consecutive root/anchor positions do not exceed the maximum motion implied by velocity plus declared dash/knockback; camera discontinuities only occur at documented snaps.           | consecutive manifests/snapshots                    | no visible teleport, jitter, or one-frame pose pop                      |
+| Pivot / foot anchor    | A camera-tracked grounded actor has no more than 0.25 logical pixels of screen-anchor range; horizontal flips preserve the declared world anchor.                                     | manifest anchor vs transform                       | feet look planted rather than sliding/floating                          |
+| Clipping               | Source rectangles are inside sprite-sheet bounds; destination rectangles are finite; intended scene clipping is limited to viewport boundaries.                                       | manifest rectangle bounds, screenshot edge checks  | no chopped heads/weapons or accidental layer cuts                       |
+| Proportionality        | Each archetype/enemy remains within its authored width/height and aspect-ratio tolerance (normally ±2%); scale never becomes zero/negative.                                           | manifest dimensions/scale                          | silhouette and weapon size look believable across poses                 |
+| Camera                 | Camera follows its declared target smoothly, stays clamped to map bounds, and preserves viewport framing; target screen offset stays within configured dead-zone.                     | camera snapshots and strip                         | no nausea-inducing lurch, late catch-up, or revealing void outside map  |
+| Input-to-action        | A command accepted on tick N changes the appropriate state no later than N+1, subject only to explicit cooldown/buffer rules.                                                         | command tape correlated with snapshots             | controls feel immediate and directionally faithful                      |
+| State transitions      | Health, death, pickup, cooldown, victory, and loss transitions occur once, in valid order, and freeze/continue only as specified.                                                     | invariant tests and replay snapshots               | feedback is readable: hit, death, pickup, win/loss are visually clear   |
+| Screenshots            | Baseline scenarios render after assets settle, at pinned viewport/DPR; image diff stays within approved threshold and no unexpected blank/transparent regions appear.                 | pixel diff, alpha/region checks, manifest          | composition, contrast, readability, and style coherence                 |
+| Live-loop liveness     | The ordinary route advances at 60 Hz under wall-clock time without a stepping bridge; presentation samples remain frequent and monotonically change.                                  | observe-only rAF samples and canonical tick delta  | no frozen launch, animation stall, or delayed first response            |
+| Device-safe encounter  | The first three threats are wholly inside the unobstructed viewport after the real CSS canvas crop and do not deeply stack.                                                           | device-space projected manifest bounds             | opening reads as an encounter rather than clipped scenery               |
+| World-UI attachment    | A monster health bar is centered and 2–4 logical pixels above the current frame's actual alpha-ink top.                                                                               | alpha-derived world-UI manifest geometry           | bars clearly belong to bodies instead of floating as debris             |
+| Isolated-pose scale    | Every separately generated pose is normalized in the 1024-pixel source space, receives one shared scale, and ends on the fixed source anchor; no cell-local transform is permitted.   | assembly report, exact hashes, 16 mutations        | identity, camera, anatomy, support ownership, and weight transfer agree |
+| Topology-locked paint  | A surface-only edit has the exact reviewed keyed silhouette after deterministic stencil preparation; translation or best alignment never excuses a changed contour.                   | exact mask diff, stencil report, named mutations   | internal materials preserve limb ownership and read naturally at scale  |
+| Runtime surface detail | A finished surface retains readable broad interior contrast at 128 pixels without collapsing into weak mud or overloading the frame with one-pixel grain/rims.                        | frozen detail contract, detail map, three controls | material, lighting, and value groups belong to the same cast style      |
 
 Numeric tolerances belong in scenario/test metadata, never hidden in an evaluator’s judgment. Pixel comparisons are valuable for regressions but may vary with browser rasterization; manifests and semantic snapshots are the source of truth for geometry and timing. Conversely, passing all metrics is not proof of quality: reviewers inspect screenshots and especially multi-frame strips for unnatural rhythm, overlap, visual hierarchy, and whether the action is understandable at a glance.
 
@@ -29,8 +30,11 @@ preparer's optional `--topology-mask` mode operates before safe fitting in the
 normalized 1024-pixel space. It uses the reviewed reference alpha, clips extra
 candidate ink, fills missing reference foreground from the nearest candidate
 foreground with deterministic Manhattan distance and tie order, and refuses a
-blank candidate or reference. With the option absent, historical output bytes
-remain unchanged.
+blank candidate or reference. `--prepared-topology-mask` repeats the lock
+against an exact 256 × 256 reviewed reference after resampling/contact
+placement, preserving its complete effective keyed-alpha field and verifying
+final safe bounds, grounding, and contact. With both options absent, historical
+output bytes remain unchanged.
 
 The pose manifest's optional `topologyLock` points to one exact 256 × 256
 prepared reference, declares alpha threshold `24`, and normally permits zero
@@ -42,6 +46,27 @@ alignment can explain it, reference hashes/dimensions are strict, stencil holes
 receive non-magenta color, extra ink is clipped, and repeated artifacts are
 byte-identical. Exact topology is still not evidence of good anatomy, value
 design, identity, or movement; independent visual review retains veto power.
+
+## Finished-surface runtime detail
+
+`quality/actor-detail-contract.v1.json` freezes a deterministic triage metric
+for isolated poses that explicitly claim finished surface. On the exact keyed
+128 × 128 projection it keeps pixels whose centered 5 × 5 alpha neighborhood
+is at least 192, computes Rec.709 luma and a separable `[1,2,1]/4` binomial
+blur, then classifies absolute high-pass values as flat `<2`, weak `2–8`, or
+strong `≥8`. It reports strong occupancy, strong-to-detailed readability, and
+isolated extrema.
+
+The provisional frozen envelope requires at least 500 usable interior pixels,
+strong occupancy `0.30–0.60`, readability `≥0.38`, and isolated extrema
+occupancy `≤0.07`. Exact accepted Vanguard, Ranger, and Stonekin idle frames
+calibrate the range. V8's real keyed→resize→keyed projection measures
+`0.143921` strong occupancy and `0.245416` readability, reproducing
+`runtime-detail-collapse`. Candidate-independent accepted fixtures prove blur
+collapse plus seeded-grain and dense-rim overload; repeated detail maps are
+byte-identical. Blockouts do not opt in. A frequency pass cannot decide whether
+the remaining broad shapes, material, lighting, or identity are artistically
+correct, and visual review retains veto authority.
 
 ## Enforced sequence thresholds
 

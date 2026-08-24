@@ -6,6 +6,11 @@ import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import sharp from "sharp";
+import {
+  ACTOR_DETAIL_ALGORITHM_VERSION,
+  assessActorDetail,
+  renderActorDetailMap,
+} from "./lib/actor-detail-metrics.mjs";
 
 const executeFile = promisify(execFile);
 const root = process.cwd();
@@ -642,13 +647,25 @@ async function reproducePreparation(trial) {
           "preparation topology mask",
         )
       : null;
+    const preparedTopologyMask = trial.preparation.preparedTopologyMask
+      ? await validateFile(
+          trial.preparation.preparedTopologyMask,
+          "preparation prepared topology mask",
+        )
+      : null;
     let topologyDiagnostics = null;
+    let preparedTopologyDiagnostics = null;
     for (const output of [first, second]) {
       const arguments_ = [script, "--input", input, "--output", output];
       if (trial.preparation.preserveFraming)
         arguments_.push("--preserve-framing");
       if (topologyMask)
         arguments_.push("--topology-mask", topologyMask.filePath);
+      if (preparedTopologyMask)
+        arguments_.push(
+          "--prepared-topology-mask",
+          preparedTopologyMask.filePath,
+        );
       const result = await executeFile(process.execPath, arguments_, {
         cwd: root,
         maxBuffer: 10 * 1024 * 1024,
@@ -670,6 +687,24 @@ async function reproducePreparation(trial) {
             "Pose preparation topology diagnostics are not deterministic",
           );
         topologyDiagnostics = report.topology;
+      }
+      if (preparedTopologyMask) {
+        if (
+          !report.preparedTopology?.exactFinalMask ||
+          !report.preparedTopology?.exactAlphaAfterEnforcement
+        )
+          throw new Error(
+            "Pose preparation did not enforce its prepared topology mask exactly",
+          );
+        if (
+          preparedTopologyDiagnostics &&
+          JSON.stringify(preparedTopologyDiagnostics) !==
+            JSON.stringify(report.preparedTopology)
+        )
+          throw new Error(
+            "Pose preparation prepared-topology diagnostics are not deterministic",
+          );
+        preparedTopologyDiagnostics = report.preparedTopology;
       }
     }
     const [firstBytes, secondBytes, committedBytes] = await Promise.all([
@@ -700,6 +735,15 @@ async function reproducePreparation(trial) {
               sha256: topologyMask.sha256,
             },
             topology: topologyDiagnostics,
+          }
+        : {}),
+      ...(preparedTopologyMask
+        ? {
+            preparedTopologyMask: {
+              file: trial.preparation.preparedTopologyMask.file,
+              sha256: preparedTopologyMask.sha256,
+            },
+            preparedTopology: preparedTopologyDiagnostics,
           }
         : {}),
     };
@@ -848,7 +892,10 @@ function htmlReport(report) {
   const independentReview = report.visualReview
     ? `<h2>Independent exact-hash review</h2><p>Verdict: <strong>${escapeHtml(report.visualReview.verdict)}</strong> · reviewer <code>${escapeHtml(report.visualReview.reviewer)}</code> · all four reviewed hashes match: <strong>${report.visualReview.hashesMatch ? "yes" : "NO"}</strong>.</p><h3>Accepted axes</h3><ul>${report.visualReview.acceptedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul><h3>Rejected axes</h3><ul>${report.visualReview.rejectedAxes.map((axis) => `<li>${escapeHtml(axis)}</li>`).join("")}</ul>`
     : "<h2>Independent exact-hash review</h2><p>No independent review is recorded for this historical diagnostic.</p>";
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(report.trial.id)}</title><style>body{max-width:1120px;margin:2rem auto;padding:0 1rem;background:#0c0a0c;color:#eadfce;font:16px/1.5 system-ui}.reject{color:#ef8d83}code{color:#efbd70}img{max-width:100%;height:auto;border:1px solid #584549}figure{margin:1.25rem 0}figcaption{color:#b8a699}</style></head><body><h1>${escapeHtml(report.trial.id)}</h1><p class="reject"><strong>REJECTED:</strong> this identity master cannot seed follow-up poses.</p><p>${escapeHtml(report.trial.recommendation)}</p><dl><dt>Raw SHA-256</dt><dd><code>${report.sources.candidate.sha256}</code></dd><dt>Prepared SHA-256</dt><dd><code>${report.sources.prepared.sha256}</code></dd><dt>Runtime ink</dt><dd>${report.assessment.runtime.bounds.width}×${report.assessment.runtime.bounds.height}, aspect ${report.assessment.runtime.bounds.aspectRatio}</dd><dt>Contact center / rig anchor</dt><dd>${report.assessment.runtime.contact.centroidX} / ${actorSpec.atlas.footAnchor.x} px</dd><dt>Shared collision radius</dt><dd>${report.collisionContract.logicalRadiusPixels} logical px</dd><dt>Raw literal magenta</dt><dd>${report.raw.literalMagentaRatio}</dd></dl><h2>Recorded visual findings</h2><ul>${failures}</ul>${independentReview}<h2>Mechanical review</h2><ul>${mechanical}</ul><figure><a href="pose-evidence.png"><img src="pose-evidence.png" alt="Raw, prepared, runtime, and alpha evidence"></a><figcaption>One generated pose through deterministic ingress at raw, 256-pixel source-cell, and 128-pixel runtime scale. Preparation preserves aspect ratio and reports the exact safe bounds and foot anchor.</figcaption></figure><figure><a href="runtime-scale-comparison.png"><img src="runtime-scale-comparison.png" alt="Isolated master beside production actors at runtime scale"></a><figcaption>The candidate and production actors share one logical ground line. Relative size, silhouette, material density, and support placement remain visual-review questions.</figcaption></figure><h2>Detector controls</h2><ul>${controls}</ul><p>Mechanical ingress cannot manufacture missing anatomy, correct viewpoint or style, or authorize follow-up generation.</p></body></html>`;
+  const surface = report.surfaceAssessment
+    ? `<h2>Finished-surface detail</h2><p>Verdict: <strong>${report.surfaceAssessment.pass ? "PASS" : "REJECT"}</strong> · strong occupancy ${report.surfaceAssessment.metrics.strongOccupancy} · readability ${report.surfaceAssessment.metrics.readability} · isolated extrema ${report.surfaceAssessment.metrics.isolatedExtremaOccupancy}.</p><ul>${report.surfaceAssessment.violations.map(({ code }) => `<li><strong>${escapeHtml(code)}</strong></li>`).join("")}</ul><figure><a href="runtime-detail-map.png"><img src="runtime-detail-map.png" alt="Runtime interior detail classification"></a><figcaption>Blue is flat interior, amber is weak detail, red is strong detail, and magenta marks isolated extrema. This frequency envelope can reject collapse or overload but cannot approve style.</figcaption></figure>`
+    : "";
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${escapeHtml(report.trial.id)}</title><style>body{max-width:1120px;margin:2rem auto;padding:0 1rem;background:#0c0a0c;color:#eadfce;font:16px/1.5 system-ui}.reject{color:#ef8d83}code{color:#efbd70}img{max-width:100%;height:auto;border:1px solid #584549}figure{margin:1.25rem 0}figcaption{color:#b8a699}</style></head><body><h1>${escapeHtml(report.trial.id)}</h1><p class="reject"><strong>REJECTED:</strong> this identity master cannot seed follow-up poses.</p><p>${escapeHtml(report.trial.recommendation)}</p><dl><dt>Raw SHA-256</dt><dd><code>${report.sources.candidate.sha256}</code></dd><dt>Prepared SHA-256</dt><dd><code>${report.sources.prepared.sha256}</code></dd><dt>Runtime ink</dt><dd>${report.assessment.runtime.bounds.width}×${report.assessment.runtime.bounds.height}, aspect ${report.assessment.runtime.bounds.aspectRatio}</dd><dt>Contact center / rig anchor</dt><dd>${report.assessment.runtime.contact.centroidX} / ${actorSpec.atlas.footAnchor.x} px</dd><dt>Shared collision radius</dt><dd>${report.collisionContract.logicalRadiusPixels} logical px</dd><dt>Raw literal magenta</dt><dd>${report.raw.literalMagentaRatio}</dd></dl><h2>Recorded visual findings</h2><ul>${failures}</ul>${independentReview}<h2>Mechanical review</h2><ul>${mechanical}</ul>${surface}<figure><a href="pose-evidence.png"><img src="pose-evidence.png" alt="Raw, prepared, runtime, and alpha evidence"></a><figcaption>One generated pose through deterministic ingress at raw, 256-pixel source-cell, and 128-pixel runtime scale. Preparation preserves aspect ratio and reports the exact safe bounds and foot anchor.</figcaption></figure><figure><a href="runtime-scale-comparison.png"><img src="runtime-scale-comparison.png" alt="Isolated master beside production actors at runtime scale"></a><figcaption>The candidate and production actors share one logical ground line. Relative size, silhouette, material density, and support placement remain visual-review questions.</figcaption></figure><h2>Detector controls</h2><ul>${controls}</ul><p>Mechanical ingress cannot manufacture missing anatomy, correct viewpoint or style, or authorize follow-up generation.</p></body></html>`;
 }
 
 async function run() {
@@ -923,6 +970,73 @@ async function run() {
     });
     assessment.pass = false;
   }
+  let surface = null;
+  if (trial.surfaceTarget) {
+    if (
+      !trial.surfaceTarget.contract ||
+      typeof trial.surfaceTarget.contract !== "object" ||
+      typeof trial.surfaceTarget.contract.file !== "string" ||
+      typeof trial.surfaceTarget.contract.sha256 !== "string"
+    )
+      throw new Error(
+        "surfaceTarget.contract must declare exact file and sha256 fields",
+      );
+    const contractSource = await validateFile(
+      trial.surfaceTarget.contract,
+      "surface detail contract",
+    );
+    const contract = JSON.parse(contractSource.bytes.toString("utf8"));
+    if (
+      contract.contract !== "CinderwakeActorRuntimeDetailV1" ||
+      contract.algorithmVersion !== ACTOR_DETAIL_ALGORITHM_VERSION
+    )
+      throw new Error("Surface detail contract or algorithm version is stale");
+    const expectedAssessment = trial.surfaceTarget.expectedAssessment;
+    if (!new Set(["pass", "fail"]).has(expectedAssessment))
+      throw new Error("surfaceTarget.expectedAssessment must be pass or fail");
+    if (!Array.isArray(trial.surfaceTarget.expectedViolationCodes))
+      throw new Error("surfaceTarget.expectedViolationCodes must be an array");
+    const renderedDetail = await renderActorDetailMap(runtime.image);
+    const result = assessActorDetail(
+      renderedDetail.metrics,
+      contract.thresholds,
+    );
+    const actualViolationCodes = result.violations
+      .map(({ code }) => code)
+      .sort();
+    const expectedViolationCodes = [
+      ...trial.surfaceTarget.expectedViolationCodes,
+    ].sort();
+    const exactViolationSetMatch =
+      actualViolationCodes.length === expectedViolationCodes.length &&
+      actualViolationCodes.every(
+        (code, index) => code === expectedViolationCodes[index],
+      );
+    const expectedOutcomeMet =
+      exactViolationSetMatch &&
+      (expectedAssessment === "pass"
+        ? result.pass && expectedViolationCodes.length === 0
+        : !result.pass && expectedViolationCodes.length > 0);
+    surface = {
+      contract: {
+        file: trial.surfaceTarget.contract.file,
+        sha256: contractSource.sha256,
+        algorithmVersion: contract.algorithmVersion,
+        thresholds: contract.thresholds,
+      },
+      metrics: renderedDetail.metrics,
+      pass: result.pass,
+      violations: result.violations,
+      expectation: {
+        expectedAssessment,
+        expectedViolationCodes,
+        actualViolationCodes,
+        exactViolationSetMatch,
+        expectedOutcomeMet,
+      },
+      detailMapBuffer: renderedDetail.png,
+    };
+  }
   const negativeControlsResult = await negativeControls(
     trial.mechanicalTargets,
   );
@@ -959,6 +1073,9 @@ async function run() {
     ? path.join(options.output, "topology-diff.png")
     : null;
   const topologyDiffBuffer = topology ? await topologyDiff(topology) : null;
+  const detailMapPath = surface
+    ? path.join(options.output, "runtime-detail-map.png")
+    : null;
   await Promise.all([
     writePoseEvidence(
       candidate.filePath,
@@ -970,6 +1087,9 @@ async function run() {
     writeScaleComparison(runtime.buffer, runtimeComparisonPath),
     ...(topologyDiffPath
       ? [fs.writeFile(topologyDiffPath, topologyDiffBuffer)]
+      : []),
+    ...(detailMapPath
+      ? [fs.writeFile(detailMapPath, surface.detailMapBuffer)]
       : []),
   ]);
   const [poseEvidenceSha256, runtimeComparisonSha256] = await Promise.all([
@@ -996,12 +1116,16 @@ async function run() {
   const visualReviewSatisfied = recordedVisualReview
     ? visualReviewHashesMatch
     : !visualReviewRequired;
+  const surfaceOutcomeMet = surface?.expectation.expectedOutcomeMet ?? true;
   const report = {
     schemaVersion: 1,
     contract: "CinderwakeIsolatedActorPoseAssessmentV1",
     status: "rejected",
     verificationStatus:
-      expectedMechanicalOutcomeMet && controlsPass && visualReviewSatisfied
+      expectedMechanicalOutcomeMet &&
+      controlsPass &&
+      surfaceOutcomeMet &&
+      visualReviewSatisfied
         ? "pass"
         : "fail",
     trial: {
@@ -1042,6 +1166,21 @@ async function run() {
       ),
     },
     assessment,
+    ...(surface
+      ? {
+          surfaceAssessment: {
+            contract: surface.contract,
+            metrics: surface.metrics,
+            pass: surface.pass,
+            violations: surface.violations,
+            expectation: surface.expectation,
+            detailMapArtifact: {
+              file: "runtime-detail-map.png",
+              sha256: sha256(surface.detailMapBuffer),
+            },
+          },
+        }
+      : {}),
     ...(topology
       ? {
           topologyLock: {
@@ -1082,6 +1221,7 @@ async function run() {
       "pose-evidence.png",
       "runtime-scale-comparison.png",
       ...(topology ? ["topology-diff.png"] : []),
+      ...(surface ? ["runtime-detail-map.png"] : []),
     ],
   };
   await Promise.all([
@@ -1091,9 +1231,14 @@ async function run() {
     ),
     fs.writeFile(path.join(options.output, "index.html"), htmlReport(report)),
   ]);
-  if (!expectedMechanicalOutcomeMet || !controlsPass || !visualReviewSatisfied)
+  if (
+    !expectedMechanicalOutcomeMet ||
+    !controlsPass ||
+    !surfaceOutcomeMet ||
+    !visualReviewSatisfied
+  )
     throw new Error(
-      `Pose assessment contract failed: expected-mechanical=${expectedMechanicalAssessment}, mechanical-outcome=${expectedMechanicalOutcomeMet}, exact-violations=${exactViolationSetMatch}, controls=${controlsPass}, visual-review=${recordedVisualReview ? visualReviewHashesMatch : visualReviewRequired ? "required-but-missing" : "not-required"}`,
+      `Pose assessment contract failed: expected-mechanical=${expectedMechanicalAssessment}, mechanical-outcome=${expectedMechanicalOutcomeMet}, exact-violations=${exactViolationSetMatch}, controls=${controlsPass}, surface=${surface ? surfaceOutcomeMet : "not-declared"}, visual-review=${recordedVisualReview ? visualReviewHashesMatch : visualReviewRequired ? "required-but-missing" : "not-required"}`,
     );
   console.log(
     `Isolated Ashfang idle master rejected reproducibly: mechanical ${assessment.pass ? "pass" : "fail"}, runtime ${assessment.runtime.bounds.width}x${assessment.runtime.bounds.height}, aspect ${assessment.runtime.bounds.aspectRatio}; ${negativeControlsResult.length}/${negativeControlsResult.length} controls caught. No production asset changed.`,

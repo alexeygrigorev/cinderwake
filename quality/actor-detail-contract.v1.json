@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeActorRuntimeDetailV1",
+  "algorithmVersion": "cinderwake-actor-runtime-detail-v1",
+  "scope": {
+    "included": "One finished-surface actor frame at its exact 128x128 runtime projection.",
+    "excluded": [
+      "anatomy and silhouette quality",
+      "pose, contact, topology, and animation continuity",
+      "unfinished flat-color anatomy blockouts whose intentionally sparse surfaces are not production art"
+    ],
+    "limitation": "This provisional raster detector is a triage gate, not a visual approval system. Exact-hash independent visual review remains mandatory for art acceptance and production promotion."
+  },
+  "algorithm": {
+    "alphaInterior": {
+      "visibleAlphaMinimum": 192,
+      "erosion": "A pixel is usable only when every alpha value in its centered 5x5 square is at least 192 (two-pixel square erosion)."
+    },
+    "luma": "Rec.709 luma: 0.2126 R + 0.7152 G + 0.0722 B, evaluated without quantizing the result.",
+    "blur": "Separable 3x3 binomial blur with kernel [1,2,1]/4 horizontally and then vertically.",
+    "highPass": "Absolute difference between the unblurred luma and binomial-blurred luma.",
+    "classes": {
+      "flat": "h < 2",
+      "weak": "2 <= h < 8",
+      "strong": "h >= 8"
+    },
+    "occupancyDenominator": "All usable interior pixels.",
+    "readability": "strong pixels / (weak pixels + strong pixels), or zero when there are no detailed pixels.",
+    "isolatedExtrema": "A usable pixel whose luma is at least 8 above every one of its eight neighbors or at least 8 below every one of its eight neighbors.",
+    "rounding": "Reported ratios are rounded to six decimal places; integer counts are authoritative."
+  },
+  "thresholds": {
+    "status": "provisional-frozen",
+    "usableInteriorMinimum": 500,
+    "strongOccupancyMinimum": 0.3,
+    "strongOccupancyMaximum": 0.6,
+    "readabilityMinimum": 0.38,
+    "isolatedExtremaOccupancyMaximum": 0.07
+  },
+  "calibrationFixtures": [
+    {
+      "id": "accepted-vanguard-east-idle-runtime-0",
+      "expected": "pass",
+      "file": "public/assets/sprites/actor-vanguard.png",
+      "sha256": "5004facbf1b0400554b30c80fe1f83dd097786c7c61f8b235734c551f8d620a4",
+      "projection": {
+        "kind": "atlas-crop",
+        "left": 0,
+        "top": 0,
+        "width": 128,
+        "height": 128
+      },
+      "expectedMetrics": {
+        "usableInteriorPixels": 2773,
+        "strongOccupancy": 0.403173,
+        "readability": 0.490781,
+        "isolatedExtremaOccupancy": 0.03462
+      }
+    },
+    {
+      "id": "accepted-ranger-east-idle-runtime-0",
+      "expected": "pass",
+      "file": "public/assets/sprites/actor-ranger.png",
+      "sha256": "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862",
+      "projection": {
+        "kind": "atlas-crop",
+        "left": 0,
+        "top": 0,
+        "width": 128,
+        "height": 128
+      },
+      "expectedMetrics": {
+        "usableInteriorPixels": 1447,
+        "strongOccupancy": 0.393918,
+        "readability": 0.475793,
+        "isolatedExtremaOccupancy": 0.030408
+      }
+    },
+    {
+      "id": "accepted-stonekin-east-idle-runtime-0",
+      "expected": "pass",
+      "file": "public/assets/sprites/actor-stonekin.png",
+      "sha256": "eb970bb947701a82db2607e4da9c30537f53f4d303fd397b70e3edf68018019a",
+      "projection": {
+        "kind": "atlas-crop",
+        "left": 0,
+        "top": 0,
+        "width": 128,
+        "height": 128
+      },
+      "expectedMetrics": {
+        "usableInteriorPixels": 4902,
+        "strongOccupancy": 0.418809,
+        "readability": 0.512226,
+        "isolatedExtremaOccupancy": 0.04488
+      }
+    },
+    {
+      "id": "rejected-ashfang-v8-runtime-projection",
+      "expected": "fail",
+      "expectedViolation": "runtime-detail-collapse",
+      "file": "art/generation/prepared/ashfang-idle-master-v8.png",
+      "sha256": "4f9aac8921d16c6cfc69d2810345f07399a335adbe9c96d6aa54809c52fcb5df",
+      "projection": {
+        "kind": "keyed-resize-keyed",
+        "sourceWidth": 256,
+        "sourceHeight": 256,
+        "width": 128,
+        "height": 128,
+        "kernel": "lanczos3",
+        "sha256": "ce3cb08fb535f31d1f3e06ae0a8a456434689deaa701f129348b23a57bb6e6de"
+      },
+      "expectedMetrics": {
+        "usableInteriorPixels": 1209,
+        "strongOccupancy": 0.143921,
+        "readability": 0.245416,
+        "isolatedExtremaOccupancy": 0.00579
+      }
+    }
+  ],
+  "negativeControls": {
+    "sourcePolicy": "Every mutation starts from one of the three immutable accepted production fixtures above, never from a generated candidate.",
+    "controls": [
+      {
+        "id": "deterministic-blur-attenuation",
+        "baseFixture": "accepted-vanguard-east-idle-runtime-0",
+        "expectedViolation": "runtime-detail-collapse"
+      },
+      {
+        "id": "seeded-plus-minus-24-grain",
+        "baseFixture": "accepted-ranger-east-idle-runtime-0",
+        "expectedViolation": "runtime-detail-overload"
+      },
+      {
+        "id": "dense-internal-rim-tracing",
+        "baseFixture": "accepted-stonekin-east-idle-runtime-0",
+        "expectedViolation": "runtime-detail-overload"
+      }
+    ]
+  }
+}

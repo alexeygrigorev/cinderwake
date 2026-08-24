@@ -81,6 +81,14 @@
     "alphaThreshold": 24,
     "maximumChangedPixels": 0
   },
+  "surfaceTarget": {
+    "contract": {
+      "file": "quality/actor-detail-contract.v1.json",
+      "sha256": "e6f0ac60eb55a4049bd091521832a03111aea5989e932068a7091911796b8c71"
+    },
+    "expectedAssessment": "fail",
+    "expectedViolationCodes": ["runtime-detail-collapse"]
+  },
   "visualReview": {
     "verdict": "REJECT",
     "identityMasterSeed": "REJECT",

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
@@ -27,13 +28,15 @@ function parseArguments(arguments_) {
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
     if (argument === "--help") {
-      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png> [--preserve-framing] [--topology-mask <png>]
+      console.log(`Usage: node scripts/prepare-actor-pose.mjs --input <png> --output <png> [--preserve-framing] [--topology-mask <png>] [--prepared-topology-mask <256px-png>]
 
 Normalizes one isolated generated actor pose into one fixed 256x256
 ActorAtlasV2 source cell without changing its aspect ratio. The optional
 framing mode preserves the canonical 1024-to-256 canvas scale and only
 shrinks further when required by the safe bounds. The optional topology mask
-replaces the candidate silhouette in normalized 1024-space before placement.`);
+replaces the candidate silhouette in normalized 1024-space before placement.
+The optional prepared topology mask locks the final keyed silhouette after all
+resampling and placement to an exact 256x256 prepared reference.`);
       process.exit(0);
     }
     if (argument === "--preserve-framing") {
@@ -41,12 +44,22 @@ replaces the candidate silhouette in normalized 1024-space before placement.`);
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
-    if (name !== "--input" && name !== "--output" && name !== "--topology-mask")
+    if (
+      name !== "--input" &&
+      name !== "--output" &&
+      name !== "--topology-mask" &&
+      name !== "--prepared-topology-mask"
+    )
       throw new Error(`Unknown option: ${argument}`);
     const value = inlineValue ?? arguments_[++index];
     if (!value || value.startsWith("--"))
       throw new Error(`${name} requires a value`);
-    const key = name === "--topology-mask" ? "topologyMask" : name.slice(2);
+    const key =
+      name === "--topology-mask"
+        ? "topologyMask"
+        : name === "--prepared-topology-mask"
+          ? "preparedTopologyMask"
+          : name.slice(2);
     options[key] = path.resolve(root, value);
   }
   if (!options.input || !options.output)
@@ -55,6 +68,8 @@ replaces the candidate silhouette in normalized 1024-space before placement.`);
     throw new Error("Preparation cannot overwrite its raw input");
   if (options.topologyMask === options.output)
     throw new Error("Preparation cannot overwrite its topology mask");
+  if (options.preparedTopologyMask === options.output)
+    throw new Error("Preparation cannot overwrite its prepared topology mask");
   return options;
 }
 
@@ -130,6 +145,28 @@ async function normalizedKeyedTopology(inputPath) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
+async function exactKeyedPreparedTopology(inputPath) {
+  const input = await fs.readFile(inputPath);
+  const metadata = await sharp(input).metadata();
+  if (metadata.width !== cellSize || metadata.height !== cellSize)
+    throw new Error(
+      `Prepared topology mask must be exactly ${cellSize}x${cellSize}; received ${metadata.width}x${metadata.height}`,
+    );
+  const { data, info } = await sharp(input)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (let offset = 0; offset < data.length; offset += 4)
+    data[offset + 3] = Math.min(
+      data[offset + 3],
+      keyedAlpha(data[offset], data[offset + 1], data[offset + 2]),
+    );
+  return {
+    buffer: await sharp(data, { raw: info }).png().toBuffer(),
+    sha256: createHash("sha256").update(input).digest("hex"),
+  };
+}
+
 async function removeBoundaryArtifacts(buffer) {
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
@@ -180,7 +217,11 @@ async function removeBoundaryArtifacts(buffer) {
   return sharp(data, { raw: info }).png().toBuffer();
 }
 
-async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
+async function enforceTopologyMask(
+  candidateBuffer,
+  topologyBuffer,
+  { preserveReferenceAlpha = false } = {},
+) {
   const [candidate, topology] = await Promise.all(
     [candidateBuffer, topologyBuffer].map((buffer) =>
       sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
@@ -195,6 +236,7 @@ async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
   const { width, height } = candidate.info;
   const pixelCount = width * height;
   const candidateVisible = new Uint8Array(pixelCount);
+  const candidateAlphaByPixel = new Uint8Array(pixelCount);
   const referenceVisible = new Uint8Array(pixelCount);
   const referenceAlpha = new Uint8Array(pixelCount);
   const nearestSource = new Int32Array(pixelCount);
@@ -217,6 +259,7 @@ async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
         candidate.data[offset + 2],
       ),
     );
+    candidateAlphaByPixel[pixel] = candidateAlpha;
     const maskAlpha = Math.min(
       topology.data[offset + 3],
       keyedAlpha(
@@ -268,34 +311,73 @@ async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
     }
   }
 
+  let nearestOpaqueSource;
+  if (preserveReferenceAlpha) {
+    nearestOpaqueSource = new Int32Array(pixelCount);
+    nearestOpaqueSource.fill(-1);
+    const opaqueQueue = new Int32Array(pixelCount);
+    let opaqueQueueLength = 0;
+    for (let pixel = 0; pixel < pixelCount; pixel += 1) {
+      if (candidateAlphaByPixel[pixel] !== 255) continue;
+      nearestOpaqueSource[pixel] = pixel;
+      opaqueQueue[opaqueQueueLength++] = pixel;
+    }
+    if (opaqueQueueLength === 0)
+      throw new Error(
+        "Prepared pose has no fully keyable foreground color for alpha preservation",
+      );
+    for (let cursor = 0; cursor < opaqueQueueLength; cursor += 1) {
+      const pixel = opaqueQueue[cursor];
+      const x = pixel % width;
+      const neighbors = [
+        x > 0 ? pixel - 1 : -1,
+        x + 1 < width ? pixel + 1 : -1,
+        pixel >= width ? pixel - width : -1,
+        pixel + width < pixelCount ? pixel + width : -1,
+      ];
+      for (const neighbor of neighbors) {
+        if (neighbor < 0 || nearestOpaqueSource[neighbor] !== -1) continue;
+        nearestOpaqueSource[neighbor] = nearestOpaqueSource[pixel];
+        opaqueQueue[opaqueQueueLength++] = neighbor;
+      }
+    }
+  }
+
   const output = Buffer.alloc(candidate.data.length);
   let changedPixels = 0;
+  let alphaFallbackPixels = 0;
   let exactMaskAfterEnforcement = true;
+  let exactAlphaAfterEnforcement = true;
   for (let pixel = 0; pixel < pixelCount; pixel += 1) {
     const offset = pixel * 4;
     const maskAlpha = referenceAlpha[pixel];
     if (maskAlpha > 0) {
-      const source = candidateVisible[pixel] ? pixel : nearestSource[pixel];
+      let source = candidateVisible[pixel] ? pixel : nearestSource[pixel];
+      if (preserveReferenceAlpha && candidateAlphaByPixel[source] < maskAlpha) {
+        source = nearestOpaqueSource[pixel];
+        alphaFallbackPixels += 1;
+      }
       const sourceOffset = source * 4;
       output[offset] = candidate.data[sourceOffset];
       output[offset + 1] = candidate.data[sourceOffset + 1];
       output[offset + 2] = candidate.data[sourceOffset + 2];
       output[offset + 3] = maskAlpha;
     }
-    const candidateAlpha = candidate.data[offset + 3];
+    const candidateAlpha = candidateAlphaByPixel[pixel];
     const colorChanged =
       maskAlpha > 0 &&
       (output[offset] !== candidate.data[offset] ||
         output[offset + 1] !== candidate.data[offset + 1] ||
         output[offset + 2] !== candidate.data[offset + 2]);
     if (maskAlpha !== candidateAlpha || colorChanged) changedPixels += 1;
-    const outputVisible =
-      Math.min(
-        output[offset + 3],
-        keyedAlpha(output[offset], output[offset + 1], output[offset + 2]),
-      ) >= 24;
+    const outputAlpha = Math.min(
+      output[offset + 3],
+      keyedAlpha(output[offset], output[offset + 1], output[offset + 2]),
+    );
+    const outputVisible = outputAlpha >= 24;
     if (outputVisible !== Boolean(referenceVisible[pixel]))
       exactMaskAfterEnforcement = false;
+    if (outputAlpha !== maskAlpha) exactAlphaAfterEnforcement = false;
   }
   if (!exactMaskAfterEnforcement)
     throw new Error(
@@ -316,8 +398,94 @@ async function enforceTopologyMask(candidateBuffer, topologyBuffer) {
       changedVisiblePixels: missingVisiblePixels + extraVisiblePixels,
       changedPixels,
       exactMaskAfterEnforcement,
+      ...(preserveReferenceAlpha
+        ? { alphaFallbackPixels, exactAlphaAfterEnforcement }
+        : {}),
     },
   };
+}
+
+async function literalMagentaTransparentBackground(buffer) {
+  const { data, info } = await sharp(buffer)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (let offset = 0; offset < data.length; offset += 4) {
+    if (data[offset + 3] !== 0) continue;
+    data[offset] = magenta.r;
+    data[offset + 1] = magenta.g;
+    data[offset + 2] = magenta.b;
+  }
+  return (
+    sharp(data, { raw: info })
+      // Palette quantization canonicalizes every fully transparent entry to one
+      // arbitrary RGB value. Truecolor preserves literal magenta under alpha 0.
+      .png({ compressionLevel: 9 })
+      .toBuffer()
+  );
+}
+
+async function visibleMaskMismatchPixels(firstBuffer, secondBuffer) {
+  const [first, second] = await Promise.all(
+    [firstBuffer, secondBuffer].map((buffer) =>
+      sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+  if (
+    first.info.width !== second.info.width ||
+    first.info.height !== second.info.height
+  )
+    throw new Error("Prepared topology comparison dimensions differ");
+  let mismatches = 0;
+  for (let offset = 0; offset < first.data.length; offset += 4) {
+    const firstVisible =
+      Math.min(
+        first.data[offset + 3],
+        keyedAlpha(
+          first.data[offset],
+          first.data[offset + 1],
+          first.data[offset + 2],
+        ),
+      ) >= 24;
+    const secondVisible =
+      Math.min(
+        second.data[offset + 3],
+        keyedAlpha(
+          second.data[offset],
+          second.data[offset + 1],
+          second.data[offset + 2],
+        ),
+      ) >= 24;
+    if (firstVisible !== secondVisible) mismatches += 1;
+  }
+  return mismatches;
+}
+
+async function effectiveAlphaMismatchPixels(firstBuffer, secondBuffer) {
+  const [first, second] = await Promise.all(
+    [firstBuffer, secondBuffer].map((buffer) =>
+      sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+  if (
+    first.info.width !== second.info.width ||
+    first.info.height !== second.info.height
+  )
+    throw new Error("Prepared topology alpha comparison dimensions differ");
+  let mismatches = 0;
+  for (let offset = 0; offset < first.data.length; offset += 4) {
+    const effectiveAlpha = (image) =>
+      Math.min(
+        image.data[offset + 3],
+        keyedAlpha(
+          image.data[offset],
+          image.data[offset + 1],
+          image.data[offset + 2],
+        ),
+      );
+    if (effectiveAlpha(first) !== effectiveAlpha(second)) mismatches += 1;
+  }
+  return mismatches;
 }
 
 async function alphaBounds(buffer, label) {
@@ -513,12 +681,78 @@ async function run() {
     height,
     left,
     top,
-    outputBuffer,
-    preparedInkBounds,
-    preparedContact,
+    outputBuffer: renderedOutputBuffer,
+    preparedInkBounds: renderedInkBounds,
+    preparedContact: renderedContact,
   } = rendered;
-  if (!fitsSafeBounds(preparedInkBounds))
+  if (!fitsSafeBounds(renderedInkBounds))
     throw new Error("Prepared pose leaves source-cell safe bounds");
+  let outputBuffer = renderedOutputBuffer;
+  let preparedInkBounds = renderedInkBounds;
+  let preparedContact = renderedContact;
+  let preparedTopologyDiagnostics;
+  if (options.preparedTopologyMask) {
+    const preparedTopology = await exactKeyedPreparedTopology(
+      options.preparedTopologyMask,
+    );
+    await alphaBounds(preparedTopology.buffer, "prepared topology mask");
+    const enforced = await enforceTopologyMask(
+      outputBuffer,
+      preparedTopology.buffer,
+      { preserveReferenceAlpha: true },
+    );
+    if (!enforced.diagnostics.exactAlphaAfterEnforcement)
+      throw new Error(
+        "Prepared topology enforcement did not preserve reference alpha",
+      );
+    outputBuffer = await literalMagentaTransparentBackground(enforced.buffer);
+    const finalMaskMismatchPixels = await visibleMaskMismatchPixels(
+      outputBuffer,
+      preparedTopology.buffer,
+    );
+    if (finalMaskMismatchPixels !== 0)
+      throw new Error(
+        "Prepared topology enforcement did not reproduce the exact final mask",
+      );
+    const finalAlphaMismatchPixels = await effectiveAlphaMismatchPixels(
+      outputBuffer,
+      preparedTopology.buffer,
+    );
+    if (finalAlphaMismatchPixels !== 0)
+      throw new Error(
+        "Prepared topology enforcement did not preserve exact final alpha",
+      );
+    preparedInkBounds = await alphaBounds(
+      outputBuffer,
+      "prepared-topology-locked pose",
+    );
+    preparedContact = await contactEvidence(outputBuffer, preparedInkBounds);
+    if (!fitsSafeBounds(preparedInkBounds))
+      throw new Error("Prepared topology mask leaves source-cell safe bounds");
+    if (preparedInkBounds.top + preparedInkBounds.height !== footAnchor.y)
+      throw new Error(
+        "Prepared topology mask is not grounded at the foot anchor",
+      );
+    if (Math.abs(preparedContact.centroidX - footAnchor.x) > 0.5)
+      throw new Error(
+        "Prepared topology mask contact is not centered at the foot anchor",
+      );
+    preparedTopologyDiagnostics = {
+      reference: path.relative(root, options.preparedTopologyMask),
+      sha256: preparedTopology.sha256,
+      ...enforced.diagnostics,
+      finalMaskMismatchPixels,
+      finalAlphaMismatchPixels,
+      exactFinalMask: finalMaskMismatchPixels === 0,
+      finalBounds: preparedInkBounds,
+      finalContact: {
+        ...preparedContact,
+        centroidOffsetFromAnchor: Number(
+          (preparedContact.centroidX - footAnchor.x).toFixed(6),
+        ),
+      },
+    };
+  }
   await fs.mkdir(path.dirname(options.output), { recursive: true });
   await fs.writeFile(options.output, outputBuffer);
   console.log(
@@ -545,6 +779,9 @@ async function run() {
         footAnchor,
         safeBounds,
         ...(topologyDiagnostics ? { topology: topologyDiagnostics } : {}),
+        ...(preparedTopologyDiagnostics
+          ? { preparedTopology: preparedTopologyDiagnostics }
+          : {}),
       },
       null,
       2,

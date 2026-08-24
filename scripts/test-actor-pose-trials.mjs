@@ -78,6 +78,7 @@ const trials = [
     id: "ashfang-idle-master-v8",
     manifest: "art/generation/pose-trials/ashfang-idle-master-v8.json",
     expectedViolations: ["topology-mask-drift"],
+    expectedSurfaceViolations: ["runtime-detail-collapse"],
     requiresReview: true,
   },
 ];
@@ -282,6 +283,16 @@ for (const trial of trials) {
       JSON.stringify([...trial.expectedViolations].sort()),
     `${trial.id} reproduced unexpected violations`,
   );
+  if (trial.expectedSurfaceViolations) {
+    const actualSurfaceViolations =
+      report.surfaceAssessment?.violations.map(({ code }) => code).sort() ?? [];
+    assert(
+      JSON.stringify(actualSurfaceViolations) ===
+        JSON.stringify([...trial.expectedSurfaceViolations].sort()) &&
+        report.surfaceAssessment?.expectation.expectedOutcomeMet,
+      `${trial.id} did not reproduce exact expected surface violations`,
+    );
+  }
   assert(
     report.negativeControls.length === 5 &&
       report.negativeControls.every(({ detected }) => detected),

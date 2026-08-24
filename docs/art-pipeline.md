@@ -50,11 +50,18 @@ A generated surface repaint cannot preserve reviewed anatomy merely by saying
 “immutable stencil” in its prompt. Opt-in topology preparation keys the raw
 candidate and reviewed topology in the same 1024-pixel space, clips extra ink,
 fills missing reference foreground deterministically, and preserves the
-reference alpha mask before ordinary scale/anchor placement. The independent
-prepared-cell oracle then requires the exact alpha-24 mask and emits a labeled
-diff. Alignment search is diagnostic only; it cannot turn translated pixels
-green. Neither boundary approves material style, identity, runtime readability,
-or animation.
+reference alpha mask before ordinary scale/anchor placement. A second exact
+prepared-space alpha lock runs after resampling and contact placement because
+colors can alter the effective keyed contour. The independent prepared-cell
+oracle then requires the exact alpha-24 mask and emits a labeled diff. Alignment
+search is diagnostic only; it cannot turn translated pixels green.
+
+Finished-surface isolated poses declare the exact actor-detail contract. Its
+native 128-pixel classifier ignores a two-pixel silhouette band, distinguishes
+flat/weak/strong Rec.709 detail after a fixed binomial blur, and rejects both
+collapsed value structure and one-pixel overload. Calibrations and controls are
+hash-bound to accepted cast pixels, never the candidate. Topology and frequency
+metrics still cannot approve material style, identity, anatomy, or animation.
 
 `art/actor-atlas-v1.json` is the single machine-readable packing authority (its schema ID is `ActorAtlasV2`; the stable filename preserves existing tooling). `npm run art:build` chroma-keys the source, removes boundary-connected cross-cell fragments, computes one safe normalization envelope across all six sheets, reanchors every frame, downsamples authoring cells to 128 × 128 runtime cells, and emits a fixed 1024 × 2560 atlas. The 20 rows cover east, north, and south versions of every clip plus two reserves; west reflects east. This reduces decoded memory per actor from roughly 24 MiB to 10 MiB while retaining the 256-pixel originals for future repacking. `npm run art:check` verifies source presence, declared cadence, dimensions, non-empty cells, padding, anchors, and content hashes. Adding a character therefore means supplying the six sheets and one actor ID, not writing character-specific animation code.
 
@@ -106,6 +113,7 @@ npm run art:animation:check
 npm run art:generation:check
 npm run art:pose:assembly:check
 npm run art:topology:check
+npm run art:detail:check
 npm run art:pose:check
 npm test
 npm run capture:matrix

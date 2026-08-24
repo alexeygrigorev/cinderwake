@@ -33,19 +33,25 @@ Keep detection and transformation separate and opt-in:
    it are clipped; reference pixels missing candidate foreground receive the
    nearest candidate-foreground color under four-neighbor Manhattan distance,
    row-major source order, then left/right/up/down neighbor order.
-3. The preparation report publishes candidate/reference visible counts,
+3. Resampling, color spill, and contact correction may still alter the effective
+   prepared mask. `--prepared-topology-mask` therefore takes one exact 256 × 256
+   reviewed cell after ordinary placement, repeats deterministic clipping/fill,
+   preserves the complete reference keyed-alpha field, and validates final safe
+   bounds, Y231 grounding, and centered support.
+4. The preparation report publishes candidate/reference visible counts,
    missing, extra, changed, antialias, coordinate-space, distance/tie rules, and
-   exact post-enforcement status. A manifest records the topology mask's exact
-   file and hash so reproduction invokes the same option twice and compares
-   committed bytes.
-4. Without either opt-in record, historical preparation and pose assessment
+   exact post-enforcement status for both stages. A manifest records both masks'
+   exact files and hashes so reproduction invokes the same options twice and
+   compares committed bytes.
+5. Without any opt-in record, historical preparation and pose assessment
    remain byte- and verdict-compatible.
 
 ## Test the tester
 
 `npm run art:topology:check` pins a historical legacy hash, builds enforced
 output twice, proves the exact reference mask, verifies nearest-color hole fill
-and clipping, and rejects blank or missing inputs without partial output. A
+and clipping at both normalized and prepared stages, and rejects blank, missing,
+wrong-size, unsafe, ungrounded, or off-center inputs without partial output. A
 separate oracle fixture accepts an identical mask, rejects a one-pixel contour
 mutation by the exact named code, rejects a translated mask even when diagnostic
 alignment reaches zero difference, rejects stale hashes and wrong dimensions,

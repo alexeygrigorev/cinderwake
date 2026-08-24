@@ -303,17 +303,30 @@ node scripts/prepare-actor-pose.mjs \
   --input <candidate.png> \
   --output <prepared.png> \
   --preserve-framing \
-  --topology-mask <reviewed-raw-topology.png>
+  --topology-mask <reviewed-raw-topology.png> \
+  --prepared-topology-mask <reviewed-prepared-topology.png>
 ```
 
 clips extra candidate ink, fills missing reference foreground from the nearest
 candidate foreground with a fixed Manhattan/tie order, preserves the reviewed
-alpha mask, and reports all changed pixels. A manifest using that mode records
-the exact topology-mask file and hash under `preparation.topologyMask`; a
-separate `topologyLock` binds the reviewed prepared reference, alpha threshold,
-and permitted difference count. Enforcement establishes silhouette identity,
-not artistic quality: material, lighting, anatomy readability, and motion still
-require exact-hash and temporal review.
+source alpha mask, and reports all changed pixels. Resampling and color keying
+can still perturb the 256-cell contour, so the prepared-space option performs a
+second exact alpha-field lock after scale/contact placement and republishes
+final bounds and support evidence. A manifest records both exact files/hashes
+under `preparation.topologyMask` and `preparation.preparedTopologyMask`; a
+separate `topologyLock` proves the committed output against the reviewed
+prepared reference. Enforcement establishes silhouette identity, not artistic
+quality.
+
+Finished surfaces also opt into `quality/actor-detail-contract.v1.json`.
+`npm run art:detail:check` keys and projects the exact 128-pixel frame, erodes
+two silhouette pixels, and measures Rec.709 high-pass detail after a 3 × 3
+binomial blur. Frozen Vanguard, Ranger, and Stonekin fixtures establish the
+current strong-detail/readability envelope. Exact v8 reproduces
+`runtime-detail-collapse`; candidate-independent blur, seeded grain, and dense
+internal-rim mutations prove both collapse and overload codes. The metric
+cannot approve material, lighting, anatomy, or style, so exact-hash visual
+review remains required.
 
 ## Mobile selection scenes
 

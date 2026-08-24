@@ -42,6 +42,18 @@ function pixelAt(image, x, y) {
   return [...image.data.subarray(offset, offset + 4)];
 }
 
+function effectiveAlphaAt(image, pixel) {
+  const offset = pixel * 4;
+  return Math.min(
+    image.data[offset + 3],
+    keyedAlpha(
+      image.data[offset],
+      image.data[offset + 1],
+      image.data[offset + 2],
+    ),
+  );
+}
+
 async function assertMatchingVisibleMasks(expectedFile, actualFile) {
   const [expected, actual] = await Promise.all(
     [expectedFile, actualFile].map((file) => rgba(file)),
@@ -53,18 +65,9 @@ async function assertMatchingVisibleMasks(expectedFile, actualFile) {
   );
   let mismatches = 0;
   for (let offset = 0; offset < expected.data.length; offset += 4) {
-    const expectedVisible =
-      keyedAlpha(
-        expected.data[offset],
-        expected.data[offset + 1],
-        expected.data[offset + 2],
-      ) >= 24;
-    const actualVisible =
-      keyedAlpha(
-        actual.data[offset],
-        actual.data[offset + 1],
-        actual.data[offset + 2],
-      ) >= 24;
+    const pixel = offset / 4;
+    const expectedVisible = effectiveAlphaAt(expected, pixel) >= 24;
+    const actualVisible = effectiveAlphaAt(actual, pixel) >= 24;
     if (expectedVisible !== actualVisible) mismatches += 1;
   }
   assert(mismatches === 0, `${mismatches} prepared mask pixels differ`);
@@ -253,6 +256,160 @@ try {
     "prepared-reference enforcement lost its literal-magenta background",
   );
 
+  const realisticCandidate = path.join(
+    root,
+    "art/generation/candidates/ashfang-idle-master-v8.png",
+  );
+  const realisticRawTopology = path.join(
+    root,
+    "art/generation/candidates/ashfang-anatomy-blockout-v4.png",
+  );
+  const realisticPreparedTopology = path.join(
+    root,
+    "art/generation/prepared/ashfang-anatomy-blockout-v4.png",
+  );
+  const realisticRawOnly = path.join(temporaryRoot, "realistic-raw-only.png");
+  await execute(
+    process.execPath,
+    [
+      preparer,
+      "--input",
+      realisticCandidate,
+      "--output",
+      realisticRawOnly,
+      "--preserve-framing",
+      "--topology-mask",
+      realisticRawTopology,
+    ],
+    { cwd: root },
+  );
+  const realisticOutputs = [
+    "realistic-locked-first.png",
+    "realistic-locked-second.png",
+  ].map((file) => path.join(temporaryRoot, file));
+  let realisticReport;
+  for (const output of realisticOutputs) {
+    const execution = await execute(
+      process.execPath,
+      [
+        preparer,
+        "--input",
+        realisticCandidate,
+        "--output",
+        output,
+        "--preserve-framing",
+        "--topology-mask",
+        realisticRawTopology,
+        "--prepared-topology-mask",
+        realisticPreparedTopology,
+      ],
+      { cwd: root },
+    );
+    const report = JSON.parse(execution.stdout);
+    if (realisticReport)
+      assert(
+        JSON.stringify(report.preparedTopology) ===
+          JSON.stringify(realisticReport.preparedTopology),
+        "prepared topology diagnostics are not deterministic",
+      );
+    realisticReport = report;
+  }
+  const [realisticFirst, realisticSecond] = await Promise.all(
+    realisticOutputs.map((file) => fs.readFile(file)),
+  );
+  assert(
+    realisticFirst.equals(realisticSecond),
+    "prepared-topology output is not byte-deterministic",
+  );
+  assert(
+    realisticReport.topology.exactMaskAfterEnforcement === true &&
+      realisticReport.preparedTopology.reference ===
+        path.relative(root, realisticPreparedTopology) &&
+      realisticReport.preparedTopology.sha256 ===
+        sha256(await fs.readFile(realisticPreparedTopology)) &&
+      realisticReport.preparedTopology.coordinateSpace === "256x256" &&
+      realisticReport.preparedTopology.candidateMissingVisiblePixels > 0 &&
+      realisticReport.preparedTopology.candidateExtraVisiblePixels > 0 &&
+      realisticReport.preparedTopology.changedVisiblePixels ===
+        realisticReport.preparedTopology.candidateMissingVisiblePixels +
+          realisticReport.preparedTopology.candidateExtraVisiblePixels &&
+      realisticReport.preparedTopology.exactMaskAfterEnforcement === true &&
+      realisticReport.preparedTopology.exactAlphaAfterEnforcement === true &&
+      realisticReport.preparedTopology.finalMaskMismatchPixels === 0 &&
+      realisticReport.preparedTopology.finalAlphaMismatchPixels === 0 &&
+      realisticReport.preparedTopology.exactFinalMask === true &&
+      realisticReport.preparedBounds.left === 14 &&
+      realisticReport.preparedBounds.top === 76 &&
+      realisticReport.preparedBounds.width === 148 &&
+      realisticReport.preparedBounds.height === 156 &&
+      realisticReport.preparedBounds.top +
+        realisticReport.preparedBounds.height ===
+        realisticReport.footAnchor.y &&
+      Math.abs(realisticReport.contact.centroidOffsetFromAnchor) <= 0.5,
+    "combined raw/prepared topology diagnostics or final grounding are invalid",
+  );
+  const [rawOnlyImage, preparedReferenceImage, realisticLockedImage] =
+    await Promise.all(
+      [realisticRawOnly, realisticPreparedTopology, realisticOutputs[0]].map(
+        (file) => rgba(file),
+      ),
+    );
+  let missingPixel = -1;
+  let extraPixel = -1;
+  for (
+    let pixel = 0;
+    pixel <
+    preparedReferenceImage.info.width * preparedReferenceImage.info.height;
+    pixel += 1
+  ) {
+    const referenceAlpha = effectiveAlphaAt(preparedReferenceImage, pixel);
+    const rawOnlyAlpha = effectiveAlphaAt(rawOnlyImage, pixel);
+    if (missingPixel < 0 && referenceAlpha >= 24 && rawOnlyAlpha < 24)
+      missingPixel = pixel;
+    const referenceColor = pixelAt(
+      preparedReferenceImage,
+      pixel % preparedReferenceImage.info.width,
+      Math.floor(pixel / preparedReferenceImage.info.width),
+    );
+    if (
+      extraPixel < 0 &&
+      referenceAlpha === 0 &&
+      rawOnlyAlpha >= 24 &&
+      referenceColor.slice(0, 3).join(",") === "255,0,255"
+    )
+      extraPixel = pixel;
+  }
+  assert(
+    missingPixel >= 0 && extraPixel >= 0,
+    "realistic raw-only render did not expose both post-resample gap classes",
+  );
+  assert(
+    effectiveAlphaAt(realisticLockedImage, missingPixel) >= 24 &&
+      pixelAt(
+        realisticLockedImage,
+        missingPixel % realisticLockedImage.info.width,
+        Math.floor(missingPixel / realisticLockedImage.info.width),
+      )
+        .slice(0, 3)
+        .join(",") !== "255,0,255",
+    "prepared topology did not fill a realistic missing contour pixel",
+  );
+  assert(
+    effectiveAlphaAt(realisticLockedImage, extraPixel) === 0 &&
+      pixelAt(
+        realisticLockedImage,
+        extraPixel % realisticLockedImage.info.width,
+        Math.floor(extraPixel / realisticLockedImage.info.width),
+      )
+        .slice(0, 3)
+        .join(",") === "255,0,255",
+    "prepared topology did not clip a realistic extra contour pixel",
+  );
+  await assertMatchingVisibleMasks(
+    realisticPreparedTopology,
+    realisticOutputs[0],
+  );
+
   const blank = path.join(temporaryRoot, "blank.png");
   await sharp({
     create: { width: 1024, height: 1024, channels: 4, background: magenta },
@@ -295,10 +452,52 @@ try {
     "stale-reference.png",
     path.join(temporaryRoot, "stale-reference-output.png"),
   );
+  const blankPrepared = path.join(temporaryRoot, "blank-prepared.png");
+  await sharp({
+    create: { width: 256, height: 256, channels: 4, background: magenta },
+  })
+    .png()
+    .toFile(blankPrepared);
+  await expectFailure(
+    [
+      "--input",
+      realisticCandidate,
+      "--output",
+      path.join(temporaryRoot, "blank-prepared-output.png"),
+      "--prepared-topology-mask",
+      blankPrepared,
+    ],
+    "prepared topology mask is blank",
+    path.join(temporaryRoot, "blank-prepared-output.png"),
+  );
+  await expectFailure(
+    [
+      "--input",
+      realisticCandidate,
+      "--output",
+      path.join(temporaryRoot, "wrong-size-prepared-output.png"),
+      "--prepared-topology-mask",
+      blank,
+    ],
+    "Prepared topology mask must be exactly 256x256",
+    path.join(temporaryRoot, "wrong-size-prepared-output.png"),
+  );
+  await expectFailure(
+    [
+      "--input",
+      realisticCandidate,
+      "--output",
+      path.join(temporaryRoot, "stale-prepared-output.png"),
+      "--prepared-topology-mask",
+      path.join(temporaryRoot, "stale-prepared.png"),
+    ],
+    "stale-prepared.png",
+    path.join(temporaryRoot, "stale-prepared-output.png"),
+  );
 } finally {
   await fs.rm(temporaryRoot, { recursive: true, force: true });
 }
 
 console.log(
-  "Actor topology stencil PASS: legacy hash unchanged; exact synthetic reference mask enforced deterministically; missing color filled, extra ink clipped, diagnostics exact, and blank/stale inputs rejected without partial output.",
+  "Actor topology stencil PASS: legacy hash unchanged; source and exact prepared masks enforced deterministically; realistic post-resample holes filled and extras clipped; diagnostics exact; blank, wrong-size, and stale inputs rejected without partial output.",
 );
