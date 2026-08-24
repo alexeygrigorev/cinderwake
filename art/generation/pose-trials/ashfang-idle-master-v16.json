@@ -31,17 +31,36 @@
     "promptSha256": "634258834b7858199d16de8c8cd65459b8daec4e6ef51e642f5c330eab68f8d4"
   },
   "semanticReview": {
-    "passed": [],
+    "passed": [
+      "one living calm quadruped reads as Ashfang at its 71-pixel runtime scale",
+      "the elevated three-quarter camera, identity, clear foreleg channel, and broad restrained matte materials remain readable"
+    ],
     "failed": [
       {
-        "code": "visual-review-unreviewed",
-        "detail": "No exact-hash human visual verdict has been recorded. This provenance record deliberately makes no semantic, topology, anatomy, style, or promotion claim."
+        "code": "runtime-height-below-minimum",
+        "detail": "The deterministic runtime projection is 103x71 pixels, below the frozen 72-pixel height minimum."
+      },
+      {
+        "code": "far-hind-chain-merged",
+        "detail": "The far-hind root and route merge into the body and collapse to three obvious supports at review scale."
+      },
+      {
+        "code": "near-support-baseline-invalid",
+        "detail": "Near paws do not share the requested common baseline and the support is forward-biased."
+      },
+      {
+        "code": "paw-claw-count-invalid",
+        "detail": "The large paws visibly show four claws instead of exactly three."
+      },
+      {
+        "code": "authored-source-height-invalid",
+        "detail": "Normalized source ink is 817x561 pixels, missing the requested 670-676 pixel normalized ink height."
       }
     ]
   },
   "evaluation": {
     "status": "rejected",
-    "notes": "V16 is retained as generated-candidate evidence only. Its visual review is unreviewed and no follow-up phase is authorized, regardless of mechanical assessment."
+    "notes": "V16 is rejected and retained as generated-candidate evidence only. The independent exact-hash review does not authorize follow-up phases, production promotion, pixel reuse, attachment, or conditioning."
   },
   "preparation": {
     "tool": "scripts/prepare-actor-pose.mjs",
@@ -53,15 +72,28 @@
     "notes": "Deterministic preserve-framing preparation reports normalized input bounds 817x561, prepared bounds 204x139, contact y=224–231, and centroid offset -0.293783. These are ingress facts, not visual approval."
   },
   "visualReview": {
-    "verdict": "UNREVIEWED",
-    "phaseAuthorization": "UNAUTHORIZED",
-    "pixelReuseDecision": "PIXEL_REUSE_PROHIBITED_UNLESS_A_LATER_EXACT_HASH_REVIEW_ACCEPTS_THIS_CANDIDATE",
-    "reviewer": null,
-    "acceptedAxes": [],
+    "verdict": "REJECT",
+    "phaseAuthorization": "REJECT_UNAUTHORIZED",
+    "pixelReuseDecision": "DO_NOT_PROMOTE_REUSE_ATTACH_OR_CONDITION",
+    "reviewer": "/root/ashfang_v16_exact_review",
+    "reviewedCommit": "481dd404d77ee8b5c1027f79aa1059fb5ffcc47e",
+    "reviewedRawSha256": "8b8ff68f5414f79c7857f39716342fa9137a75b95f5aef389deebd3158c1fc8b",
+    "reviewedPreparedSha256": "c3118bf07460793c3d666ae6df6772092689ff80f53860f4409c1032c6e794f4",
+    "reviewedPoseEvidenceSha256": "c5bd82859a662b27f65bc54d67e5e2926259b149273c43b690ed32d48f7f95ee",
+    "reviewedRuntimeComparisonSha256": "4c875d9ec57d889339d7a1efb994b090ba91b1f36491ea7acdc645672b3aaee2",
+    "acceptedAxes": [
+      "living calm Ashfang quadruped identity at 71px runtime scale",
+      "elevated three-quarter gameplay camera",
+      "clear foreleg negative-space channel",
+      "broad restrained matte material treatment"
+    ],
     "rejectedAxes": [
-      "all visual claims remain unreviewed",
-      "animation-phase generation and any production promotion",
-      "candidate-pixel reuse before later exact-hash acceptance"
+      "runtime 103x71 below the 72px minimum height",
+      "far-hind root and route merge, leaving only three obvious supports",
+      "near paws lack a common baseline and place support forward",
+      "large paws show four claws rather than exactly three",
+      "normalized source 817x561 misses the requested 670-676px ink height",
+      "animation phases, production promotion, pixel reuse, attachment, and conditioning"
     ]
   },
   "mechanicalTargets": {
@@ -91,5 +123,5 @@
     "actualViolationCodes": ["runtime-height"],
     "negativeControlsCaught": 5
   },
-  "recommendation": "Do not promote this candidate, attach it to another generation, reuse its pixels, or generate phases. Preserve it only as exact provenance until an independent exact-hash visual review records a verdict and explicitly authorizes a next action."
+  "recommendation": "Do not promote, reuse, attach, condition, or generate phases from V16. A fresh guide must move the far-hind route outward into an open channel, impose an exact common near-paw baseline, require exactly three claws per paw, and supply sufficient authored occupancy. Only the accepted identity, camera, foreleg-channel, and restrained-matte findings may survive as text."
 }
