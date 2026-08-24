@@ -7,7 +7,11 @@ import {
 } from "../../src/game/constants";
 import type { RenderManifestV1 } from "../../src/render/manifest";
 import { buildRenderManifest } from "../../src/render/manifest";
-import { openingNorthWallFeature } from "../../src/game/sceneryLayout";
+import { isFloor } from "../../src/game/dungeon";
+import {
+  buildSceneryLayout,
+  openingNorthWallFeature,
+} from "../../src/game/sceneryLayout";
 import {
   createRunScenario,
   worldFromScenario,
@@ -113,6 +117,38 @@ describe("opening-room composition gate", () => {
     });
   });
 
+  it("builds a deterministic, varied ruin silhouette only on deep blocked terrain", () => {
+    for (let seed = 0; seed < 32; seed += 1) {
+      const state = worldFromScenario(
+        createRunScenario(`opening-backdrop-${seed}`, "vanguard"),
+      );
+      const first = buildSceneryLayout(state.map).filter(({ id }) =>
+        id.startsWith("architecture:opening:backdrop:"),
+      );
+      const second = buildSceneryLayout(state.map).filter(({ id }) =>
+        id.startsWith("architecture:opening:backdrop:"),
+      );
+      expect(first, `missing silhouette for seed ${seed}`).toHaveLength(3);
+      expect(second).toEqual(first);
+      expect(new Set(first.map(({ name }) => name)).size).toBe(3);
+      for (const placement of first) {
+        expect(placement.collisionMode).toBe("solid");
+        expect(placement.collision).not.toBeNull();
+        for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+          for (let offsetX = -1; offsetX <= 1; offsetX += 1)
+            expect(
+              isFloor(
+                state.map,
+                placement.tile.x + offsetX,
+                placement.tile.y + offsetY,
+              ),
+              `${placement.id} approaches a walkable route for seed ${seed}`,
+            ).toBe(false);
+        }
+      }
+    }
+  });
+
   it.each([
     {
       name: "erased boundary",
@@ -145,6 +181,27 @@ describe("opening-room composition gate", () => {
             ? { ...sprite, visible: false }
             : sprite,
         );
+      },
+    },
+    {
+      name: "empty wide backdrop",
+      expected: "opening:wide-backdrop-too-sparse",
+      mutate(manifest: RenderManifestV1) {
+        manifest.sceneSprites = manifest.sceneSprites.map((sprite) =>
+          sprite.objectId.startsWith("architecture:opening:backdrop:")
+            ? { ...sprite, visible: false }
+            : sprite,
+        );
+      },
+    },
+    {
+      name: "repeated wide backdrop",
+      expected: "opening:wide-backdrop-obviously-repeated",
+      mutate(manifest: RenderManifestV1) {
+        const backdrops = manifest.sceneSprites.filter(({ objectId }) =>
+          objectId.startsWith("architecture:opening:backdrop:"),
+        );
+        backdrops[1]!.spriteId = backdrops[0]!.spriteId;
       },
     },
     {

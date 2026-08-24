@@ -103,7 +103,10 @@ const OPENING_GROUND_DECAL_NAMES = [
   "blood-smear",
 ] as const satisfies readonly (typeof PASSABLE_GROUND_DECAL_NAMES)[number][];
 
+const OPENING_BACKDROP_NAMES = ["gatehouse", "chapel", "watchtower"] as const;
+
 type StructureName = (typeof STRUCTURE_NAMES)[number];
+type OpeningBackdropName = (typeof OPENING_BACKDROP_NAMES)[number];
 type PropName = (typeof PROP_NAMES)[number];
 type GroundDecalName = (typeof GROUND_DECAL_NAMES)[number];
 
@@ -135,6 +138,15 @@ const STRUCTURE_COLLISIONS: Record<StructureName, CollisionProfile> = {
   wagon: { halfWidth: 1_180, halfHeight: 500, offsetY: -70 },
   obelisk: { halfWidth: 620, halfHeight: 430, offsetY: -70 },
   rubble: { halfWidth: 780, halfHeight: 380, offsetY: -50 },
+};
+
+const OPENING_BACKDROP_COLLISIONS: Record<
+  OpeningBackdropName,
+  CollisionProfile
+> = {
+  gatehouse: { halfWidth: 1_520, halfHeight: 620, offsetY: -120 },
+  chapel: STRUCTURE_COLLISIONS.chapel,
+  watchtower: STRUCTURE_COLLISIONS.watchtower,
 };
 
 const PROP_COLLISIONS: Record<PropName, CollisionProfile> = {
@@ -200,6 +212,110 @@ function contiguousGroups(values: number[]): number[][] {
     else active.push(value);
   }
   return groups;
+}
+
+function isDeepBlockedTile(map: DungeonMap, tile: Vec2): boolean {
+  for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+    for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+      const x = tile.x + offsetX;
+      const y = tile.y + offsetY;
+      if (
+        x < 0 ||
+        y < 0 ||
+        x >= map.width ||
+        y >= map.height ||
+        isFloor(map, x, y)
+      )
+        return false;
+    }
+  }
+  return true;
+}
+
+function nearestDeepBlockedTile(
+  map: DungeonMap,
+  target: Vec2,
+  used: Vec2[],
+): Vec2 | null {
+  for (let distance = 0; distance <= 4; distance += 1) {
+    for (let offsetY = -distance; offsetY <= distance; offsetY += 1) {
+      const offsetX = distance - Math.abs(offsetY);
+      for (const xSign of offsetX === 0 ? [0] : [-1, 1]) {
+        const tile = {
+          x: target.x + offsetX * xSign,
+          y: target.y + offsetY,
+        };
+        if (
+          used.every(
+            (placed) => Math.hypot(placed.x - tile.x, placed.y - tile.y) >= 3,
+          ) &&
+          isDeepBlockedTile(map, tile)
+        )
+          return tile;
+      }
+    }
+  }
+  return null;
+}
+
+function openingBackdropPlacements(map: DungeonMap): SceneryPlacement[] {
+  const room = map.rooms[0];
+  if (!room) return [];
+  const verticalDrift = sceneVariant(map, room.y, room.x, 3) - 1;
+  const targets = [
+    {
+      x: room.x - 3,
+      y: room.y + Math.floor(room.height * 0.35) + verticalDrift,
+    },
+    {
+      x: room.x - 3,
+      y: room.y + Math.floor(room.height * 0.7) - verticalDrift,
+    },
+    {
+      x: room.x + room.width + 2,
+      y: room.y + Math.floor(room.height / 2) - verticalDrift,
+    },
+  ];
+  const used: Vec2[] = [];
+  const candidates = targets.flatMap((target) => {
+    const tile = nearestDeepBlockedTile(map, target, used);
+    if (!tile) return [];
+    used.push(tile);
+    return [tile];
+  });
+  const nameOffset = sceneVariant(
+    map,
+    room.x + room.width,
+    room.y + room.height,
+    OPENING_BACKDROP_NAMES.length,
+  );
+  return candidates.map((tile, index) => {
+    const name =
+      OPENING_BACKDROP_NAMES[
+        (nameOffset + index) % OPENING_BACKDROP_NAMES.length
+      ]!;
+    const worldAnchor = {
+      // The third role occupies the right gutter, where landscape HUD chrome
+      // also lives. Its half-tile inward inset keeps the painted silhouette
+      // visible without putting its transparent sprite bounds under the
+      // objective/foe controls. The selected 3x3 blocked field leaves this
+      // support safely outside the walkable shell after the inset.
+      x:
+        tile.x * UNITS_PER_TILE +
+        UNITS_PER_TILE / 2 -
+        (index === 2 ? UNITS_PER_TILE / 2 : 0),
+      y: tile.y * UNITS_PER_TILE + UNITS_PER_TILE / 2,
+    };
+    return {
+      id: `architecture:opening:backdrop:${index}:${name}`,
+      kind: "structure",
+      name,
+      collisionMode: "solid",
+      tile,
+      worldAnchor,
+      collision: footprint(worldAnchor, OPENING_BACKDROP_COLLISIONS[name]),
+    };
+  });
 }
 
 /**
@@ -604,6 +720,13 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
       });
     });
   }
+
+  // Large landscape canvases reveal the blocked field outside the opening's
+  // masonry shell. Populate that inaccessible field with a varied ruin
+  // silhouette instead of leaving broad, texture-only gutters. Every anchor
+  // and its immediate neighbors are blocked map tiles, so these structures
+  // add visual hierarchy without changing or visually contradicting a route.
+  placements.push(...openingBackdropPlacements(map));
 
   if (map.rooms.length > 0) {
     const tile = wildernessCityLandmarkTile(map);

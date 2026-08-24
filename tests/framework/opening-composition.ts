@@ -17,6 +17,10 @@ export interface OpeningCompositionEvidence {
   openingFocalCount: number;
   openingFocalAreaRatio: number;
   maximumOpeningFocalAreaRatio: number;
+  visibleBackdropCount: number;
+  uniqueBackdropSpriteCount: number;
+  backdropAreaRatio: number;
+  backdropCollisionViolationCount: number;
   forgeVisibleFraction: number;
   raisedCollisionViolationCount: number;
   adjacentRoomLeakCount: number;
@@ -196,6 +200,9 @@ export function assessOpeningComposition(
   const forge = manifest.sceneSprites.find(
     ({ objectId }) => objectId === "structure:0:forge",
   );
+  const backdrops = visible.filter(({ objectId }) =>
+    objectId.startsWith("architecture:opening:backdrop:"),
+  );
   const adjacentRoomLeaks = visible.filter(({ objectId }) => {
     const index = roomIndex(objectId);
     return index !== null && index > 0;
@@ -329,6 +336,20 @@ export function assessOpeningComposition(
     // visibility contract.
     maximumOpeningFocalAreaRatio:
       viewport.width / viewport.height < 0.75 ? 0.36 : 0.28,
+    visibleBackdropCount: backdrops.length,
+    uniqueBackdropSpriteCount: new Set(
+      backdrops.map(({ spriteId }) => spriteId),
+    ).size,
+    backdropAreaRatio:
+      rectangleUnionArea(
+        backdrops.map(({ destinationRect }) => destinationRect),
+        viewport,
+      ) /
+      (viewport.width * viewport.height),
+    backdropCollisionViolationCount: backdrops.filter(
+      ({ collision }) =>
+        !collision || collision.mode !== "solid" || collision.halfWidth <= 0,
+    ).length,
     forgeVisibleFraction: forge
       ? intersectionArea(forge.destinationRect, viewport) /
         (forge.destinationRect.width * forge.destinationRect.height)
@@ -386,6 +407,18 @@ export function assessOpeningComposition(
     violations.push("opening:authored-focal-area-out-of-range");
   if (evidence.forgeVisibleFraction < 0.85)
     violations.push("opening:focal-forge-cropped");
+  if (
+    viewport.width / viewport.height >= 1.2 &&
+    (evidence.visibleBackdropCount < 2 || evidence.backdropAreaRatio < 0.04)
+  )
+    violations.push("opening:wide-backdrop-too-sparse");
+  if (
+    evidence.visibleBackdropCount > 1 &&
+    evidence.uniqueBackdropSpriteCount !== evidence.visibleBackdropCount
+  )
+    violations.push("opening:wide-backdrop-obviously-repeated");
+  if (evidence.backdropCollisionViolationCount > 0)
+    violations.push("opening:backdrop-missing-solid-collision");
   if (evidence.raisedCollisionViolationCount > 0)
     violations.push("opening:raised-scenery-missing-solid-collision");
   if (evidence.adjacentRoomLeakCount > 0)
