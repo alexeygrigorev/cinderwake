@@ -1251,6 +1251,102 @@
         "reviewedArtifactHashes": []
       },
       "reproduce": ""
+    },
+    {
+      "checkId": "PRES-CITY-027",
+      "executionRecipeId": "recipe:pres-city-027",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "city-sign-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "gate-entry-disabled",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "service-listener-removed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "service-outcome-suppressed",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": true,
+        "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
+    },
+    {
+      "checkId": "PRES-STATE-028",
+      "executionRecipeId": "recipe:pres-state-028",
+      "result": "UNRUN",
+      "coverageAtRun": "partial",
+      "observed": {
+        "scenarioIds": [],
+        "deviceProfileIds": [],
+        "gestureIds": []
+      },
+      "firstFailingTick": null,
+      "signals": [],
+      "artifacts": [],
+      "negativeControls": [
+        {
+          "id": "stale-state-retained-after-reset",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "same-tape-state-diverged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "same-state-frame-diverged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "manifest-frame-tick-desynchronized",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        }
+      ],
+      "visualReview": {
+        "mandatory": false,
+        "verdict": "NOT_RUN",
+        "reviewerId": "",
+        "reasons": [],
+        "reviewedArtifactHashes": []
+      },
+      "reproduce": ""
     }
   ]
 }

@@ -2,7 +2,7 @@
 
 This is the repeatable release checklist for presentation defects. It is deliberately **not** a gameplay-design checklist: quests, balance, NPC behavior, economy, and progression are out of scope. Run it for Cinderwake now and keep the IDs and evidence shapes when adapting the framework to another game.
 
-The [executable presentation-run contract](presentation-run-contract.md), [ordered recipe catalog](../../quality/presentation-recipes.v1.json), and [exact blank run template](../../quality/presentation-run.v1.template.json) lock this checklist’s 26 IDs, order, matrices, controls, evidence shape, and acceptance semantics. Use those files rather than copying a partial handwritten result next time.
+The [executable presentation-run contract](presentation-run-contract.md), [ordered recipe catalog](../../quality/presentation-recipes.v1.json), and [exact blank run template](../../quality/presentation-run.v1.template.json) lock this checklist’s 28 IDs, order, matrices, controls, evidence shape, and acceptance semantics. Use those files rather than copying a partial handwritten result next time.
 
 For every item, mark exactly one result:
 
@@ -15,6 +15,34 @@ For every item, mark exactly one result:
 - **Automatic** — a named machine oracle and representative negative control exist.
 - **Partial** — useful evidence or assertions exist, but the exact defect can still escape or its detector lacks a negative control.
 - **Missing** — no dedicated machine oracle exists.
+
+## User-reported regression gate
+
+This is the short entry checklist for the concrete failures found during Cinderwake playtesting. A future self-testing agent must go through every box on every release candidate. The box is satisfied only when all linked `PRES-*` rows have executable evidence in the same hash-bound presentation run; checking the prose box by inspection is not sufficient.
+
+- [ ] The ordinary production page starts, character selection works, Begin works, and every visible button produces its declared state change. (`PRES-LIVE-001`, `PRES-BLANK-011`)
+- [ ] On mobile, tapping reachable ground walks without striking; Strike attacks without creating a movement route; the four pad directions work. (`PRES-INPUT-002`, `PRES-MOBILE-010`)
+- [ ] Every playable character's world position, on-screen glyph, facing, and walk animation agree with each commanded direction. (`PRES-MOVE-003`, `PRES-FACING-015`)
+- [ ] Every actor and monster atlas is cut correctly: no clipped cells, blank cells, stale recovery poses, scale pops, displaced anchors, or malformed facing banks. (`PRES-SPRITE-004`, `PRES-ANCHOR-013`)
+- [ ] Idle, walk, turn, attack, ability, hurt, recovery, and death sequences look natural in order and do not jump, freeze, duplicate, skip, flicker, or retain stale pixels. (`PRES-MOTION-005`, `PRES-DUP-014`, `PRES-FLICKER-024`)
+- [ ] The player, enemies, buildings, props, and UI sprites remain crisp at the original captured resolution on high-DPR phones and desktops. (`PRES-CRISP-006`, `PRES-CROSSDEVICE-025`)
+- [ ] Nothing is stretched: source and destination aspect ratios, X/Y camera scale, role proportions, and facing-to-facing scale remain consistent. (`PRES-ASPECT-007`, `PRES-PROPORTION-023`)
+- [ ] Default zoom and framing show enough surrounding world to navigate while actors, threats, buildings, and controls remain readable; no crop reveals void. (`PRES-ZOOM-017`, `PRES-CAMERA-016`)
+- [ ] The camera follows starts, stops, turns, reversals, and map edges smoothly without jitter, lurch, overshoot, or a one-frame discontinuity. (`PRES-CAMERA-016`, `PRES-MOTION-005`)
+- [ ] Characters cannot walk through solid scenery, but every collision is explained by a visible footprint, names the blocking object, gives immediate feedback, and still permits a route around it. (`PRES-COLLIDE-008`)
+- [ ] There are no invisible fences, oversized roof colliders, unexplained blocked directions, or collision geometry left behind after its sprite disappears. (`PRES-COLLIDE-008`, `PRES-LEAK-012`)
+- [ ] All player-facing world imagery is sprite-backed except permitted title text; no CSS placeholder, emoji, glyph, gradient panel, or debug shape substitutes for game art. (`PRES-SPRITE-009`)
+- [ ] Wilderness and Embercross visibly contain coherent sprite-backed buildings, landmarks, props, objects, ground detail, and service locations rather than empty scattered tiles. (`PRES-PROP-020`, `PRES-DENSITY-022`, `PRES-TILE-018`)
+- [ ] Actors, monsters, scenery, loot, effects, city residents, service surfaces, and selection art share one Cinderwake perspective, lighting, palette, edge treatment, and detail density. (`PRES-STYLE-021`, `PRES-PROPORTION-023`)
+- [ ] Wide desktop and landscape views do not expose repetitive topology, large low-information ground fields, checkerboard seams, or cloned-prop patterns. (`PRES-TILE-018`, `PRES-DENSITY-022`)
+- [ ] Actors and monsters read as living intentional poses at play scale; none looks like a prone corpse, malformed cutout, floating body, or unrelated ground prop. (`PRES-SPRITE-004`, `PRES-MOTION-005`, `PRES-PROPORTION-023`)
+- [ ] Combat remains legible: actors do not collapse into accidental overlaps, depth order is logical, effects stay attached, and health indicators do not obscure the sprites. (`PRES-DEPTH-019`, `PRES-DENSITY-022`)
+- [ ] Phone portrait and landscape layouts keep the player, destination, city services, status text, and controls readable, unobscured, safe-area aware, and comfortably tappable. (`PRES-MOBILE-010`, `PRES-CROSSDEVICE-025`)
+- [ ] Embercross can be found from the wilderness, entered through a visible gate, and its merchant, tavern, and healer controls are visibly identifiable and live through physical input. (`PRES-CITY-027`, supported by `PRES-LIVE-001`, `PRES-PROP-020`, and `PRES-MOBILE-010`)
+- [ ] Every reproduction starts from a declared production route or serialized state, records the exact gesture/command tape, and captures synchronized snapshots, manifests, ordered frames, final state, environment, and hashes. (`PRES-STATE-028`, `PRES-REVIEW-026`, and every applicable recipe)
+- [ ] An independent visual agent reviews the ordered frames at actual play scale and normal speed; a machine pass cannot override its specific rejection. (`PRES-REVIEW-026` and every row marked mandatory review)
+
+If any box cannot be backed by its linked rows, leave it unchecked and record the gap as a blocker. The canonical execution order remains the 28-row contract below so results stay comparable between Cinderwake and future games.
 
 ## Fixed execution order
 
@@ -362,6 +390,34 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Current evidence: `docs/decisions/0017-hash-bound-screen-acceptance.md`; `docs/decisions/0009-visual-review-veto.md`; quality-index scripts and `quality/screen-review.v1.json`.
 - Missing automation/next implementation: add this checklist’s ID/result schema to the public quality index and fail publishing on absent applicable IDs.
 - Independent visual-agent review mandatory: **yes** by definition.
+
+## P0 — complete journey and framework reproducibility
+
+These rows were appended without renumbering the published presentation IDs. They remain P0 acceptance blockers even though their stable IDs follow the P2 audit rows in execution order.
+
+### PRES-CITY-027 — real wilderness-to-city service journey
+
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Scenario/precondition: cold ordinary production route in the wilderness with no state injection; separately run a complete production-input route through every Embercross service on desktop, phone portrait, and phone landscape.
+- Production gesture: discover the city sign/landmark, navigate to and enter the gate, approach each resident, open the merchant and buy/sell, open the tavern and eat/sleep, then open the healer and heal.
+- Ordered artifacts: complete production journey state/manifest/frame timeline; gate and service-affordance frames; physical gesture log; service intent and before/after state deltas; mobile video at normal speed.
+- Machine signal and threshold: the route landmark and gate are visible and reachable; entry completes through the production transition; every visible service control emits its declared intent; each affordable valid action changes exactly its documented state and feedback. No injected beside-NPC fixture may stand in for the discovery route.
+- Required negative control: remove the city sign, disable gate entry, remove one service listener, and suppress one service outcome/feedback. The journey evaluator must fail each at the first missing affordance, transition, intent, or outcome.
+- Current evidence: city unit/browser tests prove isolated layout and transactions; production-route tests prove only portions of the journey. No retained no-injection route currently proves the complete chain.
+- Missing automation/next implementation: add one production mobile journey recorder that traverses from wilderness to every service and emits the required synchronized artifact bundle plus all four mutations.
+- Independent visual-agent review mandatory: **yes**, for discoverability, transition quality, service readability, and mobile interaction feedback.
+
+### PRES-STATE-028 — arbitrary-state load, reset, replay, and frame determinism
+
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Scenario/precondition: representative named `ScenarioV1`, an exact serialized `GameState`, reset/reload isolation, and two clean replays of the same state plus command tape at the deterministic capture profile.
+- Production gesture: load scenario; capture; load exact state; run a command tape and capture; reset; reload the identical state; replay the identical tape and capture again.
+- Ordered artifacts: serialized initial state; load/reset records; per-tick semantic state hashes; render-manifest hashes; ordered lossless frame hashes; final states; environment and exact command.
+- Machine signal and threshold: loaded state equals the canonical serialized input; reset leaves no entity, input, camera, animation, or presentation residue; same input produces identical per-tick state hashes; synchronized manifests and deterministic frames match at every declared capture tick.
+- Required negative control: retain stale state after reset, perturb one replay state tick, perturb one deterministic frame, and shift one manifest/frame tick association. Each must fail its dedicated isolation, state-hash, frame-hash, or synchronization signal.
+- Current evidence: `tests/e2e/browser-bridge.spec.ts`, `tests/unit/testkit.test.ts`, temporal scenario tests, and deterministic visual captures cover important parts separately.
+- Missing automation/next implementation: one evaluator must bind those parts into two replay bundles and compare every state/manifest/frame tick rather than trusting independently green tests.
+- Independent visual-agent review mandatory: **no** for exact deterministic equivalence; the relevant presentation rows still require review of whether matching frames look good.
 
 ## Result record template
 

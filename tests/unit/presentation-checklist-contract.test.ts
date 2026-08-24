@@ -165,6 +165,54 @@ describe("presentation checklist contract", () => {
     expect(validate({ contract, recipes, run }).valid).toBe(true);
   });
 
+  it("keeps the complete city journey and arbitrary-state replay as explicit P0 gates", async () => {
+    const { contract, recipes, run } = await fixture();
+    const expected = [
+      {
+        checkId: "PRES-CITY-027",
+        recipeId: "recipe:pres-city-027",
+        signals: [
+          "city-route-discoverable",
+          "gate-transition-completes",
+          "all-service-intents-live",
+          "all-service-outcomes-visible",
+        ],
+      },
+      {
+        checkId: "PRES-STATE-028",
+        recipeId: "recipe:pres-state-028",
+        signals: [
+          "loaded-state-matches",
+          "reset-isolates-runs",
+          "replay-state-hashes-match",
+          "replay-manifest-frame-hashes-match",
+        ],
+      },
+    ];
+
+    for (const item of expected) {
+      const index = contract.checks.findIndex(
+        ({ id }: { id: string }) => id === item.checkId,
+      );
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(contract.checks[index]).toMatchObject({
+        id: item.checkId,
+        executionRecipeId: item.recipeId,
+        priority: "P0",
+      });
+      expect(recipes.recipes[index]).toMatchObject({
+        id: item.recipeId,
+        checkId: item.checkId,
+        evaluator: { requiredSignalIds: item.signals },
+      });
+      expect(run.checks[index]).toMatchObject({
+        checkId: item.checkId,
+        executionRecipeId: item.recipeId,
+        result: "UNRUN",
+      });
+    }
+  });
+
   it("adds liveness intent-registry evidence and both listener controls", async () => {
     const { contract, recipes, run } = await fixture();
     const check = contract.checks[0];

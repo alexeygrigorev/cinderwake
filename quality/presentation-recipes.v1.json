@@ -1177,6 +1177,118 @@
           "expectedSignal": "mandatory-review-incomplete"
         }
       ]
+    },
+    {
+      "id": "recipe:pres-city-027",
+      "checkId": "PRES-CITY-027",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "ordinary-wilderness-to-embercross-journey",
+          "embercross-all-services-production-route"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "partial",
+        "requiredIds": ["desktop", "phone-portrait", "phone-landscape"]
+      },
+      "gestureSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "find-city-sign",
+          "navigate-to-gate",
+          "enter-embercross",
+          "open-merchant-and-buy-sell",
+          "open-tavern-and-eat-sleep",
+          "open-healer-and-heal"
+        ]
+      },
+      "evaluator": {
+        "id": "production-city-journey-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "city-route-discoverable",
+          "gate-transition-completes",
+          "all-service-intents-live",
+          "all-service-outcomes-visible"
+        ]
+      },
+      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts tests/e2e/city-production-route.spec.ts tests/e2e/city.spec.ts tests/e2e/mobile.spec.ts",
+      "negativeControls": [
+        {
+          "id": "city-sign-removed",
+          "expectedSignal": "city-route-undiscoverable"
+        },
+        {
+          "id": "gate-entry-disabled",
+          "expectedSignal": "gate-transition-inert"
+        },
+        {
+          "id": "service-listener-removed",
+          "expectedSignal": "service-control-inert"
+        },
+        {
+          "id": "service-outcome-suppressed",
+          "expectedSignal": "service-state-or-feedback-missing"
+        }
+      ]
+    },
+    {
+      "id": "recipe:pres-state-028",
+      "checkId": "PRES-STATE-028",
+      "scenarioSet": {
+        "coverage": "partial",
+        "requiredIds": [
+          "arbitrary-scenario-load",
+          "exact-state-load",
+          "reset-and-reload-isolation",
+          "same-state-same-tape-replay"
+        ]
+      },
+      "deviceProfileSet": {
+        "coverage": "implemented",
+        "requiredIds": ["deterministic-960x540"]
+      },
+      "gestureSet": {
+        "coverage": "implemented",
+        "requiredIds": [
+          "load-scenario",
+          "load-exact-state",
+          "run-command-tape",
+          "capture-ordered-frames",
+          "reset",
+          "replay-command-tape"
+        ]
+      },
+      "evaluator": {
+        "id": "state-replay-determinism-v1",
+        "coverage": "partial",
+        "requiredSignalIds": [
+          "loaded-state-matches",
+          "reset-isolates-runs",
+          "replay-state-hashes-match",
+          "replay-manifest-frame-hashes-match"
+        ]
+      },
+      "reproduce": "npx vitest run tests/unit/testkit.test.ts tests/unit/temporal-scenarios.test.ts && npx playwright test tests/e2e/browser-bridge.spec.ts tests/visual/animation.spec.ts",
+      "negativeControls": [
+        {
+          "id": "stale-state-retained-after-reset",
+          "expectedSignal": "reset-isolation-failed"
+        },
+        {
+          "id": "same-tape-state-diverged",
+          "expectedSignal": "replay-state-hash-mismatch"
+        },
+        {
+          "id": "same-state-frame-diverged",
+          "expectedSignal": "replay-frame-hash-mismatch"
+        },
+        {
+          "id": "manifest-frame-tick-desynchronized",
+          "expectedSignal": "evidence-timeline-desynchronized"
+        }
+      ]
     }
   ]
 }

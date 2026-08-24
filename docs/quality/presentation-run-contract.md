@@ -1,6 +1,6 @@
 # Executable presentation-run contract
 
-The prose checklist remains the human explanation of what matters. The versioned [contract](../../quality/presentation-checklist.v1.json) makes its 26 `PRES-*` checks stable, and the ordered [recipe catalog](../../quality/presentation-recipes.v1.json) binds every row to required scenario, device-profile, gesture, evaluator-signal, mutation-signal, and reproduction-command sets. The adjacent [run template](../../quality/presentation-run.v1.template.json) is the exact record shape. It deliberately leaves every row `UNRUN`: valid for linting, never an accepted game-quality claim.
+The prose checklist remains the human explanation of what matters. The versioned [contract](../../quality/presentation-checklist.v1.json) makes its 28 `PRES-*` checks stable, and the ordered [recipe catalog](../../quality/presentation-recipes.v1.json) binds every row to required scenario, device-profile, gesture, evaluator-signal, mutation-signal, and reproduction-command sets. The adjacent [run template](../../quality/presentation-run.v1.template.json) is the exact record shape. It deliberately leaves every row `UNRUN`: valid for linting, never an accepted game-quality claim.
 
 ## Reproducing a run
 

@@ -472,6 +472,44 @@
         "checklist-id-omitted",
         "rejected-candidate-published"
       ]
+    },
+    {
+      "id": "PRES-CITY-027",
+      "executionRecipeId": "recipe:pres-city-027",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": true,
+      "evidenceRequirements": [
+        "production-city-journey-timeline",
+        "gate-and-service-affordance-frames",
+        "service-intent-state-deltas",
+        "mobile-city-journey-video"
+      ],
+      "negativeControlIds": [
+        "city-sign-removed",
+        "gate-entry-disabled",
+        "service-listener-removed",
+        "service-outcome-suppressed"
+      ]
+    },
+    {
+      "id": "PRES-STATE-028",
+      "executionRecipeId": "recipe:pres-state-028",
+      "priority": "P0",
+      "coverage": "partial",
+      "mandatoryReview": false,
+      "evidenceRequirements": [
+        "serialized-initial-state",
+        "reset-isolation-record",
+        "replay-state-hash-timeline",
+        "synchronized-manifest-frame-hashes"
+      ],
+      "negativeControlIds": [
+        "stale-state-retained-after-reset",
+        "same-tape-state-diverged",
+        "same-state-frame-diverged",
+        "manifest-frame-tick-desynchronized"
+      ]
     }
   ]
 }

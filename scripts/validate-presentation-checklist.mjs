@@ -32,6 +32,8 @@ const EXPECTED_IDS = [
   "PRES-FLICKER-024",
   "PRES-CROSSDEVICE-025",
   "PRES-REVIEW-026",
+  "PRES-CITY-027",
+  "PRES-STATE-028",
 ];
 
 const PRIORITIES = new Set(["P0", "P1", "P2"]);
@@ -262,7 +264,7 @@ function validateContract(contract) {
       issues,
       "check-ids-not-canonical",
       "contract.checks",
-      "The 26 PRES IDs must be complete, unique, and in published execution order.",
+      "The 28 PRES IDs must be complete, unique, and in published execution order.",
     );
   checks.forEach((check, index) => {
     const location = `contract.checks[${index}]`;
