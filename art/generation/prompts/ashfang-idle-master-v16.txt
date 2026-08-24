@@ -1,0 +1,13 @@
+Use case: stylized-concept
+Asset type: isolated game-character animation master for Cinderwake
+Input images: Image 1 is Ashfang sparse idle spatial guide v3 only. Image 2 is Stonekin rendering style only. Do not attach, copy, reference, or derive from any v15 image pixels or seed.
+
+Primary request: Create exactly one fresh, original, living Ashfang: a heavy volcanic rock-hound in a quiet east-facing idle. Preserve the accepted v15 identity and camera intent only through this text: elevated three-quarter gameplay view; compact horned wedge head; muscular raised shoulders and hips; charcoal basalt plates with muted ochre top planes, cool far-side separation, restrained ember vents, small orange eye, and a hooked tail. Never reuse v15 pixels, silhouette, composition, seed, or image reference.
+
+Spatial construction: Image 1 supplies only four open chain centerlines, the east axis, head/tail direction, and paw locations. Build fresh organic anatomy around it. Exactly four independently traceable continuous chains must read root-to-elbow/hock-to-lower-leg-to-three-claw paw: far hind, near hind, far fore, near fore. Keep the far-fore chain continuously visible through its magenta negative-space channel. Both near paws are the lowest support row. Keep far fore and near fore separated by at least 55 guide pixels below their elbows. Make a lifted sternum-to-belly arch; the belly must remain at least 9% of the canvas above the near-paw row. The animal is raised and alive, never prone, crawling, pouncing, attacking, or resting on its belly.
+
+Composition/framing: one flat literal #ff00ff background, no floor, shadow, scenery, UI, text, border, watermark, effects, smoke, or particles. Normalize the inked creature height to 670–676 pixels on the 1024px source canvas. Keep occupied width at or below 74% of the canvas and occupied aspect ratio at or below 1.50. Center the creature with clear margins and broad magenta gaps between lower legs.
+
+Style: broad quiet matte charcoal, basalt, iron-bark, ochre, and cool-slate planes; warm upper-left light; crisp readable native-game silhouette; only two or three filled ember vents. No shingles, fissure noise, tiled armor, thin glowing crack networks, glossy plastic, noisy scales, surface clutter, golem construction, humanoid anatomy, pillar legs, ball joints, joint rings, contour tracing, or a copied guide line.
+
+Constraints: exactly one creature, one calm idle, exactly four legs and four broad three-claw paws, no fifth limb, no hidden/merged far limb, no duplicate body. The guide is spatial-only and Stonekin is style-only; neither supplies production pixels.

@@ -63,3 +63,26 @@ reference, and it cannot approve generated pixels. Rebuild or verify it with:
 node scripts/build-pose-layout-guide-v2.mjs
 node scripts/build-pose-layout-guide-v2.mjs --check
 ```
+
+## Ashfang sparse idle guide v3
+
+`ashfang-idle-sparse-layout-v3.png` is a new, immutable spatial-only contract
+for the v16 fresh Ashfang idle generation. It intentionally does not reuse the
+v2 geometry: it has four open three-point chains, one open axis, and open tail
+and head directions on a literal `#ff00ff` field. It contains no torso contour,
+width cue, ring, oval, surface mark, or any other closed shape.
+
+The two near paws end at `(405,765)` and `(635,765)`, so their support midpoint
+is exactly `x=520`; the far fore and near fore remain separated by at least 55
+pixels below their elbows. It is paired only with the Stonekin style reference.
+The v15 candidate pixels and seed are expressly forbidden.
+
+```sh
+node scripts/build-ashfang-idle-guide-v3.mjs
+node scripts/build-ashfang-idle-guide-v3.mjs --check
+node scripts/test-ashfang-idle-guide-v3.mjs
+```
+
+The focused test runs deterministic rebuild checks and negative controls for a
+changed coordinate, malformed chain/closed-shape substitute, insufficient
+foreleg gap, wrong baseline or midpoint, and excessive image occupancy.
