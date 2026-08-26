@@ -10,6 +10,14 @@ body {
   font-family:
     ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
 }
+:root {
+  /* Browser safe-area values remain the default; production-style tests can
+     override these variables to emulate a notch or home-indicator inset. */
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inset-left: env(safe-area-inset-left, 0px);
+}
 button,
 input,
 select {
@@ -399,8 +407,8 @@ button {
   .selection {
     grid-template-columns: 1fr;
     align-items: start;
-    padding: max(28px, env(safe-area-inset-top)) 20px
-      max(36px, env(safe-area-inset-bottom));
+    padding: max(28px, var(--safe-area-inset-top)) 20px
+      max(36px, var(--safe-area-inset-bottom));
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -433,7 +441,7 @@ button {
 @media (max-width: 760px), (pointer: coarse) {
   .game {
     align-content: start;
-    padding-bottom: calc(146px + env(safe-area-inset-bottom));
+    padding-bottom: calc(146px + var(--safe-area-inset-bottom));
     overflow: hidden;
   }
   .stage {
@@ -441,8 +449,8 @@ button {
     max-width: 100vw;
   }
   .hud.top {
-    padding: 9px max(10px, env(safe-area-inset-right)) 9px
-      max(10px, env(safe-area-inset-left));
+    padding: 9px max(10px, var(--safe-area-inset-right)) 9px
+      max(10px, var(--safe-area-inset-left));
   }
   .brand {
     font-size: 14px;
@@ -470,10 +478,10 @@ button {
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    height: calc(146px + env(safe-area-inset-bottom));
-    padding: 10px max(14px, env(safe-area-inset-right))
-      max(10px, env(safe-area-inset-bottom))
-      max(14px, env(safe-area-inset-left));
+    height: calc(146px + var(--safe-area-inset-bottom));
+    padding: 10px max(14px, var(--safe-area-inset-right))
+      max(10px, var(--safe-area-inset-bottom))
+      max(14px, var(--safe-area-inset-left));
     background: linear-gradient(180deg, #0a0e0fdd, #111819 35%);
     border-top: 1px solid #35413d;
     touch-action: none;
@@ -555,12 +563,12 @@ button {
     text-transform: uppercase;
   }
   .game > .lab-toggle {
-    right: max(10px, env(safe-area-inset-right));
-    bottom: calc(152px + env(safe-area-inset-bottom));
+    right: max(10px, var(--safe-area-inset-right));
+    bottom: calc(152px + var(--safe-area-inset-bottom));
   }
   .lab {
-    right: max(8px, env(safe-area-inset-right));
-    bottom: calc(190px + env(safe-area-inset-bottom));
+    right: max(8px, var(--safe-area-inset-right));
+    bottom: calc(190px + var(--safe-area-inset-bottom));
     width: min(290px, calc(100vw - 16px));
     max-height: calc(100svh - 210px);
     overflow-y: auto;
@@ -570,7 +578,7 @@ button {
 @media (orientation: portrait) and (max-width: 760px) {
   .stage {
     width: 100vw;
-    height: calc(100svh - 146px - env(safe-area-inset-bottom));
+    height: calc(100svh - 146px - var(--safe-area-inset-bottom));
     max-width: none;
     aspect-ratio: auto;
     overflow: hidden;
@@ -595,7 +603,7 @@ button {
   .mobile-controls {
     height: 118px;
     padding-top: 5px;
-    padding-bottom: max(5px, env(safe-area-inset-bottom));
+    padding-bottom: max(5px, var(--safe-area-inset-bottom));
     background: linear-gradient(90deg, #0b1111e8, transparent 42%, #0b1111e8);
     border-top: 0;
     pointer-events: none;
@@ -616,8 +624,8 @@ button {
     min-height: 58px;
   }
   .game > .lab-toggle {
-    top: max(8px, env(safe-area-inset-top));
-    right: max(8px, env(safe-area-inset-right));
+    top: max(8px, var(--safe-area-inset-top));
+    right: max(8px, var(--safe-area-inset-right));
     bottom: auto;
   }
 }
@@ -626,9 +634,9 @@ button {
 .city-service-sheet {
   position: fixed;
   z-index: 8;
-  right: max(10px, env(safe-area-inset-right));
-  bottom: calc(118px + env(safe-area-inset-bottom));
-  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, var(--safe-area-inset-right));
+  bottom: calc(118px + var(--safe-area-inset-bottom));
+  left: max(10px, var(--safe-area-inset-left));
   display: grid;
   box-sizing: border-box;
   gap: 5px;
@@ -745,8 +753,8 @@ button {
 
 @media (orientation: landscape) and (max-height: 500px) {
   .city-service-sheet {
-    top: max(52px, env(safe-area-inset-top));
-    right: max(96px, env(safe-area-inset-right));
+    top: max(52px, var(--safe-area-inset-top));
+    right: max(96px, var(--safe-area-inset-right));
     bottom: auto;
     left: auto;
     width: min(390px, calc(100vw - 230px));
@@ -817,7 +825,7 @@ button {
 .selection-v2 .selection-header {
   position: absolute;
   z-index: 2;
-  top: max(18px, env(safe-area-inset-top));
+  top: max(18px, var(--safe-area-inset-top));
   left: 18px;
   width: calc(100% - 36px);
   text-align: center;
@@ -845,7 +853,7 @@ button {
   width: min(100%, 560px);
   max-width: none;
   margin: 0 auto;
-  padding: 0 14px max(14px, env(safe-area-inset-bottom));
+  padding: 0 14px max(14px, var(--safe-area-inset-bottom));
 }
 .selection-v2 .selected-class {
   min-height: 58px;
@@ -971,8 +979,8 @@ button {
   font-size: 11px;
 }
 .selection-v2 .selection-lab-toggle {
-  top: max(14px, env(safe-area-inset-top));
-  right: max(12px, env(safe-area-inset-right));
+  top: max(14px, var(--safe-area-inset-top));
+  right: max(12px, var(--safe-area-inset-right));
   bottom: auto;
   width: 48px;
   min-height: 44px;
@@ -1042,8 +1050,8 @@ button {
     font-size: 44px;
   }
   .selection-v2 .choose {
-    right: max(14px, env(safe-area-inset-right));
-    bottom: max(10px, env(safe-area-inset-bottom));
+    right: max(14px, var(--safe-area-inset-right));
+    bottom: max(10px, var(--safe-area-inset-bottom));
     left: auto;
     width: min(58vw, 500px);
     padding: 0;
@@ -1435,9 +1443,9 @@ button {
   }
 
   .game .hud.top {
-    padding: max(10px, env(safe-area-inset-top))
-      max(10px, env(safe-area-inset-right)) 10px
-      max(10px, env(safe-area-inset-left));
+    padding: max(10px, var(--safe-area-inset-top))
+      max(10px, var(--safe-area-inset-right)) 10px
+      max(10px, var(--safe-area-inset-left));
   }
 
   .game .brand {
@@ -1450,8 +1458,8 @@ button {
   }
 
   .game .objective {
-    top: max(61px, calc(env(safe-area-inset-top) + 51px));
-    right: max(10px, env(safe-area-inset-right));
+    top: max(61px, calc(var(--safe-area-inset-top) + 51px));
+    right: max(10px, var(--safe-area-inset-right));
     width: 54px;
     height: 54px;
     padding: 10px;
@@ -1479,7 +1487,7 @@ button {
   .game .hud.bottom {
     z-index: 6;
     right: auto;
-    bottom: calc(108px + env(safe-area-inset-bottom));
+    bottom: calc(108px + var(--safe-area-inset-bottom));
     left: 50%;
     width: auto;
     padding: 0;
@@ -1508,9 +1516,10 @@ button {
     z-index: 7;
     inset: auto 0 0;
     display: flex;
-    height: calc(112px + env(safe-area-inset-bottom));
-    padding: 4px max(10px, env(safe-area-inset-right))
-      max(4px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    height: calc(112px + var(--safe-area-inset-bottom));
+    padding: 4px max(10px, var(--safe-area-inset-right))
+      max(4px, var(--safe-area-inset-bottom))
+      max(10px, var(--safe-area-inset-left));
     align-items: end;
     justify-content: space-between;
     pointer-events: none;
@@ -1605,7 +1614,7 @@ button {
   }
 
   .game > .lab-toggle {
-    top: max(8px, env(safe-area-inset-top));
+    top: max(8px, var(--safe-area-inset-top));
     right: 72px;
     bottom: auto;
     opacity: 0.62;
@@ -1627,7 +1636,7 @@ button {
   }
 
   .selection-v2 .selection-header {
-    top: max(12px, env(safe-area-inset-top));
+    top: max(12px, var(--safe-area-inset-top));
   }
 
   .selection-v2 .selection-header .eyebrow {
@@ -1640,7 +1649,7 @@ button {
   }
 
   .selection-v2 .choose {
-    padding: 0 11px max(10px, env(safe-area-inset-bottom));
+    padding: 0 11px max(10px, var(--safe-area-inset-bottom));
   }
 
   .selection-v2 .selected-class {
@@ -1704,8 +1713,8 @@ button {
 @media (orientation: portrait) and (max-width: 760px) and (pointer: coarse) {
   .game .objective {
     position: fixed;
-    top: max(70px, calc(env(safe-area-inset-top) + 60px));
-    right: max(0px, env(safe-area-inset-right));
+    top: max(70px, calc(var(--safe-area-inset-top) + 60px));
+    right: max(0px, var(--safe-area-inset-right));
     width: 50px;
     height: 50px;
   }
@@ -1759,15 +1768,15 @@ button {
   }
 
   .game .mobile-controls {
-    height: calc(104px + env(safe-area-inset-bottom));
+    height: calc(104px + var(--safe-area-inset-bottom));
   }
 
   .game .hud.bottom {
-    bottom: max(7px, env(safe-area-inset-bottom));
+    bottom: max(7px, var(--safe-area-inset-bottom));
   }
 
   .selection-v2 .selection-header {
-    top: max(10px, env(safe-area-inset-top));
+    top: max(10px, var(--safe-area-inset-top));
   }
 
   .selection-v2 .selection-header h1 {
@@ -1775,8 +1784,8 @@ button {
   }
 
   .selection-v2 .choose {
-    right: max(12px, env(safe-area-inset-right));
-    bottom: max(8px, env(safe-area-inset-bottom));
+    right: max(12px, var(--safe-area-inset-right));
+    bottom: max(8px, var(--safe-area-inset-bottom));
     width: min(45vw, 400px);
   }
 
@@ -2088,10 +2097,10 @@ button {
     grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.2fr);
     align-items: start;
     gap: 14px;
-    padding: max(16px, env(safe-area-inset-top))
-      max(16px, env(safe-area-inset-right))
-      max(16px, env(safe-area-inset-bottom))
-      max(16px, env(safe-area-inset-left));
+    padding: max(16px, var(--safe-area-inset-top))
+      max(16px, var(--safe-area-inset-right))
+      max(16px, var(--safe-area-inset-bottom))
+      max(16px, var(--safe-area-inset-left));
     overflow-x: hidden;
     overflow-y: auto;
   }
@@ -2134,7 +2143,7 @@ button {
   }
   .game .objective {
     top: 8px;
-    right: max(70px, calc(env(safe-area-inset-right) + 60px));
+    right: max(70px, calc(var(--safe-area-inset-right) + 60px));
     width: 54px;
     height: 54px;
   }
@@ -2144,8 +2153,8 @@ button {
    test lab and outcome panels. */
 .selection-v2 .selection-lab-toggle {
   position: fixed;
-  top: max(14px, env(safe-area-inset-top));
-  right: max(12px, env(safe-area-inset-right));
+  top: max(14px, var(--safe-area-inset-top));
+  right: max(12px, var(--safe-area-inset-right));
   bottom: auto;
   display: flex;
   width: 48px;
