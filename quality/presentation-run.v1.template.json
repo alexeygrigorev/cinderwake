@@ -68,7 +68,7 @@
       "checkId": "PRES-INPUT-002",
       "executionRecipeId": "recipe:pres-input-002",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],

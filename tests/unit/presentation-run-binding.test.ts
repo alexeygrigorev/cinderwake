@@ -70,6 +70,9 @@ describe("presentation run binding", () => {
     const stateRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-STATE-028",
     );
+    const inputRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-INPUT-002",
+    );
     const cityRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -82,12 +85,23 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-STATE-028",
       ).evidenceRequirements,
     ];
+    const inputRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-INPUT-002",
+      ).evidenceRequirements,
+    ];
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
+    const inputArtifacts = await artifactFixture(inputRequirements);
     const commit = "a".repeat(40);
     const metadata = {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait", "phone-landscape"],
+    };
+    const inputMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["phone-portrait", "phone-landscape"],
     };
     const run = await bindPresentationRun({
       repoRoot: root,
@@ -99,10 +113,14 @@ describe("presentation run binding", () => {
       cityComparison: comparison(cityRecipe),
       stateMetadata: metadata,
       stateComparison: comparison(stateRecipe),
+      inputMetadata,
+      inputComparison: comparison(inputRecipe),
       commit,
-      reproduce: "npm run test:city-journey && npm run test:state-replay",
+      reproduce:
+        "npm run test:city-journey && npm run test:state-replay && npm run test:input-intents",
       cityArtifacts,
       stateArtifacts,
+      inputArtifacts,
     });
     const report = validatePresentationChecklist(contract, recipes, run, {
       mode: "lint",
@@ -113,6 +131,9 @@ describe("presentation run binding", () => {
     )!;
     const state = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-STATE-028",
+    )!;
+    const input = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-INPUT-002",
     )!;
 
     expect(report.valid).toBe(true);
@@ -130,6 +151,13 @@ describe("presentation run binding", () => {
     ).toBe(true);
     expect(
       state.artifacts.every(({ sha256 }) => /^[a-f0-9]{64}$/.test(sha256)),
+    ).toBe(true);
+    expect(input.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(input.signals).toHaveLength(
+      inputRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      input.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
   });
 });

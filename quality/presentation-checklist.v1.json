@@ -45,7 +45,7 @@
       "id": "PRES-INPUT-002",
       "executionRecipeId": "recipe:pres-input-002",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "mobile-gesture-log",

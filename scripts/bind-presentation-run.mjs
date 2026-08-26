@@ -48,6 +48,14 @@ async function main() {
     repoRoot,
     option(args, "--state-root", "quality-results/state-replay/pres-state-028"),
   );
+  const inputRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--input-root",
+      "quality-results/input-intents/pres-input-002",
+    ),
+  );
   const [
     template,
     contract,
@@ -56,6 +64,8 @@ async function main() {
     cityComparison,
     stateMetadata,
     stateComparison,
+    inputMetadata,
+    inputComparison,
   ] = await Promise.all([
     readJson(path.join(repoRoot, "quality/presentation-run.v1.template.json")),
     readJson(path.join(repoRoot, "quality/presentation-checklist.v1.json")),
@@ -64,11 +74,13 @@ async function main() {
     readJson(path.join(cityRoot, "comparison.json")),
     readJson(path.join(stateRoot, "metadata.json")),
     readJson(path.join(stateRoot, "comparison.json")),
+    readJson(path.join(inputRoot, "metadata.json")),
+    readJson(path.join(inputRoot, "comparison.json")),
   ]);
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run test:city-journey && npm run test:state-replay && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -79,6 +91,8 @@ async function main() {
     cityComparison,
     stateMetadata,
     stateComparison,
+    inputMetadata,
+    inputComparison,
     commit,
     reproduce,
   });
@@ -98,6 +112,7 @@ async function main() {
   }
   console.log(`Bound P0 presentation evidence into ${outputPath}`);
   console.log("PRES-STATE-028: PASS (machine evidence)");
+  console.log("PRES-INPUT-002: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CITY-027: NEEDS_VISUAL_REVIEW");
   console.log(
     "Remaining checklist rows remain UNRUN; acceptance is still blocked.",

@@ -31,10 +31,13 @@ export interface PresentationRunBindingInput {
   cityComparison: any;
   stateMetadata: any;
   stateComparison: any;
+  inputMetadata: any;
+  inputComparison: any;
   commit: string;
   reproduce: string;
   cityArtifacts?: Array<readonly [string, string]>;
   stateArtifacts?: Array<readonly [string, string]>;
+  inputArtifacts?: Array<readonly [string, string]>;
 }
 
 export declare function bindPresentationRun(

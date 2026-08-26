@@ -60,7 +60,7 @@
       "id": "recipe:pres-input-002",
       "checkId": "PRES-INPUT-002",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": ["animation-idle-open-floor"]
       },
       "deviceProfileSet": {
@@ -68,7 +68,7 @@
         "requiredIds": ["phone-portrait", "phone-landscape"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "tap-open-ground",
           "joystick-north",
@@ -80,10 +80,10 @@
       },
       "evaluator": {
         "id": "gesture-intent-separation-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": ["movement-without-attack", "strike-without-route"]
       },
-      "reproduce": "npx playwright test tests/e2e/mobile.spec.ts tests/e2e/physical-gesture-temporal.spec.ts",
+      "reproduce": "npm run test:input-intents && npx vitest run tests/unit/gesture-intent-evidence.test.ts",
       "negativeControls": [
         {
           "id": "ground-and-strike-bindings-swapped",

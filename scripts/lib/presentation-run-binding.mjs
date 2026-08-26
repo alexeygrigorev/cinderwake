@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
+const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
 const CITY_FRAME_FILES = [
   "frame-0000-ordinary-wilderness.png",
   "frame-0001-ordinary-city-discovered.png",
@@ -20,6 +21,21 @@ const CITY_FRAME_FILES = [
   "frame-0013-healer:restore-health-after.png",
   "frame-0014-inn:sleep-until-dawn-before.png",
   "frame-0015-inn:sleep-until-dawn-after.png",
+];
+const INPUT_FRAME_FILES = [
+  "frame-0000-initial.png",
+  "frame-0001-tap-open-ground-before.png",
+  "frame-0002-tap-open-ground-after.png",
+  "frame-0003-joystick-north-before.png",
+  "frame-0004-joystick-north-after.png",
+  "frame-0005-joystick-east-before.png",
+  "frame-0006-joystick-east-after.png",
+  "frame-0007-joystick-south-before.png",
+  "frame-0008-joystick-south-after.png",
+  "frame-0009-joystick-west-before.png",
+  "frame-0010-joystick-west-after.png",
+  "frame-0011-tap-strike-before.png",
+  "frame-0012-tap-strike-after.png",
 ];
 
 function isObject(value) {
@@ -201,6 +217,64 @@ function stateArtifactSpecifications() {
   return specifications;
 }
 
+function inputArtifactSpecifications() {
+  const specifications = [
+    [
+      "environment-metadata",
+      "quality-results/input-intents/pres-input-002/metadata.json",
+    ],
+    [
+      "semantic-snapshot-timeline",
+      "quality-results/input-intents/pres-input-002/input-intents.json",
+    ],
+    [
+      "gesture-or-command-tape",
+      "quality-results/input-intents/pres-input-002/input-intents.json",
+    ],
+    [
+      "negative-control-evidence",
+      "quality-results/input-intents/pres-input-002/comparison.json",
+    ],
+    [
+      "mobile-gesture-log",
+      "quality-results/input-intents/pres-input-002/input-intents.json",
+    ],
+    [
+      "intent-state-deltas",
+      "quality-results/input-intents/pres-input-002/input-intents.json",
+    ],
+    [
+      "pressed-control-frames",
+      "quality-results/input-intents/pres-input-002/input-intents.json",
+    ],
+  ];
+  for (const profileId of INPUT_PROFILE_IDS) {
+    for (const filename of [
+      "gesture-log.json",
+      "states.json",
+      "render-manifest-timeline.json",
+    ])
+      specifications.push([
+        filename === "gesture-log.json"
+          ? "mobile-gesture-log"
+          : filename === "states.json"
+            ? "intent-state-deltas"
+            : "render-manifest-timeline",
+        `quality-results/input-intents/pres-input-002/${profileId}/${filename}`,
+      ]);
+    for (const filename of INPUT_FRAME_FILES)
+      specifications.push([
+        "ordered-frame-sequence",
+        `quality-results/input-intents/pres-input-002/${profileId}/${filename}`,
+      ]);
+    specifications.push([
+      "pressed-control-frames",
+      `quality-results/input-intents/pres-input-002/${profileId}/input-intents.webm`,
+    ]);
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -318,25 +392,44 @@ export async function bindPresentationRun({
   cityComparison,
   stateMetadata,
   stateComparison,
+  inputMetadata,
+  inputComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
   stateArtifacts = stateArtifactSpecifications(),
+  inputArtifacts = inputArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
+  const inputCheck = contract.checks.find(({ id }) => id === "PRES-INPUT-002");
   const cityRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CITY-027",
   );
   const stateRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-STATE-028",
   );
-  if (!cityCheck || !stateCheck || !cityRecipe || !stateRecipe)
-    throw new Error("P0 city/state contract recipes are incomplete");
+  const inputRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-INPUT-002",
+  );
+  if (
+    !cityCheck ||
+    !stateCheck ||
+    !inputCheck ||
+    !cityRecipe ||
+    !stateRecipe ||
+    !inputRecipe
+  )
+    throw new Error("P0 city/state/input contract recipes are incomplete");
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
   const stateSource = sourceCommit(stateMetadata, "PRES-STATE-028");
-  if (citySource !== stateSource || citySource !== commit)
+  const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
+  if (
+    citySource !== stateSource ||
+    citySource !== inputSource ||
+    citySource !== commit
+  )
     throw new Error("P0 evidence bundles do not bind to the current commit");
 
   const checks = structuredClone(template.checks);
@@ -346,8 +439,12 @@ export async function bindPresentationRun({
   const stateIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-STATE-028",
   );
+  const inputIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-INPUT-002",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
+  const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
   checks[cityIndex] = await bindRow({
     repoRoot,
     contractCheck: cityCheck,
@@ -367,6 +464,16 @@ export async function bindPresentationRun({
     artifactSpecifications: stateArtifacts,
     result: "PASS",
     deviceProfileIds: ["deterministic-960x540"],
+  });
+  checks[inputIndex] = await bindRow({
+    repoRoot,
+    contractCheck: inputCheck,
+    recipe: inputRecipe,
+    metadata: inputMetadata,
+    comparison: inputComparisonData,
+    artifactSpecifications: inputArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: inputMetadata.profileIds,
   });
   return {
     ...structuredClone(template),
