@@ -25,7 +25,11 @@ export interface TestHost {
   startScenario(scenario: ScenarioV1): void;
   startState(state: GameState): void;
   setInput(input: InputState): void;
-  step(ticks?: number, input?: InputState): void;
+  step(
+    ticks?: number,
+    input?: InputState,
+    options?: { render?: boolean },
+  ): void;
   sampleInput?(): InputState;
   render(interpolationAlpha?: number): void;
   getManifest(): RenderManifestV1;
@@ -183,9 +187,10 @@ export function installGameTestBridge(
           };
         queued.delete(host.getState().tick);
         applyInput();
-        host.step(1, options.useBrowserInput ? host.sampleInput?.() : input);
+        host.step(1, options.useBrowserInput ? host.sampleInput?.() : input, {
+          render: options.render ?? true,
+        });
       }
-      if (options.render) host.render();
       return canonicalState(host.getState());
     },
     render(options = {}) {

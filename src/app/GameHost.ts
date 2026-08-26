@@ -108,12 +108,16 @@ export class GameHost {
     this.paused = !this.paused;
     return this.paused;
   }
-  step(ticks = 1, input?: InputState): GameState {
+  step(
+    ticks = 1,
+    input?: InputState,
+    options: { render?: boolean } = {},
+  ): GameState {
     for (let i = 0; i < ticks; i++) {
       stepGame(this.state, input ?? this.inputProvider?.() ?? this.input);
       this.renderer.advanceCamera(this.state, this.cameraMode);
+      if (options.render ?? true) this.render();
     }
-    this.render();
     return this.state;
   }
   sampleInput(): InputState {
