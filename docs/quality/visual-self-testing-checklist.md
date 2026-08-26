@@ -115,14 +115,14 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-SPRITE-004 — complete, correctly cut sprite cells
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for existing crop/continuity checks, **Partial** for canonical layout/map integrity.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for the exhaustive crop, continuity, canonical layout, and runtime-map checks; independent visual review remains mandatory.
 - Scenario/precondition: every registered actor × clip × runtime facing, including unreachable registered banks, decoded directly from the production atlas.
 - Production gesture: none; launch production once to prove decoded assets, then audit the atlas offline in runtime order.
 - Ordered artifacts: catalog/atlas hashes; canonical per-family character layout contract; exact clip/facing→cell map; registry completeness report; per-bank ordered source cells; alpha masks and measurements; 144 strips and six overviews; report JSON/HTML; production decode evidence.
 - Machine signal and threshold: every registered playable family implements one complete canonical cell-size, clip, facing, and anchor schema; every runtime crop resolves through its exact declared clip/facing→cell map; no registered bank is omitted. Nonblank alpha, source bounds, safe crop, common foot anchor, continuity envelopes, pose diversity, loop wrap, and recovery use the frozen values in `docs/quality-model.md` lines 99–115 and the actor contract—never silently widen them for a failing actor.
 - Required negative control: stale recovery, displaced frame, cell-edge clipping, facing-scale overflow, declared clip-transition scale pop, omitted registered bank, swapped clip/facing cell map, and a playable family diverging from its canonical layout schema.
-- Current evidence: `npm run art:animation:check`; `scripts/audit-actor-atlases.mjs`; `docs/decisions/0015-exhaustive-actor-atlas-audit.md` lines 17–25; decode test in `tests/e2e/sprite-contract.spec.ts`.
-- Missing automation/next implementation: add the canonical layout/map completeness controls to the existing exhaustive audit; any newly registered sprite family must enter that registry rather than being sampled in one scene.
+- Current evidence: `npm run art:animation:check` now loads the production `SPRITE_CATALOG`, validates the versioned `quality/actor-atlas-layout-contract.v1.json`, and retains metadata/report/HTML, 144 ordered strips, six overviews, exact source-cell mappings, and eight named negative controls under `quality-results/actor-atlas-audit/`; `scripts/audit-actor-atlases.mjs`; `docs/decisions/0015-exhaustive-actor-atlas-audit.md`; decode test in `tests/e2e/sprite-contract.spec.ts`.
+- Missing automation/next implementation: complete the independent visual review and bind its verdict with `npm run quality:presentation:bind`; any newly registered sprite family must enter the canonical registry rather than being sampled in one scene.
 - Independent visual-agent review mandatory: **yes**, for anatomy, support ownership, and whether the cuts form natural motion.
 
 ### PRES-MOTION-005 — no jumpy, frozen, skipped, or reordered animation

@@ -21,7 +21,7 @@ Add one deterministic atlas-wide gate between packing and curated browser captur
 - compare the same phase across authored east, north, and south idle/walk banks so an immediate facing change cannot hide a scale pop;
 - retain one strip for every bank, one labeled overview per actor, a self-contained HTML report, and complete JSON evidence;
 - audit registered banks even when current AI cannot reach them;
-- reject four synthetic negative controls covering stale recovery, displaced action art, cell-edge clipping, and facing-scale overflow; and
+- reject eight synthetic negative controls covering stale recovery, displaced action art, cell-edge clipping, facing-scale overflow, clip-transition scale pops, omitted registry banks, swapped clip/facing maps, and canonical layout-schema divergence; and
 - run strictly inside `npm run check` without excluding known-bad clips or weakening thresholds.
 
 Repair art at the source recipe boundary. Hurt uses three authored recoil cells followed by the exact facing-specific idle cell. Ashfang's side ability reuses its charge cell for a one-frame hold and omits the disconnected airborne pose. Its unusually low and wide side-run uses one declared, foot-anchored `scaleX: 0.9` / `scaleY: 1.42` transform before packing. Source rasters remain immutable; the packer and actor contract contain the entire reproducible decision.

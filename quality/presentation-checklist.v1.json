@@ -75,14 +75,18 @@
       "id": "PRES-SPRITE-004",
       "executionRecipeId": "recipe:pres-sprite-004",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "atlas-catalog-hashes",
         "all-bank-cell-masks",
         "atlas-audit-report",
         "canonical-character-layout-contract",
-        "clip-facing-cell-map"
+        "clip-facing-cell-map",
+        "registry-completeness-report",
+        "production-decode-evidence",
+        "actor-atlas-audit-html",
+        "actor-overview"
       ],
       "negativeControlIds": [
         "stale-recovery",

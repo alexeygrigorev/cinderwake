@@ -129,7 +129,7 @@
       "id": "recipe:pres-sprite-004",
       "checkId": "PRES-SPRITE-004",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "all-registered-actor-banks",
           "canonical-character-layout-map"
@@ -145,7 +145,7 @@
       },
       "evaluator": {
         "id": "actor-atlas-audit-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "all-banks-pass",
           "all-authored-facing-comparisons-pass",

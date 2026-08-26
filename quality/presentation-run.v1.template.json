@@ -140,7 +140,7 @@
       "checkId": "PRES-SPRITE-004",
       "executionRecipeId": "recipe:pres-sprite-004",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],

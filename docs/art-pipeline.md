@@ -67,7 +67,7 @@ metrics still cannot approve material style, identity, anatomy, or animation.
 
 Clip recipes may reuse an exact source cell for recovery, hold an authored pose for intentional timing, or declare a deterministic foot-anchored scale transform. These exceptions live under an actor ID in the same contract and are applied by the normal packer; they are never opaque edits to a built atlas. Current Ashfang metadata uses this mechanism to hold its charged side ability before impact and to normalize its unusually low side-run silhouette against the authored north/south scale. Hurt clips for every actor finish on the exact facing-specific idle source cell, so recovery equality survives all rebuilds.
 
-Run `npm run art:animation:check` after packing. It audits all 144 runtime-facing clip banks, records 720 authored-facing comparisons, injects four known-bad negative controls, and writes inspectable strips, actor overviews, JSON, and HTML to `quality-results/actor-atlas-audit/`. This is stricter than the source/geometry validator and broader than the curated browser sequence matrix; all three gates remain necessary.
+Run `npm run art:animation:check` after packing. It loads the production sprite catalog, validates the versioned actor-family layout and exact clip/facing cell map, audits all 144 runtime-facing clip banks, records 720 authored-facing comparisons, injects eight known-bad negative controls, and writes inspectable strips, actor overviews, JSON, metadata, and HTML to `quality-results/actor-atlas-audit/`. This is stricter than the source/geometry validator and broader than the curated browser sequence matrix; all three gates remain necessary.
 
 ### Generation ingress proof
 
