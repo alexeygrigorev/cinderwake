@@ -1,4 +1,6 @@
 import type { GameState } from "../game/types";
+import type { Vec2 } from "../game/types";
+import { findStateNavigationRoute } from "../game/navigation";
 import type { RenderManifestV1 } from "../render/manifest";
 import { canonicalState } from "./canonical";
 
@@ -46,6 +48,7 @@ export interface PlayerObserverV1 {
   snapshot(): ReturnType<typeof canonicalState>;
   renderManifest(): RenderManifestV1;
   captureFrame(): string;
+  navigationRoute(target: Vec2): Vec2[];
   presentationSamples(): LivePresentationSampleV1[];
   clearPresentationSamples(): void;
 }
@@ -81,6 +84,15 @@ export function installPlayerObserver(
     snapshot: () => canonicalState(host.getState()),
     renderManifest: () => structuredClone(host.getManifest()),
     captureFrame: () => host.getCanvas().toDataURL("image/png"),
+    navigationRoute: (target) => {
+      const state = host.getState();
+      return findStateNavigationRoute(
+        state,
+        state.player.position,
+        target,
+        state.player.radius,
+      ).map((point) => ({ ...point }));
+    },
     presentationSamples: () => samples.map((sample) => structuredClone(sample)),
     clearPresentationSamples: () => samples.splice(0),
   };

@@ -1474,6 +1474,18 @@ function discoveredCityState(tick = 0): CityStateV1 {
   return result.state;
 }
 
+function productionCityServicesState(): CityStateV1 {
+  return createInitialCityState({
+    traveler: {
+      gold: 120,
+      health: 50,
+      maxHealth: 160,
+      tonics: 0,
+      inventory: [{ itemId: "ashfang-pelt", quantity: 1 }],
+    },
+  });
+}
+
 function temporalHeroAction(
   classId: CharacterClass,
   action: "primary" | "ability",
@@ -1935,6 +1947,24 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     player: { placement: "city-landmark-approach" },
     monsters: [],
     exitUnlocked: true,
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  },
+  "production-city-services-route": {
+    schemaVersion: 1,
+    id: "production-city-services-route",
+    seed: "quality-production-city-services-route-01",
+    classId: "vanguard",
+    map: { mode: "generated" },
+    player: {
+      placement: "city-landmark-approach",
+      health: 50,
+      maxHealth: 160,
+      gold: 120,
+      tonics: 0,
+    },
+    monsters: [],
+    exitUnlocked: true,
+    city: productionCityServicesState(),
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "temporal-city-entry": {
