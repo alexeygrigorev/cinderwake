@@ -82,6 +82,9 @@ describe("presentation run binding", () => {
     const spriteRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
     );
+    const temporalRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOTION-005",
+    );
     const cityRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -118,12 +121,19 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-SPRITE-004",
       ).evidenceRequirements,
     ];
+    const temporalRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-MOTION-005",
+      ).evidenceRequirements,
+    ];
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
     const inputArtifacts = await artifactFixture(inputRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
+    const temporalArtifacts = await artifactFixture(temporalRequirements);
     const commit = "a".repeat(40);
     const metadata = {
       source: { commit, dirty: false },
@@ -145,6 +155,10 @@ describe("presentation run binding", () => {
       source: { commit, dirty: false },
       profileIds: ["runtime-atlas-native-resolution"],
     };
+    const temporalMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["desktop", "phone-portrait"],
+    };
     const run = await bindPresentationRun({
       repoRoot: root,
       runId: "binding-fixture",
@@ -163,6 +177,8 @@ describe("presentation run binding", () => {
       movementComparison: comparison(movementRecipe),
       spriteMetadata,
       spriteComparison: comparison(spriteRecipe),
+      temporalMetadata,
+      temporalComparison: comparison(temporalRecipe),
       commit,
       reproduce:
         "npm run test:city-journey && npm run test:state-replay && npm run test:input-intents",
@@ -172,6 +188,7 @@ describe("presentation run binding", () => {
       liveArtifacts,
       movementArtifacts,
       spriteArtifacts,
+      temporalArtifacts,
     });
     const report = validatePresentationChecklist(contract, recipes, run, {
       mode: "lint",
@@ -194,6 +211,9 @@ describe("presentation run binding", () => {
     )!;
     const sprite = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
+    )!;
+    const temporal = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOTION-005",
     )!;
 
     expect(report.valid).toBe(true);
@@ -250,6 +270,17 @@ describe("presentation run binding", () => {
     );
     expect(
       sprite.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(temporal.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(temporal.observed.deviceProfileIds).toEqual([
+      "desktop",
+      "phone-portrait",
+    ]);
+    expect(temporal.signals).toHaveLength(
+      temporalRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      temporal.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
   });
 });

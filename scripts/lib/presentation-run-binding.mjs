@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { TEMPORAL_SEQUENCE_ENTRY_IDS } from "./temporal-sequence-evidence.mjs";
 
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
@@ -469,6 +470,29 @@ function actorAtlasArtifactSpecifications() {
   return specifications;
 }
 
+function temporalSequenceArtifactSpecifications() {
+  const root = "quality-results/temporal-sequence-audit";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+    ["temporal-sequence-audit-report", `${root}/report.json`],
+    ["live-temporal-contact-sheet", `${root}/index.html`],
+  ];
+  for (const entryId of TEMPORAL_SEQUENCE_ENTRY_IDS) {
+    const sequenceRoot = `quality-results/sequences/${entryId}`;
+    specifications.push(
+      ["all-clip-command-tapes", `${sequenceRoot}/commands.json`],
+      [
+        "per-tick-animation-manifest",
+        `${sequenceRoot}/render-manifest-timeline.json`,
+      ],
+      ["live-temporal-contact-sheet", `${sequenceRoot}/contact-sheet.png`],
+      ["temporal-sequence-audit-report", `${sequenceRoot}/report.html`],
+    );
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -594,6 +618,8 @@ export async function bindPresentationRun({
   movementComparison,
   spriteMetadata,
   spriteComparison,
+  temporalMetadata,
+  temporalComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
@@ -602,6 +628,7 @@ export async function bindPresentationRun({
   liveArtifacts = liveArtifactSpecifications(),
   movementArtifacts = directionalMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
+  temporalArtifacts = temporalSequenceArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
@@ -631,6 +658,12 @@ export async function bindPresentationRun({
   const spriteRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-SPRITE-004",
   );
+  const temporalCheck = contract.checks.find(
+    ({ id }) => id === "PRES-MOTION-005",
+  );
+  const temporalRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-MOTION-005",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
@@ -643,10 +676,12 @@ export async function bindPresentationRun({
     !movementCheck ||
     !movementRecipe ||
     !spriteCheck ||
-    !spriteRecipe
+    !spriteRecipe ||
+    !temporalCheck ||
+    !temporalRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/movement/sprite contract recipes are incomplete",
+      "P0 live/city/state/input/movement/sprite/temporal contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -655,12 +690,14 @@ export async function bindPresentationRun({
   const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
+  const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
     citySource !== liveSource ||
     citySource !== movementSource ||
     citySource !== spriteSource ||
+    citySource !== temporalSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -684,6 +721,9 @@ export async function bindPresentationRun({
   const spriteIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-SPRITE-004",
   );
+  const temporalIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-MOTION-005",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
@@ -695,6 +735,10 @@ export async function bindPresentationRun({
   const spriteComparisonData = comparisonData(
     spriteComparison,
     "PRES-SPRITE-004",
+  );
+  const temporalComparisonData = comparisonData(
+    temporalComparison,
+    "PRES-MOTION-005",
   );
   checks[liveIndex] = await bindRow({
     repoRoot,
@@ -755,6 +799,16 @@ export async function bindPresentationRun({
     artifactSpecifications: spriteArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: spriteMetadata.profileIds,
+  });
+  checks[temporalIndex] = await bindRow({
+    repoRoot,
+    contractCheck: temporalCheck,
+    recipe: temporalRecipe,
+    metadata: temporalMetadata,
+    comparison: temporalComparisonData,
+    artifactSpecifications: temporalArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: temporalMetadata.profileIds,
   });
   return {
     ...structuredClone(template),

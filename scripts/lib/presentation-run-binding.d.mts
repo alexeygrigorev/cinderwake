@@ -39,6 +39,8 @@ export interface PresentationRunBindingInput {
   movementComparison: any;
   spriteMetadata: any;
   spriteComparison: any;
+  temporalMetadata: any;
+  temporalComparison: any;
   commit: string;
   reproduce: string;
   cityArtifacts?: Array<readonly [string, string]>;
@@ -47,6 +49,7 @@ export interface PresentationRunBindingInput {
   liveArtifacts?: Array<readonly [string, string]>;
   movementArtifacts?: Array<readonly [string, string]>;
   spriteArtifacts?: Array<readonly [string, string]>;
+  temporalArtifacts?: Array<readonly [string, string]>;
 }
 
 export declare function bindPresentationRun(

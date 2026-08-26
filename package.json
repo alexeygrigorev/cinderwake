@@ -30,6 +30,7 @@
     "quality:presentation:init": "node scripts/init-presentation-run.mjs",
     "quality:presentation:bind": "node scripts/bind-presentation-run.mjs",
     "quality:presentation:progress": "node scripts/report-presentation-progress.mjs",
+    "quality:temporal:check": "node scripts/audit-temporal-sequences.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
     "art:selection:build": "node scripts/build-selection-assets.mjs",

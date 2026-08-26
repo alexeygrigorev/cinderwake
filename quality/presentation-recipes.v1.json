@@ -210,6 +210,7 @@
         "id": "temporal-sequence-assessor-v1",
         "coverage": "partial",
         "requiredSignalIds": [
+          "catalog-complete-and-passing",
           "cadence-continuity",
           "transition-continuity",
           "terminal-pose-retained"

@@ -76,6 +76,10 @@ async function main() {
     repoRoot,
     option(args, "--sprite-root", "quality-results/actor-atlas-audit"),
   );
+  const temporalRoot = path.resolve(
+    repoRoot,
+    option(args, "--temporal-root", "quality-results/temporal-sequence-audit"),
+  );
   const [
     template,
     contract,
@@ -92,6 +96,8 @@ async function main() {
     movementComparison,
     spriteMetadata,
     spriteComparison,
+    temporalMetadata,
+    temporalComparison,
   ] = await Promise.all([
     readJson(path.join(repoRoot, "quality/presentation-run.v1.template.json")),
     readJson(path.join(repoRoot, "quality/presentation-checklist.v1.json")),
@@ -108,11 +114,13 @@ async function main() {
     readJson(path.join(movementRoot, "comparison.json")),
     readJson(path.join(spriteRoot, "metadata.json")),
     readJson(path.join(spriteRoot, "report.json")),
+    readJson(path.join(temporalRoot, "metadata.json")),
+    readJson(path.join(temporalRoot, "comparison.json")),
   ]);
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -131,6 +139,8 @@ async function main() {
     movementComparison,
     spriteMetadata,
     spriteComparison,
+    temporalMetadata,
+    temporalComparison,
     commit,
     reproduce,
   });
@@ -153,6 +163,7 @@ async function main() {
   console.log("PRES-INPUT-002: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOVE-003: NEEDS_VISUAL_REVIEW");
   console.log("PRES-SPRITE-004: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-MOTION-005: NEEDS_VISUAL_REVIEW");
   console.log("PRES-LIVE-001: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CITY-027: NEEDS_VISUAL_REVIEW");
   console.log(
