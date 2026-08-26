@@ -22,6 +22,12 @@ The browser bridge is a deliberately narrow test API that can load a scenario, a
 
 The ordinary public route additionally installs an **observe-only player boundary**. It returns cloned state, manifests, pixels, and a bounded history of real `requestAnimationFrame` presentation samples, but exposes no load, input, step, reset, pause, or clock control. The live-player journey enters through character selection, waits wall-clock time, sends physical touch, and reads only this observer. It therefore detects a frozen production loop, a launch button that never enters play, or an input adapter disconnected from simulation even when every exact-step fixture still passes.
 
+The Playwright suite defaults to two workers. Every worker decodes and paints
+the complete raster atlas set, and higher parallelism can starve Chromium during
+mobile and temporal captures, producing timing failures without a game defect.
+The default is therefore part of the reproducible browser-test environment;
+`--workers=1` remains useful when diagnosing a single trace.
+
 The production gesture temporal journey binds that liveness proof to ordered
 pixels and causal postconditions. Desktop keyboard, canvas mouse, mobile ground
 touch, a real Chromium touch stream across the joystick, and both Strike
