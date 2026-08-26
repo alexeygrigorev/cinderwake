@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "kind": "ActorAtlasLayoutContractV1",
+  "atlasSpec": "art/actor-atlas-v1.json",
+  "runtimeRegistry": "src/render/sprites.ts",
+  "atlas": {
+    "pixelWidth": 1024,
+    "pixelHeight": 2560,
+    "columns": 8,
+    "rows": 20,
+    "cellWidth": 128,
+    "cellHeight": 128
+  },
+  "actors": [
+    { "id": "vanguard", "role": "hero", "playable": true },
+    { "id": "ranger", "role": "hero", "playable": true },
+    { "id": "arcanist", "role": "hero", "playable": true },
+    { "id": "ashfang", "role": "monster", "playable": false },
+    { "id": "hexer", "role": "monster", "playable": false },
+    { "id": "stonekin", "role": "monster", "playable": false }
+  ],
+  "facings": [
+    {
+      "id": "east",
+      "spriteSuffix": "",
+      "sourceGroup": "clips",
+      "flipX": false
+    },
+    {
+      "id": "west",
+      "spriteSuffix": "",
+      "sourceGroup": "clips",
+      "flipX": true
+    },
+    {
+      "id": "north",
+      "spriteSuffix": ":north",
+      "sourceGroup": "directionalClips",
+      "sourceKeyPrefix": "north",
+      "flipX": false
+    },
+    {
+      "id": "south",
+      "spriteSuffix": ":south",
+      "sourceGroup": "directionalClips",
+      "sourceKeyPrefix": "south",
+      "flipX": false
+    }
+  ],
+  "clips": [
+    {
+      "id": "idle",
+      "frameCount": 6,
+      "durationTicks": 60,
+      "looping": true
+    },
+    {
+      "id": "walk",
+      "frameCount": 8,
+      "durationTicks": 40,
+      "looping": true
+    },
+    {
+      "id": "attack",
+      "frameCount": 6,
+      "durationTicks": 26,
+      "looping": false
+    },
+    {
+      "id": "ability",
+      "frameCount": 8,
+      "durationTicks": 36,
+      "looping": false
+    },
+    {
+      "id": "hurt",
+      "frameCount": 4,
+      "durationTicks": 12,
+      "looping": false
+    },
+    {
+      "id": "death",
+      "frameCount": 8,
+      "durationTicks": 48,
+      "looping": false
+    }
+  ]
+}

@@ -5,29 +5,39 @@ import path from "node:path";
 import process from "node:process";
 import { promisify } from "node:util";
 import sharp from "sharp";
+import { createServer } from "vite";
 import {
   assessLandmarkGaitBank,
   fixtureAlphaReader,
   mutateFixture,
 } from "./lib/actor-gait-contract.mjs";
+import {
+  runActorAtlasLayoutNegativeControls,
+  validateActorAtlasLayout,
+} from "./lib/actor-atlas-layout.mjs";
 
 const executeFile = promisify(execFile);
 const ROOT = process.cwd();
+const LAYOUT_CONTRACT_PATH = path.join(
+  ROOT,
+  "quality",
+  "actor-atlas-layout-contract.v1.json",
+);
 const SPEC = JSON.parse(
   await fs.readFile(path.join(ROOT, "art", "actor-atlas-v1.json"), "utf8"),
 );
-const ACTORS = [
-  "vanguard",
-  "ranger",
-  "arcanist",
-  "ashfang",
-  "hexer",
-  "stonekin",
-];
-const FACINGS = ["east", "west", "north", "south"];
+const LAYOUT_CONTRACT = JSON.parse(
+  await fs.readFile(LAYOUT_CONTRACT_PATH, "utf8"),
+);
+const ACTORS = LAYOUT_CONTRACT.actors.map(({ id }) => id);
+const FACINGS = LAYOUT_CONTRACT.facings.map(({ id }) => id);
 const AUTHORED_FACINGS = ["east", "north", "south"];
-const MONSTER_IDS = new Set(["ashfang", "hexer", "stonekin"]);
-const CLIPS = Object.keys(SPEC.clips);
+const MONSTER_IDS = new Set(
+  LAYOUT_CONTRACT.actors
+    .filter(({ role }) => role === "monster")
+    .map(({ id }) => id),
+);
+const CLIPS = LAYOUT_CONTRACT.clips.map(({ id }) => id);
 const CELL = SPEC.atlas.cellWidth;
 const CORE_HALF_WIDTH = 24;
 const VANGUARD_MOTION_CONTRACT = JSON.parse(
@@ -141,6 +151,27 @@ function sha256(data) {
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
+}
+
+async function loadProductionSpriteCatalog() {
+  const server = await createServer({
+    root: ROOT,
+    logLevel: "silent",
+    server: { middlewareMode: true },
+    appType: "custom",
+  });
+  try {
+    const loaded = await server.ssrLoadModule(
+      "/src/render/sprites.ts?actor-atlas-layout-audit",
+    );
+    assert(
+      loaded.SPRITE_CATALOG,
+      "src/render/sprites.ts must export SPRITE_CATALOG",
+    );
+    return loaded.SPRITE_CATALOG;
+  } finally {
+    await server.close();
+  }
 }
 
 function capitalize(value) {
@@ -958,6 +989,17 @@ async function runVanguardGaitNegativeControls() {
   };
 }
 
+function negativeControl(id, mutation, expectedSignal, detected) {
+  return {
+    id,
+    mutation,
+    expectedSignal,
+    status: detected ? "DETECTED" : "NOT_DETECTED",
+    signal: detected ? expectedSignal : "",
+    detected,
+  };
+}
+
 function runNegativeControls(framesByBank) {
   const idle = framesByBank.get("east:idle")[0];
   const hurt = framesByBank.get("east:hurt");
@@ -1011,42 +1053,38 @@ function runNegativeControls(framesByBank) {
   };
 
   return [
-    {
-      id: "non-idle-hurt-terminal",
-      mutation:
-        "replace the exact idle recovery frame with the preceding recoil",
-      expectedFailure: "recoverySeamExact",
-      detected: !staleHurtCheck.recoverySeamExact && !staleHurtCheck.pass,
-    },
-    {
-      id: "displaced-action-frame",
-      mutation: "translate one ability frame 40 px left and 40 px up",
-      expectedFailure: "motionContinuity",
-      detected:
-        !displacedAbilityCheck.motionContinuity && !displacedAbilityCheck.pass,
-    },
-    {
-      id: "cut-loop-frame",
-      mutation: "translate one walk frame 60 px through the left cell edge",
-      expectedFailure: "geometry",
-      detected: !clippedWalkCheck.geometry && !clippedWalkCheck.pass,
-    },
-    {
-      id: "oversized-facing-turn",
-      mutation: "force a same-phase turn height delta one pixel over policy",
-      expectedFailure: "turnHeightDifference",
-      detected: !facingComparisonPass(oversizedTurn),
-    },
-    {
-      id: "idle-walk-height-pop",
-      mutation:
-        "force a foot-anchored idle/walk median ink-height delta one pixel over policy",
-      expectedFailure: "maximumAtlasMedianInkHeightDifference",
-      detected:
-        oversizedClipTransition.footBottomRange !== 0 ||
+    negativeControl(
+      "stale-recovery",
+      "replace the exact idle recovery frame with the preceding recoil",
+      "stale-recovery-detected",
+      !staleHurtCheck.recoverySeamExact && !staleHurtCheck.pass,
+    ),
+    negativeControl(
+      "frame-displaced",
+      "translate one ability frame 40 px left and 40 px up",
+      "frame-displacement-detected",
+      !displacedAbilityCheck.motionContinuity && !displacedAbilityCheck.pass,
+    ),
+    negativeControl(
+      "cell-edge-clipped",
+      "translate one walk frame 60 px through the left cell edge",
+      "cell-edge-contact-detected",
+      !clippedWalkCheck.geometry && !clippedWalkCheck.pass,
+    ),
+    negativeControl(
+      "facing-scale-overflow",
+      "force a same-phase turn height delta one pixel over policy",
+      "facing-scale-overflow-detected",
+      !facingComparisonPass(oversizedTurn),
+    ),
+    negativeControl(
+      "clip-transition-scale-pop",
+      "force a foot-anchored idle/walk median ink-height delta one pixel over policy",
+      "transition-scale-pop-detected",
+      oversizedClipTransition.footBottomRange !== 0 ||
         oversizedClipTransition.medianInkHeightDifference >
           oversizedClipTransition.maximumMedianInkHeightDifference,
-    },
+    ),
   ];
 }
 
@@ -1132,14 +1170,15 @@ function reportHtml(report) {
 <p>This is an exhaustive byte-level and visual audit of all six actors, six clips, and four runtime facings. West strips are the exact horizontal reflection used by the renderer. A gold outline marks the loop-wrap frame or idle recovery frame. Metrics diagnose continuity; the strips retain visual-review authority.</p>
 <h2>Defects found before repair</h2><p>The same gate replayed against immutable atlas bytes from commit <code>${htmlEscape(report.repairBaseline.commit)}</code> passed only ${report.repairBaseline.summary.passingBanks}/${report.repairBaseline.summary.totalBanks} banks and ${report.repairBaseline.summary.passingFacingComparisons}/${report.repairBaseline.summary.totalFacingComparisons} authored-facing comparisons. Existing narrower tests had passed that art.</p><ul>${baselineDefects}</ul>
 <p class="coverage"><strong>Existing-test gap:</strong> ${htmlEscape(report.coverageGap)}</p><ul>${findings}</ul>
-<p>${report.summary.detectedNegativeControls}/${report.summary.negativeControls} injected negative controls were rejected. Current monster ability banks are registered and audited even though monster AI does not yet select them.</p>
-<p>Commit <code>${htmlEscape(report.metadata.commit)}</code> · tracked patch <code>${htmlEscape(report.metadata.trackedWorktreePatchSha256)}</code> · actor spec <code>${htmlEscape(report.metadata.actorSpecSha256)}</code> · generated ${htmlEscape(report.metadata.generatedAt)} · Node ${htmlEscape(report.metadata.node)} · sharp ${htmlEscape(report.metadata.sharp)}. Command <code>${htmlEscape(report.executedCommand)}</code>. <a href="report.json">JSON evidence and complete file hashes</a>.</p>
+<p class="coverage"><strong>Runtime registry layout:</strong> ${report.summary.actorSpriteDefinitions}/${report.actorLayout.summary.expectedSpriteCount} actor definitions, ${report.summary.actorLayoutBanks}/${report.actorLayout.summary.expectedBankCount} clip/facing banks, and ${report.actorLayout.summary.expectedFrameCount} exact frame cells map through the production catalog. The eight layout and continuity controls are all detected.</p>
+<p>${report.summary.detectedNegativeControls}/${report.summary.negativeControls} injected continuity, layout, and registry negative controls were rejected. Current monster ability banks are registered and audited even though monster AI does not yet select them.</p>
+<p>Commit <code>${htmlEscape(report.metadata.commit)}</code> · source dirty <code>${htmlEscape(report.metadata.source.dirty)}</code> · tracked patch <code>${htmlEscape(report.metadata.trackedWorktreePatchSha256)}</code> · actor spec <code>${htmlEscape(report.metadata.actorSpecSha256)}</code> · generated ${htmlEscape(report.metadata.generatedAt)} · Node ${htmlEscape(report.metadata.node)} · sharp ${htmlEscape(report.metadata.sharp)}. Command <code>${htmlEscape(report.executedCommand)}</code>. <a href="report.json">JSON evidence and complete file hashes</a>.</p>
 ${actorSections}
 </body>
 </html>\n`;
 }
 
-async function metadata() {
+async function metadata(productionCatalog) {
   const commit =
     process.env.GITHUB_SHA ??
     (
@@ -1155,9 +1194,18 @@ async function metadata() {
   ).stdout;
   return {
     commit,
+    dirty: trackedPatch.length > 0,
+    source: {
+      commit,
+      dirty: trackedPatch.length > 0,
+      patchSha256: sha256(trackedPatch),
+    },
     trackedWorktreePatchSha256: sha256(trackedPatch),
     actorSpecSha256: sha256(
       await fs.readFile(path.join(ROOT, "art", "actor-atlas-v1.json")),
+    ),
+    actorAtlasLayoutContractSha256: sha256(
+      await fs.readFile(LAYOUT_CONTRACT_PATH),
     ),
     builderSha256: sha256(
       await fs.readFile(path.join(ROOT, "scripts", "build-sprite-assets.mjs")),
@@ -1168,6 +1216,7 @@ async function metadata() {
     buildManifestSha256: sha256(
       await fs.readFile(path.join(ATLAS_DIRECTORY, "build-manifest.json")),
     ),
+    productionSpriteCatalogRevision: productionCatalog.revision,
     generatedAt: new Date().toISOString(),
     node: process.version,
     sharp: sharp.versions.sharp,
@@ -1176,6 +1225,17 @@ async function metadata() {
 }
 
 await fs.mkdir(REPORT_DIRECTORY, { recursive: true });
+const productionCatalog = await loadProductionSpriteCatalog();
+const actorLayout = validateActorAtlasLayout({
+  catalog: productionCatalog,
+  spec: SPEC,
+  contract: LAYOUT_CONTRACT,
+});
+const actorLayoutNegativeControls = runActorAtlasLayoutNegativeControls({
+  catalog: productionCatalog,
+  spec: SPEC,
+  contract: LAYOUT_CONTRACT,
+});
 const actorReports = [];
 const authoredFacingComparisons = [];
 const transitionComparisons = [];
@@ -1320,6 +1380,8 @@ for (const actorId of ACTORS) {
   });
 }
 
+negativeControls = [...negativeControls, ...actorLayoutNegativeControls];
+
 for (const comparison of authoredFacingComparisons)
   comparison.pass = facingComparisonPass(comparison);
 
@@ -1395,21 +1457,62 @@ const findings = [
         : `All ${vanguardGaitNegativeControls.controls.length} same-support, articulation, alpha-binding, phase-order, anchor, and stretch mutations were rejected.`,
   },
 ];
+const auditPass =
+  failedBanks.length === 0 &&
+  failedFacingComparisons.length === 0 &&
+  failedTransitionComparisons.length === 0 &&
+  failedNegativeControls.length === 0 &&
+  actorLayout.pass &&
+  vanguardMotionCalibration.gatePass &&
+  vanguardGaitNegativeControls.accepted.pass &&
+  failedVanguardGaitNegativeControls.length === 0;
+const comparison = {
+  pass: auditPass,
+  signals: [
+    {
+      id: "all-banks-pass",
+      pass: failedBanks.length === 0,
+      detail: {
+        passing: allBanks.length - failedBanks.length,
+        total: allBanks.length,
+      },
+    },
+    {
+      id: "all-authored-facing-comparisons-pass",
+      pass: failedFacingComparisons.length === 0,
+      detail: {
+        passing:
+          authoredFacingComparisons.length - failedFacingComparisons.length,
+        total: authoredFacingComparisons.length,
+      },
+    },
+    {
+      id: "character-layout-schema-complete",
+      pass: actorLayout.pass,
+      detail: actorLayout.summary,
+    },
+    {
+      id: "clip-facing-cell-map-exact",
+      pass: actorLayout.pass,
+      detail: { mappings: actorLayout.summary.mappedBankCount },
+    },
+  ],
+};
+const reportMetadata = await metadata(productionCatalog);
 const report = {
   schemaVersion: 1,
   contract: "CinderwakeActorAtlasAuditV1",
-  pass:
-    failedBanks.length === 0 &&
-    failedFacingComparisons.length === 0 &&
-    failedTransitionComparisons.length === 0 &&
-    failedNegativeControls.length === 0 &&
-    vanguardMotionCalibration.gatePass &&
-    vanguardGaitNegativeControls.accepted.pass &&
-    failedVanguardGaitNegativeControls.length === 0,
+  pass: auditPass,
   command: "npm run art:animation:check",
   reportOnlyCommand: "npm run art:animation:audit",
   executedCommand: [process.execPath, ...process.argv.slice(1)].join(" "),
-  metadata: await metadata(),
+  metadata: reportMetadata,
+  comparison,
+  actorLayoutContract: {
+    file: path.relative(ROOT, LAYOUT_CONTRACT_PATH),
+    ...LAYOUT_CONTRACT,
+  },
+  actorLayout,
   thresholds: THRESHOLDS,
   repairBaseline: REPAIR_BASELINE,
   summary: {
@@ -1430,6 +1533,9 @@ const report = {
     negativeControls: negativeControls.length,
     detectedNegativeControls:
       negativeControls.length - failedNegativeControls.length,
+    actorLayoutPass: actorLayout.pass,
+    actorSpriteDefinitions: actorLayout.summary.actualActorSpriteCount,
+    actorLayoutBanks: actorLayout.summary.mappedBankCount,
     vanguardGaitNegativeControls: vanguardGaitNegativeControls.controls.length,
     detectedVanguardGaitNegativeControls:
       vanguardGaitNegativeControls.controls.length -
@@ -1437,7 +1543,7 @@ const report = {
     vanguardDisposition: vanguardMotionCalibration.disposition,
   },
   coverageGap:
-    "Before this exhaustive gate, the atlas validator required only nonblank grounded cells and two distinct hashes. The temporal matrix still has no hurt sequence, no monster ability sequence, and no same-tick authored-facing turn sequence, so those narrower reports could pass while discontinuities remained shipped. This gate closes that static-atlas coverage gap; browser sequences remain authoritative for rendered timing and camera behavior.",
+    "Before this exhaustive gate, the atlas validator required only nonblank grounded cells and two distinct hashes, while the runtime catalog was checked only for broad registration and cadence. The temporal matrix still has no hurt sequence, no monster ability sequence, and no same-tick authored-facing turn sequence, so those narrower reports could pass while discontinuities or a stale clip/facing map remained shipped. This gate closes that static-atlas coverage gap; browser sequences remain authoritative for rendered timing and camera behavior.",
   findings,
   negativeControls,
   vanguardMotionCalibration,
@@ -1454,12 +1560,34 @@ const report = {
   transitionComparisons,
   actors: actorReports,
 };
+const evidenceMetadata = {
+  schemaVersion: 1,
+  checkId: "PRES-SPRITE-004",
+  recipeId: "recipe:pres-sprite-004",
+  evaluator: "actor-atlas-audit-v1",
+  scenarioIds: ["all-registered-actor-banks", "canonical-character-layout-map"],
+  profileIds: ["runtime-atlas-native-resolution"],
+  gestureIds: ["decode-production-atlases"],
+  source: reportMetadata.source,
+  environment: {
+    node: reportMetadata.node,
+    sharp: reportMetadata.sharp,
+    libvips: reportMetadata.libvips,
+    productionSpriteCatalogRevision:
+      reportMetadata.productionSpriteCatalogRevision,
+  },
+  reproductionCommand: "npm run art:animation:check",
+};
 await Promise.all([
   fs.writeFile(
     path.join(REPORT_DIRECTORY, "report.json"),
     `${JSON.stringify(report, null, 2)}\n`,
   ),
   fs.writeFile(path.join(REPORT_DIRECTORY, "index.html"), reportHtml(report)),
+  fs.writeFile(
+    path.join(REPORT_DIRECTORY, "metadata.json"),
+    `${JSON.stringify(evidenceMetadata, null, 2)}\n`,
+  ),
 ]);
 console.log(
   `${report.pass ? "PASS" : "FAIL"} ${report.summary.passingBanks}/${report.summary.totalBanks} banks, ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} facing comparisons, ${report.summary.passingTransitionComparisons}/${report.summary.totalTransitionComparisons} declared clip transitions; ${path.relative(ROOT, REPORT_DIRECTORY)}`,
