@@ -399,26 +399,26 @@ These rows were appended without renumbering the published presentation IDs. The
 
 ### PRES-CITY-027 — real wilderness-to-city service journey
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for machine evidence; independent visual review remains mandatory.
 - Scenario/precondition: retain both the cold ordinary production route in the wilderness with no state injection and the complete production-input route through every Embercross service on desktop, phone portrait, and phone landscape.
 - Production gesture: discover the city sign/landmark, navigate to and enter the gate, approach each resident, open the merchant and buy/sell, open the tavern and eat/sleep, then open the healer and heal.
 - Ordered artifacts: complete production journey state/manifest/frame timeline; gate and service-affordance frames; physical gesture log; service intent and before/after state deltas; mobile video at normal speed.
 - Machine signal and threshold: the route landmark and gate are visible and reachable; entry completes through the production transition; every visible service control emits its declared intent; each affordable valid action changes exactly its documented state and feedback. No injected beside-NPC fixture may stand in for the discovery route.
 - Required negative control: remove the city sign, disable gate entry, remove one service listener, and suppress one service outcome/feedback. The journey evaluator must fail each at the first missing affordance, transition, intent, or outcome.
 - Current evidence: `npm run test:city-journey` now retains both no-bridge production-input scenarios across desktop, phone portrait, and phone landscape, with synchronized state/manifest/frame artifacts, cold wilderness-to-gate milestones, five successful service receipts, and all four mutations. `tests/e2e/city-production-route.spec.ts` remains a separate focused regression proof.
-- Missing automation/next implementation: bind this clean scenario bundle into a retained row-level presentation run; independent visual review remains mandatory before this P0 row can pass.
+- Missing automation/next implementation: complete the independent visual review and bind its verdict to the retained row-level presentation run before this P0 row can pass.
 - Independent visual-agent review mandatory: **yes**, for discoverability, transition quality, service readability, and mobile interaction feedback.
 
 ### PRES-STATE-028 — arbitrary-state load, reset, replay, and frame determinism
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic**.
 - Scenario/precondition: representative named `ScenarioV1`, an exact serialized `GameState`, reset/reload isolation, and two clean replays of the same state plus command tape at the deterministic capture profile.
 - Production gesture: load scenario; capture; load exact state; run a command tape and capture; reset; reload the identical state; replay the identical tape and capture again.
 - Ordered artifacts: serialized initial state; load/reset records; per-tick semantic state hashes; render-manifest hashes; ordered lossless frame hashes; final states; environment and exact command.
 - Machine signal and threshold: loaded state equals the canonical serialized input; reset leaves no entity, input, camera, animation, or presentation residue; same input produces identical per-tick state hashes; synchronized manifests and deterministic frames match at every declared capture tick.
 - Required negative control: retain stale state after reset, perturb one replay state tick, perturb one deterministic frame, and shift one manifest/frame tick association. Each must fail its dedicated isolation, state-hash, frame-hash, or synchronization signal.
 - Current evidence: `npm run test:state-replay` now records two browser replay bundles, compares every declared state/manifest/frame tick, and runs the four required negative controls; `tests/unit/state-replay.test.ts` exercises the comparator without a browser.
-- Missing automation/next implementation: execute the evaluator as part of a retained presentation run and populate the row-bound artifacts/signals; the generated bundle is evidence, not an automatic PASS for the still-Partial P0 row.
+- Missing automation/next implementation: keep the generated row-bound evidence attached to the retained presentation run; the machine row can pass, while the overall release remains blocked by the other unrun checklist rows.
 - Independent visual-agent review mandatory: **no** for exact deterministic equivalence; the relevant presentation rows still require review of whether matching frames look good.
 
 ## Result record template
