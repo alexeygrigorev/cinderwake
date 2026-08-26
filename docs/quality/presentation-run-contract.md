@@ -29,20 +29,23 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:input-intents
    npm run test:directional-motion
    npm run test:production-liveness
+   npm run test:mobile-screen
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
 
    The binder refuses dirty or stale recorder metadata, hashes every referenced
    artifact, copies the canonical signals and detected mutations, records
    `PRES-STATE-028` as a machine `PASS`, and records `PRES-LIVE-001`,
-   `PRES-CITY-027`, `PRES-INPUT-002`, `PRES-MOVE-003`, and `PRES-SPRITE-004`
+   `PRES-CITY-027`, `PRES-INPUT-002`, `PRES-MOBILE-010`, `PRES-MOVE-003`, and `PRES-SPRITE-004`
    as `NEEDS_VISUAL_REVIEW` because their ordered frames, videos, strips, and
-   overviews still need independent review. It also records `PRES-MOTION-005`
+   overviews still need independent review. The mobile row binds its two phone
+   profiles, five causal gestures/signals, safe-area and text metrics, and nine
+   detected mutations. It also records `PRES-MOTION-005`
    as `NEEDS_VISUAL_REVIEW` after binding the 26-entry temporal catalog, its
    per-tick manifests/contact sheets, four machine signals, and six named
    detector controls. Its output remains under `quality-results/`; it does not
-   claim that the other 21 rows ran or that the live/city/input/movement/atlas/
-   temporal evidence was visually accepted.
+   claim that the other 20 rows ran or that the live/city/input/mobile/movement/
+   atlas/temporal evidence was visually accepted.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.

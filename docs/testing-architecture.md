@@ -74,6 +74,32 @@ quality-results/sequences/<scenario-id>/
 playwright-report/
 ```
 
+The production mobile screen recorder writes a parallel retained bundle:
+
+```text
+quality-results/mobile-screen/pres-mobile-010/
+  metadata.json              # exact source commit and environment
+  mobile-screen.json         # synchronized profiles, gestures, and timelines
+  comparison.json            # five signals and nine detected mutations
+  phone-portrait/
+    *.png                    # ordered composed-page frames
+    gesture-log.json
+    states.json
+    render-manifest-timeline.json
+    layout.json              # target geometry and projections
+    safe-area.json
+    text-metrics.json
+    mobile-screen.webm
+  phone-landscape/           # same retained profile artifacts
+```
+
+`npm run test:mobile-screen` enters the public selection and launch route with
+physical Chromium touch events, records move/Strike/orientation feedback, and
+uses the city-service fixture only for the separately declared service state.
+The evaluator proves geometry, containment, safe-area, text, and causal pressed
+feedback; the retained frames and video still require independent native-device
+visual review.
+
 The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 26 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails; `quality:temporal:check` validates that retained catalog against the temporal evaluator, source commit, required bundles, four machine signals, and six named detector controls. Every close-up records its logical crop, physical canvas backing, backing scale, and exact physical source rectangle; the assessor rejects a crop that uses logical coordinates directly against a high-DPI backing. The two start/stop tapes additionally declare exact idle/walk/idle phases and frame coverage in `commands.json`; the assessor mirrors expected and observed contracts into `animation-analysis.json`. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
 The public quality index is generated only after the component reports exist
