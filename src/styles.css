@@ -1626,7 +1626,11 @@ button {
   }
 
   .selection-v2 .selection-art {
-    background-position: center 42%;
+    background-position: center -96px;
+  }
+
+  .selection-v2[data-selected-class="arcanist"] .selection-art {
+    background-position: center -96px;
   }
 
   .selection-v2::after {
@@ -1649,7 +1653,9 @@ button {
   }
 
   .selection-v2 .choose {
-    padding: 0 11px max(10px, var(--safe-area-inset-bottom));
+    padding: 0 max(12px, var(--safe-area-inset-right))
+      max(10px, var(--safe-area-inset-bottom))
+      max(12px, var(--safe-area-inset-left));
   }
 
   .selection-v2 .selected-class {
@@ -1667,7 +1673,7 @@ button {
   }
 
   .selection-v2 .selected-class .sprite-stats {
-    font-size: 7px;
+    font-size: 8px;
   }
 
   .selection-v2 .cards {
@@ -1692,7 +1698,7 @@ button {
 
   .selection-v2 .seed-label > .sprite-text {
     height: 10px;
-    font-size: 6px;
+    font-size: 8px;
   }
 
   .selection-v2 .seed-control,
