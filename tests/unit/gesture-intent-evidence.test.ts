@@ -89,9 +89,15 @@ describe("gesture intent evidence evaluator", () => {
       "swapped Strike binding",
       "gesture-intent-mismatch",
       (value: any) => {
-        value.profiles[0].gestures.find(
+        const ground = value.profiles[0].gestures.find(
+          ({ id }: { id: string }) => id === "tap-open-ground",
+        );
+        const strike = value.profiles[0].gestures.find(
           ({ id }: { id: string }) => id === "tap-strike",
-        ).after.snapshot.player.position.x += 2;
+        );
+        const groundAfter = structuredClone(ground.after);
+        ground.after = structuredClone(strike.after);
+        strike.after = groundAfter;
       },
     ],
     [
@@ -121,6 +127,26 @@ describe("gesture intent evidence evaluator", () => {
 
     expect(result.pass).toBe(false);
     expect(result.failures).toContain(expectedFailure);
+  });
+
+  it("makes both separation signals fail when the bindings are swapped", () => {
+    const value = {
+      profiles: [profile("phone-portrait"), profile("phone-landscape")],
+      requiredProfiles: ["phone-portrait", "phone-landscape"],
+    };
+    const ground = value.profiles[0].gestures.find(
+      ({ id }: { id: string }) => id === "tap-open-ground",
+    )!;
+    const strike = value.profiles[0].gestures.find(
+      ({ id }: { id: string }) => id === "tap-strike",
+    )!;
+    const groundAfter = structuredClone(ground.after);
+    ground.after = structuredClone(strike.after);
+    strike.after = groundAfter;
+
+    const result = evaluateGestureIntentEvidence(value);
+
+    expect(result.signals.map(({ pass }) => pass)).toEqual([false, false]);
   });
 
   it("publishes the contract gesture order", () => {

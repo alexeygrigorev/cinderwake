@@ -492,10 +492,15 @@ function negativeControls(evidence) {
     expectedSignal: "gesture-intent-mismatch",
   };
   const mutated = structuredClone(evidence);
+  const ground = mutated.profiles[0].gestures.find(
+    ({ id }) => id === "tap-open-ground",
+  );
   const strike = mutated.profiles[0].gestures.find(
     ({ id }) => id === "tap-strike",
   );
-  strike.after.snapshot.player.position.x += 1;
+  const groundAfter = structuredClone(ground.after);
+  ground.after = structuredClone(strike.after);
+  strike.after = groundAfter;
   const result = evaluateGestureIntentEvidence(mutated);
   const detected = result.failures.includes(control.expectedSignal);
   return [
