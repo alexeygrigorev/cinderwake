@@ -100,9 +100,14 @@ export function installPlayerObserver(
     const player = manifest.drawCalls.find(
       ({ entityId }) => entityId === "player",
     );
-    const referenceScene = manifest.sceneSprites.find(
-      ({ objectId, visible }) => objectId === "structure:0:forge" && visible,
-    );
+    const referenceScene =
+      manifest.sceneSprites.find(
+        ({ objectId, visible }) => objectId === "structure:0:forge" && visible,
+      ) ??
+      // Explicit directional-motion arenas have no generated forge. A stable
+      // floor tile still gives the follow-camera oracle a scene anchor without
+      // adding a test-only prop or changing the rendered world.
+      manifest.sceneSprites.find(({ objectId }) => objectId === "tile:14:4");
     samples.push({
       observedAtMs: performance.now(),
       tick: manifest.tick,

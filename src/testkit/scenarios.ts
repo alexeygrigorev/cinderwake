@@ -1653,6 +1653,31 @@ function vanguardStartStopScenario(
   };
 }
 
+function directionalMotionScenario(
+  classId: CharacterClass,
+  cameraMode: "fixed" | "follow",
+): ScenarioV1 {
+  const scenarioId = `${cameraMode === "fixed" ? "fixed" : "follow"}-camera-open-floor-${classId}`;
+  return {
+    schemaVersion: 1,
+    id: scenarioId,
+    seed: `quality-directional-motion-${cameraMode}-${classId}-01`,
+    classId,
+    map: { mode: "explicit", rows: arenaRows(30, 25) },
+    player: { tile: [15, 12] },
+    monsters: [],
+    settings: {
+      ai: false,
+      autoPickup: false,
+      cameraFollow: cameraMode === "follow",
+    },
+    camera: {
+      mode: cameraMode === "fixed" ? "fixed" : "smooth",
+      centerTile: [15, 12],
+    },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1672,6 +1697,30 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     monsters: [],
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
+  "fixed-camera-open-floor-vanguard": directionalMotionScenario(
+    "vanguard",
+    "fixed",
+  ),
+  "fixed-camera-open-floor-ranger": directionalMotionScenario(
+    "ranger",
+    "fixed",
+  ),
+  "fixed-camera-open-floor-arcanist": directionalMotionScenario(
+    "arcanist",
+    "fixed",
+  ),
+  "follow-camera-open-floor-vanguard": directionalMotionScenario(
+    "vanguard",
+    "follow",
+  ),
+  "follow-camera-open-floor-ranger": directionalMotionScenario(
+    "ranger",
+    "follow",
+  ),
+  "follow-camera-open-floor-arcanist": directionalMotionScenario(
+    "arcanist",
+    "follow",
+  ),
   "ashfang-start-stop-east": openingStartStopScenario("ashfang"),
   "arcanist-start-stop-east": openingStartStopScenario("arcanist"),
   "vanguard-start-stop-east": vanguardStartStopScenario("east"),
