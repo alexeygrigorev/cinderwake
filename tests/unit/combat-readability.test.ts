@@ -3,7 +3,10 @@ import { MONSTERS } from "../../src/game/content";
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
-import { destinationOverlapRatio } from "../framework/combat-readability";
+import {
+  assessCombatReadability,
+  destinationOverlapRatio,
+} from "../framework/combat-readability";
 import {
   worldFromScenario,
   type ScenarioV1,
@@ -127,6 +130,26 @@ describe("presentation-only combat readability", () => {
     )!;
 
     expect(impact).toBeDefined();
+    expect(impact.ownerId).toBe("player");
     expect(impact.zOrder).toBeLessThan(player.zOrder);
+    expect(
+      assessCombatReadability(manifest, {
+        requiredEffectOwnerIds: ["player"],
+      }).evidence.attachedEffects,
+    ).toContainEqual(
+      expect.objectContaining({ ownerId: "player", actorId: "player" }),
+    );
+  });
+
+  it("rejects an attached effect whose explicit owner is missing", () => {
+    const state = worldFromScenario(meleeScenario([9.6, 7]));
+    for (let tick = 0; tick < 8; tick += 1) stepGame(state, EMPTY_INPUT);
+    const manifest = buildRenderManifest(state, CAMERA);
+    const effect = manifest.drawCalls.find(({ type }) => type === "effect")!;
+    effect.ownerId = "monster:missing";
+
+    expect(assessCombatReadability(manifest).violations).toContain(
+      `combat:effect-owner-missing:${effect.entityId}`,
+    );
   });
 });

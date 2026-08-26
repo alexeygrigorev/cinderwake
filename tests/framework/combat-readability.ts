@@ -37,6 +37,7 @@ export interface CombatReadabilityEvidence {
   attachedEffects: Array<{
     effectId: string;
     actorId: string;
+    ownerId: string;
     anchorDistance: number;
     attached: boolean;
     paintsBehindActor: boolean;
@@ -194,23 +195,24 @@ export function assessCombatReadability(
   const attachedEffects = manifest.drawCalls
     .filter(({ type }) => type === "effect")
     .flatMap((effect) => {
-      const nearest = [...actors].sort(
-        (first, second) =>
-          screenDistance(effect, first) - screenDistance(effect, second) ||
-          first.entityId.localeCompare(second.entityId),
-      )[0];
-      if (!nearest) return [];
-      const anchorDistance = screenDistance(effect, nearest);
+      if (!effect.ownerId) return [];
+      const owner = actors.find(({ entityId }) => entityId === effect.ownerId);
+      if (!owner) {
+        violations.push(`combat:effect-owner-missing:${effect.entityId}`);
+        return [];
+      }
+      const anchorDistance = screenDistance(effect, owner);
       const attached =
         anchorDistance <=
         COMBAT_READABILITY_LIMITS.maximumAttachedEffectAnchorDistance;
-      const paintsBehindActor = effect.zOrder < nearest.zOrder;
+      const paintsBehindActor = effect.zOrder < owner.zOrder;
       if (attached && !paintsBehindActor)
         violations.push(`combat:attached-effect-depth:${effect.entityId}`);
       return [
         {
           effectId: effect.entityId,
-          actorId: nearest.entityId,
+          actorId: owner.entityId,
+          ownerId: owner.entityId,
           anchorDistance,
           attached,
           paintsBehindActor,
