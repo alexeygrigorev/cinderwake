@@ -23,6 +23,7 @@
     "test:production-liveness": "node scripts/test-production-liveness.mjs",
     "test:mobile-screen": "node scripts/test-mobile-screen.mjs",
     "test:depth-transition": "node scripts/test-depth-transition.mjs",
+    "test:collision": "node scripts/test-collision.mjs",
     "capture:sequence": "node scripts/capture-sequence.mjs",
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "report:screens": "node scripts/build-screen-report.mjs",
