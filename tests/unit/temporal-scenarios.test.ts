@@ -302,6 +302,23 @@ describe("public temporal scenario catalog", () => {
     ).toEqual(["common ashfang-pelt", "tempered gold"]);
   });
 
+  it("retains the presentation anchor across the living-to-death transition", () => {
+    const state = worldFromScenario(BUILTIN_SCENARIOS["temporal-enemy-death"]!);
+    const camera = { x: 533.3333333333334, y: 360, zoom: 0.9 };
+    const before = buildRenderManifest(state, camera).drawCalls.find(
+      ({ entityId }) => entityId === TEMPORAL_ENTITY_IDS.deathSubject,
+    )!;
+    expect(before.presentationOffset).toBeDefined();
+
+    stepGame(state, EMPTY_INPUT);
+    const after = buildRenderManifest(state, camera).drawCalls.find(
+      ({ entityId }) => entityId === TEMPORAL_ENTITY_IDS.deathSubject,
+    )!;
+
+    expect(after.presentationOffset).toEqual(before.presentationOffset);
+    expect(after.screenAnchor).toEqual(before.screenAnchor);
+  });
+
   it("keeps the friendly projectile observable over a long motion interval", () => {
     const state = worldFromScenario(
       BUILTIN_SCENARIOS["temporal-friendly-projectile"]!,

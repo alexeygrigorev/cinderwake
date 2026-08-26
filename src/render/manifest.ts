@@ -1106,7 +1106,8 @@ export function buildRenderManifest(
       monster.position,
     );
     const presentationOffset =
-      monster.health > 0 && monster.kind !== "hexer"
+      monster.kind !== "hexer" &&
+      (monster.health > 0 || monster.removeAtTick !== null)
         ? meleePresentationOffset(
             screenFor(playerWorldAnchor, camera),
             screenFor(monsterWorldAnchor, camera),
