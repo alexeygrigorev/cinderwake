@@ -4,6 +4,7 @@ import path from "node:path";
 
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
+const LIVE_PROFILE_IDS = ["desktop", "phone-portrait"];
 const CITY_FRAME_FILES = [
   "frame-0000-ordinary-wilderness.png",
   "frame-0001-ordinary-city-discovered.png",
@@ -37,6 +38,44 @@ const INPUT_FRAME_FILES = [
   "frame-0011-tap-strike-before.png",
   "frame-0012-tap-strike-after.png",
 ];
+const LIVE_FRAME_FILES = {
+  desktop: [
+    "frame-0000-selection-ranger-before.png",
+    "frame-0001-selection-ranger-after.png",
+    "frame-0002-ranger-gameplay.png",
+    "frame-0003-selection-arcanist-before.png",
+    "frame-0004-selection-arcanist-after.png",
+    "frame-0005-arcanist-gameplay.png",
+    "frame-0006-selection-vanguard-before.png",
+    "frame-0007-selection-vanguard-after.png",
+    "frame-0008-vanguard-gameplay.png",
+    "frame-0009-attack-before.png",
+    "frame-0010-attack-after.png",
+    "frame-0011-ability-before.png",
+    "frame-0012-ability-after.png",
+    "frame-0013-tonic-before.png",
+    "frame-0014-tonic-after.png",
+  ],
+  "phone-portrait": [
+    "frame-0000-selection-ranger-before.png",
+    "frame-0001-selection-ranger-after.png",
+    "frame-0002-ranger-gameplay.png",
+    "frame-0003-selection-arcanist-before.png",
+    "frame-0004-selection-arcanist-after.png",
+    "frame-0005-arcanist-gameplay.png",
+    "frame-0006-selection-vanguard-before.png",
+    "frame-0007-selection-vanguard-after.png",
+    "frame-0008-vanguard-gameplay.png",
+    "frame-0009-move-pad-before.png",
+    "frame-0010-move-pad-after.png",
+    "frame-0011-attack-before.png",
+    "frame-0012-attack-after.png",
+    "frame-0013-ability-before.png",
+    "frame-0014-ability-after.png",
+    "frame-0015-tonic-before.png",
+    "frame-0016-tonic-after.png",
+  ],
+};
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -275,6 +314,60 @@ function inputArtifactSpecifications() {
   return specifications;
 }
 
+function liveArtifactSpecifications() {
+  const root = "quality-results/production-liveness/pres-live-001";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/liveness.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+    ["production-control-route", `${root}/liveness.json`],
+    ["recovery-frame-sequence", `${root}/recovery.json`],
+  ];
+  for (const profileId of LIVE_PROFILE_IDS) {
+    specifications.push(
+      ["production-control-route", `${root}/${profileId}/selection.json`],
+      ["control-intent-registry", `${root}/${profileId}/control-census.json`],
+      [
+        "visible-control-census-to-intent-map",
+        `${root}/${profileId}/control-census.json`,
+      ],
+      ["gesture-or-command-tape", `${root}/${profileId}/gesture-log.json`],
+      ["semantic-snapshot-timeline", `${root}/${profileId}/states.json`],
+      ["transition-deadline-contract", `${root}/${profileId}/states.json`],
+      [
+        "render-manifest-timeline",
+        `${root}/${profileId}/render-manifest-timeline.json`,
+      ],
+      ["ordered-frame-sequence", `${root}/${profileId}/frames.json`],
+      ["transition-deadline-contract", `${root}/${profileId}/selection.json`],
+      [
+        "production-control-route",
+        `${root}/${profileId}/production-liveness.webm`,
+      ],
+    );
+    for (const filename of LIVE_FRAME_FILES[profileId])
+      specifications.push([
+        "ordered-frame-sequence",
+        `${root}/${profileId}/${filename}`,
+      ]);
+  }
+  for (const filename of [
+    "abort-failed.png",
+    "abort-retry.png",
+    "stall-failed.png",
+    "stall-back.png",
+  ])
+    specifications.push([
+      "recovery-frame-sequence",
+      `${root}/recovery/${filename}`,
+    ]);
+  specifications.push(
+    ["recovery-frame-sequence", `${root}/recovery/recovery.webm`],
+    ["transition-deadline-contract", `${root}/recovery.json`],
+  );
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -394,15 +487,19 @@ export async function bindPresentationRun({
   stateComparison,
   inputMetadata,
   inputComparison,
+  liveMetadata,
+  liveComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
   stateArtifacts = stateArtifactSpecifications(),
   inputArtifacts = inputArtifactSpecifications(),
+  liveArtifacts = liveArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
   const inputCheck = contract.checks.find(({ id }) => id === "PRES-INPUT-002");
+  const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
   const cityRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CITY-027",
   );
@@ -412,22 +509,29 @@ export async function bindPresentationRun({
   const inputRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-INPUT-002",
   );
+  const liveRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-LIVE-001",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
     !inputCheck ||
+    !liveCheck ||
     !cityRecipe ||
     !stateRecipe ||
-    !inputRecipe
+    !inputRecipe ||
+    !liveRecipe
   )
-    throw new Error("P0 city/state/input contract recipes are incomplete");
+    throw new Error("P0 live/city/state/input contract recipes are incomplete");
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
   const stateSource = sourceCommit(stateMetadata, "PRES-STATE-028");
   const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
+  const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
+    citySource !== liveSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -442,9 +546,23 @@ export async function bindPresentationRun({
   const inputIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-INPUT-002",
   );
+  const liveIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-LIVE-001",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
+  const liveComparisonData = comparisonData(liveComparison, "PRES-LIVE-001");
+  checks[liveIndex] = await bindRow({
+    repoRoot,
+    contractCheck: liveCheck,
+    recipe: liveRecipe,
+    metadata: liveMetadata,
+    comparison: liveComparisonData,
+    artifactSpecifications: liveArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: liveMetadata.profileIds,
+  });
   checks[cityIndex] = await bindRow({
     repoRoot,
     contractCheck: cityCheck,

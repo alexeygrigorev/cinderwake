@@ -56,6 +56,14 @@ async function main() {
       "quality-results/input-intents/pres-input-002",
     ),
   );
+  const liveRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--live-root",
+      "quality-results/production-liveness/pres-live-001",
+    ),
+  );
   const [
     template,
     contract,
@@ -66,6 +74,8 @@ async function main() {
     stateComparison,
     inputMetadata,
     inputComparison,
+    liveMetadata,
+    liveComparison,
   ] = await Promise.all([
     readJson(path.join(repoRoot, "quality/presentation-run.v1.template.json")),
     readJson(path.join(repoRoot, "quality/presentation-checklist.v1.json")),
@@ -76,11 +86,13 @@ async function main() {
     readJson(path.join(stateRoot, "comparison.json")),
     readJson(path.join(inputRoot, "metadata.json")),
     readJson(path.join(inputRoot, "comparison.json")),
+    readJson(path.join(liveRoot, "metadata.json")),
+    readJson(path.join(liveRoot, "comparison.json")),
   ]);
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:production-liveness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -93,6 +105,8 @@ async function main() {
     stateComparison,
     inputMetadata,
     inputComparison,
+    liveMetadata,
+    liveComparison,
     commit,
     reproduce,
   });
@@ -113,6 +127,7 @@ async function main() {
   console.log(`Bound P0 presentation evidence into ${outputPath}`);
   console.log("PRES-STATE-028: PASS (machine evidence)");
   console.log("PRES-INPUT-002: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-LIVE-001: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CITY-027: NEEDS_VISUAL_REVIEW");
   console.log(
     "Remaining checklist rows remain UNRUN; acceptance is still blocked.",
