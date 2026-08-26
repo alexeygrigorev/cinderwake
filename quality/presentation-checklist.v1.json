@@ -108,7 +108,8 @@
       "evidenceRequirements": [
         "all-clip-command-tapes",
         "per-tick-animation-manifest",
-        "live-temporal-contact-sheet"
+        "live-temporal-contact-sheet",
+        "temporal-sequence-audit-report"
       ],
       "negativeControlIds": [
         "frame-duplicated-or-frozen",

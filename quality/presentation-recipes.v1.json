@@ -216,7 +216,7 @@
           "terminal-pose-retained"
         ]
       },
-      "reproduce": "npm run capture:matrix",
+      "reproduce": "npm run capture:matrix && npm run quality:temporal:check",
       "negativeControls": [
         {
           "id": "frame-duplicated-or-frozen",
