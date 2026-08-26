@@ -1359,6 +1359,11 @@ async function normalizeProfile(raw, profileId) {
     current.frameFile = `frame-${String(index).padStart(4, "0")}-${current.label.replaceAll(/[^A-Za-z0-9._-]+/g, "-")}.png`;
     await fs.writeFile(path.join(directory, current.frameFile), current.frame);
   }
+  const publicOrientation = {
+    ...raw.orientation,
+    before: publicCapture(raw.orientation.before),
+    after: publicCapture(raw.orientation.after),
+  };
   const publicGestures = raw.gestures.map((gesture) => ({
     ...gesture,
     before: publicGestureCapture(gesture.before),
@@ -1369,7 +1374,7 @@ async function normalizeProfile(raw, profileId) {
   const publicProfile = {
     profileId,
     viewport: raw.viewport,
-    orientation: raw.orientation,
+    orientation: publicOrientation,
     deviceScaleFactor: raw.deviceScaleFactor,
     mode: raw.mode,
     bridgeExposed: raw.bridgeExposed,
@@ -1396,7 +1401,7 @@ async function normalizeProfile(raw, profileId) {
       initial: publicCapture(raw.city.before),
     },
     textMetrics: raw.textMetrics,
-    orientationEvidence: raw.orientation,
+    orientationEvidence: publicOrientation,
     gestures: publicGestures,
     timeline,
   };
@@ -1406,11 +1411,7 @@ async function normalizeProfile(raw, profileId) {
       selection: publicProfile.selection,
       game: publicProfile.game,
       city: publicProfile.city,
-      orientation: {
-        ...raw.orientation,
-        before: publicCapture(raw.orientation.before),
-        after: publicCapture(raw.orientation.after),
-      },
+      orientation: publicOrientation,
       timeline,
     }),
     writeJson(path.join(directory, "render-manifest-timeline.json"), {
