@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -32,6 +33,25 @@ const acceptedFixture = JSON.parse(
     "utf8",
   ),
 );
+const stagedRejection = JSON.parse(
+  await fs.readFile(
+    path.join(
+      root,
+      "art",
+      "motion-landmarks",
+      "candidates",
+      "vanguard-walk-v3-staged.rejection.json",
+    ),
+    "utf8",
+  ),
+);
+
+async function fileSha256(file: string) {
+  return crypto
+    .createHash("sha256")
+    .update(await fs.readFile(path.join(root, file)))
+    .digest("hex");
+}
 
 function assess(fixture: typeof acceptedFixture) {
   return assessLandmarkGaitBank(
@@ -105,6 +125,26 @@ describe("Vanguard semantic gait promotion contract", () => {
     expect(
       assessment.failures.map(({ code }: { code: string }) => code),
     ).toContain(failureCode);
+  });
+
+  it("binds the staged v3 rejection to duplicated runtime cells without invented landmarks", async () => {
+    expect(stagedRejection.disposition).toBe("REJECT");
+    expect(stagedRejection.rejection.gate).toBe("duplicate-half-cycle");
+    expect(stagedRejection.rejection.landmarksRecorded).toBe(false);
+    expect(await fileSha256(stagedRejection.atlas.file)).toBe(
+      stagedRejection.atlas.sha256,
+    );
+    for (const source of stagedRejection.sources)
+      expect(await fileSha256(source.file)).toBe(source.sha256);
+    for (const facing of ["east", "west", "north", "south"]) {
+      const evidence = stagedRejection.facings[facing];
+      expect(evidence).not.toHaveProperty("landmarks");
+      expect(evidence.runtimeFrameHashes).toHaveLength(8);
+      expect(evidence.runtimeFrameHashes.slice(0, 4)).toEqual(
+        evidence.runtimeFrameHashes.slice(4),
+      );
+      expect(new Set(evidence.runtimeFrameHashes)).toHaveProperty("size", 4);
+    }
   });
 
   it("records the exact current atlas as rejected calibration while keeping the detector green", async () => {

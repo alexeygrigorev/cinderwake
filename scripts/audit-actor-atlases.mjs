@@ -40,6 +40,7 @@ const VANGUARD_MOTION_CONTRACT = JSON.parse(
 function parseArguments(arguments_) {
   const options = {
     atlasDirectory: path.join(ROOT, "public", "assets", "sprites"),
+    landmarkSidecar: path.join(ROOT, VANGUARD_MOTION_CONTRACT.promotionSidecar),
     reportDirectory: path.join(ROOT, "quality-results", "actor-atlas-audit"),
     reportOnly: false,
   };
@@ -50,13 +51,19 @@ function parseArguments(arguments_) {
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
-    if (name !== "--atlas-dir" && name !== "--report-dir")
+    if (
+      name !== "--atlas-dir" &&
+      name !== "--landmark-sidecar" &&
+      name !== "--report-dir"
+    )
       throw new Error(`Unknown option: ${argument}`);
     const value = inlineValue ?? arguments_[++index];
     if (!value || value.startsWith("--"))
       throw new Error(`${name} requires a value`);
     if (name === "--atlas-dir")
       options.atlasDirectory = path.resolve(ROOT, value);
+    else if (name === "--landmark-sidecar")
+      options.landmarkSidecar = path.resolve(ROOT, value);
     else options.reportDirectory = path.resolve(ROOT, value);
   }
   return options;
@@ -64,6 +71,7 @@ function parseArguments(arguments_) {
 
 const OPTIONS = parseArguments(process.argv.slice(2));
 const ATLAS_DIRECTORY = OPTIONS.atlasDirectory;
+const LANDMARK_SIDECAR = OPTIONS.landmarkSidecar;
 const REPORT_DIRECTORY = OPTIONS.reportDirectory;
 const THRESHOLDS = {
   minimumInkPixels: 120,
@@ -690,24 +698,77 @@ async function assessVanguardMotionCalibration(atlasSha256, framesByBank) {
       detail: lowArticulationFacings,
     });
 
-  const sidecarFile = path.join(
-    ROOT,
-    VANGUARD_MOTION_CONTRACT.promotionSidecar,
-  );
+  const sidecarFile = LANDMARK_SIDECAR;
   const sidecar = await readJsonIfPresent(sidecarFile);
   const promotionAssessments = [];
+  const sidecarAtlasSha256 = sidecar?.atlas?.sha256;
+  const sidecarAtlasMatches = sidecarAtlasSha256 === atlasSha256;
+  const sidecarDisposition = sidecar?.disposition ?? "PROMOTION_CANDIDATE";
   if (!sidecar) {
     failures.push({
       code: "missing-landmark-sidecar",
-      detail: VANGUARD_MOTION_CONTRACT.promotionSidecar,
+      detail: path.relative(ROOT, sidecarFile),
+    });
+  } else if (!sidecarAtlasMatches) {
+    failures.push({
+      code: "landmark-sidecar-atlas-mismatch",
+      detail: {
+        declared: sidecarAtlasSha256 ?? null,
+        observed: atlasSha256,
+      },
+    });
+  } else if (sidecarDisposition === "REJECT") {
+    for (const facing of FACINGS) {
+      const declaredRasterHashes =
+        sidecar.facings?.[facing]?.runtimeFrameHashes ?? [];
+      const observedRasterHashes = framesByBank
+        .get(`${facing}:walk`)
+        .map(({ sha256: rasterHash }) => rasterHash);
+      if (
+        declaredRasterHashes.length !== observedRasterHashes.length ||
+        declaredRasterHashes.some(
+          (rasterHash, index) => rasterHash !== observedRasterHashes[index],
+        )
+      )
+        failures.push({
+          code: "landmark-frame-raster-mismatch",
+          detail: { facing, declaredRasterHashes, observedRasterHashes },
+        });
+    }
+    failures.push({
+      code: "candidate-landmark-evidence-rejected",
+      detail: sidecar.rejection,
     });
   } else {
     for (const facing of FACINGS) {
       const bank = sidecar.facings?.[facing];
       const frames = framesByBank.get(`${facing}:walk`);
+      const declaredRasterHashes =
+        bank?.frames?.map(({ rasterHash }) => rasterHash) ?? [];
+      const observedRasterHashes = frames.map(
+        ({ sha256: rasterHash }) => rasterHash,
+      );
+      const rasterHashesMatch =
+        declaredRasterHashes.length === observedRasterHashes.length &&
+        declaredRasterHashes.every(
+          (rasterHash, index) => rasterHash === observedRasterHashes[index],
+        );
+      const assessment = assessLandmarkGaitBank(
+        bank,
+        policy,
+        atlasAlphaReader(frames),
+      );
+      if (!rasterHashesMatch) {
+        assessment.pass = false;
+        assessment.failures.unshift({
+          code: "landmark-frame-raster-mismatch",
+          detail: { declaredRasterHashes, observedRasterHashes },
+        });
+      }
       promotionAssessments.push({
         facing,
-        ...assessLandmarkGaitBank(bank, policy, atlasAlphaReader(frames)),
+        rasterHashesMatch,
+        ...assessment,
       });
     }
   }
@@ -741,6 +802,8 @@ async function assessVanguardMotionCalibration(atlasSha256, framesByBank) {
     duplicateFacings.length === 0 &&
     lowArticulationFacings.length === 0 &&
     sidecar !== null &&
+    sidecarAtlasMatches &&
+    sidecarDisposition !== "REJECT" &&
     promotionAssessments.length === FACINGS.length &&
     promotionAssessments.every(({ pass }) => pass);
 
@@ -775,8 +838,11 @@ async function assessVanguardMotionCalibration(atlasSha256, framesByBank) {
     lowArticulationFacings,
     failures,
     promotionSidecar: {
-      file: VANGUARD_MOTION_CONTRACT.promotionSidecar,
+      file: path.relative(ROOT, sidecarFile),
       present: sidecar !== null,
+      disposition: sidecarDisposition,
+      declaredAtlasSha256: sidecarAtlasSha256 ?? null,
+      atlasMatches: sidecar !== null && sidecarAtlasMatches,
       assessments: promotionAssessments,
     },
   };

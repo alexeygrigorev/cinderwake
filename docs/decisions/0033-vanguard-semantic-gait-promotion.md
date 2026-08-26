@@ -55,3 +55,25 @@ pixel noise or renaming frames. New bytes invalidate the calibration waiver and
 must arrive with reviewed landmark evidence for every cardinal bank. The
 current visual debt stays explicit and reproducible instead of either breaking
 unrelated checks or disappearing behind a green hash test.
+
+## Vanguard v3 staged-candidate result
+
+The surgical v3 atlas is not production art. Its exact atlas hash
+`4757e7749994dd11b35ad4238b9cd0ec1bc429e0d4ee4081021965cfc68e40a5`
+is bound to
+`art/motion-landmarks/candidates/vanguard-walk-v3-staged.rejection.json`.
+For east, reflected west, north, and south, runtime frames 0–3 are
+byte-identical to frames 4–7 respectively. The candidate therefore fails the
+existing `duplicate-half-cycle` gate before semantic landmark review can make
+it promotion-eligible.
+
+The rejection sidecar intentionally contains no root, torso, foot, knee,
+support, phase, or anchor coordinates. Coordinates cannot repair that raster
+failure, and recording them would falsely imply a completed anatomical review.
+It instead preserves all 32 observed runtime-cell hashes, the four duplicate
+pairs, staged source hashes, and the exact reproduction command. The candidate
+can be replayed without changing production by passing both `--atlas-dir` and
+`--landmark-sidecar` to `scripts/audit-actor-atlases.mjs`; the audit rejects a
+sidecar whose declared atlas or per-frame hashes do not match the bytes under
+test. A future attempt must first author eight non-duplicated runtime frames in
+every facing, then supply all required alpha-bound landmarks.

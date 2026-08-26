@@ -821,6 +821,126 @@
           "fitness for production promotion"
         ]
       }
+    },
+    {
+      "id": "vanguard-primary-walk-v3-2026-08-24",
+      "actorId": "vanguard",
+      "sourceFamily": "primary",
+      "promptFile": "art/generation/prompts/vanguard-primary-walk-v3.txt",
+      "candidateFile": "art/generation/candidates/vanguard-primary-walk-v3.png",
+      "candidateSha256": "e083173dc2c4a96b60fecb9e628c8c545a3fe701f4a3ec87165780fd47b49f51",
+      "referenceFiles": [
+        {
+          "file": "art/generation/candidates/vanguard-primary-walk-v2.png",
+          "sha256": "9308de5b936a6e4ecccaed443c2c31799f115ebef934fad98c0c78c6d79554dc"
+        },
+        {
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI built-in image generation tool",
+        "artifactId": "exec-5318516e-77e8-4621-9c46-5fa758a6a0e2.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized, keyed, safe-fitted, and foot-anchored on the ActorAtlasV2 1024x1024 ingress grid before review."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background is a graded hot-pink field rather than literal flat #ff00ff, so raw source ingress remains rejected."
+          }
+        ],
+        "notes": "The raw edit target remains quarantined for chroma noncompliance. Prepared cells 4-7 receive exact-hash visual acceptance for an upright alternating east walk, but production remains prohibited until surgical assembly, semantic landmarks, atlas audit, and cardinal start/stop gates pass."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/vanguard-primary-walk-v3.png --output art/generation/prepared/vanguard-primary-walk-v3.png",
+        "file": "art/generation/prepared/vanguard-primary-walk-v3.png",
+        "sha256": "28f71a0fe42f055cf345c1076e6740108d429346a53915d1d6b1a734df7525b4",
+        "status": "accepted-for-pipeline-proof",
+        "notes": "Preparation reproducibly repairs chroma, safe bounds, shared scale, and foot anchoring. This is mechanical ingress only and cannot authorize production promotion."
+      },
+      "visualReview": {
+        "verdict": "ACCEPT",
+        "reviewer": "/root/prop_depth_gate",
+        "reviewedPreparedSha256": "28f71a0fe42f055cf345c1076e6740108d429346a53915d1d6b1a734df7525b4",
+        "acceptedAxes": [
+          "Vanguard identity and ember-gothic material style",
+          "four distinct east walk phases with readable alternating support",
+          "upright idle-to-walk scale and equipment continuity",
+          "safe prepared cell cuts for surgical promotion testing"
+        ],
+        "rejectedAxes": ["raw-source-chroma-compliance"]
+      }
+    },
+    {
+      "id": "vanguard-directions-walk-v3-2026-08-24",
+      "actorId": "vanguard",
+      "sourceFamily": "directions",
+      "promptFile": "art/generation/prompts/vanguard-directions-walk-v3.txt",
+      "candidateFile": "art/generation/candidates/vanguard-directions-walk-v3.png",
+      "candidateSha256": "dabd75593cd9f822e23e252a9fd4d4c91a89a98475c6f90325c4f63accac8412",
+      "referenceFiles": [
+        {
+          "file": "art/generation/candidates/vanguard-directions-walk-v2.png",
+          "sha256": "78a8e791b44a922610b1378f432f14270088f49a271c4153b358a8fe525c6e25"
+        },
+        {
+          "file": "art/source/actors/vanguard-source.png",
+          "sha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424"
+        },
+        {
+          "file": "art/source/actors/vanguard-directions-source.png",
+          "sha256": "16a99686ec59d9d11f28baac434f7805333612b025c7f825f372a113f8b35390"
+        }
+      ],
+      "generation": {
+        "tool": "OpenAI built-in image generation tool",
+        "artifactId": "exec-dfe1eb9d-4616-42ff-ac7d-4682ebdccd12.png"
+      },
+      "observed": {
+        "rawDimensions": "1254x1254",
+        "requestedDimensions": "1024x1024",
+        "normalization": "Deterministically resized, keyed, safe-fitted, and foot-anchored on the ActorAtlasV2 1024x1024 ingress grid before review."
+      },
+      "evaluation": {
+        "status": "rejected",
+        "reasons": [
+          {
+            "kind": "structural",
+            "code": "nonliteral-chroma",
+            "detail": "The immutable raw background is a graded hot-pink field rather than literal flat #ff00ff, so raw source ingress remains rejected."
+          }
+        ],
+        "notes": "The raw edit target remains quarantined for chroma noncompliance. Prepared north cells 4-7 and south cells 12-15 receive exact-hash visual acceptance for upright alternating walks, with south cell 14 the subtlest phase. Production remains prohibited until surgical assembly, semantic landmarks, atlas audit, and cardinal start/stop gates pass."
+      },
+      "preparation": {
+        "tool": "scripts/prepare-actor-source.mjs",
+        "command": "node scripts/prepare-actor-source.mjs --input art/generation/candidates/vanguard-directions-walk-v3.png --output art/generation/prepared/vanguard-directions-walk-v3.png",
+        "file": "art/generation/prepared/vanguard-directions-walk-v3.png",
+        "sha256": "d8e8d4c36a2394d53390b9881a22cc0e6cf49ebdfd785f409706940616626eab",
+        "status": "accepted-for-pipeline-proof",
+        "notes": "Preparation reproducibly repairs chroma, safe bounds, shared scale, and foot anchoring. This is mechanical ingress only and cannot authorize production promotion."
+      },
+      "visualReview": {
+        "verdict": "ACCEPT",
+        "reviewer": "/root/prop_depth_gate",
+        "reviewedPreparedSha256": "d8e8d4c36a2394d53390b9881a22cc0e6cf49ebdfd785f409706940616626eab",
+        "acceptedAxes": [
+          "Vanguard identity and ember-gothic material style",
+          "four distinct north walk phases with readable alternating support",
+          "four distinct south walk phases with readable alternating support",
+          "upright scale, cardinal views, equipment continuity, and safe prepared cell cuts"
+        ],
+        "rejectedAxes": ["raw-source-chroma-compliance"]
+      }
     }
   ]
 }

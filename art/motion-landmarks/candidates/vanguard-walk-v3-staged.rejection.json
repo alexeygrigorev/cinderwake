@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "contract": "CinderwakeVanguardMotionCandidateEvidenceV1",
+  "candidateId": "vanguard-walk-v3-surgical-candidate",
+  "disposition": "REJECT",
+  "atlas": {
+    "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png",
+    "sha256": "4757e7749994dd11b35ad4238b9cd0ec1bc429e0d4ee4081021965cfc68e40a5"
+  },
+  "sources": [
+    {
+      "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-source.png",
+      "sha256": "e3cf66e3742afcf4c8fcac66efed37c8280c138915ece9e9b4f0fd6fb902afd9"
+    },
+    {
+      "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-directions-source.png",
+      "sha256": "0d616c4fe5b48da57b8e28c2dc589bfb1228292dc43d7e7e859f189726f81cf9"
+    },
+    {
+      "file": "art/generation/prepared/vanguard-walk-v3-staged/splice-report.json",
+      "sha256": "0efe4cce736cef0a156938983f34b05a17cd307a558c48847dbead1b195164bd"
+    }
+  ],
+  "rejection": {
+    "gate": "duplicate-half-cycle",
+    "summary": "Every cardinal runtime walk bank repeats frames 0-3 byte-for-byte as frames 4-7. The candidate therefore fails the raster gate before anatomical landmark review can authorize promotion.",
+    "landmarksRecorded": false,
+    "landmarkReason": "Root, torso, foot, knee, support, phase, and anchor coordinates are intentionally absent. Adding them cannot make a duplicated half-cycle promotion-eligible and would imply semantic review of an already-disqualified candidate.",
+    "affectedFacings": ["east", "west", "north", "south"],
+    "duplicateFramePairs": [
+      [0, 4],
+      [1, 5],
+      [2, 6],
+      [3, 7]
+    ]
+  },
+  "facings": {
+    "east": {
+      "atlasRow": 1,
+      "reflectedAtRuntime": false,
+      "runtimeFrameHashes": [
+        "70a84ef31266af7517d1b6364217e29f5d16150283dec3926ebfa479554b8fcc",
+        "34df41680cc578b05407daa8b6e8c563481a5752cbcd71ac248dd515dd3150c6",
+        "e4b5333a5bf6137748007da901a39325c0d61e1e8cee9329448fd5b54aeadaaf",
+        "6591a5636a13817900f274fe2f873eb4a38f818d5eef86f3a05147b9a9462004",
+        "70a84ef31266af7517d1b6364217e29f5d16150283dec3926ebfa479554b8fcc",
+        "34df41680cc578b05407daa8b6e8c563481a5752cbcd71ac248dd515dd3150c6",
+        "e4b5333a5bf6137748007da901a39325c0d61e1e8cee9329448fd5b54aeadaaf",
+        "6591a5636a13817900f274fe2f873eb4a38f818d5eef86f3a05147b9a9462004"
+      ]
+    },
+    "west": {
+      "atlasRow": 1,
+      "reflectedAtRuntime": true,
+      "runtimeFrameHashes": [
+        "73768e565d18e44bd1235e5210fe980a0a7b4b945e19563030691870e95a9e9f",
+        "c56945ecd7a8b3bd32a890c3623ebc5514a92be77b76d1c8ff165827a8de2ca4",
+        "d7fefa66ab5d37a682c6b640acae733a0bac5beb885320a033afc4cd0afe25a8",
+        "cd89c3872887f3e82a536ba8fefd7768c72d39ed43100186ec7e63b66f56bc2e",
+        "73768e565d18e44bd1235e5210fe980a0a7b4b945e19563030691870e95a9e9f",
+        "c56945ecd7a8b3bd32a890c3623ebc5514a92be77b76d1c8ff165827a8de2ca4",
+        "d7fefa66ab5d37a682c6b640acae733a0bac5beb885320a033afc4cd0afe25a8",
+        "cd89c3872887f3e82a536ba8fefd7768c72d39ed43100186ec7e63b66f56bc2e"
+      ]
+    },
+    "north": {
+      "atlasRow": 7,
+      "reflectedAtRuntime": false,
+      "runtimeFrameHashes": [
+        "88b5295f5a6e6027df284d297c96b591d05bb9f70196bf383fa6307ee0597f0a",
+        "6b53c547140b18696b5bcd15a5d48d6a9d244819df34426a1c28cb7491dee177",
+        "5709262a6bcf124fc55144af45a8db98b5d8b99cf163ba9e61ba13b0c7a0b8ff",
+        "275b33bc058ae6b2054c98039d10d6527101f88c0a70291af288599c894434d7",
+        "88b5295f5a6e6027df284d297c96b591d05bb9f70196bf383fa6307ee0597f0a",
+        "6b53c547140b18696b5bcd15a5d48d6a9d244819df34426a1c28cb7491dee177",
+        "5709262a6bcf124fc55144af45a8db98b5d8b99cf163ba9e61ba13b0c7a0b8ff",
+        "275b33bc058ae6b2054c98039d10d6527101f88c0a70291af288599c894434d7"
+      ]
+    },
+    "south": {
+      "atlasRow": 9,
+      "reflectedAtRuntime": false,
+      "runtimeFrameHashes": [
+        "f9e5de08d0947f822539a265cea882e98664b221a0de4d1a8c3fd591142821c1",
+        "5d38726d010dcc8bf4ad3d27f7bf69015ff325200854dc0b2f5f36ea828a5ab0",
+        "6de7f649dc1546d66ca14062e08ceb39893b63b5f681caba5a38c54d57c90063",
+        "66e3e7985ac7fe842f703154a0c6cfe1763f674403fdb2b52abb6c091192a0bb",
+        "f9e5de08d0947f822539a265cea882e98664b221a0de4d1a8c3fd591142821c1",
+        "5d38726d010dcc8bf4ad3d27f7bf69015ff325200854dc0b2f5f36ea828a5ab0",
+        "6de7f649dc1546d66ca14062e08ceb39893b63b5f681caba5a38c54d57c90063",
+        "66e3e7985ac7fe842f703154a0c6cfe1763f674403fdb2b52abb6c091192a0bb"
+      ]
+    }
+  },
+  "reproduction": {
+    "command": "node scripts/audit-actor-atlases.mjs --report-only --atlas-dir <directory containing staged Vanguard plus unchanged peer atlases> --landmark-sidecar art/motion-landmarks/candidates/vanguard-walk-v3-staged.rejection.json --report-dir <output>",
+    "expectedDisposition": "REJECT",
+    "expectedFailureCodes": [
+      "duplicate-half-cycle",
+      "candidate-landmark-evidence-rejected"
+    ],
+    "expectedSemanticNegativeControls": 7
+  }
+}
