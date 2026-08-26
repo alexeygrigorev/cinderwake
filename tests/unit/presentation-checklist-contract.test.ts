@@ -243,6 +243,31 @@ describe("presentation checklist contract", () => {
     });
   });
 
+  it("binds the city journey gate to its executable evaluator", async () => {
+    const { recipes } = await fixture();
+    const recipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-CITY-027",
+    );
+
+    expect(recipe).toMatchObject({
+      scenarioSet: { coverage: "partial" },
+      deviceProfileSet: { coverage: "implemented" },
+      gestureSet: { coverage: "implemented" },
+      evaluator: {
+        id: "production-city-journey-v1",
+        coverage: "implemented",
+      },
+      reproduce:
+        "npm run test:city-journey && npx vitest run tests/unit/city-journey-evidence.test.ts",
+    });
+    expect(recipe.negativeControls.map(({ id }: { id: string }) => id)).toEqual([
+      "city-sign-removed",
+      "gate-entry-disabled",
+      "service-listener-removed",
+      "service-outcome-suppressed",
+    ]);
+  });
+
   it("binds every visible control bijectively to an intent and deadline", async () => {
     const { contract, recipes, run } = await fixture();
     const check = contract.checks[0];

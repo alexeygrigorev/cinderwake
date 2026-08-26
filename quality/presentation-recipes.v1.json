@@ -1266,11 +1266,11 @@
         ]
       },
       "deviceProfileSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": ["desktop", "phone-portrait", "phone-landscape"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "find-city-sign",
           "navigate-to-gate",
@@ -1282,7 +1282,7 @@
       },
       "evaluator": {
         "id": "production-city-journey-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "city-route-discoverable",
           "gate-transition-completes",
@@ -1290,7 +1290,7 @@
           "all-service-outcomes-visible"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts tests/e2e/city-production-route.spec.ts tests/e2e/city.spec.ts tests/e2e/mobile.spec.ts",
+      "reproduce": "npm run test:city-journey && npx vitest run tests/unit/city-journey-evidence.test.ts",
       "negativeControls": [
         {
           "id": "city-sign-removed",
