@@ -96,6 +96,14 @@ async function main() {
       "quality-results/depth-transition/pres-depth-019",
     ),
   );
+  const collisionRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--collision-root",
+      "quality-results/collision/pres-collide-008",
+    ),
+  );
   const [
     template,
     contract,
@@ -118,6 +126,8 @@ async function main() {
     temporalComparison,
     depthMetadata,
     depthComparison,
+    collisionMetadata,
+    collisionComparison,
   ] = await Promise.all([
     readJson(path.join(repoRoot, "quality/presentation-run.v1.template.json")),
     readJson(path.join(repoRoot, "quality/presentation-checklist.v1.json")),
@@ -140,11 +150,13 @@ async function main() {
     readJson(path.join(temporalRoot, "comparison.json")),
     readJson(path.join(depthRoot, "metadata.json")),
     readJson(path.join(depthRoot, "comparison.json")),
+    readJson(path.join(collisionRoot, "metadata.json")),
+    readJson(path.join(collisionRoot, "comparison.json")),
   ]);
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -169,6 +181,8 @@ async function main() {
     temporalComparison,
     depthMetadata,
     depthComparison,
+    collisionMetadata,
+    collisionComparison,
     commit,
     reproduce,
   });
@@ -194,6 +208,7 @@ async function main() {
   console.log("PRES-SPRITE-004: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOTION-005: NEEDS_VISUAL_REVIEW");
   console.log("PRES-DEPTH-019: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-COLLIDE-008: NEEDS_VISUAL_REVIEW");
   console.log("PRES-LIVE-001: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CITY-027: NEEDS_VISUAL_REVIEW");
   console.log(

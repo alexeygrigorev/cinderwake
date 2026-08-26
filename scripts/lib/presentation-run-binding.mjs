@@ -556,6 +556,50 @@ function depthTransitionArtifactSpecifications() {
   return specifications;
 }
 
+async function collisionArtifactSpecifications(repoRoot) {
+  const root = "quality-results/collision/pres-collide-008";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/collision.json`],
+    ["gesture-or-command-tape", `${root}/collision.json`],
+    ["render-manifest-timeline", `${root}/collision.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+    ["solid-contact-scenarios", `${root}/collision.json`],
+    ["support-and-collider-geometry", `${root}/collision.json`],
+    ["blocked-feedback-frames", `${root}/collision.json`],
+  ];
+  for (const profileId of ["desktop", "phone-portrait"]) {
+    const profileRoot = path.join(repoRoot, root, profileId);
+    specifications.push(
+      ["semantic-snapshot-timeline", `${root}/${profileId}/collision.json`],
+      ["gesture-or-command-tape", `${root}/${profileId}/collision.json`],
+      [
+        "render-manifest-timeline",
+        `${root}/${profileId}/render-manifest-timeline.json`,
+      ],
+      ["negative-control-evidence", `${root}/${profileId}/comparison.json`],
+      ["solid-contact-scenarios", `${root}/${profileId}/collision.json`],
+      ["support-and-collider-geometry", `${root}/${profileId}/collision.json`],
+      ["blocked-feedback-frames", `${root}/${profileId}/contact-sheet.png`],
+    );
+    const files = await fs.readdir(profileRoot);
+    for (const filename of files) {
+      if (filename.startsWith("frame-") && filename.endsWith(".png")) {
+        specifications.push(
+          ["ordered-frame-sequence", `${root}/${profileId}/${filename}`],
+          ["blocked-feedback-frames", `${root}/${profileId}/${filename}`],
+        );
+      }
+      if (filename.startsWith("mask-") && filename.endsWith(".png"))
+        specifications.push([
+          "support-and-collider-geometry",
+          `${root}/${profileId}/${filename}`,
+        ]);
+    }
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -687,6 +731,8 @@ export async function bindPresentationRun({
   temporalComparison,
   depthMetadata,
   depthComparison,
+  collisionMetadata,
+  collisionComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
@@ -698,6 +744,7 @@ export async function bindPresentationRun({
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
   depthArtifacts = depthTransitionArtifactSpecifications(),
+  collisionArtifacts = null,
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
@@ -743,6 +790,12 @@ export async function bindPresentationRun({
   const depthRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-DEPTH-019",
   );
+  const collisionCheck = contract.checks.find(
+    ({ id }) => id === "PRES-COLLIDE-008",
+  );
+  const collisionRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-COLLIDE-008",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
@@ -761,10 +814,12 @@ export async function bindPresentationRun({
     !temporalCheck ||
     !temporalRecipe ||
     !depthCheck ||
-    !depthRecipe
+    !depthRecipe ||
+    !collisionCheck ||
+    !collisionRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/mobile/movement/sprite/temporal/depth contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/sprite/temporal/depth/collision contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -776,6 +831,7 @@ export async function bindPresentationRun({
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
   const depthSource = sourceCommit(depthMetadata, "PRES-DEPTH-019");
+  const collisionSource = sourceCommit(collisionMetadata, "PRES-COLLIDE-008");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
@@ -785,6 +841,7 @@ export async function bindPresentationRun({
     citySource !== spriteSource ||
     citySource !== temporalSource ||
     citySource !== depthSource ||
+    citySource !== collisionSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -817,6 +874,9 @@ export async function bindPresentationRun({
   const depthIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-DEPTH-019",
   );
+  const collisionIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-COLLIDE-008",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
@@ -838,6 +898,10 @@ export async function bindPresentationRun({
     "PRES-MOTION-005",
   );
   const depthComparisonData = comparisonData(depthComparison, "PRES-DEPTH-019");
+  const collisionComparisonData = comparisonData(
+    collisionComparison,
+    "PRES-COLLIDE-008",
+  );
   checks[liveIndex] = await bindRow({
     repoRoot,
     contractCheck: liveCheck,
@@ -929,6 +993,17 @@ export async function bindPresentationRun({
     artifactSpecifications: depthArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: depthMetadata.profileIds,
+  });
+  checks[collisionIndex] = await bindRow({
+    repoRoot,
+    contractCheck: collisionCheck,
+    recipe: collisionRecipe,
+    metadata: collisionMetadata,
+    comparison: collisionComparisonData,
+    artifactSpecifications:
+      collisionArtifacts ?? (await collisionArtifactSpecifications(repoRoot)),
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: collisionMetadata.profileIds,
   });
   return {
     ...structuredClone(template),

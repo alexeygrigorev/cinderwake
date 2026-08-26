@@ -341,7 +341,7 @@
           "swept-contact-holds"
         ]
       },
-      "reproduce": "npx vitest run tests/unit/scenery-collision.test.ts tests/unit/projectile-scenery-collision.test.ts && npx playwright test tests/e2e/scenery-collision.spec.ts tests/e2e/projectile-scenery-collision.spec.ts",
+      "reproduce": "npm run test:collision && npx vitest run tests/unit/scenery-collision.test.ts tests/unit/projectile-scenery-collision.test.ts && npx playwright test tests/e2e/scenery-collision.spec.ts tests/e2e/projectile-scenery-collision.spec.ts",
       "negativeControls": [
         {
           "id": "collider-enlarged-or-offset",

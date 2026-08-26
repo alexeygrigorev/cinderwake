@@ -91,6 +91,9 @@ describe("presentation run binding", () => {
     const depthRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-DEPTH-019",
     );
+    const collisionRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-COLLIDE-008",
+    );
     const cityRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -145,6 +148,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-DEPTH-019",
       ).evidenceRequirements,
     ];
+    const collisionRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-COLLIDE-008",
+      ).evidenceRequirements,
+    ];
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
     const inputArtifacts = await artifactFixture(inputRequirements);
@@ -154,6 +163,7 @@ describe("presentation run binding", () => {
     const spriteArtifacts = await artifactFixture(spriteRequirements);
     const temporalArtifacts = await artifactFixture(temporalRequirements);
     const depthArtifacts = await artifactFixture(depthRequirements);
+    const collisionArtifacts = await artifactFixture(collisionRequirements);
     const commit = "a".repeat(40);
     const metadata = {
       source: { commit, dirty: false },
@@ -187,6 +197,10 @@ describe("presentation run binding", () => {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
     };
+    const collisionMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["desktop", "phone-portrait"],
+    };
     const run = await bindPresentationRun({
       repoRoot: root,
       runId: "binding-fixture",
@@ -211,6 +225,8 @@ describe("presentation run binding", () => {
       temporalComparison: comparison(temporalRecipe),
       depthMetadata,
       depthComparison: comparison(depthRecipe),
+      collisionMetadata,
+      collisionComparison: comparison(collisionRecipe),
       commit,
       reproduce:
         "npm run test:city-journey && npm run test:state-replay && npm run test:input-intents",
@@ -223,6 +239,7 @@ describe("presentation run binding", () => {
       spriteArtifacts,
       temporalArtifacts,
       depthArtifacts,
+      collisionArtifacts,
     });
     const report = validatePresentationChecklist(contract, recipes, run, {
       mode: "lint",
@@ -254,6 +271,9 @@ describe("presentation run binding", () => {
     )!;
     const depth = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-DEPTH-019",
+    )!;
+    const collision = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-COLLIDE-008",
     )!;
 
     expect(report.valid).toBe(true);
@@ -343,6 +363,17 @@ describe("presentation run binding", () => {
     );
     expect(
       depth.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(collision.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(collision.observed.deviceProfileIds).toEqual([
+      "desktop",
+      "phone-portrait",
+    ]);
+    expect(collision.signals).toHaveLength(
+      collisionRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      collision.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
   });
 });

@@ -45,6 +45,8 @@ export interface PresentationRunBindingInput {
   temporalComparison: any;
   depthMetadata: any;
   depthComparison: any;
+  collisionMetadata: any;
+  collisionComparison: any;
   commit: string;
   reproduce: string;
   cityArtifacts?: Array<readonly [string, string]>;
@@ -56,6 +58,7 @@ export interface PresentationRunBindingInput {
   spriteArtifacts?: Array<readonly [string, string]>;
   temporalArtifacts?: Array<readonly [string, string]>;
   depthArtifacts?: Array<readonly [string, string]>;
+  collisionArtifacts?: Array<readonly [string, string]> | null;
 }
 
 export declare function bindPresentationRun(
