@@ -541,10 +541,7 @@ function assertWorldUiCall(
     call.frameOpacity,
     `${pathName}.frameOpacity`,
   );
-  const fillOpacity = finiteNumber(
-    call.fillOpacity,
-    `${pathName}.fillOpacity`,
-  );
+  const fillOpacity = finiteNumber(call.fillOpacity, `${pathName}.fillOpacity`);
   if (frameOpacity > 1) fail(`${pathName}.frameOpacity must be <= 1`);
   if (fillOpacity > 1) fail(`${pathName}.fillOpacity must be <= 1`);
   const frame = object(call.frame, `${pathName}.frame`);
