@@ -5,6 +5,15 @@ import path from "node:path";
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
 const LIVE_PROFILE_IDS = ["desktop", "phone-portrait"];
+const MOTION_PROFILE_IDS = ["desktop", "phone-portrait"];
+const MOTION_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
+const MOTION_CAMERA_MODES = ["fixed", "follow"];
+const MOTION_DIRECTION_IDS = [
+  "move-north",
+  "move-east",
+  "move-south",
+  "move-west",
+];
 const CITY_FRAME_FILES = [
   "frame-0000-ordinary-wilderness.png",
   "frame-0001-ordinary-city-discovered.png",
@@ -368,6 +377,55 @@ function liveArtifactSpecifications() {
   return specifications;
 }
 
+function directionalMotionFrameFiles() {
+  const files = [];
+  let index = 0;
+  const frame = (label) =>
+    `frame-${String(index++).padStart(4, "0")}-${label}.png`;
+  for (const actorId of MOTION_ACTOR_IDS)
+    for (const cameraMode of MOTION_CAMERA_MODES) {
+      files.push(frame(`${actorId}-${cameraMode}-initial`));
+      for (const directionId of MOTION_DIRECTION_IDS) {
+        files.push(
+          frame(`${actorId}-${cameraMode}-${directionId}-before`),
+          frame(`${actorId}-${cameraMode}-${directionId}-after`),
+        );
+      }
+    }
+  return files;
+}
+
+function directionalMotionArtifactSpecifications() {
+  const root = "quality-results/directional-motion/pres-move-003";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["cardinal-input-timeline", `${root}/movement.json`],
+    ["world-screen-camera-anchors", `${root}/movement.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+  ];
+  for (const profileId of MOTION_PROFILE_IDS) {
+    specifications.push(
+      ["cardinal-input-timeline", `${root}/${profileId}/gesture-log.json`],
+      ["world-screen-camera-anchors", `${root}/${profileId}/states.json`],
+      [
+        "world-screen-camera-anchors",
+        `${root}/${profileId}/render-manifest-timeline.json`,
+      ],
+      ["walk-mask-contact-sheet", `${root}/${profileId}/contact-sheet.png`],
+      [
+        "walk-mask-contact-sheet",
+        `${root}/${profileId}/directional-motion.webm`,
+      ],
+    );
+    for (const filename of directionalMotionFrameFiles())
+      specifications.push([
+        "ordered-frame-sequence",
+        `${root}/${profileId}/${filename}`,
+      ]);
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -489,17 +547,23 @@ export async function bindPresentationRun({
   inputComparison,
   liveMetadata,
   liveComparison,
+  movementMetadata,
+  movementComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
   stateArtifacts = stateArtifactSpecifications(),
   inputArtifacts = inputArtifactSpecifications(),
   liveArtifacts = liveArtifactSpecifications(),
+  movementArtifacts = directionalMotionArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
   const inputCheck = contract.checks.find(({ id }) => id === "PRES-INPUT-002");
   const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
+  const movementCheck = contract.checks.find(
+    ({ id }) => id === "PRES-MOVE-003",
+  );
   const cityRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CITY-027",
   );
@@ -512,6 +576,9 @@ export async function bindPresentationRun({
   const liveRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-LIVE-001",
   );
+  const movementRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-MOVE-003",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
@@ -520,18 +587,24 @@ export async function bindPresentationRun({
     !cityRecipe ||
     !stateRecipe ||
     !inputRecipe ||
-    !liveRecipe
+    !liveRecipe ||
+    !movementCheck ||
+    !movementRecipe
   )
-    throw new Error("P0 live/city/state/input contract recipes are incomplete");
+    throw new Error(
+      "P0 live/city/state/input/movement contract recipes are incomplete",
+    );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
   const stateSource = sourceCommit(stateMetadata, "PRES-STATE-028");
   const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
   const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
+  const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
     citySource !== liveSource ||
+    citySource !== movementSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -549,10 +622,17 @@ export async function bindPresentationRun({
   const liveIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-LIVE-001",
   );
+  const movementIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-MOVE-003",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
   const liveComparisonData = comparisonData(liveComparison, "PRES-LIVE-001");
+  const movementComparisonData = comparisonData(
+    movementComparison,
+    "PRES-MOVE-003",
+  );
   checks[liveIndex] = await bindRow({
     repoRoot,
     contractCheck: liveCheck,
@@ -592,6 +672,16 @@ export async function bindPresentationRun({
     artifactSpecifications: inputArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: inputMetadata.profileIds,
+  });
+  checks[movementIndex] = await bindRow({
+    repoRoot,
+    contractCheck: movementCheck,
+    recipe: movementRecipe,
+    metadata: movementMetadata,
+    comparison: movementComparisonData,
+    artifactSpecifications: movementArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: movementMetadata.profileIds,
   });
   return {
     ...structuredClone(template),

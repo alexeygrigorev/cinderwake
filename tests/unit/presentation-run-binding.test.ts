@@ -76,6 +76,9 @@ describe("presentation run binding", () => {
     const liveRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
     );
+    const movementRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
+    );
     const cityRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -100,10 +103,17 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-LIVE-001",
       ).evidenceRequirements,
     ];
+    const movementRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-MOVE-003",
+      ).evidenceRequirements,
+    ];
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
     const inputArtifacts = await artifactFixture(inputRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
+    const movementArtifacts = await artifactFixture(movementRequirements);
     const commit = "a".repeat(40);
     const metadata = {
       source: { commit, dirty: false },
@@ -114,6 +124,10 @@ describe("presentation run binding", () => {
       profileIds: ["phone-portrait", "phone-landscape"],
     };
     const liveMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["desktop", "phone-portrait"],
+    };
+    const movementMetadata = {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
     };
@@ -131,6 +145,8 @@ describe("presentation run binding", () => {
       inputComparison: comparison(inputRecipe),
       liveMetadata,
       liveComparison: comparison(liveRecipe),
+      movementMetadata,
+      movementComparison: comparison(movementRecipe),
       commit,
       reproduce:
         "npm run test:city-journey && npm run test:state-replay && npm run test:input-intents",
@@ -138,6 +154,7 @@ describe("presentation run binding", () => {
       stateArtifacts,
       inputArtifacts,
       liveArtifacts,
+      movementArtifacts,
     });
     const report = validatePresentationChecklist(contract, recipes, run, {
       mode: "lint",
@@ -154,6 +171,9 @@ describe("presentation run binding", () => {
     )!;
     const live = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
+    )!;
+    const movement = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     )!;
 
     expect(report.valid).toBe(true);
@@ -189,6 +209,17 @@ describe("presentation run binding", () => {
     );
     expect(
       live.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(movement.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(movement.observed.deviceProfileIds).toEqual([
+      "desktop",
+      "phone-portrait",
+    ]);
+    expect(movement.signals).toHaveLength(
+      movementRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      movement.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
   });
 });

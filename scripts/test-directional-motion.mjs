@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "@playwright/test";
+import sharp from "sharp";
 import {
   DIRECTIONAL_MOTION_ACTOR_IDS,
   DIRECTIONAL_MOTION_DIRECTION_IDS,
@@ -448,6 +449,36 @@ function publicSample(sample) {
   };
 }
 
+async function writeContactSheet(directory, captures) {
+  const selected = captures.filter(({ label }) => label.endsWith("-after"));
+  const cellWidth = 320;
+  const cellHeight = 180;
+  const columns = 4;
+  const rows = Math.ceil(selected.length / columns);
+  const layers = [];
+  for (const [index, capture] of selected.entries()) {
+    layers.push({
+      input: await sharp(capture.frame)
+        .resize(cellWidth, cellHeight, { fit: "fill" })
+        .png()
+        .toBuffer(),
+      left: (index % columns) * cellWidth,
+      top: Math.floor(index / columns) * cellHeight,
+    });
+  }
+  await sharp({
+    create: {
+      width: columns * cellWidth,
+      height: rows * cellHeight,
+      channels: 4,
+      background: "#120f16",
+    },
+  })
+    .composite(layers)
+    .png()
+    .toFile(path.join(directory, "contact-sheet.png"));
+}
+
 async function normalizeProfile(raw, profileId) {
   const directory = path.join(OUTPUT, profileId);
   await fs.mkdir(directory, { recursive: true });
@@ -562,6 +593,7 @@ async function normalizeProfile(raw, profileId) {
       ),
     }),
   ]);
+  await writeContactSheet(directory, normalizedCaptures);
   return { profileId, runs, timeline };
 }
 
