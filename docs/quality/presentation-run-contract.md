@@ -24,16 +24,17 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:city-journey
    npm run test:state-replay
    npm run test:input-intents
+   npm run test:production-liveness
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
 
    The binder refuses dirty or stale recorder metadata, hashes every referenced
    artifact, copies the canonical signals and detected mutations, records
-   `PRES-STATE-028` as a machine `PASS`, and records `PRES-CITY-027` and
-   `PRES-INPUT-002` as `NEEDS_VISUAL_REVIEW` because their ordered frames and
-   mobile videos still need independent review. Its output remains under
-   `quality-results/`; it does not claim that the other 25 rows ran or that
-   the city/input frames were visually accepted.
+   `PRES-STATE-028` as a machine `PASS`, and records `PRES-LIVE-001`,
+   `PRES-CITY-027`, and `PRES-INPUT-002` as `NEEDS_VISUAL_REVIEW` because
+   their ordered frames and videos still need independent review. Its output
+   remains under `quality-results/`; it does not claim that the other 24 rows
+   ran or that the live/city/input frames were visually accepted.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.
