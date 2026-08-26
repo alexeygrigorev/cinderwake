@@ -36,9 +36,9 @@ function capture(tick: number, classId = "vanguard", attacks = 0) {
 function activation(
   controlId: string,
   intentId: string,
-  before,
-  after,
-  postcondition,
+  before: ReturnType<typeof capture>,
+  after: ReturnType<typeof capture>,
+  postcondition: Record<string, unknown>,
 ) {
   return {
     controlId,

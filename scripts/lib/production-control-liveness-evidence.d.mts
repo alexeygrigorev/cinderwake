@@ -10,12 +10,12 @@ export declare const PRODUCTION_LIVENESS_DEADLINES_MS: {
 };
 
 export interface ProductionControlLivenessEvidenceInput {
-  profiles: unknown[];
+  profiles: readonly unknown[];
   recovery: unknown;
-  requiredProfiles?: string[];
-  requiredScenarioIds?: string[];
-  requiredClasses?: string[];
-  deadlines?: Record<string, number>;
+  requiredProfiles?: readonly string[];
+  requiredScenarioIds?: readonly string[];
+  requiredClasses?: readonly string[];
+  deadlines?: Readonly<Record<string, number>>;
 }
 
 export declare function evaluateProductionControlLiveness(
