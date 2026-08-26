@@ -111,6 +111,75 @@ function dataUrlBuffer(value) {
   return Buffer.from(value.slice("data:image/png;base64,".length), "base64");
 }
 
+function directionalSnapshot(snapshot) {
+  return {
+    schemaVersion: snapshot.schemaVersion,
+    scenarioId: snapshot.scenarioId,
+    tick: snapshot.tick,
+    player: {
+      classId: snapshot.player?.classId,
+      position: snapshot.player?.position,
+      previousPosition: snapshot.player?.previousPosition,
+      velocity: snapshot.player?.velocity,
+      facing: snapshot.player?.facing,
+      animation: snapshot.player?.animation,
+    },
+  };
+}
+
+function directionalDrawCall(call) {
+  if (!call) return null;
+  return {
+    entityId: call.entityId,
+    type: call.type,
+    geometryId: call.geometryId,
+    clip: call.clip,
+    frameIndex: call.frameIndex,
+    frameCount: call.frameCount,
+    frameIdentity: call.frameIdentity,
+    facing: call.facing,
+    facingBucket: call.facingBucket,
+    worldAnchor: call.worldAnchor,
+    screenAnchor: call.screenAnchor,
+    destinationRect: call.destinationRect,
+    footAnchor: call.footAnchor,
+    visible: call.visible,
+  };
+}
+
+function directionalManifest(manifest) {
+  const referenceScene = manifest.sceneSprites?.find(
+    ({ objectId }) => objectId === REFERENCE_SCENE_ID,
+  );
+  return {
+    schemaVersion: manifest.schemaVersion,
+    tick: manifest.tick,
+    simTick: manifest.simTick,
+    presentationTick: manifest.presentationTick,
+    interpolationAlpha: manifest.interpolationAlpha,
+    cameraMode: manifest.cameraMode,
+    camera: manifest.camera,
+    cameraTarget: manifest.cameraTarget,
+    viewport: manifest.viewport,
+    drawCalls: [
+      directionalDrawCall(
+        manifest.drawCalls?.find(({ entityId }) => entityId === "player"),
+      ),
+    ].filter(Boolean),
+    sceneSprites: referenceScene
+      ? [
+          {
+            objectId: referenceScene.objectId,
+            visible: referenceScene.visible,
+            worldAnchor: referenceScene.worldAnchor,
+            screenAnchor: referenceScene.screenAnchor,
+            destinationRect: referenceScene.destinationRect,
+          },
+        ]
+      : [],
+  };
+}
+
 async function startServer(port) {
   const server = spawn(
     "npm",
@@ -401,16 +470,18 @@ async function runActorMode(
 function normalizeCapture(raw, directory, index) {
   const frame = dataUrlBuffer(raw.frame);
   const frameFile = `frame-${String(index).padStart(4, "0")}-${raw.label}.png`;
+  const snapshot = directionalSnapshot(raw.snapshot);
+  const manifest = directionalManifest(raw.manifest);
   return {
     tick: raw.tick,
     stateTick: raw.stateTick,
     manifestTick: raw.manifestTick,
-    stateHash: hashJson(raw.snapshot),
-    manifestHash: hashJson(raw.manifest),
+    stateHash: hashJson(snapshot),
+    manifestHash: hashJson(manifest),
     frameHash: sha256(frame),
     frameFile,
-    snapshot: raw.snapshot,
-    manifest: raw.manifest,
+    snapshot,
+    manifest,
     referenceScene: raw.referenceScene,
     frame,
     label: raw.label,
