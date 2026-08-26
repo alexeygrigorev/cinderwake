@@ -260,12 +260,14 @@ describe("presentation checklist contract", () => {
       reproduce:
         "npm run test:city-journey && npx vitest run tests/unit/city-journey-evidence.test.ts",
     });
-    expect(recipe.negativeControls.map(({ id }: { id: string }) => id)).toEqual([
-      "city-sign-removed",
-      "gate-entry-disabled",
-      "service-listener-removed",
-      "service-outcome-suppressed",
-    ]);
+    expect(recipe.negativeControls.map(({ id }: { id: string }) => id)).toEqual(
+      [
+        "city-sign-removed",
+        "gate-entry-disabled",
+        "service-listener-removed",
+        "service-outcome-suppressed",
+      ],
+    );
   });
 
   it("binds every visible control bijectively to an intent and deadline", async () => {

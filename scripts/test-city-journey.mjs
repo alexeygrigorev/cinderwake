@@ -374,12 +374,7 @@ async function driveTo(
         x: fallbackDirection.x,
         y: fallbackDirection.y,
       });
-      latest = await waitForWaypointProgress(
-        page,
-        before,
-        waypoint,
-        complete,
-      );
+      latest = await waitForWaypointProgress(page, before, waypoint, complete);
     }
     if (DEBUG)
       console.log(
