@@ -754,10 +754,10 @@ button {
 @media (orientation: landscape) and (max-height: 500px) {
   .city-service-sheet {
     top: max(52px, var(--safe-area-inset-top));
-    right: max(96px, var(--safe-area-inset-right));
+    right: calc(139px + max(10px, var(--safe-area-inset-right)));
     bottom: auto;
     left: auto;
-    width: min(390px, calc(100vw - 230px));
+    width: min(390px, calc(100vw - 291px));
     padding: 6px 9px 5px;
   }
 
@@ -1774,7 +1774,7 @@ button {
   }
 
   .game .mobile-controls {
-    height: calc(104px + var(--safe-area-inset-bottom));
+    height: calc(96px + var(--safe-area-inset-bottom));
   }
 
   .game .hud.bottom {
