@@ -79,6 +79,9 @@ describe("presentation run binding", () => {
     const movementRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     );
+    const spriteRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
+    );
     const cityRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -109,11 +112,18 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-MOVE-003",
       ).evidenceRequirements,
     ];
+    const spriteRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-SPRITE-004",
+      ).evidenceRequirements,
+    ];
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
     const inputArtifacts = await artifactFixture(inputRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
+    const spriteArtifacts = await artifactFixture(spriteRequirements);
     const commit = "a".repeat(40);
     const metadata = {
       source: { commit, dirty: false },
@@ -131,6 +141,10 @@ describe("presentation run binding", () => {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
     };
+    const spriteMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["runtime-atlas-native-resolution"],
+    };
     const run = await bindPresentationRun({
       repoRoot: root,
       runId: "binding-fixture",
@@ -147,6 +161,8 @@ describe("presentation run binding", () => {
       liveComparison: comparison(liveRecipe),
       movementMetadata,
       movementComparison: comparison(movementRecipe),
+      spriteMetadata,
+      spriteComparison: comparison(spriteRecipe),
       commit,
       reproduce:
         "npm run test:city-journey && npm run test:state-replay && npm run test:input-intents",
@@ -155,6 +171,7 @@ describe("presentation run binding", () => {
       inputArtifacts,
       liveArtifacts,
       movementArtifacts,
+      spriteArtifacts,
     });
     const report = validatePresentationChecklist(contract, recipes, run, {
       mode: "lint",
@@ -174,6 +191,9 @@ describe("presentation run binding", () => {
     )!;
     const movement = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
+    )!;
+    const sprite = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
     )!;
 
     expect(report.valid).toBe(true);
@@ -220,6 +240,16 @@ describe("presentation run binding", () => {
     );
     expect(
       movement.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(sprite.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(sprite.observed.deviceProfileIds).toEqual([
+      "runtime-atlas-native-resolution",
+    ]);
+    expect(sprite.signals).toHaveLength(
+      spriteRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      sprite.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
   });
 });

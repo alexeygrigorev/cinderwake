@@ -14,6 +14,23 @@ const MOTION_DIRECTION_IDS = [
   "move-south",
   "move-west",
 ];
+const ACTOR_ATLAS_ACTOR_IDS = [
+  "vanguard",
+  "ranger",
+  "arcanist",
+  "ashfang",
+  "hexer",
+  "stonekin",
+];
+const ACTOR_ATLAS_FACING_IDS = ["east", "west", "north", "south"];
+const ACTOR_ATLAS_CLIP_IDS = [
+  "idle",
+  "walk",
+  "attack",
+  "ability",
+  "hurt",
+  "death",
+];
 const CITY_FRAME_FILES = [
   "frame-0000-ordinary-wilderness.png",
   "frame-0001-ordinary-city-discovered.png",
@@ -426,6 +443,32 @@ function directionalMotionArtifactSpecifications() {
   return specifications;
 }
 
+function actorAtlasArtifactSpecifications() {
+  const root = "quality-results/actor-atlas-audit";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["negative-control-evidence", `${root}/report.json`],
+    ["atlas-catalog-hashes", `${root}/metadata.json`],
+    ["all-bank-cell-masks", `${root}/report.json`],
+    ["atlas-audit-report", `${root}/report.json`],
+    ["canonical-character-layout-contract", `${root}/report.json`],
+    ["clip-facing-cell-map", `${root}/report.json`],
+    ["registry-completeness-report", `${root}/report.json`],
+    ["production-decode-evidence", `${root}/report.json`],
+    ["actor-atlas-audit-html", `${root}/index.html`],
+  ];
+  for (const actorId of ACTOR_ATLAS_ACTOR_IDS) {
+    specifications.push(["actor-overview", `${root}/overviews/${actorId}.png`]);
+    for (const facingId of ACTOR_ATLAS_FACING_IDS)
+      for (const clipId of ACTOR_ATLAS_CLIP_IDS)
+        specifications.push([
+          "all-bank-cell-masks",
+          `${root}/strips/${actorId}/${facingId}-${clipId}.png`,
+        ]);
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -549,6 +592,8 @@ export async function bindPresentationRun({
   liveComparison,
   movementMetadata,
   movementComparison,
+  spriteMetadata,
+  spriteComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
@@ -556,6 +601,7 @@ export async function bindPresentationRun({
   inputArtifacts = inputArtifactSpecifications(),
   liveArtifacts = liveArtifactSpecifications(),
   movementArtifacts = directionalMotionArtifactSpecifications(),
+  spriteArtifacts = actorAtlasArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
@@ -563,6 +609,9 @@ export async function bindPresentationRun({
   const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
+  );
+  const spriteCheck = contract.checks.find(
+    ({ id }) => id === "PRES-SPRITE-004",
   );
   const cityRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CITY-027",
@@ -579,6 +628,9 @@ export async function bindPresentationRun({
   const movementRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOVE-003",
   );
+  const spriteRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-SPRITE-004",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
@@ -589,10 +641,12 @@ export async function bindPresentationRun({
     !inputRecipe ||
     !liveRecipe ||
     !movementCheck ||
-    !movementRecipe
+    !movementRecipe ||
+    !spriteCheck ||
+    !spriteRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/movement contract recipes are incomplete",
+      "P0 live/city/state/input/movement/sprite contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -600,11 +654,13 @@ export async function bindPresentationRun({
   const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
   const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
+  const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
     citySource !== liveSource ||
     citySource !== movementSource ||
+    citySource !== spriteSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -625,6 +681,9 @@ export async function bindPresentationRun({
   const movementIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOVE-003",
   );
+  const spriteIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-SPRITE-004",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
@@ -632,6 +691,10 @@ export async function bindPresentationRun({
   const movementComparisonData = comparisonData(
     movementComparison,
     "PRES-MOVE-003",
+  );
+  const spriteComparisonData = comparisonData(
+    spriteComparison,
+    "PRES-SPRITE-004",
   );
   checks[liveIndex] = await bindRow({
     repoRoot,
@@ -682,6 +745,16 @@ export async function bindPresentationRun({
     artifactSpecifications: movementArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: movementMetadata.profileIds,
+  });
+  checks[spriteIndex] = await bindRow({
+    repoRoot,
+    contractCheck: spriteCheck,
+    recipe: spriteRecipe,
+    metadata: spriteMetadata,
+    comparison: spriteComparisonData,
+    artifactSpecifications: spriteArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: spriteMetadata.profileIds,
   });
   return {
     ...structuredClone(template),
