@@ -1339,7 +1339,7 @@
       },
       "evaluator": {
         "id": "state-replay-determinism-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "loaded-state-matches",
           "reset-isolates-runs",
@@ -1347,7 +1347,7 @@
           "replay-manifest-frame-hashes-match"
         ]
       },
-      "reproduce": "npx vitest run tests/unit/testkit.test.ts tests/unit/temporal-scenarios.test.ts && npx playwright test tests/e2e/browser-bridge.spec.ts tests/visual/animation.spec.ts",
+      "reproduce": "npm run test:state-replay && npx vitest run tests/unit/state-replay.test.ts",
       "negativeControls": [
         {
           "id": "stale-state-retained-after-reset",

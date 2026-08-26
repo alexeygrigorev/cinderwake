@@ -227,6 +227,22 @@ describe("presentation checklist contract", () => {
     }
   });
 
+  it("binds the state replay gate to its executable evaluator", async () => {
+    const { recipes } = await fixture();
+    const recipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-STATE-028",
+    );
+
+    expect(recipe).toMatchObject({
+      evaluator: {
+        id: "state-replay-determinism-v1",
+        coverage: "implemented",
+      },
+      reproduce:
+        "npm run test:state-replay && npx vitest run tests/unit/state-replay.test.ts",
+    });
+  });
+
   it("binds every visible control bijectively to an intent and deadline", async () => {
     const { contract, recipes, run } = await fixture();
     const check = contract.checks[0];

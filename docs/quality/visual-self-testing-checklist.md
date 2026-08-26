@@ -417,8 +417,8 @@ These rows were appended without renumbering the published presentation IDs. The
 - Ordered artifacts: serialized initial state; load/reset records; per-tick semantic state hashes; render-manifest hashes; ordered lossless frame hashes; final states; environment and exact command.
 - Machine signal and threshold: loaded state equals the canonical serialized input; reset leaves no entity, input, camera, animation, or presentation residue; same input produces identical per-tick state hashes; synchronized manifests and deterministic frames match at every declared capture tick.
 - Required negative control: retain stale state after reset, perturb one replay state tick, perturb one deterministic frame, and shift one manifest/frame tick association. Each must fail its dedicated isolation, state-hash, frame-hash, or synchronization signal.
-- Current evidence: `tests/e2e/browser-bridge.spec.ts`, `tests/unit/testkit.test.ts`, temporal scenario tests, and deterministic visual captures cover important parts separately.
-- Missing automation/next implementation: one evaluator must bind those parts into two replay bundles and compare every state/manifest/frame tick rather than trusting independently green tests.
+- Current evidence: `npm run test:state-replay` now records two browser replay bundles, compares every declared state/manifest/frame tick, and runs the four required negative controls; `tests/unit/state-replay.test.ts` exercises the comparator without a browser.
+- Missing automation/next implementation: execute the evaluator as part of a retained presentation run and populate the row-bound artifacts/signals; the generated bundle is evidence, not an automatic PASS for the still-Partial P0 row.
 - Independent visual-agent review mandatory: **no** for exact deterministic equivalence; the relevant presentation rows still require review of whether matching frames look good.
 
 ## Result record template
