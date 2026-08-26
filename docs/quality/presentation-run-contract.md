@@ -18,11 +18,26 @@ The prose checklist remains the human explanation of what matters. The versioned
 
    This initializes a record; it does not execute a recipe, collect evidence, run a mutation, or perform visual review.
 
-2. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
-3. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.
-4. Record evaluator signals as structured `actual` and `contract` values, and copy the recipe's exact per-row reproduction command. A partial, missing, or calibration-required recipe cannot become `PASS`.
-5. Mark a negative control `DETECTED` only when its exact recipe `expectedSignal` and at least one hash-bound artifact are retained.
-6. For mandatory review rows, record a stable `reviewerId`, nonempty reasons, `ACCEPT`, and SHA-256 values drawn only from that row's claimed artifacts. `REJECT`, `UNCERTAIN`, and `NOT_RUN` cannot be promoted to `PASS`.
+2. Run the executable P0 recorders and bind their fresh bundles into a row-level run:
+
+   ```sh
+   npm run test:city-journey
+   npm run test:state-replay
+   npm run quality:presentation:bind -- --run-id <run-id>
+   ```
+
+   The binder refuses dirty or stale recorder metadata, hashes every referenced
+   artifact, copies the canonical signals and detected mutations, records
+   `PRES-STATE-028` as a machine `PASS`, and records `PRES-CITY-027` as
+   `NEEDS_VISUAL_REVIEW`. Its output remains under `quality-results/`; it does
+   not claim that the other 26 rows ran or that the city frames were visually
+   accepted.
+
+3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
+4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.
+5. Record evaluator signals as structured `actual` and `contract` values, and copy the recipe's exact per-row reproduction command. A partial, missing, or calibration-required recipe cannot become `PASS`.
+6. Mark a negative control `DETECTED` only when its exact recipe `expectedSignal` and at least one hash-bound artifact are retained.
+7. For mandatory review rows, record a stable `reviewerId`, nonempty reasons, `ACCEPT`, and SHA-256 values drawn only from that row's claimed artifacts. `REJECT`, `UNCERTAIN`, and `NOT_RUN` cannot be promoted to `PASS`.
 
 Inspect the ordered run at any point without changing it:
 
