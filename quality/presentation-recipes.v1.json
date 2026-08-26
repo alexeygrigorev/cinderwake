@@ -861,10 +861,12 @@
         "requiredSignalIds": [
           "z-order-follows-foot-boundary",
           "attachments-follow-owner",
-          "health-effect-occlusion-in-range"
+          "health-effect-occlusion-in-range",
+          "state-manifest-anchors-reconcile",
+          "ordered-combat-transition"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/depth-transition-thorn-pillar.spec.ts tests/e2e/live-player-journey.spec.ts",
+      "reproduce": "npm run test:depth-transition && npx playwright test tests/e2e/depth-transition-thorn-pillar.spec.ts tests/e2e/live-player-journey.spec.ts",
       "negativeControls": [
         {
           "id": "actor-prop-z-swapped",
