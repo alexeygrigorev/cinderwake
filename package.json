@@ -21,6 +21,7 @@
     "test:input-intents": "node scripts/test-input-intents.mjs",
     "test:directional-motion": "node scripts/test-directional-motion.mjs",
     "test:production-liveness": "node scripts/test-production-liveness.mjs",
+    "test:mobile-screen": "node scripts/test-mobile-screen.mjs",
     "capture:sequence": "node scripts/capture-sequence.mjs",
     "capture:matrix": "node scripts/capture-matrix.mjs",
     "report:screens": "node scripts/build-screen-report.mjs",
