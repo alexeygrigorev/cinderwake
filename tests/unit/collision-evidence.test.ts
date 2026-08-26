@@ -133,11 +133,15 @@ describe("PRES-COLLIDE-008 evidence oracle", () => {
 
   it("reports missing coverage and overlap as actionable failures", () => {
     const value = evidence();
-    value.profiles[0].scenarios[0].contacts[0].blockedPosition = {
+    const profile = value.profiles.at(0);
+    if (!profile) throw new Error("fixture must include a profile");
+    const contact = profile.scenarios.at(0)?.contacts?.at(0);
+    if (!contact) throw new Error("fixture must include a contact");
+    contact.blockedPosition = {
       x: 1000,
       y: 1000,
     };
-    value.profiles[0].scenarios = value.profiles[0].scenarios.slice(0, 1);
+    profile.scenarios = profile.scenarios.slice(0, 1);
     const result = evaluateCollisionEvidence(value);
     expect(result.pass).toBe(false);
     expect(result.failures).toEqual(
