@@ -33,6 +33,8 @@ export interface PresentationRunBindingInput {
   stateComparison: any;
   inputMetadata: any;
   inputComparison: any;
+  mobileMetadata: any;
+  mobileComparison: any;
   liveMetadata: any;
   liveComparison: any;
   movementMetadata: any;
@@ -46,6 +48,7 @@ export interface PresentationRunBindingInput {
   cityArtifacts?: Array<readonly [string, string]>;
   stateArtifacts?: Array<readonly [string, string]>;
   inputArtifacts?: Array<readonly [string, string]>;
+  mobileArtifacts?: Array<readonly [string, string]> | null;
   liveArtifacts?: Array<readonly [string, string]>;
   movementArtifacts?: Array<readonly [string, string]>;
   spriteArtifacts?: Array<readonly [string, string]>;
