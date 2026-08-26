@@ -324,6 +324,7 @@ export function stateFromSnapshot(input: unknown): GameState {
     const path = `state.effects[${index}]`;
     const item = record(effectValue, path);
     entityId(item.id, `${path}.id`);
+    if (item.ownerId !== undefined) string(item.ownerId, `${path}.ownerId`);
     if (!new Set(["slash", "nova", "impact"]).has(item.kind as string))
       throw new Error(`${path}.kind is invalid`);
     vector(item.position, `${path}.position`);

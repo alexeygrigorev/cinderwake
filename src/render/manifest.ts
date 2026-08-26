@@ -49,6 +49,8 @@ export interface SpriteReferenceV2 {
 
 export interface DrawCallV1 extends SpriteReferenceV2 {
   entityId: string;
+  /** Present for combat effects that are attached to an actor. */
+  ownerId?: string;
   type: "player" | "monster" | "npc" | "loot" | "projectile" | "effect";
   geometryId: string;
   clip: AnimationClip | "resident-idle" | "loot" | "projectile" | "static";
@@ -1205,6 +1207,7 @@ export function buildRenderManifest(
     add(
       {
         entityId: effect.id,
+        ...(effect.ownerId ? { ownerId: effect.ownerId } : {}),
         type: "effect",
         geometryId: `effect:${effect.kind}`,
         clip: "static",

@@ -116,6 +116,7 @@ export interface ScenarioPendingAttackV1 {
 
 export interface ScenarioEffectV1 {
   id?: string;
+  ownerId?: string;
   kind: EffectState["kind"];
   tile: VecTuple;
   color: string;
@@ -807,6 +808,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       monster,
       [
         "id",
+        "ownerId",
         "kind",
         "tile",
         "previousTile",
@@ -989,6 +991,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
     if (!(["slash", "nova", "impact"] as unknown[]).includes(effect.kind))
       throw new Error(`${path}.kind is invalid`);
     assertOptionalString(effect.id, `${path}.id`);
+    assertOptionalString(effect.ownerId, `${path}.ownerId`);
     assertTuple(effect.tile, `${path}.tile`);
     assertString(effect.color, `${path}.color`);
     for (const field of ["startedAtTick", "expiresAtTick", "radius"] as const)
@@ -1231,6 +1234,7 @@ export function worldFromScenario(input: ScenarioV1): GameState {
   }));
   state.effects = (input.effects ?? []).map((effect, index): EffectState => ({
     id: effect.id ?? `effect:fixture:${index}`,
+    ...(effect.ownerId ? { ownerId: effect.ownerId } : {}),
     kind: effect.kind,
     position: positionFromTile(effect.tile),
     color: effect.color,

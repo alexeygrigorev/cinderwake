@@ -128,6 +128,8 @@ export interface LootState {
 
 export interface EffectState {
   id: string;
+  /** Actor that owns an attached combat effect; world impacts may omit it. */
+  ownerId?: string;
   kind: "slash" | "nova" | "impact";
   position: Vec2;
   color: string;

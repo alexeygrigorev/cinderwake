@@ -453,6 +453,7 @@ function applyDamageToMonster(
   );
   state.effects.push({
     id: `effect:${state.nextEntityId}`,
+    ownerId: monster.id,
     kind: "impact",
     position: { ...monster.position },
     color:
@@ -681,6 +682,7 @@ function resolvePendingAttacks(state: GameState): void {
       hitCone(state, attack, attack.kind === "ability" ? 512 : 724);
       state.effects.push({
         id: `effect:${attack.id}`,
+        ownerId: "player",
         kind: attack.kind === "ability" ? "nova" : "slash",
         position: { ...attack.origin },
         color: ARCHETYPES.vanguard.accent,
@@ -718,6 +720,7 @@ function resolvePendingAttacks(state: GameState): void {
       }
       state.effects.push({
         id: `effect:${attack.id}`,
+        ownerId: "player",
         kind: "nova",
         position: { ...attack.origin },
         color: ARCHETYPES.arcanist.accent,
@@ -871,6 +874,7 @@ function damagePlayer(
   const source = state.monsters.find((monster) => monster.id === sourceId);
   state.effects.push({
     id: `effect:${state.nextEntityId}`,
+    ownerId: "player",
     kind: "impact",
     position: { ...state.player.position },
     color: source ? MONSTERS[source.kind].color : "#ef7868",
