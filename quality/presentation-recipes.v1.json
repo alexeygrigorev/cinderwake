@@ -1259,7 +1259,7 @@
       "id": "recipe:pres-city-027",
       "checkId": "PRES-CITY-027",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "ordinary-wilderness-to-embercross-journey",
           "embercross-all-services-production-route"
@@ -1284,6 +1284,7 @@
         "id": "production-city-journey-v1",
         "coverage": "implemented",
         "requiredSignalIds": [
+          "ordinary-route-reachable",
           "city-route-discoverable",
           "gate-transition-completes",
           "all-service-intents-live",

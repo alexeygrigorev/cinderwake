@@ -186,6 +186,7 @@ describe("presentation checklist contract", () => {
         checkId: "PRES-CITY-027",
         recipeId: "recipe:pres-city-027",
         signals: [
+          "ordinary-route-reachable",
           "city-route-discoverable",
           "gate-transition-completes",
           "all-service-intents-live",
@@ -250,7 +251,7 @@ describe("presentation checklist contract", () => {
     );
 
     expect(recipe).toMatchObject({
-      scenarioSet: { coverage: "partial" },
+      scenarioSet: { coverage: "implemented" },
       deviceProfileSet: { coverage: "implemented" },
       gestureSet: { coverage: "implemented" },
       evaluator: {

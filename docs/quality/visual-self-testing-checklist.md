@@ -400,13 +400,13 @@ These rows were appended without renumbering the published presentation IDs. The
 ### PRES-CITY-027 — real wilderness-to-city service journey
 
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
-- Scenario/precondition: cold ordinary production route in the wilderness with no state injection; separately run a complete production-input route through every Embercross service on desktop, phone portrait, and phone landscape.
+- Scenario/precondition: retain both the cold ordinary production route in the wilderness with no state injection and the complete production-input route through every Embercross service on desktop, phone portrait, and phone landscape.
 - Production gesture: discover the city sign/landmark, navigate to and enter the gate, approach each resident, open the merchant and buy/sell, open the tavern and eat/sleep, then open the healer and heal.
 - Ordered artifacts: complete production journey state/manifest/frame timeline; gate and service-affordance frames; physical gesture log; service intent and before/after state deltas; mobile video at normal speed.
 - Machine signal and threshold: the route landmark and gate are visible and reachable; entry completes through the production transition; every visible service control emits its declared intent; each affordable valid action changes exactly its documented state and feedback. No injected beside-NPC fixture may stand in for the discovery route.
 - Required negative control: remove the city sign, disable gate entry, remove one service listener, and suppress one service outcome/feedback. The journey evaluator must fail each at the first missing affordance, transition, intent, or outcome.
-- Current evidence: `npm run test:city-journey` now retains a no-bridge production-input service route across desktop, phone portrait, and phone landscape, with synchronized state/manifest/frame artifacts, five successful service receipts, and all four mutations. `tests/e2e/city-production-route.spec.ts` remains the separate cold ordinary-route proof.
-- Missing automation/next implementation: bind the cold ordinary route and the complete service route into one retained scenario bundle; independent visual review remains mandatory before this P0 row can pass.
+- Current evidence: `npm run test:city-journey` now retains both no-bridge production-input scenarios across desktop, phone portrait, and phone landscape, with synchronized state/manifest/frame artifacts, cold wilderness-to-gate milestones, five successful service receipts, and all four mutations. `tests/e2e/city-production-route.spec.ts` remains a separate focused regression proof.
+- Missing automation/next implementation: bind this clean scenario bundle into a retained row-level presentation run; independent visual review remains mandatory before this P0 row can pass.
 - Independent visual-agent review mandatory: **yes**, for discoverability, transition quality, service readability, and mobile interaction feedback.
 
 ### PRES-STATE-028 — arbitrary-state load, reset, replay, and frame determinism
