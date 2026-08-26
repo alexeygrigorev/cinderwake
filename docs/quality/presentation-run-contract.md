@@ -31,6 +31,7 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:production-liveness
    npm run test:mobile-screen
    npm run test:depth-transition
+   npm run test:collision
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
 
@@ -48,8 +49,11 @@ The prose checklist remains the human explanation of what matters. The versioned
    `NEEDS_VISUAL_REVIEW` after the depth recorder captures desktop and
    phone-portrait transitions, z-ordered manifests, attached-owner records,
    and seven named detector controls. Its output remains under `quality-results/`; it does not
-   claim that the other 20 rows ran or that the live/city/input/mobile/movement/
-   atlas/temporal/depth evidence was visually accepted.
+   claim that the other 19 rows ran or that the live/city/input/mobile/movement/
+   atlas/temporal/depth/collision evidence was visually accepted. `PRES-COLLIDE-008`
+   binds the generated and Embercross solid inventories, representative contact
+   journeys, swept projectile evidence, alpha-support measurements, and four
+   named detector controls as `NEEDS_VISUAL_REVIEW`.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.
