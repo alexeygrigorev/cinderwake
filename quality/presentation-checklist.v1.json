@@ -510,7 +510,7 @@
       "id": "PRES-CITY-027",
       "executionRecipeId": "recipe:pres-city-027",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "production-city-journey-timeline",
@@ -529,7 +529,7 @@
       "id": "PRES-STATE-028",
       "executionRecipeId": "recipe:pres-state-028",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": false,
       "evidenceRequirements": [
         "serialized-initial-state",

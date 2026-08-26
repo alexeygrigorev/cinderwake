@@ -235,6 +235,7 @@ describe("presentation checklist contract", () => {
     );
 
     expect(recipe).toMatchObject({
+      scenarioSet: { coverage: "implemented" },
       evaluator: {
         id: "state-replay-determinism-v1",
         coverage: "implemented",

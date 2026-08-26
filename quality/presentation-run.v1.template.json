@@ -1340,7 +1340,7 @@
       "checkId": "PRES-CITY-027",
       "executionRecipeId": "recipe:pres-city-027",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],
@@ -1388,7 +1388,7 @@
       "checkId": "PRES-STATE-028",
       "executionRecipeId": "recipe:pres-state-028",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],

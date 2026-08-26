@@ -1315,7 +1315,7 @@
       "id": "recipe:pres-state-028",
       "checkId": "PRES-STATE-028",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "arbitrary-scenario-load",
           "exact-state-load",

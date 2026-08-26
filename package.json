@@ -25,6 +25,7 @@
     "quality:presentation:lint": "node scripts/validate-presentation-checklist.mjs --mode lint",
     "quality:presentation:accept": "node scripts/validate-presentation-checklist.mjs --mode accept",
     "quality:presentation:init": "node scripts/init-presentation-run.mjs",
+    "quality:presentation:bind": "node scripts/bind-presentation-run.mjs",
     "quality:presentation:progress": "node scripts/report-presentation-progress.mjs",
     "art:build": "node scripts/build-sprite-assets.mjs",
     "art:check": "node scripts/validate-sprite-assets.mjs",
