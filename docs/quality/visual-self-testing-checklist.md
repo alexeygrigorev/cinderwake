@@ -79,7 +79,7 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-LIVE-001 — launch and control liveness
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for machine evidence; independent visual review remains mandatory.
 - Scenario/precondition: cold ordinary `/` route, every selectable character in turn, assets uncached; separately abort and stall one required atlas.
 - Production gesture: select character, activate Begin, then activate every visible game/modal control using its real mouse or touch event.
 - Ordered artifacts: page frame before gesture; browser-event log; complete visible enabled-control census; a bijective census-to-intent/postcondition map; frozen per-transition deadline contract; observer readiness and presentation samples; frame/state after each control; console/page errors; failure, Retry, and Back frames; standard metadata/hashes.
@@ -97,8 +97,8 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Ordered artifacts: initial snapshot/frame; target/pad/button device coordinates; raw touch sequence; ordered observer samples and PNGs during each gesture; event/state deltas after release; control pressed-state frames.
 - Machine signal and threshold: ground tap and pad produce movement intent and world displacement without `attack_started`; Strike produces `attack_started` without route persistence or movement. Use exact intent exclusion and the input adapter’s declared next-tick/deadline contract, not a pixel-diff threshold.
 - Required negative control: swap ground-tap and Strike bindings; the evaluator must report `gesture-intent-mismatch` for both routes.
-- Current evidence: `tests/e2e/mobile.spec.ts` test “tapping the ground persistently moves without striking”; `tests/e2e/physical-gesture-temporal.spec.ts` mobile journey; `docs/decisions/0025-production-gesture-temporal-evidence.md`.
-- Missing automation/next implementation: add the explicit swapped-binding mutation and exercise all four physical joystick directions on the ordinary route.
+- Current evidence: `npm run test:input-intents` retains the observe-only `animation-idle` open-floor route as `animation-idle-open-floor` across phone portrait and landscape, with synchronized state/manifest/frame hashes, raw touch logs, pressed-control video, and the swapped-binding mutation; `tests/e2e/mobile.spec.ts` and `tests/e2e/physical-gesture-temporal.spec.ts` remain focused regressions.
+- Missing automation/next implementation: complete the independent visual review and bind its verdict to the retained row-level presentation run; machine intent separation is complete, including all four physical joystick directions.
 - Independent visual-agent review mandatory: **yes**, for unambiguous pressed/route feedback; intent separation is machine-authoritative.
 
 ### PRES-MOVE-003 — glyph follows the commanded direction
