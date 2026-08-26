@@ -571,6 +571,8 @@ export class CanvasRenderer {
           destinationRect,
           actorInkTop,
           healthRatio,
+          frameOpacity: 0.8,
+          fillOpacity: 0.7,
           frame: { ...frame, destinationRect: { ...destinationRect } },
           fill: {
             ...fillBase,
@@ -646,7 +648,9 @@ export class CanvasRenderer {
       { assetId: part.assetId, sourceRect: part.sourceRect },
       part.destinationRect,
       false,
-      kind === "health-frame" ? 0.8 : 0.7,
+      kind === "health-frame"
+        ? worldUi.frameOpacity
+        : worldUi.fillOpacity,
       0,
     );
   }

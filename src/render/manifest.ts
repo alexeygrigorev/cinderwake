@@ -116,6 +116,8 @@ export interface WorldUiCallV1 {
   destinationRect: DestinationRectV1;
   actorInkTop: number;
   healthRatio: number;
+  frameOpacity: number;
+  fillOpacity: number;
   frame: SpriteReferenceV2 & { destinationRect: DestinationRectV1 };
   fill: SpriteReferenceV2 & { destinationRect: DestinationRectV1 };
   visible: boolean;

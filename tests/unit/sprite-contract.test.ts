@@ -188,6 +188,8 @@ describe("sprite atlas quality contract", () => {
       destinationRect,
       actorInkTop: 102,
       healthRatio: 0.5,
+      frameOpacity: 0.8,
+      fillOpacity: 0.7,
       visible: true,
       frame: {
         renderMode: "sprite",

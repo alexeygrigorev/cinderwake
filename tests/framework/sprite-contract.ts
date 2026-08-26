@@ -94,6 +94,8 @@ export interface ManifestWorldUiCallV1 {
   destinationRect: { x: number; y: number; width: number; height: number };
   actorInkTop: number;
   healthRatio: number;
+  frameOpacity: number;
+  fillOpacity: number;
   frame: ManifestSpriteReferenceV2 & {
     destinationRect: { x: number; y: number; width: number; height: number };
   };
@@ -535,6 +537,16 @@ function assertWorldUiCall(
   );
   const ratio = finiteNumber(call.healthRatio, `${pathName}.healthRatio`);
   if (ratio > 1) fail(`${pathName}.healthRatio must be <= 1`);
+  const frameOpacity = finiteNumber(
+    call.frameOpacity,
+    `${pathName}.frameOpacity`,
+  );
+  const fillOpacity = finiteNumber(
+    call.fillOpacity,
+    `${pathName}.fillOpacity`,
+  );
+  if (frameOpacity > 1) fail(`${pathName}.frameOpacity must be <= 1`);
+  if (fillOpacity > 1) fail(`${pathName}.fillOpacity must be <= 1`);
   const frame = object(call.frame, `${pathName}.frame`);
   assertSpriteReference(frame, catalog, `${pathName}.frame`);
   if (frame.spriteId !== "world-ui:health-frame")
