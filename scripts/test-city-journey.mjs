@@ -18,7 +18,7 @@ const UNITS_PER_TILE = 1_024;
 const TILE_PIXELS = 48;
 const DEBUG = process.argv.includes("--debug");
 const PHYSICAL_PULSE_MS = 70;
-const KEYBOARD_PULSE_MS = 30;
+const KEYBOARD_PULSE_MS = 60;
 
 const PROFILES = {
   desktop: {
@@ -268,17 +268,12 @@ async function dragJoystick(page, session, direction, movePad) {
 }
 
 async function keyboardPulse(page, direction) {
-  const key =
-    Math.abs(direction.x) >= Math.abs(direction.y)
-      ? direction.x >= 0
-        ? "d"
-        : "a"
-      : direction.y >= 0
-        ? "s"
-        : "w";
-  await page.keyboard.down(key);
+  const keys = [];
+  if (direction.x !== 0) keys.push(direction.x >= 0 ? "d" : "a");
+  if (direction.y !== 0) keys.push(direction.y >= 0 ? "s" : "w");
+  for (const key of keys) await page.keyboard.down(key);
   await page.waitForTimeout(KEYBOARD_PULSE_MS);
-  await page.keyboard.up(key);
+  for (const key of keys.reverse()) await page.keyboard.up(key);
 }
 
 async function performWaypoint(
