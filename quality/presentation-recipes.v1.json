@@ -95,31 +95,27 @@
       "id": "recipe:pres-move-003",
       "checkId": "PRES-MOVE-003",
       "scenarioSet": {
-        "coverage": "partial",
-        "requiredIds": [
-          "animation-walk",
-          "fixed-camera-open-floor",
-          "follow-camera-open-floor"
-        ]
+        "coverage": "implemented",
+        "requiredIds": ["fixed-camera-open-floor", "follow-camera-open-floor"]
       },
       "deviceProfileSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": ["desktop", "phone-portrait"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": ["move-north", "move-east", "move-south", "move-west"]
       },
       "evaluator": {
         "id": "directional-motion-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "world-direction-matches",
           "screen-direction-matches",
           "facing-and-walk-match"
         ]
       },
-      "reproduce": "npx vitest run tests/unit/directional-motion.test.ts && npx playwright test tests/e2e/physical-gesture-temporal.spec.ts",
+      "reproduce": "npm run test:directional-motion && npx vitest run tests/unit/directional-motion-evidence.test.ts",
       "negativeControls": [
         {
           "id": "render-projection-reversed",

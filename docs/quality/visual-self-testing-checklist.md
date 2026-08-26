@@ -103,14 +103,14 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-MOVE-003 — glyph follows the commanded direction
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for machine evidence; independent visual review remains mandatory.
 - Scenario/precondition: actor idle on open floor; fixed camera for direct glyph displacement, then normal follow camera with one stable scene reference; repeat all four cardinal directions for every playable actor.
 - Production gesture: key down/up or cardinal joystick drag; ground tap in each reachable quadrant.
 - Ordered artifacts: input vector; initial world/screen anchors; every walk sample’s world anchor, screen anchor, facing bucket, clip, frame identity, camera, reference-scene anchor; ordered full frames/masks/contact sheet; final state.
 - Machine signal and threshold: nonzero world displacement has the same axis sign as input; under fixed camera, glyph screen displacement has the same sign; under follow camera, the scene reference moves with the opposite sign; clip is `walk`, facing matches the command, and at least two authored frames occur during a sufficiently long gesture. Use exact signs and declared clip cadence.
 - Required negative control: reverse rendered projection only; freeze the walk frame; force the opposite facing. Each mutation must fail its own `screen-direction`, `walk-frozen`, or `facing-mismatch` signal.
-- Current evidence: `tests/unit/directional-motion.test.ts`; production east checks in `tests/e2e/physical-gesture-temporal.spec.ts` lines 91–150; cardinal sprite-bank assertions in `tests/unit/sprite-contract.test.ts` test “projects every actor clip…”; observer fields in `src/testkit/playerObserver.ts` lines 5–18.
-- Missing automation/next implementation: no detector-specific negative mutations; production route currently proves east rather than every actor/direction.
+- Current evidence: `npm run test:directional-motion` records two clean production profiles (`desktop`, `phone-portrait`) for all three playable actors, both fixed and follow camera modes, and all four cardinal directions. It retains synchronized state/manifest/frame anchors, input logs, full-resolution frames, per-profile contact sheets, and video; the pure `directional-motion-v1` evaluator and its projection-reversal, frozen-walk-frame, and opposite-facing mutations are exercised before the bundle is written. `tests/unit/directional-motion-evidence.test.ts` and the existing directional/browser regressions remain focused coverage.
+- Missing automation/next implementation: complete the independent visual review and bind its verdict with `npm run quality:presentation:bind`; the production matrix, synchronized anchor checks, and detector-specific negative controls are now automated and contractually complete.
 - Independent visual-agent review mandatory: **yes**, because semantically correct travel can still look like foot sliding.
 
 ### PRES-SPRITE-004 — complete, correctly cut sprite cells

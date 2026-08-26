@@ -58,7 +58,7 @@
       "id": "PRES-MOVE-003",
       "executionRecipeId": "recipe:pres-move-003",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "cardinal-input-timeline",

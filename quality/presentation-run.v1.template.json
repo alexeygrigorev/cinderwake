@@ -98,7 +98,7 @@
       "checkId": "PRES-MOVE-003",
       "executionRecipeId": "recipe:pres-move-003",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],
