@@ -353,7 +353,7 @@ async function driveTo(
 ) {
   const gestures = [];
   const history = [];
-  const maxAttempts = DEBUG ? 10 : 64;
+  const maxAttempts = DEBUG ? 10 : 128;
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const before = await page.evaluate(() =>
       window.__GAME_OBSERVE__.snapshot(),
