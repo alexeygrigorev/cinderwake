@@ -531,6 +531,31 @@ function temporalSequenceArtifactSpecifications() {
   return specifications;
 }
 
+function depthTransitionArtifactSpecifications() {
+  const root = "quality-results/depth-transition/pres-depth-019";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["z-ordered-draw-calls", `${root}/depth-transition.json`],
+    ["occlusion-masks", `${root}/comparison.json`],
+    ["attachment-owner-records", `${root}/depth-transition.json`],
+    ["body-health-effect-mask-ratios", `${root}/depth-transition.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+  ];
+  for (const profileId of ["desktop", "phone-portrait"]) {
+    const profileRoot = `${root}/${profileId}`;
+    specifications.push(
+      ["z-ordered-draw-calls", `${profileRoot}/render-manifest-timeline.json`],
+      ["occlusion-masks", `${profileRoot}/contact-sheet.png`],
+      ["attachment-owner-records", `${profileRoot}/depth-transition.json`],
+      [
+        "body-health-effect-mask-ratios",
+        `${profileRoot}/depth-transition.json`,
+      ],
+    );
+  }
+  return specifications;
+}
+
 function sourceCommit(metadata, name) {
   const commit = metadata?.source?.commit;
   if (
@@ -660,6 +685,8 @@ export async function bindPresentationRun({
   spriteComparison,
   temporalMetadata,
   temporalComparison,
+  depthMetadata,
+  depthComparison,
   commit,
   reproduce,
   cityArtifacts = cityArtifactSpecifications(),
@@ -670,6 +697,7 @@ export async function bindPresentationRun({
   movementArtifacts = directionalMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
+  depthArtifacts = depthTransitionArtifactSpecifications(),
 }) {
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
@@ -711,6 +739,10 @@ export async function bindPresentationRun({
   const temporalRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOTION-005",
   );
+  const depthCheck = contract.checks.find(({ id }) => id === "PRES-DEPTH-019");
+  const depthRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-DEPTH-019",
+  );
   if (
     !cityCheck ||
     !stateCheck ||
@@ -727,10 +759,12 @@ export async function bindPresentationRun({
     !spriteCheck ||
     !spriteRecipe ||
     !temporalCheck ||
-    !temporalRecipe
+    !temporalRecipe ||
+    !depthCheck ||
+    !depthRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/mobile/movement/sprite/temporal contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/sprite/temporal/depth contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -741,6 +775,7 @@ export async function bindPresentationRun({
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
+  const depthSource = sourceCommit(depthMetadata, "PRES-DEPTH-019");
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
@@ -749,6 +784,7 @@ export async function bindPresentationRun({
     citySource !== movementSource ||
     citySource !== spriteSource ||
     citySource !== temporalSource ||
+    citySource !== depthSource ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -778,6 +814,9 @@ export async function bindPresentationRun({
   const temporalIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOTION-005",
   );
+  const depthIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-DEPTH-019",
+  );
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
@@ -798,6 +837,7 @@ export async function bindPresentationRun({
     temporalComparison,
     "PRES-MOTION-005",
   );
+  const depthComparisonData = comparisonData(depthComparison, "PRES-DEPTH-019");
   checks[liveIndex] = await bindRow({
     repoRoot,
     contractCheck: liveCheck,
@@ -879,6 +919,16 @@ export async function bindPresentationRun({
     artifactSpecifications: temporalArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: temporalMetadata.profileIds,
+  });
+  checks[depthIndex] = await bindRow({
+    repoRoot,
+    contractCheck: depthCheck,
+    recipe: depthRecipe,
+    metadata: depthMetadata,
+    comparison: depthComparisonData,
+    artifactSpecifications: depthArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: depthMetadata.profileIds,
   });
   return {
     ...structuredClone(template),
