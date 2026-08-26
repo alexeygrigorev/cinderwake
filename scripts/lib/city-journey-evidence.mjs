@@ -1,4 +1,10 @@
+export const CITY_SCENARIO_IDS = {
+  ordinary: "production-city-route",
+  services: "production-city-services-route",
+};
+
 export const CITY_JOURNEY_SIGNAL_IDS = [
+  "ordinary-route-reachable",
   "city-route-discoverable",
   "gate-transition-completes",
   "all-service-intents-live",
@@ -6,6 +12,7 @@ export const CITY_JOURNEY_SIGNAL_IDS = [
 ];
 
 export const CITY_JOURNEY_FAILURE_IDS = [
+  "ordinary-route-inert",
   "city-route-undiscoverable",
   "gate-transition-inert",
   "service-control-inert",
@@ -130,6 +137,7 @@ function expectedServiceRecord(profile, expectation) {
 
 function profileTimeline(profile) {
   return [
+    ...(profile?.ordinaryRoute?.timeline ?? []),
     ...(profile?.timeline ?? []),
     ...(profile?.services ?? []).flatMap((service) => [
       service.before,
@@ -146,6 +154,10 @@ function profileTimeline(profile) {
 export function evaluateCityJourneyEvidence({
   profiles,
   requiredProfiles = [],
+  requiredScenarioIds = [
+    CITY_SCENARIO_IDS.ordinary,
+    CITY_SCENARIO_IDS.services,
+  ],
   serviceExpectations = CITY_SERVICE_EXPECTATIONS,
 }) {
   const failures = [];
@@ -154,15 +166,43 @@ export function evaluateCityJourneyEvidence({
   );
   const selectedProfiles = requiredProfiles.map((id) => profileMap.get(id));
   const hasAllProfiles = selectedProfiles.every(Boolean);
+  const hasRequiredScenarios =
+    requiredScenarioIds.includes(CITY_SCENARIO_IDS.ordinary) &&
+    requiredScenarioIds.includes(CITY_SCENARIO_IDS.services);
   const timelinesSynchronized = selectedProfiles.every((profile) =>
     timelineSynchronized(profileTimeline(profile)),
   );
   if (!timelinesSynchronized) failures.push("journey-evidence-desynchronized");
 
+  const ordinaryRouteReachable =
+    hasAllProfiles &&
+    hasRequiredScenarios &&
+    selectedProfiles.every((profile) => {
+      const route = profile.ordinaryRoute;
+      return (
+        route?.scenarioId === CITY_SCENARIO_IDS.ordinary &&
+        route.initial?.injectionUsed === false &&
+        route.initial?.bridgeExposed === false &&
+        route.initial?.signVisible === true &&
+        route.initial?.snapshot?.scenarioId === CITY_SCENARIO_IDS.ordinary &&
+        route.initial?.snapshot?.city?.locationPhase === "undiscovered" &&
+        route.discovered?.snapshot?.city?.locationPhase === "discovered" &&
+        route.discovered?.eventTypes?.includes("city_discovered") &&
+        route.entered?.snapshot?.city?.locationPhase === "inside" &&
+        route.entered?.eventTypes?.includes("city_entered") &&
+        route.entered?.mapChanged === true &&
+        route.entered?.gateVisible === true &&
+        route.entered?.residentIds?.length === 4
+      );
+    });
+  if (!ordinaryRouteReachable) failures.push("ordinary-route-inert");
+
   const routeDiscoverable =
     hasAllProfiles &&
     selectedProfiles.every(
       (profile) =>
+        hasRequiredScenarios &&
+        profile.scenarioId === CITY_SCENARIO_IDS.services &&
         profile.initial?.injectionUsed === false &&
         profile.initial?.bridgeExposed === false &&
         profile.initial?.signVisible === true &&
@@ -206,6 +246,15 @@ export function evaluateCityJourneyEvidence({
     failures.push("service-state-or-feedback-missing");
 
   const signals = [
+    {
+      id: "ordinary-route-reachable",
+      pass: ordinaryRouteReachable,
+      detail: {
+        profiles: selectedProfiles
+          .filter(Boolean)
+          .map((profile) => profile.profileId),
+      },
+    },
     {
       id: "city-route-discoverable",
       pass: routeDiscoverable,

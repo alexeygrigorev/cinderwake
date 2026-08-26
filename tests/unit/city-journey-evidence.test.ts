@@ -72,13 +72,45 @@ function fixture() {
       };
     },
   );
-  const initial = state("undiscovered", 0);
+  const initial = state("undiscovered", 0) as any;
   const discovered = state("discovered", 4);
   const entered = state("inside", 8);
+  initial.scenarioId = "production-city-services-route";
+  const ordinaryInitial = structuredClone(initial) as any;
+  ordinaryInitial.scenarioId = "production-city-route";
+  const ordinaryDiscovered = structuredClone(discovered);
+  const ordinaryEntered = structuredClone(entered);
+  const ordinaryRoute = {
+    scenarioId: "production-city-route",
+    initial: {
+      injectionUsed: false,
+      bridgeExposed: false,
+      signVisible: true,
+      snapshot: ordinaryInitial,
+    },
+    discovered: {
+      snapshot: ordinaryDiscovered,
+      eventTypes: ["city_discovered"],
+    },
+    entered: {
+      snapshot: ordinaryEntered,
+      eventTypes: ["city_entered"],
+      mapChanged: true,
+      gateVisible: true,
+      residentIds: ["mara", "oren", "tess", "ileya"],
+    },
+    timeline: [
+      capture(0, ordinaryInitial),
+      capture(4, ordinaryDiscovered),
+      capture(8, ordinaryEntered),
+    ],
+  };
   return {
     profiles: [
       {
         profileId: "phone-portrait",
+        scenarioId: "production-city-services-route",
+        ordinaryRoute,
         initial: {
           injectionUsed: false,
           bridgeExposed: false,
@@ -120,6 +152,13 @@ describe("city journey evidence evaluator", () => {
   });
 
   it.each([
+    [
+      "missing cold ordinary route",
+      "ordinary-route-inert",
+      (value: any) => {
+        value.profiles[0].ordinaryRoute.entered.mapChanged = false;
+      },
+    ],
     [
       "missing sign",
       "city-route-undiscoverable",

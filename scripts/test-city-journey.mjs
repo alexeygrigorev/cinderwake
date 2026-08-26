@@ -10,7 +10,9 @@ import {
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
 
 const OUTPUT = path.resolve("quality-results/city-journey/pres-city-027");
-const SCENARIO_ID = "production-city-services-route";
+const ORDINARY_SCENARIO_ID = "production-city-route";
+const SERVICE_SCENARIO_ID = "production-city-services-route";
+const REQUIRED_SCENARIO_IDS = [ORDINARY_SCENARIO_ID, SERVICE_SCENARIO_ID];
 const VIEWPORT_LOGICAL = { width: 960, height: 540 };
 const UNITS_PER_TILE = 1_024;
 const TILE_PIXELS = 48;
@@ -136,6 +138,51 @@ function sceneVisible(manifest, objectId) {
   return manifest.sceneSprites.some(
     ({ objectId: candidate, visible }) => candidate === objectId && visible,
   );
+}
+
+async function prepareProductionPage(page, baseURL, scenarioId) {
+  await page.goto(`${baseURL}/?scenario=${scenarioId}`, {
+    waitUntil: "networkidle",
+  });
+  await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
+  await page.waitForFunction(() => Boolean(window.__GAME_OBSERVE__?.ready));
+  const bridgeExposed = await page.evaluate(() =>
+    Boolean(window.__GAME_TEST__),
+  );
+  if (bridgeExposed)
+    throw new Error(
+      `Production scenario ${scenarioId} exposed mutating bridge`,
+    );
+  return { bridgeExposed, bounds: await geometry(page) };
+}
+
+async function waitForVisibleGate(page) {
+  await page.waitForFunction(
+    () =>
+      window.__GAME_OBSERVE__
+        ?.renderManifest()
+        .sceneSprites.some(
+          ({ objectId, visible }) =>
+            objectId === "gate:embercross:south" && visible,
+        ),
+    undefined,
+    { timeout: 3_000 },
+  );
+}
+
+async function closeRecordedContext(
+  context,
+  page,
+  profileDirectory,
+  videoName,
+) {
+  const video = page.video();
+  await context.close();
+  const videoPath = video ? await video.path() : null;
+  if (videoPath) {
+    await fs.mkdir(profileDirectory, { recursive: true });
+    await fs.copyFile(videoPath, path.join(profileDirectory, videoName));
+  }
 }
 
 async function capture(page, label) {
@@ -490,9 +537,9 @@ async function captureService(
   };
 }
 
-async function runProfile(browser, profileId, profile, baseURL) {
+async function runOrdinaryProfile(browser, profileId, profile, baseURL) {
   const profileDirectory = path.join(OUTPUT, profileId);
-  const videoDirectory = path.join(OUTPUT, "video-tmp", profileId);
+  const videoDirectory = path.join(OUTPUT, "video-tmp", profileId, "ordinary");
   await fs.mkdir(videoDirectory, { recursive: true });
   const context = await browser.newContext({
     viewport: profile.viewport,
@@ -505,18 +552,117 @@ async function runProfile(browser, profileId, profile, baseURL) {
   const page = await context.newPage();
   const session = profile.hasTouch ? await context.newCDPSession(page) : null;
   try {
-    await page.goto(`${baseURL}/?scenario=${SCENARIO_ID}`, {
-      waitUntil: "networkidle",
-    });
-    await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
-    await page.waitForFunction(() => Boolean(window.__GAME_OBSERVE__?.ready));
-    const bridgeExposed = await page.evaluate(() =>
-      Boolean(window.__GAME_TEST__),
+    const { bridgeExposed, bounds } = await prepareProductionPage(
+      page,
+      baseURL,
+      ORDINARY_SCENARIO_ID,
     );
-    if (bridgeExposed)
-      throw new Error("Production city journey exposed mutating bridge");
-    const bounds = await geometry(page);
+    const initialCapture = await capture(page, "ordinary-wilderness");
+    if (initialCapture.snapshot.scenarioId !== ORDINARY_SCENARIO_ID)
+      throw new Error("Ordinary city route loaded the wrong scenario");
+    const initialSign = initialCapture.manifest.sceneSprites.find(
+      ({ objectId }) => objectId === "landmark:embercross:road-sign",
+    );
+    if (!initialSign)
+      throw new Error("Ordinary city route has no visible sign");
+    const initial = {
+      injectionUsed: false,
+      bridgeExposed,
+      signVisible: Boolean(initialSign.visible),
+      snapshot: initialCapture.snapshot,
+      capture: initialCapture,
+    };
+    const gestures = [];
+    const landmarkTarget = wildernessCityLandmarkApproach(
+      initialCapture.snapshot.map,
+    );
+    const discoveredRoute = await driveTo(
+      page,
+      session,
+      profile,
+      bounds,
+      landmarkTarget,
+      (snapshot) => snapshot.city.locationPhase !== "undiscovered",
+      "ordinary discover city",
+    );
+    gestures.push(...discoveredRoute.gestures);
+    const discoveredCapture = await capture(page, "ordinary-city-discovered");
+    const discovered = {
+      snapshot: discoveredCapture.snapshot,
+      eventTypes: eventTypes(discoveredCapture.snapshot),
+      capture: discoveredCapture,
+      history: discoveredRoute.history,
+    };
+    const mapBeforeCity = discoveredCapture.snapshot.map.digest;
+    const gateTarget = tileCenter(discoveredCapture.snapshot.map.exit);
+    const enteredRoute = await driveTo(
+      page,
+      session,
+      profile,
+      bounds,
+      gateTarget,
+      (snapshot) => snapshot.city.locationPhase === "inside",
+      "ordinary enter Embercross",
+    );
+    gestures.push(...enteredRoute.gestures);
+    await waitForVisibleGate(page);
+    const enteredCapture = await capture(page, "ordinary-city-entered");
+    const entered = {
+      snapshot: enteredCapture.snapshot,
+      eventTypes: eventTypes(enteredCapture.snapshot),
+      mapChanged: enteredCapture.snapshot.map.digest !== mapBeforeCity,
+      gateVisible: sceneVisible(
+        enteredCapture.manifest,
+        "gate:embercross:south",
+      ),
+      residentIds: enteredCapture.manifest.drawCalls
+        .filter(({ type }) => type === "npc")
+        .map(({ entityId }) => entityId)
+        .sort(),
+      capture: enteredCapture,
+      history: enteredRoute.history,
+    };
+    return {
+      scenarioId: ORDINARY_SCENARIO_ID,
+      initial,
+      discovered,
+      entered,
+      timeline: [initialCapture, discoveredCapture, enteredCapture],
+      gestures,
+    };
+  } finally {
+    await closeRecordedContext(
+      context,
+      page,
+      profileDirectory,
+      "ordinary-city-route.webm",
+    );
+  }
+}
+
+async function runProfile(browser, profileId, profile, baseURL) {
+  const profileDirectory = path.join(OUTPUT, profileId);
+  const videoDirectory = path.join(OUTPUT, "video-tmp", profileId, "services");
+  await fs.mkdir(videoDirectory, { recursive: true });
+  const context = await browser.newContext({
+    viewport: profile.viewport,
+    deviceScaleFactor: profile.deviceScaleFactor,
+    colorScheme: "dark",
+    hasTouch: profile.hasTouch,
+    isMobile: profile.isMobile,
+    recordVideo: { dir: videoDirectory, size: profile.viewport },
+  });
+  const page = await context.newPage();
+  const session = profile.hasTouch ? await context.newCDPSession(page) : null;
+  try {
+    const { bridgeExposed, bounds } = await prepareProductionPage(
+      page,
+      baseURL,
+      SERVICE_SCENARIO_ID,
+    );
     const initialCapture = await capture(page, "wilderness");
+    if (initialCapture.snapshot.scenarioId !== SERVICE_SCENARIO_ID)
+      throw new Error("Service city route loaded the wrong scenario");
     const initialSign = initialCapture.manifest.sceneSprites.find(
       ({ objectId }) => objectId === "landmark:embercross:road-sign",
     );
@@ -562,17 +708,7 @@ async function runProfile(browser, profileId, profile, baseURL) {
       "enter Embercross",
     );
     gestures.push(...enteredRoute.gestures);
-    await page.waitForFunction(
-      () =>
-        window.__GAME_OBSERVE__
-          ?.renderManifest()
-          .sceneSprites.some(
-            ({ objectId, visible }) =>
-              objectId === "gate:embercross:south" && visible,
-          ),
-      undefined,
-      { timeout: 3_000 },
-    );
+    await waitForVisibleGate(page);
     const enteredCapture = await capture(page, "city-entered");
     const entered = {
       snapshot: enteredCapture.snapshot,
@@ -595,6 +731,7 @@ async function runProfile(browser, profileId, profile, baseURL) {
         await captureService(page, action, profile, bounds, session, gestures),
       );
     return {
+      scenarioId: SERVICE_SCENARIO_ID,
       profileId,
       initial,
       discovered,
@@ -604,16 +741,12 @@ async function runProfile(browser, profileId, profile, baseURL) {
       gestures,
     };
   } finally {
-    const video = page.video();
-    await context.close();
-    const videoPath = video ? await video.path() : null;
-    if (videoPath) {
-      await fs.mkdir(profileDirectory, { recursive: true });
-      await fs.copyFile(
-        videoPath,
-        path.join(profileDirectory, "city-journey.webm"),
-      );
-    }
+    await closeRecordedContext(
+      context,
+      page,
+      profileDirectory,
+      "city-journey.webm",
+    );
   }
 }
 
@@ -667,6 +800,9 @@ async function normalizeProfile(raw, profileId) {
   const directory = path.join(OUTPUT, profileId);
   await fs.mkdir(directory, { recursive: true });
   const rawCaptures = [
+    raw.ordinaryRoute.initial.capture,
+    raw.ordinaryRoute.discovered.capture,
+    raw.ordinaryRoute.entered.capture,
     raw.initial.capture,
     raw.discovered.capture,
     raw.entered.capture,
@@ -685,6 +821,26 @@ async function normalizeProfile(raw, profileId) {
     captures.push(normalized);
   }
   const lookup = (capture) => byLabel.get(capture.label);
+  const ordinaryRoute = {
+    ...raw.ordinaryRoute,
+    initial: {
+      ...raw.ordinaryRoute.initial,
+      capture: publicCapture(lookup(raw.ordinaryRoute.initial.capture)),
+    },
+    discovered: {
+      ...raw.ordinaryRoute.discovered,
+      capture: publicCapture(lookup(raw.ordinaryRoute.discovered.capture)),
+    },
+    entered: {
+      ...raw.ordinaryRoute.entered,
+      capture: publicCapture(lookup(raw.ordinaryRoute.entered.capture)),
+    },
+    timeline: [
+      publicCapture(lookup(raw.ordinaryRoute.initial.capture)),
+      publicCapture(lookup(raw.ordinaryRoute.discovered.capture)),
+      publicCapture(lookup(raw.ordinaryRoute.entered.capture)),
+    ],
+  };
   const initial = {
     ...raw.initial,
     capture: publicCapture(lookup(raw.initial.capture)),
@@ -703,8 +859,17 @@ async function normalizeProfile(raw, profileId) {
     after: publicCapture(lookup(service.after)),
   }));
   await Promise.all([
+    writeJson(path.join(directory, "ordinary-route.json"), ordinaryRoute),
     writeJson(path.join(directory, "states.json"), {
       schemaVersion: 1,
+      ordinaryRoute: {
+        scenarioId: ordinaryRoute.scenarioId,
+        milestones: [
+          ordinaryRoute.initial.capture,
+          ordinaryRoute.discovered.capture,
+          ordinaryRoute.entered.capture,
+        ],
+      },
       milestones: [initial.capture, discovered.capture, entered.capture],
       services: services.map(({ actionId, npcId, before, after, receipt }) => ({
         actionId,
@@ -744,6 +909,8 @@ async function normalizeProfile(raw, profileId) {
   ]);
   return {
     profileId,
+    ordinaryRoute,
+    scenarioId: raw.scenarioId,
     initial,
     discovered,
     entered,
@@ -853,15 +1020,22 @@ async function main() {
     server = started.server;
     browser = await chromium.launch();
     const rawProfiles = [];
-    for (const profileId of profileIds)
-      rawProfiles.push(
-        await runProfile(
-          browser,
-          profileId,
-          PROFILES[profileId],
-          started.baseURL,
-        ),
+    for (const profileId of profileIds) {
+      const profile = PROFILES[profileId];
+      const ordinaryRoute = await runOrdinaryProfile(
+        browser,
+        profileId,
+        profile,
+        started.baseURL,
       );
+      const serviceRoute = await runProfile(
+        browser,
+        profileId,
+        profile,
+        started.baseURL,
+      );
+      rawProfiles.push({ ...serviceRoute, ordinaryRoute });
+    }
     const profiles = [];
     for (const raw of rawProfiles)
       profiles.push(await normalizeProfile(raw, raw.profileId));
@@ -871,6 +1045,7 @@ async function main() {
     });
     const evidence = {
       requiredProfiles: profileIds,
+      requiredScenarioIds: REQUIRED_SCENARIO_IDS,
       profiles,
     };
     const comparison = evaluateCityJourneyEvidence(evidence);
@@ -881,7 +1056,8 @@ async function main() {
       checkId: "PRES-CITY-027",
       recipeId: "recipe:pres-city-027",
       evaluator: "production-city-journey-v1",
-      scenarioId: SCENARIO_ID,
+      scenarioId: SERVICE_SCENARIO_ID,
+      scenarioIds: REQUIRED_SCENARIO_IDS,
       profileIds,
       source: sourceSnapshot(),
       environment: {

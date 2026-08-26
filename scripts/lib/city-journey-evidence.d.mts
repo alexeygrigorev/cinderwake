@@ -1,3 +1,7 @@
+export declare const CITY_SCENARIO_IDS: {
+  readonly ordinary: string;
+  readonly services: string;
+};
 export declare const CITY_JOURNEY_SIGNAL_IDS: readonly string[];
 export declare const CITY_JOURNEY_FAILURE_IDS: readonly string[];
 export declare const CITY_SERVICE_EXPECTATIONS: readonly {
@@ -8,6 +12,7 @@ export declare const CITY_SERVICE_EXPECTATIONS: readonly {
 export interface CityJourneyEvidenceInput {
   profiles: unknown[];
   requiredProfiles?: string[];
+  requiredScenarioIds?: string[];
   serviceExpectations?: readonly { npcId: string; actionId: string }[];
 }
 
