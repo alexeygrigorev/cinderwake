@@ -1,20 +1,35 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "vanguard-walk-v3-surgical-candidate",
+  "normalization": {
+    "width": 1024,
+    "height": 1024,
+    "operation": "resize-square-before-grid-splice"
+  },
   "families": [
     {
       "family": "primary",
       "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-source.png",
       "changed": [4, 5, 6, 7],
-      "baseSha256": "7638f7e8b7cc18e98115e0846f9dc2c526252a5f8312aedc1e4b7711b3679d9c",
-      "mixedSha256": "cc5acd7f217dec12d36b05539576b44da586baacebadb12600e37fb844d09997"
+      "baseSha256": "3fd25303a8c44aab725442628b6600a5061325e9854d6254efe34a28f4ad5446",
+      "baseSourceSha256": "f89615720487a303cc563ad9bd879078872d0c86afaa1554dc20907ab75b7424",
+      "baseSourceDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "mixedSha256": "719b8ee3925d3864b63da3157a56db9f04868c111022d38b9c02d2f1162270a8"
     },
     {
       "family": "directions",
       "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-directions-source.png",
       "changed": [4, 5, 6, 7, 12, 13, 14, 15],
-      "baseSha256": "3db276dbd86f6e4fc0e7481c32f5c0a317dff91e2b145f4708b00de136eeb840",
-      "mixedSha256": "d8f7dc404c5cf50f309536721f5f80109257146c7ece6cdc9a88e1d0e045069d"
+      "baseSha256": "ae263558c0a3992828b0c7d291384fcace7e7a7d7d5e79d4e4959b460b0d8e06",
+      "baseSourceSha256": "16a99686ec59d9d11f28baac434f7805333612b025c7f825f372a113f8b35390",
+      "baseSourceDimensions": {
+        "width": 1254,
+        "height": 1254
+      },
+      "mixedSha256": "a6f489fd67344f198173575b76c8c2c897b30654c85f01e777b21933627ec597"
     }
   ]
 }

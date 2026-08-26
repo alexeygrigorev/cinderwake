@@ -8,8 +8,8 @@
   "builtAt": "deterministic-from-committed-source",
   "outputs": {
     "actor-vanguard.png": {
-      "sha256": "a59e9ecdf1765523d523e0aa4115c797266fadfcdf29609798fd6daeb0469d4c",
-      "source": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png"
+      "sha256": "ff4a0919b570a60ff0f1ac14fcf1c709b696218d5c9e360a0e4b2c5c931666eb",
+      "source": "art/generation/prepared/vanguard-walk-v3-staged/atlas-candidate/actor-vanguard.png"
     }
   }
 }

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "vanguard-walk-v3-surgical-atlas",
+  "grid": {
+    "width": 1024,
+    "height": 2560,
+    "rowHeight": 128,
+    "channels": 4
+  },
+  "rows": [1, 7, 9],
+  "base": {
+    "file": "public/assets/sprites/actor-vanguard.png",
+    "sha256": "5004facbf1b0400554b30c80fe1f83dd097786c7c61f8b235734c551f8d620a4",
+    "decodedSha256": "a14431368f26be1f13d3c46701058d548521aa71e5c3c07c5f031029507d422a"
+  },
+  "candidate": {
+    "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas-candidate/actor-vanguard.png",
+    "sha256": "ff4a0919b570a60ff0f1ac14fcf1c709b696218d5c9e360a0e4b2c5c931666eb",
+    "decodedSha256": "d824710bc51e2b46620b16d09ce26abe8ca5f82af8b7d51aa341d2beefda3096"
+  },
+  "output": {
+    "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png",
+    "sha256": "a59e9ecdf1765523d523e0aa4115c797266fadfcdf29609798fd6daeb0469d4c",
+    "decodedSha256": "bd3282e114fdf7b786bc26dc52c179651edcaa0803a505156350885a97c4a1a0"
+  },
+  "reproductionCommand": "node scripts/splice-actor-atlas.mjs art/generation/assemblies/vanguard-walk-v3-atlas-splice.json"
+}

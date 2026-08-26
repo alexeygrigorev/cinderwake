@@ -34,6 +34,29 @@ master must not seed more poses.
    command; a changed pose, base cell, prompt, reference, placement, or scale now
    invalidates the record.
 
+For a surgical candidate that replaces already-prepared source cells, keep the
+source and runtime atlas boundaries explicit:
+
+```bash
+node scripts/splice-actor-source.mjs \
+  art/generation/assemblies/<actor>-<family>-splice.json
+node scripts/build-sprite-assets.mjs \
+  --actors <actor> \
+  --source-dir art/generation/prepared/<candidate> \
+  --output-dir art/generation/prepared/<candidate>/atlas-candidate \
+  --actors-only
+node scripts/splice-actor-atlas.mjs \
+  art/generation/assemblies/<actor>-atlas-splice.json
+```
+
+The source splicer resizes square raw bases to the 1024-pixel grid before
+copying cells and records both raw and normalized hashes. The full candidate
+build is retained as evidence, but its shared six-sheet scale can change when
+new cells are inserted. The atlas splicer therefore starts from the accepted
+production atlas and copies only the declared runtime rows; its report binds
+the base, full candidate, output, and changed rows. This keeps untouched
+runtime frames byte-identical after decode.
+
 ## Minimal manifest shape
 
 ```json

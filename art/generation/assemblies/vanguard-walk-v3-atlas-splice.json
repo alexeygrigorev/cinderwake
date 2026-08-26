@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "vanguard-walk-v3-surgical-atlas",
+  "base": "public/assets/sprites/actor-vanguard.png",
+  "candidate": "art/generation/prepared/vanguard-walk-v3-staged/atlas-candidate/actor-vanguard.png",
+  "output": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png",
+  "report": "art/generation/prepared/vanguard-walk-v3-staged/atlas/atlas-splice-report.json",
+  "rows": [1, 7, 9]
+}

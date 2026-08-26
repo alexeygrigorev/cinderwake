@@ -5,20 +5,28 @@
   "disposition": "REJECT",
   "atlas": {
     "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas/actor-vanguard.png",
-    "sha256": "4757e7749994dd11b35ad4238b9cd0ec1bc429e0d4ee4081021965cfc68e40a5"
+    "sha256": "a59e9ecdf1765523d523e0aa4115c797266fadfcdf29609798fd6daeb0469d4c"
   },
   "sources": [
     {
       "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-source.png",
-      "sha256": "e3cf66e3742afcf4c8fcac66efed37c8280c138915ece9e9b4f0fd6fb902afd9"
+      "sha256": "718a121bff50797c6e938a920a78f3188f874b5f4308d5b697484226b034cf6e"
     },
     {
       "file": "art/generation/prepared/vanguard-walk-v3-staged/vanguard-directions-source.png",
-      "sha256": "0d616c4fe5b48da57b8e28c2dc589bfb1228292dc43d7e7e859f189726f81cf9"
+      "sha256": "36e4e1d177f8324a8b06f0db55a8671c1488a0be7cbfe5bb1f9cceb8cfcee031"
     },
     {
       "file": "art/generation/prepared/vanguard-walk-v3-staged/splice-report.json",
-      "sha256": "0efe4cce736cef0a156938983f34b05a17cd307a558c48847dbead1b195164bd"
+      "sha256": "9be69e304d1327621c715336f7a7c42d9168a38aac6fd8163e6c4ee68baeb336"
+    },
+    {
+      "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas/atlas-splice-report.json",
+      "sha256": "ae0855d9a2f722e8904ae6bb7e91f50fb11a9c9674b74d6fec2ff94ca1bb1f72"
+    },
+    {
+      "file": "art/generation/prepared/vanguard-walk-v3-staged/atlas-candidate/actor-vanguard.png",
+      "sha256": "ff4a0919b570a60ff0f1ac14fcf1c709b696218d5c9e360a0e4b2c5c931666eb"
     }
   ],
   "rejection": {
@@ -39,60 +47,65 @@
       "atlasRow": 1,
       "reflectedAtRuntime": false,
       "runtimeFrameHashes": [
-        "70a84ef31266af7517d1b6364217e29f5d16150283dec3926ebfa479554b8fcc",
-        "34df41680cc578b05407daa8b6e8c563481a5752cbcd71ac248dd515dd3150c6",
-        "e4b5333a5bf6137748007da901a39325c0d61e1e8cee9329448fd5b54aeadaaf",
-        "6591a5636a13817900f274fe2f873eb4a38f818d5eef86f3a05147b9a9462004",
-        "70a84ef31266af7517d1b6364217e29f5d16150283dec3926ebfa479554b8fcc",
-        "34df41680cc578b05407daa8b6e8c563481a5752cbcd71ac248dd515dd3150c6",
-        "e4b5333a5bf6137748007da901a39325c0d61e1e8cee9329448fd5b54aeadaaf",
-        "6591a5636a13817900f274fe2f873eb4a38f818d5eef86f3a05147b9a9462004"
+        "82fb5a5d73a8f950b770c43dad51af869f76efb5b71de1de8f43fa51f79d25ca",
+        "eb6cfc7f4685aa8a7f2b92a17f71e74d2ef76217d9c1c2267b105010a69e85f4",
+        "f271f6d7ec28aa44176af9454a6dde76a659fad42a6d201eb4f339d47a8873d5",
+        "bcce6c66fccc61e9d723c478d6cd40722f48723aa4201e0b8083f85a6fd2a760",
+        "82fb5a5d73a8f950b770c43dad51af869f76efb5b71de1de8f43fa51f79d25ca",
+        "eb6cfc7f4685aa8a7f2b92a17f71e74d2ef76217d9c1c2267b105010a69e85f4",
+        "f271f6d7ec28aa44176af9454a6dde76a659fad42a6d201eb4f339d47a8873d5",
+        "bcce6c66fccc61e9d723c478d6cd40722f48723aa4201e0b8083f85a6fd2a760"
       ]
     },
     "west": {
       "atlasRow": 1,
       "reflectedAtRuntime": true,
       "runtimeFrameHashes": [
-        "73768e565d18e44bd1235e5210fe980a0a7b4b945e19563030691870e95a9e9f",
-        "c56945ecd7a8b3bd32a890c3623ebc5514a92be77b76d1c8ff165827a8de2ca4",
-        "d7fefa66ab5d37a682c6b640acae733a0bac5beb885320a033afc4cd0afe25a8",
-        "cd89c3872887f3e82a536ba8fefd7768c72d39ed43100186ec7e63b66f56bc2e",
-        "73768e565d18e44bd1235e5210fe980a0a7b4b945e19563030691870e95a9e9f",
-        "c56945ecd7a8b3bd32a890c3623ebc5514a92be77b76d1c8ff165827a8de2ca4",
-        "d7fefa66ab5d37a682c6b640acae733a0bac5beb885320a033afc4cd0afe25a8",
-        "cd89c3872887f3e82a536ba8fefd7768c72d39ed43100186ec7e63b66f56bc2e"
+        "223478f801bc1137f370e685794790445a1bc701cdefd00fd3f0d57ad40e12e6",
+        "023c3791ab3daa0ee1bd4c4f4a46b20553b70136add871dd3ff8aceed16869d4",
+        "7081eb89e68c31ee1b84c5b678f21f914c55ff3c98ba119c454d6c1c76b3ab04",
+        "e638dfc6fab072f2ee9ff65b358d3b70030d353150afe3815408f7f454090962",
+        "223478f801bc1137f370e685794790445a1bc701cdefd00fd3f0d57ad40e12e6",
+        "023c3791ab3daa0ee1bd4c4f4a46b20553b70136add871dd3ff8aceed16869d4",
+        "7081eb89e68c31ee1b84c5b678f21f914c55ff3c98ba119c454d6c1c76b3ab04",
+        "e638dfc6fab072f2ee9ff65b358d3b70030d353150afe3815408f7f454090962"
       ]
     },
     "north": {
       "atlasRow": 7,
       "reflectedAtRuntime": false,
       "runtimeFrameHashes": [
-        "88b5295f5a6e6027df284d297c96b591d05bb9f70196bf383fa6307ee0597f0a",
-        "6b53c547140b18696b5bcd15a5d48d6a9d244819df34426a1c28cb7491dee177",
-        "5709262a6bcf124fc55144af45a8db98b5d8b99cf163ba9e61ba13b0c7a0b8ff",
-        "275b33bc058ae6b2054c98039d10d6527101f88c0a70291af288599c894434d7",
-        "88b5295f5a6e6027df284d297c96b591d05bb9f70196bf383fa6307ee0597f0a",
-        "6b53c547140b18696b5bcd15a5d48d6a9d244819df34426a1c28cb7491dee177",
-        "5709262a6bcf124fc55144af45a8db98b5d8b99cf163ba9e61ba13b0c7a0b8ff",
-        "275b33bc058ae6b2054c98039d10d6527101f88c0a70291af288599c894434d7"
+        "bc0e50e9d3a5f4f1d1bfcb76133b0d54bf30a11258beaf3baf028baa97b5dca2",
+        "d139a6edc107feef60e83b8d214daddde621c2fbca447f5ae55409b787fd8c1a",
+        "cb72c3fe1a8435c62ae1d3028e476ed96fc8c7496627307aff6c12d3f1eef9d5",
+        "2b8ba9067fd84aaa19991df231234a53bdd5c36c90479a2fc5d01e84d791bc01",
+        "bc0e50e9d3a5f4f1d1bfcb76133b0d54bf30a11258beaf3baf028baa97b5dca2",
+        "d139a6edc107feef60e83b8d214daddde621c2fbca447f5ae55409b787fd8c1a",
+        "cb72c3fe1a8435c62ae1d3028e476ed96fc8c7496627307aff6c12d3f1eef9d5",
+        "2b8ba9067fd84aaa19991df231234a53bdd5c36c90479a2fc5d01e84d791bc01"
       ]
     },
     "south": {
       "atlasRow": 9,
       "reflectedAtRuntime": false,
       "runtimeFrameHashes": [
-        "f9e5de08d0947f822539a265cea882e98664b221a0de4d1a8c3fd591142821c1",
-        "5d38726d010dcc8bf4ad3d27f7bf69015ff325200854dc0b2f5f36ea828a5ab0",
-        "6de7f649dc1546d66ca14062e08ceb39893b63b5f681caba5a38c54d57c90063",
-        "66e3e7985ac7fe842f703154a0c6cfe1763f674403fdb2b52abb6c091192a0bb",
-        "f9e5de08d0947f822539a265cea882e98664b221a0de4d1a8c3fd591142821c1",
-        "5d38726d010dcc8bf4ad3d27f7bf69015ff325200854dc0b2f5f36ea828a5ab0",
-        "6de7f649dc1546d66ca14062e08ceb39893b63b5f681caba5a38c54d57c90063",
-        "66e3e7985ac7fe842f703154a0c6cfe1763f674403fdb2b52abb6c091192a0bb"
+        "7f913e899b63c0cccfcbf526377b83529f800da2cf41004dc53379594ee02be5",
+        "ead0af72a27964ef2c21e6c8392856b665cdb93013990f1e0711be8c2ae1dea9",
+        "6dbbfc9f3a65d9ee46ca57a727df9511aaabd9c3f8f98cffac5274490b12635c",
+        "bbea62c9dba3b3b6dbabc32eeb18a7353b632c60ce2aad0f36ce5575e7b848c8",
+        "7f913e899b63c0cccfcbf526377b83529f800da2cf41004dc53379594ee02be5",
+        "ead0af72a27964ef2c21e6c8392856b665cdb93013990f1e0711be8c2ae1dea9",
+        "6dbbfc9f3a65d9ee46ca57a727df9511aaabd9c3f8f98cffac5274490b12635c",
+        "bbea62c9dba3b3b6dbabc32eeb18a7353b632c60ce2aad0f36ce5575e7b848c8"
       ]
     }
   },
   "reproduction": {
+    "stageCommands": [
+      "node scripts/splice-actor-source.mjs art/generation/assemblies/vanguard-walk-v3-splice.json",
+      "node scripts/build-sprite-assets.mjs --actors vanguard --source-dir art/generation/prepared/vanguard-walk-v3-staged --output-dir art/generation/prepared/vanguard-walk-v3-staged/atlas-candidate --actors-only",
+      "node scripts/splice-actor-atlas.mjs art/generation/assemblies/vanguard-walk-v3-atlas-splice.json"
+    ],
     "command": "node scripts/audit-actor-atlases.mjs --report-only --atlas-dir <directory containing staged Vanguard plus unchanged peer atlases> --landmark-sidecar art/motion-landmarks/candidates/vanguard-walk-v3-staged.rejection.json --report-dir <output>",
     "expectedDisposition": "REJECT",
     "expectedFailureCodes": [

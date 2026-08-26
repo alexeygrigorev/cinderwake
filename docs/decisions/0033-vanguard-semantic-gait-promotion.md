@@ -59,13 +59,22 @@ unrelated checks or disappearing behind a green hash test.
 ## Vanguard v3 staged-candidate result
 
 The surgical v3 atlas is not production art. Its exact atlas hash
-`4757e7749994dd11b35ad4238b9cd0ec1bc429e0d4ee4081021965cfc68e40a5`
+`a59e9ecdf1765523d523e0aa4115c797266fadfcdf29609798fd6daeb0469d4c`
 is bound to
 `art/motion-landmarks/candidates/vanguard-walk-v3-staged.rejection.json`.
 For east, reflected west, north, and south, runtime frames 0–3 are
 byte-identical to frames 4–7 respectively. The candidate therefore fails the
 existing `duplicate-half-cycle` gate before semantic landmark review can make
 it promotion-eligible.
+
+The candidate source splice first normalizes the 1254-pixel raw bases onto the
+1024-pixel source grid. Its full atlas build is retained as evidence, but the
+shared six-sheet scale changes when the candidate cells are present. The final
+staged atlas is therefore a hash-bound runtime splice from the accepted
+production atlas, copying only rows 1, 7, and 9;
+`art/generation/prepared/vanguard-walk-v3-staged/atlas/atlas-splice-report.json`
+records that base, full candidate, output, and row boundary. Untouched runtime
+rows remain byte-identical after decode.
 
 The rejection sidecar intentionally contains no root, torso, foot, knee,
 support, phase, or anchor coordinates. Coordinates cannot repair that raster
