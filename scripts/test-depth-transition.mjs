@@ -574,7 +574,11 @@ function negativeControls(evidence) {
     (frame) => frame.effectMetrics.length > 0,
   );
   const healthFrame = evidence.frames.find(
-    (frame) => frame.healthMetrics.length > 0,
+    (frame) =>
+      frame.healthMetrics.length > 0 &&
+      frame.manifest.worldUi.some(
+        ({ ownerId }) => ownerId === COMBAT_MONSTER_ID,
+      ),
   );
   const thorn = evidence.frames.find((frame) => frame.id === "thorn-behind");
   const controls = [
@@ -640,7 +644,7 @@ function negativeControls(evidence) {
         );
         if (!frame || !player || !monster) return;
         monster.destinationRect = { ...player.destinationRect };
-        monster.footAnchor.y = player.footAnchor.y + 10;
+        monster.footAnchor.y = player.footAnchor.y - 10;
         swapPaint(frame, "body:player", `body:${COMBAT_MONSTER_ID}`);
       },
     },
