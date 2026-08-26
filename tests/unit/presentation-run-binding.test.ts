@@ -1,5 +1,4 @@
 import fs from "node:fs/promises";
-import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
@@ -44,7 +43,10 @@ async function artifactFixture(requirements: string[]) {
     path.join(directory, "evidence.json"),
   );
   await fs.writeFile(path.join(directory, "evidence.json"), "fixture\n");
-  return requirements.map((requirement) => [requirement, relativePath]);
+  return requirements.map((requirement): [string, string] => [
+    requirement,
+    relativePath,
+  ]);
 }
 
 afterEach(async () => {
@@ -108,10 +110,10 @@ describe("presentation run binding", () => {
     });
     const city = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-CITY-027",
-    );
+    )!;
     const state = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-STATE-028",
-    );
+    )!;
 
     expect(report.valid).toBe(true);
     expect(city.result).toBe("NEEDS_VISUAL_REVIEW");
