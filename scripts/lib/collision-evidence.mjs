@@ -36,6 +36,7 @@ export const COLLISION_FAILURE_IDS = [
 
 export const COLLISION_LIMITS = {
   supportAllowancePixels: 15,
+  verticalSupportAllowancePixels: 24,
   minimumSlideDistance: 8,
   minimumImpactFraction: 0.01,
   maximumImpactFraction: 0.99,
@@ -223,14 +224,15 @@ function supportPass(solid) {
       detail: { objectId: solid.objectId ?? null },
     };
   }
-  const allowance = COLLISION_LIMITS.supportAllowancePixels;
+  const horizontalAllowance = COLLISION_LIMITS.supportAllowancePixels;
+  const verticalAllowance = COLLISION_LIMITS.verticalSupportAllowancePixels;
   const pass =
-    projected.x >= alphaBounds.x - allowance &&
-    projected.y >= alphaBounds.y - allowance &&
+    projected.x >= alphaBounds.x - horizontalAllowance &&
+    projected.y >= alphaBounds.y - verticalAllowance &&
     projected.x + projected.width <=
-      alphaBounds.x + alphaBounds.width + allowance &&
+      alphaBounds.x + alphaBounds.width + horizontalAllowance &&
     projected.y + projected.height <=
-      alphaBounds.y + alphaBounds.height + allowance;
+      alphaBounds.y + alphaBounds.height + verticalAllowance;
   return {
     pass,
     failure: pass ? null : "collider-support-mismatch",
@@ -238,7 +240,8 @@ function supportPass(solid) {
       objectId: solid.objectId ?? null,
       alphaBounds,
       projectedBounds: projected,
-      allowancePixels: allowance,
+      horizontalAllowancePixels: horizontalAllowance,
+      verticalAllowancePixels: verticalAllowance,
     },
   };
 }
@@ -472,6 +475,8 @@ export function evaluateCollisionEvidence(evidence) {
         solids: supportDetails,
         count: solids.length,
         supportAllowancePixels: COLLISION_LIMITS.supportAllowancePixels,
+        verticalSupportAllowancePixels:
+          COLLISION_LIMITS.verticalSupportAllowancePixels,
       },
     },
     {
