@@ -73,6 +73,9 @@ describe("presentation run binding", () => {
     const inputRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-INPUT-002",
     );
+    const mobileRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOBILE-010",
+    );
     const liveRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
     );
@@ -103,6 +106,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-INPUT-002",
       ).evidenceRequirements,
     ];
+    const mobileRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-MOBILE-010",
+      ).evidenceRequirements,
+    ];
     const liveRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -130,6 +139,7 @@ describe("presentation run binding", () => {
     const cityArtifacts = await artifactFixture(cityRequirements);
     const stateArtifacts = await artifactFixture(stateRequirements);
     const inputArtifacts = await artifactFixture(inputRequirements);
+    const mobileArtifacts = await artifactFixture(mobileRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
@@ -140,6 +150,10 @@ describe("presentation run binding", () => {
       profileIds: ["desktop", "phone-portrait", "phone-landscape"],
     };
     const inputMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["phone-portrait", "phone-landscape"],
+    };
+    const mobileMetadata = {
       source: { commit, dirty: false },
       profileIds: ["phone-portrait", "phone-landscape"],
     };
@@ -171,6 +185,8 @@ describe("presentation run binding", () => {
       stateComparison: comparison(stateRecipe),
       inputMetadata,
       inputComparison: comparison(inputRecipe),
+      mobileMetadata,
+      mobileComparison: comparison(mobileRecipe),
       liveMetadata,
       liveComparison: comparison(liveRecipe),
       movementMetadata,
@@ -185,6 +201,7 @@ describe("presentation run binding", () => {
       cityArtifacts,
       stateArtifacts,
       inputArtifacts,
+      mobileArtifacts,
       liveArtifacts,
       movementArtifacts,
       spriteArtifacts,
@@ -202,6 +219,9 @@ describe("presentation run binding", () => {
     )!;
     const input = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-INPUT-002",
+    )!;
+    const mobile = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-MOBILE-010",
     )!;
     const live = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
@@ -238,6 +258,17 @@ describe("presentation run binding", () => {
     );
     expect(
       input.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(mobile.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(mobile.observed.deviceProfileIds).toEqual([
+      "phone-portrait",
+      "phone-landscape",
+    ]);
+    expect(mobile.signals).toHaveLength(
+      mobileRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      mobile.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
     expect(live.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(live.observed.deviceProfileIds).toEqual([

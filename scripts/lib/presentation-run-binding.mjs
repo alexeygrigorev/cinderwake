@@ -341,6 +341,44 @@ function inputArtifactSpecifications() {
   return specifications;
 }
 
+async function mobileArtifactSpecifications(repoRoot, profileIds) {
+  const root = "quality-results/mobile-screen/pres-mobile-010";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/mobile-screen.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+  ];
+  for (const profileId of profileIds) {
+    const profileRoot = path.join(repoRoot, root, profileId);
+    const relativeRoot = `${root}/${profileId}`;
+    specifications.push(
+      ["semantic-snapshot-timeline", `${relativeRoot}/states.json`],
+      ["gesture-or-command-tape", `${relativeRoot}/gesture-log.json`],
+      [
+        "render-manifest-timeline",
+        `${relativeRoot}/render-manifest-timeline.json`,
+      ],
+      ["hit-target-geometry", `${relativeRoot}/layout.json`],
+      ["safe-area-and-device-projection", `${relativeRoot}/safe-area.json`],
+      ["phone-text-legibility-metrics", `${relativeRoot}/text-metrics.json`],
+      ["mobile-profile-frames", `${relativeRoot}/mobile-screen.webm`],
+    );
+    const filenames = (await fs.readdir(profileRoot)).sort();
+    const frameFiles = filenames.filter((filename) =>
+      filename.endsWith(".png"),
+    );
+    if (frameFiles.length === 0)
+      throw new Error(`Mobile profile ${profileId} has no retained PNG frames`);
+    for (const filename of frameFiles) {
+      specifications.push(
+        ["ordered-frame-sequence", `${relativeRoot}/${filename}`],
+        ["mobile-profile-frames", `${relativeRoot}/${filename}`],
+      );
+    }
+  }
+  return specifications;
+}
+
 function liveArtifactSpecifications() {
   const root = "quality-results/production-liveness/pres-live-001";
   const specifications = [
@@ -612,6 +650,8 @@ export async function bindPresentationRun({
   stateComparison,
   inputMetadata,
   inputComparison,
+  mobileMetadata,
+  mobileComparison,
   liveMetadata,
   liveComparison,
   movementMetadata,
@@ -625,6 +665,7 @@ export async function bindPresentationRun({
   cityArtifacts = cityArtifactSpecifications(),
   stateArtifacts = stateArtifactSpecifications(),
   inputArtifacts = inputArtifactSpecifications(),
+  mobileArtifacts = null,
   liveArtifacts = liveArtifactSpecifications(),
   movementArtifacts = directionalMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
@@ -633,6 +674,9 @@ export async function bindPresentationRun({
   const cityCheck = contract.checks.find(({ id }) => id === "PRES-CITY-027");
   const stateCheck = contract.checks.find(({ id }) => id === "PRES-STATE-028");
   const inputCheck = contract.checks.find(({ id }) => id === "PRES-INPUT-002");
+  const mobileCheck = contract.checks.find(
+    ({ id }) => id === "PRES-MOBILE-010",
+  );
   const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
@@ -648,6 +692,9 @@ export async function bindPresentationRun({
   );
   const inputRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-INPUT-002",
+  );
+  const mobileRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-MOBILE-010",
   );
   const liveRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-LIVE-001",
@@ -669,9 +716,11 @@ export async function bindPresentationRun({
     !stateCheck ||
     !inputCheck ||
     !liveCheck ||
+    !mobileCheck ||
     !cityRecipe ||
     !stateRecipe ||
     !inputRecipe ||
+    !mobileRecipe ||
     !liveRecipe ||
     !movementCheck ||
     !movementRecipe ||
@@ -681,12 +730,13 @@ export async function bindPresentationRun({
     !temporalRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/movement/sprite/temporal contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/sprite/temporal contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
   const stateSource = sourceCommit(stateMetadata, "PRES-STATE-028");
   const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
+  const mobileSource = sourceCommit(mobileMetadata, "PRES-MOBILE-010");
   const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
@@ -694,6 +744,7 @@ export async function bindPresentationRun({
   if (
     citySource !== stateSource ||
     citySource !== inputSource ||
+    citySource !== mobileSource ||
     citySource !== liveSource ||
     citySource !== movementSource ||
     citySource !== spriteSource ||
@@ -712,6 +763,9 @@ export async function bindPresentationRun({
   const inputIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-INPUT-002",
   );
+  const mobileIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-MOBILE-010",
+  );
   const liveIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-LIVE-001",
   );
@@ -727,6 +781,10 @@ export async function bindPresentationRun({
   const cityComparisonData = comparisonData(cityComparison, "PRES-CITY-027");
   const stateComparisonData = comparisonData(stateComparison, "PRES-STATE-028");
   const inputComparisonData = comparisonData(inputComparison, "PRES-INPUT-002");
+  const mobileComparisonData = comparisonData(
+    mobileComparison,
+    "PRES-MOBILE-010",
+  );
   const liveComparisonData = comparisonData(liveComparison, "PRES-LIVE-001");
   const movementComparisonData = comparisonData(
     movementComparison,
@@ -779,6 +837,18 @@ export async function bindPresentationRun({
     artifactSpecifications: inputArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: inputMetadata.profileIds,
+  });
+  checks[mobileIndex] = await bindRow({
+    repoRoot,
+    contractCheck: mobileCheck,
+    recipe: mobileRecipe,
+    metadata: mobileMetadata,
+    comparison: mobileComparisonData,
+    artifactSpecifications:
+      mobileArtifacts ??
+      (await mobileArtifactSpecifications(repoRoot, mobileMetadata.profileIds)),
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: mobileMetadata.profileIds,
   });
   checks[movementIndex] = await bindRow({
     repoRoot,

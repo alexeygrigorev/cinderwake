@@ -412,7 +412,7 @@
       "id": "recipe:pres-mobile-010",
       "checkId": "PRES-MOBILE-010",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "public-selection",
           "ordinary-production-launch",
@@ -424,7 +424,7 @@
         "requiredIds": ["phone-portrait", "phone-landscape"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "touch-select-begin",
           "touch-move",
@@ -435,15 +435,16 @@
       },
       "evaluator": {
         "id": "mobile-screen-contract-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "targets-contained",
           "subject-contained",
           "hud-and-controls-contained",
-          "phone-text-legible"
+          "phone-text-legible",
+          "pressed-feedback-live"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/mobile.spec.ts tests/e2e/screen-contract.spec.ts tests/e2e/city.spec.ts",
+      "reproduce": "npm run test:mobile-screen && npx vitest run tests/unit/mobile-screen-evidence.test.ts",
       "negativeControls": [
         {
           "id": "target-undersized-or-occluded",

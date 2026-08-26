@@ -440,7 +440,7 @@
       "checkId": "PRES-MOBILE-010",
       "executionRecipeId": "recipe:pres-mobile-010",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],

@@ -191,7 +191,7 @@
       "id": "PRES-MOBILE-010",
       "executionRecipeId": "recipe:pres-mobile-010",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "mobile-profile-frames",
