@@ -24,7 +24,7 @@
       "id": "PRES-LIVE-001",
       "executionRecipeId": "recipe:pres-live-001",
       "priority": "P0",
-      "coverage": "partial",
+      "coverage": "automatic",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "production-control-route",

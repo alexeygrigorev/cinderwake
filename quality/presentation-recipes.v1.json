@@ -7,7 +7,7 @@
       "id": "recipe:pres-live-001",
       "checkId": "PRES-LIVE-001",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "ordinary-production-launch",
           "asset-load-recovery",
@@ -19,7 +19,7 @@
         "requiredIds": ["desktop", "phone-portrait"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
           "mouse-select-begin",
           "touch-select-begin",
@@ -29,7 +29,7 @@
       },
       "evaluator": {
         "id": "production-control-liveness-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "launch-and-controls-live",
           "failure-route-recovers",
@@ -38,7 +38,7 @@
           "transition-deadlines-bound"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/live-player-journey.spec.ts tests/e2e/mobile.spec.ts tests/e2e/ui-text-contract.spec.ts",
+      "reproduce": "npm run test:production-liveness && npx vitest run tests/unit/production-control-liveness-evidence.test.ts",
       "negativeControls": [
         { "id": "begin-listener-removed", "expectedSignal": "launch-inert" },
         { "id": "action-listener-removed", "expectedSignal": "control-inert" },

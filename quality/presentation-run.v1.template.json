@@ -14,7 +14,7 @@
       "checkId": "PRES-LIVE-001",
       "executionRecipeId": "recipe:pres-live-001",
       "result": "UNRUN",
-      "coverageAtRun": "partial",
+      "coverageAtRun": "automatic",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],
