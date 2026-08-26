@@ -537,7 +537,9 @@ export class CanvasRenderer {
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
       const width = Math.round(
         Math.max(
-          38,
+          // Hexer's narrower 112px cell still needs to fit the shared health
+          // bar contract at the default 0.9 zoom.
+          36,
           Math.min(
             52 * manifest.camera.zoom,
             call.destinationRect.width * 0.35,
@@ -648,9 +650,7 @@ export class CanvasRenderer {
       { assetId: part.assetId, sourceRect: part.sourceRect },
       part.destinationRect,
       false,
-      kind === "health-frame"
-        ? worldUi.frameOpacity
-        : worldUi.fillOpacity,
+      kind === "health-frame" ? worldUi.frameOpacity : worldUi.fillOpacity,
       0,
     );
   }

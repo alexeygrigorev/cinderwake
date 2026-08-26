@@ -213,6 +213,26 @@ test("uses the same presentation-only contract for Stonekin and mobile play", as
   );
 });
 
+test("keeps narrow generated-monster health bars within the actor ratio", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario("generated-run");
+    bridge.setCamera({ x: 22.5 * 48, y: 16.5 * 48, zoom: 0.9 }, "fixed");
+  });
+  const manifest = await page.evaluate(() => {
+    window.__GAME_TEST__!.render();
+    return window.__GAME_TEST__!.renderManifest();
+  });
+  expect(manifest.worldUi.length).toBeGreaterThan(0);
+  expect(
+    assessCombatReadability(manifest).violations.filter((violation) =>
+      violation.startsWith("combat:health-"),
+    ),
+  ).toEqual([]);
+});
+
 test("rejects missing or detached evidence, stacking, dominant UI, foreground effects, and visual snaps", async ({
   page,
 }) => {
