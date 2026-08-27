@@ -81,9 +81,13 @@ function cameraMotionFrameFiles() {
       `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-initial.png`,
     );
     for (const gestureId of gestureIds) {
+      const afterLabel =
+        gestureId === "approach-map-edge"
+          ? `${artifactPrefix}-${gestureId}-after`
+          : `${gestureId}-after`;
       files.push(
         `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-${gestureId}-before.png`,
-        `frame-${String(index++).padStart(4, "0")}-${gestureId}-after.png`,
+        `frame-${String(index++).padStart(4, "0")}-${afterLabel}.png`,
       );
     }
   }

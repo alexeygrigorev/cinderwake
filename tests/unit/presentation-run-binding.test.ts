@@ -69,7 +69,13 @@ describe("presentation run binding", () => {
 
     expect(framePaths).toHaveLength(52);
     expect(framePaths).toContain(
+      "quality-results/camera-motion/pres-camera-016/desktop/frame-0002-edge-approach-map-edge-after.png",
+    );
+    expect(framePaths).toContain(
       "quality-results/camera-motion/pres-camera-016/desktop/frame-0004-reverse-west-after.png",
+    );
+    expect(framePaths).not.toContain(
+      "quality-results/camera-motion/pres-camera-016/desktop/frame-0002-approach-map-edge-after.png",
     );
     expect(framePaths).not.toContain(
       "quality-results/camera-motion/pres-camera-016/desktop/frame-0004-edge-reverse-west-after.png",
