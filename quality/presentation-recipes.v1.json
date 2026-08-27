@@ -405,7 +405,7 @@
           "all-visible-draws-have-sprite-provenance"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/ui-text-contract.spec.ts tests/e2e/sprite-contract.spec.ts",
+      "reproduce": "npm run test:sprite-provenance",
       "negativeControls": [
         {
           "id": "role-replaced-with-css-or-text",

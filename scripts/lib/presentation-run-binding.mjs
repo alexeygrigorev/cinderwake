@@ -670,6 +670,44 @@ export function cameraMotionArtifactSpecifications(
   return specifications;
 }
 
+export async function visibleSpriteArtifactSpecifications(
+  repoRoot,
+  root = "quality-results/visible-sprite-provenance/pres-sprite-009",
+) {
+  const metadata = JSON.parse(
+    await fs.readFile(path.join(repoRoot, root, "metadata.json"), "utf8"),
+  );
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/evidence.json`],
+    ["gesture-or-command-tape", `${root}/evidence.json`],
+    ["render-manifest-timeline", `${root}/evidence.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+    ["visible-dom-inventory", `${root}/evidence.json`],
+    ["manifest-draw-provenance", `${root}/evidence.json`],
+    ["decoded-role-inventory", `${root}/evidence.json`],
+    ["semantic-title-role-allowlist", `${root}/metadata.json`],
+    ["complete-visible-draw-provenance", `${root}/comparison.json`],
+  ];
+  for (const profileId of metadata.profileIds ?? []) {
+    const profileRoot = path.join(repoRoot, root, profileId);
+    const relativeRoot = `${root}/${profileId}`;
+    specifications.push(
+      ["semantic-snapshot-timeline", `${relativeRoot}/states.json`],
+      ["visible-dom-inventory", `${relativeRoot}/states.json`],
+      ["manifest-draw-provenance", `${relativeRoot}/states.json`],
+      ["decoded-role-inventory", `${relativeRoot}/states.json`],
+    );
+    const files = await filesUnder(profileRoot);
+    for (const file of files) {
+      const relativePath = path.relative(repoRoot, file);
+      if (relativePath.endsWith(".png"))
+        specifications.push(["ordered-frame-sequence", relativePath]);
+    }
+  }
+  return specifications;
+}
+
 function actorAtlasArtifactSpecifications() {
   const root = "quality-results/actor-atlas-audit";
   const specifications = [
@@ -939,6 +977,8 @@ export async function bindPresentationRun({
   cameraComparison,
   spriteMetadata,
   spriteComparison,
+  visibleSpriteMetadata,
+  visibleSpriteComparison,
   temporalMetadata,
   temporalComparison,
   depthMetadata,
@@ -958,6 +998,7 @@ export async function bindPresentationRun({
   facingArtifacts = null,
   cameraArtifacts = cameraMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
+  visibleSpriteArtifacts = null,
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
   depthArtifacts = depthTransitionArtifactSpecifications(),
   collisionArtifacts = null,
@@ -986,6 +1027,9 @@ export async function bindPresentationRun({
   );
   const spriteCheck = contract.checks.find(
     ({ id }) => id === "PRES-SPRITE-004",
+  );
+  const visibleSpriteCheck = contract.checks.find(
+    ({ id }) => id === "PRES-SPRITE-009",
   );
   const cityRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CITY-027",
@@ -1019,6 +1063,9 @@ export async function bindPresentationRun({
   );
   const spriteRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-SPRITE-004",
+  );
+  const visibleSpriteRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-SPRITE-009",
   );
   const temporalCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOTION-005",
@@ -1075,6 +1122,8 @@ export async function bindPresentationRun({
     !cameraRecipe ||
     !spriteCheck ||
     !spriteRecipe ||
+    !visibleSpriteCheck ||
+    !visibleSpriteRecipe ||
     !temporalCheck ||
     !temporalRecipe ||
     !depthCheck ||
@@ -1083,7 +1132,7 @@ export async function bindPresentationRun({
     !collisionRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/mobile/movement/facing/camera/sprite/temporal/depth/collision contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/facing/camera/sprite/provenance/temporal/depth/collision contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -1101,6 +1150,10 @@ export async function bindPresentationRun({
   const facingSource = sourceCommit(facingMetadata, "PRES-FACING-015");
   const cameraSource = sourceCommit(cameraMetadata, "PRES-CAMERA-016");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
+  const visibleSpriteSource = sourceCommit(
+    visibleSpriteMetadata,
+    "PRES-SPRITE-009",
+  );
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
   const depthSource = sourceCommit(depthMetadata, "PRES-DEPTH-019");
   const collisionSource = sourceCommit(collisionMetadata, "PRES-COLLIDE-008");
@@ -1113,6 +1166,7 @@ export async function bindPresentationRun({
     citySource !== facingSource ||
     citySource !== cameraSource ||
     citySource !== spriteSource ||
+    citySource !== visibleSpriteSource ||
     citySource !== temporalSource ||
     citySource !== depthSource ||
     citySource !== collisionSource ||
@@ -1156,6 +1210,9 @@ export async function bindPresentationRun({
   const spriteIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-SPRITE-004",
   );
+  const visibleSpriteIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-SPRITE-009",
+  );
   const temporalIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOTION-005",
   );
@@ -1194,6 +1251,10 @@ export async function bindPresentationRun({
   const spriteComparisonData = comparisonData(
     spriteComparison,
     "PRES-SPRITE-004",
+  );
+  const visibleSpriteComparisonData = comparisonData(
+    visibleSpriteComparison,
+    "PRES-SPRITE-009",
   );
   const temporalComparisonData = comparisonData(
     temporalComparison,
@@ -1349,6 +1410,23 @@ export async function bindPresentationRun({
     artifactSpecifications: spriteArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: spriteMetadata.profileIds,
+  });
+  checks[visibleSpriteIndex] = await bindRow({
+    repoRoot,
+    contractCheck: visibleSpriteCheck,
+    recipe: visibleSpriteRecipe,
+    metadata: visibleSpriteMetadata,
+    comparison: visibleSpriteComparisonData,
+    artifactSpecifications:
+      visibleSpriteArtifacts ??
+      (await visibleSpriteArtifactSpecifications(repoRoot)),
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: visibleSpriteMetadata.profileIds,
+    observed: {
+      scenarioIds: visibleSpriteMetadata.scenarioIds,
+      deviceProfileIds: visibleSpriteMetadata.profileIds,
+      gestureIds: ["select", "begin", "trigger-outcome"],
+    },
   });
   checks[temporalIndex] = await bindRow({
     repoRoot,

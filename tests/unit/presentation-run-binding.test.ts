@@ -3,7 +3,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { bindPresentationRun } from "../../scripts/lib/presentation-run-binding.mjs";
+import {
+  bindPresentationRun,
+  visibleSpriteArtifactSpecifications,
+} from "../../scripts/lib/presentation-run-binding.mjs";
 import { validatePresentationChecklist } from "../../scripts/validate-presentation-checklist.mjs";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -58,6 +61,39 @@ afterEach(async () => {
 });
 
 describe("presentation run binding", () => {
+  it("enumerates visible sprite artifacts under a configured root", async () => {
+    const directory = await fs.mkdtemp(
+      path.join(root, "quality-results/.presentation-binding-test-"),
+    );
+    temporaryDirectories.push(directory);
+    const relativeRoot = path.relative(root, directory);
+    await fs.mkdir(path.join(directory, "desktop"));
+    await fs.writeFile(
+      path.join(directory, "metadata.json"),
+      JSON.stringify({ profileIds: ["desktop"] }),
+    );
+    await fs.writeFile(path.join(directory, "desktop", "states.json"), "{}\n");
+    await fs.writeFile(path.join(directory, "desktop", "frame.png"), "png\n");
+
+    const specifications = await visibleSpriteArtifactSpecifications(
+      root,
+      relativeRoot,
+    );
+
+    expect(specifications).toContainEqual([
+      "environment-metadata",
+      `${relativeRoot}/metadata.json`,
+    ]);
+    expect(specifications).toContainEqual([
+      "semantic-snapshot-timeline",
+      `${relativeRoot}/desktop/states.json`,
+    ]);
+    expect(specifications).toContainEqual([
+      "ordered-frame-sequence",
+      `${relativeRoot}/desktop/frame.png`,
+    ]);
+  });
+
   it("binds machine evidence while preserving the city visual-review gate", async () => {
     const [template, contract, recipes] = await Promise.all([
       readJson("quality/presentation-run.v1.template.json"),
@@ -96,6 +132,9 @@ describe("presentation run binding", () => {
     );
     const spriteRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
+    );
+    const visibleSpriteRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-009",
     );
     const temporalRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOTION-005",
@@ -172,6 +211,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-SPRITE-004",
       ).evidenceRequirements,
     ];
+    const visibleSpriteRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-SPRITE-009",
+      ).evidenceRequirements,
+    ];
     const temporalRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -201,6 +246,9 @@ describe("presentation run binding", () => {
     const facingArtifacts = await artifactFixture(facingRequirements);
     const cameraArtifacts = await artifactFixture(cameraRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
+    const visibleSpriteArtifacts = await artifactFixture(
+      visibleSpriteRequirements,
+    );
     const temporalArtifacts = await artifactFixture(temporalRequirements);
     const depthArtifacts = await artifactFixture(depthRequirements);
     const collisionArtifacts = await artifactFixture(collisionRequirements);
@@ -280,6 +328,11 @@ describe("presentation run binding", () => {
       source: { commit, dirty: false },
       profileIds: ["runtime-atlas-native-resolution"],
     };
+    const visibleSpriteMetadata = {
+      source: { commit, dirty: false },
+      scenarioIds: visibleSpriteRecipe.scenarioSet.requiredIds,
+      profileIds: visibleSpriteRecipe.deviceProfileSet.requiredIds,
+    };
     const temporalMetadata = {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
@@ -320,6 +373,8 @@ describe("presentation run binding", () => {
       cameraComparison: comparison(cameraRecipe),
       spriteMetadata,
       spriteComparison: comparison(spriteRecipe),
+      visibleSpriteMetadata,
+      visibleSpriteComparison: comparison(visibleSpriteRecipe),
       temporalMetadata,
       temporalComparison: comparison(temporalRecipe),
       depthMetadata,
@@ -340,6 +395,7 @@ describe("presentation run binding", () => {
       facingArtifacts,
       cameraArtifacts,
       spriteArtifacts,
+      visibleSpriteArtifacts,
       temporalArtifacts,
       depthArtifacts,
       collisionArtifacts,
@@ -511,6 +567,23 @@ describe("presentation run binding", () => {
     );
     expect(
       sprite.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    const visibleSprite = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-009",
+    );
+    expect(visibleSprite.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(visibleSprite.observed).toEqual({
+      scenarioIds: visibleSpriteMetadata.scenarioIds,
+      deviceProfileIds: visibleSpriteMetadata.profileIds,
+      gestureIds: ["select", "begin", "trigger-outcome"],
+    });
+    expect(visibleSprite.signals).toHaveLength(
+      visibleSpriteRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      visibleSprite.negativeControls.every(
+        ({ status }) => status === "DETECTED",
+      ),
     ).toBe(true);
     expect(temporal.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(temporal.observed.deviceProfileIds).toEqual([

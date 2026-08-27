@@ -7,6 +7,7 @@ import {
   directionalBankArtifactSpecifications,
   flickerArtifactSpecifications,
   renderResolutionArtifactSpecifications,
+  visibleSpriteArtifactSpecifications,
 } from "./lib/presentation-run-binding.mjs";
 
 const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -122,6 +123,14 @@ async function main() {
     repoRoot,
     option(args, "--sprite-root", "quality-results/actor-atlas-audit"),
   );
+  const visibleSpriteRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--visible-sprite-root",
+      "quality-results/visible-sprite-provenance/pres-sprite-009",
+    ),
+  );
   const temporalRoot = path.resolve(
     repoRoot,
     option(args, "--temporal-root", "quality-results/temporal-sequence-audit"),
@@ -168,6 +177,8 @@ async function main() {
     cameraComparison,
     spriteMetadata,
     spriteComparison,
+    visibleSpriteMetadata,
+    visibleSpriteComparison,
     temporalMetadata,
     temporalComparison,
     depthMetadata,
@@ -200,6 +211,8 @@ async function main() {
     readJson(path.join(cameraRoot, "comparison.json")),
     readJson(path.join(spriteRoot, "metadata.json")),
     readJson(path.join(spriteRoot, "report.json")),
+    readJson(path.join(visibleSpriteRoot, "metadata.json")),
+    readJson(path.join(visibleSpriteRoot, "comparison.json")),
     readJson(path.join(temporalRoot, "metadata.json")),
     readJson(path.join(temporalRoot, "comparison.json")),
     readJson(path.join(depthRoot, "metadata.json")),
@@ -210,7 +223,7 @@ async function main() {
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:directional-bank && npm run test:camera-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:directional-bank && npm run test:camera-motion && npm run test:production-liveness && npm run test:sprite-provenance && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -239,6 +252,8 @@ async function main() {
     cameraComparison,
     spriteMetadata,
     spriteComparison,
+    visibleSpriteMetadata,
+    visibleSpriteComparison,
     temporalMetadata,
     temporalComparison,
     depthMetadata,
@@ -250,6 +265,10 @@ async function main() {
     facingArtifacts: await directionalBankArtifactSpecifications(repoRoot),
     cameraArtifacts: cameraMotionArtifactSpecifications(
       path.relative(repoRoot, cameraRoot),
+    ),
+    visibleSpriteArtifacts: await visibleSpriteArtifactSpecifications(
+      repoRoot,
+      path.relative(repoRoot, visibleSpriteRoot),
     ),
     commit,
     reproduce,
@@ -276,6 +295,7 @@ async function main() {
   console.log("PRES-FACING-015: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CAMERA-016: NEEDS_VISUAL_REVIEW");
   console.log("PRES-SPRITE-004: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-SPRITE-009: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOTION-005: NEEDS_VISUAL_REVIEW");
   console.log("PRES-DEPTH-019: NEEDS_VISUAL_REVIEW");
   console.log("PRES-COLLIDE-008: NEEDS_VISUAL_REVIEW");
