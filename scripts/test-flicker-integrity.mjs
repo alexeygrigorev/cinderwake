@@ -402,23 +402,27 @@ async function runLiveRecording(
   paceId,
   pace,
   captureFrames,
+  recordVideo = true,
 ) {
-  const videoDirectory = path.join(
-    OUTPUT,
-    "video-tmp",
-    `${profileId}-${actorId}-${paceId}`,
-  );
+  const videoDirectory = recordVideo
+    ? path.join(OUTPUT, "video-tmp", `${profileId}-${actorId}-${paceId}`)
+    : null;
   const liveDirectory = path.join(OUTPUT, "live", profileId, actorId);
-  await fs.mkdir(videoDirectory, { recursive: true });
+  if (videoDirectory) await fs.mkdir(videoDirectory, { recursive: true });
   await fs.mkdir(liveDirectory, { recursive: true });
-  const context = await browser.newContext({
+  const contextOptions = {
     viewport: profile.viewport,
     deviceScaleFactor: profile.deviceScaleFactor,
     colorScheme: "dark",
     hasTouch: profile.hasTouch,
     isMobile: profile.isMobile,
-    recordVideo: { dir: videoDirectory, size: profile.viewport },
-  });
+  };
+  if (recordVideo)
+    contextOptions.recordVideo = {
+      dir: videoDirectory,
+      size: profile.viewport,
+    };
+  const context = await browser.newContext(contextOptions);
   const page = await context.newPage();
   const session = profile.hasTouch ? await context.newCDPSession(page) : null;
   const faults = [];
@@ -460,12 +464,12 @@ async function runLiveRecording(
     const video = page.video();
     await context.close();
     videoPath = video ? await video.path() : null;
-    if (videoPath) {
+    if (recordVideo && videoPath) {
       const target = path.join(liveDirectory, `${paceId}.webm`);
       await fs.copyFile(videoPath, target);
     }
   }
-  if (!videoPath)
+  if (recordVideo && !videoPath)
     throw new Error(`${profileId}/${actorId}/${paceId} did not produce video`);
   return result;
 }
@@ -482,6 +486,17 @@ async function runLiveProfile(browser, baseURL, profileId, profile) {
       "normal",
       LIVE_PACES.normal,
       true,
+    );
+    const cadence = await runLiveRecording(
+      browser,
+      baseURL,
+      profileId,
+      profile,
+      actorId,
+      "cadence",
+      LIVE_PACES.normal,
+      false,
+      false,
     );
     const slow =
       actorId === "vanguard"
@@ -520,10 +535,11 @@ async function runLiveProfile(browser, baseURL, profileId, profile) {
     }
     actors.push({
       actorId,
-      samples: normal.samples.map((sample) =>
+      sampleSource: "normal-no-frame-cadence-pass",
+      samples: cadence.samples.map((sample) =>
         evaluatorLiveSample(sample, actorId),
       ),
-      sampleDetails: normal.samples,
+      sampleDetails: cadence.samples,
       frameArtifacts,
       videoArtifacts,
       slowSampleCount: slow.samples.length,
