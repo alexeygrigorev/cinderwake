@@ -8,14 +8,13 @@ import { availablePort } from "./lib/available-port.mjs";
 import {
   CAMERA_MOTION_GESTURE_IDS,
   CAMERA_MOTION_PROFILE_IDS,
-  CAMERA_MOTION_SCENARIO_IDS,
+  CAMERA_MOTION_RUN_SPECS,
   evaluateCameraMotionEvidence,
   runCameraMotionNegativeControls,
 } from "./lib/camera-motion-evidence.mjs";
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
 
 const OUTPUT = path.resolve("quality-results/camera-motion/pres-camera-016");
-const SCENARIO_ID = CAMERA_MOTION_SCENARIO_IDS.edgeReversal;
 const REFERENCE_SCENE_ID = "tile:14:4";
 const TILE_PIXELS = 48;
 const LOGICAL_VIEWPORT = { width: 960, height: 540 };
@@ -24,6 +23,9 @@ const APPROACH_MS = 1_000;
 // before the target can move left. Keep the reversal long enough to show that
 // transition instead of recording a stationary clamped target.
 const HOLD_MS = 1_300;
+const DIAGONAL_HOLD_MS = 2_000;
+const STOP_HOLD_MS = 650;
+const FIXED_HOLD_MS = 1_000;
 const SETTLE_MS = 700;
 const PROFILES = {
   desktop: {
@@ -42,8 +44,67 @@ const PROFILES = {
   },
 };
 const DIRECTIONS = {
-  "reverse-west": { key: "a", x: -1, axis: "x", sign: -1 },
-  "reverse-east": { key: "d", x: 1, axis: "x", sign: 1 },
+  "reverse-west": {
+    keys: ["a"],
+    x: -1,
+    y: 0,
+    axes: [["x", -1]],
+    holdMs: HOLD_MS,
+  },
+  "reverse-east": {
+    keys: ["d"],
+    x: 1,
+    y: 0,
+    axes: [["x", 1]],
+    holdMs: HOLD_MS,
+  },
+  "diagonal-north-west": {
+    keys: ["a", "w"],
+    x: -1,
+    y: -1,
+    axes: [
+      ["x", -1],
+      ["y", -1],
+    ],
+    holdMs: DIAGONAL_HOLD_MS,
+  },
+  "stop-after-diagonal": {
+    keys: ["a", "s"],
+    x: -1,
+    y: 1,
+    axes: [
+      ["x", -1],
+      ["y", 1],
+    ],
+    holdMs: STOP_HOLD_MS,
+  },
+  "stop-center": {
+    keys: ["d"],
+    x: 1,
+    y: 0,
+    axes: [["x", 1]],
+    holdMs: STOP_HOLD_MS,
+  },
+  "fixed-travel": {
+    keys: ["d", "s"],
+    x: 1,
+    y: 1,
+    axes: [
+      ["x", 1],
+      ["y", 1],
+    ],
+    holdMs: FIXED_HOLD_MS,
+  },
+  "snap-travel": {
+    keys: ["d", "s"],
+    x: 1,
+    y: 1,
+    axes: [
+      ["x", 1],
+      ["y", 1],
+    ],
+    holdMs: HOLD_MS,
+  },
 };
 
 function option(name, fallback) {
@@ -206,8 +267,8 @@ async function startServer(port) {
   throw new Error(`Camera-motion server did not start at ${baseURL}`);
 }
 
-async function prepareProductionPage(page, baseURL) {
-  await page.goto(`${baseURL}/?scenario=${SCENARIO_ID}`, {
+async function prepareProductionPage(page, baseURL, runSpec) {
+  await page.goto(`${baseURL}/?scenario=${runSpec.scenarioId}`, {
     waitUntil: "networkidle",
   });
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
@@ -230,15 +291,18 @@ async function prepareProductionPage(page, baseURL) {
     throw new Error("Camera-motion route exposed a mutating test bridge");
   if (route.mode !== "observe-only")
     throw new Error(`Camera-motion route is not observe-only: ${route.mode}`);
-  if (route.scenarioId !== SCENARIO_ID)
+  if (route.scenarioId !== runSpec.scenarioId)
     throw new Error(`Camera-motion route loaded ${route.scenarioId}`);
-  if (route.cameraMode !== "smooth")
+  if (route.cameraMode !== runSpec.cameraMode)
     throw new Error(`Camera-motion route used camera mode ${route.cameraMode}`);
   if (!route.cameraTarget?.zoom || !route.map.width || !route.map.height)
     throw new Error("Camera-motion route omitted map or camera telemetry");
   return {
     map: route.map,
-    cameraBounds: cameraBounds(route, route.cameraTarget.zoom),
+    cameraBounds: cameraBounds(
+      route,
+      route.camera?.zoom ?? route.cameraTarget.zoom,
+    ),
   };
 }
 
@@ -265,15 +329,16 @@ async function clearSamples(page) {
 
 async function waitForMovement(page, before, direction) {
   await page.waitForFunction(
-    ({ initial, axis, sign }) => {
+    ({ initial, axes }) => {
       const position = window.__GAME_OBSERVE__?.snapshot().player.position;
       if (!position) return false;
-      return sign * (position[axis] - initial[axis]) > 0;
+      return axes.every(
+        ([axis, sign]) => sign * (position[axis] - initial[axis]) > 0,
+      );
     },
     {
       initial: before.snapshot.player.position,
-      axis: direction.axis,
-      sign: direction.sign,
+      axes: direction.axes,
     },
     { timeout: 3_000 },
   );
@@ -294,7 +359,7 @@ async function touchGesture(page, session, before, direction) {
   const radius = Math.min(bounds.width, bounds.height) * 0.3;
   const target = {
     x: center.x + direction.x * radius,
-    y: center.y,
+    y: center.y + direction.y * radius,
   };
   await session.send("Input.dispatchTouchEvent", {
     type: "touchStart",
@@ -316,35 +381,42 @@ async function touchGesture(page, session, before, direction) {
   return {
     type: "touch",
     control: "move-pad",
-    direction: { x: direction.x, y: 0 },
+    direction: { x: direction.x, y: direction.y },
     bounds,
     physical: { center, target },
   };
 }
 
 async function keyboardGesture(page, before, direction) {
-  await page.keyboard.down(direction.key);
+  for (const key of direction.keys) await page.keyboard.down(key);
   try {
     await waitForMovement(page, before, direction);
-    await page.waitForTimeout(HOLD_MS);
+    await page.waitForTimeout(direction.holdMs);
   } finally {
-    await page.keyboard.up(direction.key);
+    for (const key of [...direction.keys].reverse())
+      await page.keyboard.up(key);
   }
   return {
     type: "keyboard",
-    key: direction.key,
-    vector: { x: direction.x, y: 0 },
+    keys: [...direction.keys],
+    vector: { x: direction.x, y: direction.y },
   };
 }
 
-async function runApproach(page) {
+async function runApproach(page, artifactPrefix) {
   await clearSamples(page);
-  const before = await capture(page, "approach-map-edge-before");
+  const before = await capture(
+    page,
+    `${artifactPrefix}-approach-map-edge-before`,
+  );
   await page.waitForTimeout(APPROACH_MS);
   const samples = await page.evaluate(() =>
     window.__GAME_OBSERVE__?.presentationSamples(),
   );
-  const after = await capture(page, "approach-map-edge-after");
+  const after = await capture(
+    page,
+    `${artifactPrefix}-approach-map-edge-after`,
+  );
   return {
     id: "approach-map-edge",
     input: { type: "idle", purpose: "smooth-follow-to-east-map-clamp" },
@@ -354,10 +426,11 @@ async function runApproach(page) {
   };
 }
 
-async function runReversal(page, session, profile, id) {
+async function runHeldGesture(page, session, profile, artifactPrefix, id) {
   const direction = DIRECTIONS[id];
+  if (!direction) throw new Error(`Unknown camera gesture ${id}`);
   await clearSamples(page);
-  const before = await capture(page, `${id}-before`);
+  const before = await capture(page, `${artifactPrefix}-${id}-before`);
   const input =
     profile.input === "touch"
       ? await touchGesture(page, session, before, direction)
@@ -452,57 +525,69 @@ async function writeContactSheet(directory, captures) {
 async function normalizeProfile(raw, profileId) {
   const directory = path.join(OUTPUT, profileId);
   await fs.mkdir(directory, { recursive: true });
-  const captures = [
-    raw.initial.capture,
-    ...raw.gestures.flatMap(({ before, after }) => [before, after]),
-  ];
-  const normalizedCaptures = captures.map((capture, index) =>
-    normalizeCapture(capture, profileId, index),
-  );
+  let frameIndex = 0;
+  const normalizedRuns = [];
+  const normalizedCaptures = [];
+  for (const rawRun of raw.runs) {
+    const captures = [
+      rawRun.initial.capture,
+      ...rawRun.gestures.flatMap(({ before, after }) => [before, after]),
+    ];
+    const capturesForRun = captures.map((capture) =>
+      normalizeCapture(capture, profileId, frameIndex++),
+    );
+    normalizedCaptures.push(...capturesForRun);
+    const lookup = new Map(
+      capturesForRun.map((capture) => [capture.label, capture]),
+    );
+    const gestures = rawRun.gestures.map((gesture) => ({
+      id: gesture.id,
+      input: gesture.input,
+      before: publicCapture(lookup.get(gesture.before.label)),
+      after: publicCapture(lookup.get(gesture.after.label)),
+      samples: gesture.samples.map(publicSample),
+    }));
+    normalizedRuns.push({
+      scenarioId: rawRun.scenarioId,
+      cameraMode: rawRun.cameraMode,
+      cameraBounds: rawRun.cameraBounds,
+      initial: {
+        bridgeExposed: rawRun.initial.bridgeExposed,
+        mode: rawRun.initial.mode,
+        capture: publicCapture(lookup.get(rawRun.initial.capture.label)),
+      },
+      gestures,
+      timeline: [
+        publicCapture(lookup.get(rawRun.initial.capture.label)),
+        ...gestures.flatMap(({ before, after }) => [before, after]),
+      ],
+    });
+  }
   for (const capture of normalizedCaptures)
     await fs.writeFile(path.join(directory, capture.frameFile), capture.frame);
-  const lookup = new Map(
-    normalizedCaptures.map((capture) => [capture.label, capture]),
-  );
-  const gestures = raw.gestures.map((gesture) => ({
-    id: gesture.id,
-    input: gesture.input,
-    before: publicCapture(lookup.get(gesture.before.label)),
-    after: publicCapture(lookup.get(gesture.after.label)),
-    samples: gesture.samples.map(publicSample),
-  }));
-  const run = {
-    scenarioId: raw.scenarioId,
-    cameraMode: raw.cameraMode,
-    cameraBounds: raw.cameraBounds,
-    initial: {
-      bridgeExposed: raw.initial.bridgeExposed,
-      mode: raw.initial.mode,
-      capture: publicCapture(lookup.get(raw.initial.capture.label)),
-    },
-    gestures,
-    timeline: [
-      publicCapture(lookup.get(raw.initial.capture.label)),
-      ...gestures.flatMap(({ before, after }) => [before, after]),
-    ],
-  };
   await Promise.all([
-    writeJson(path.join(directory, "gesture-log.json"), gestures),
+    writeJson(path.join(directory, "gesture-log.json"), {
+      schemaVersion: 1,
+      profileId,
+      runs: normalizedRuns.map(({ scenarioId, cameraMode, gestures }) => ({
+        scenarioId,
+        cameraMode,
+        gestures,
+      })),
+    }),
     writeJson(path.join(directory, "states.json"), {
       schemaVersion: 1,
       profileId,
-      cameraBounds: raw.cameraBounds,
-      runs: [run],
+      runs: normalizedRuns,
     }),
     writeJson(path.join(directory, "render-manifest-timeline.json"), {
       schemaVersion: 1,
       profileId,
-      cameraBounds: raw.cameraBounds,
       frames: normalizedCaptures.map(publicCapture),
     }),
   ]);
   await writeContactSheet(directory, normalizedCaptures);
-  return { profileId, runs: [run] };
+  return { profileId, runs: normalizedRuns };
 }
 
 async function runProfile(browser, profileId, profile, baseURL) {
@@ -520,34 +605,42 @@ async function runProfile(browser, profileId, profile, baseURL) {
   const page = await context.newPage();
   const session = profile.hasTouch ? await context.newCDPSession(page) : null;
   try {
-    const route = await prepareProductionPage(page, baseURL);
-    const initialCapture = await capture(page, "initial");
-    const approach = await runApproach(page);
-    const reverseWest = await runReversal(
-      page,
-      session,
-      profile,
-      "reverse-west",
-    );
-    const reverseEast = await runReversal(
-      page,
-      session,
-      profile,
-      "reverse-east",
-    );
-    return {
-      profileId,
-      run: {
-        scenarioId: SCENARIO_ID,
-        cameraMode: "smooth",
+    const runs = [];
+    for (const runSpec of CAMERA_MOTION_RUN_SPECS) {
+      const route = await prepareProductionPage(page, baseURL, runSpec);
+      const initialCapture = await capture(
+        page,
+        `${runSpec.artifactPrefix}-initial`,
+      );
+      const gestures = [];
+      for (const gestureId of runSpec.gestureIds) {
+        gestures.push(
+          gestureId === "approach-map-edge"
+            ? await runApproach(page, runSpec.artifactPrefix)
+            : await runHeldGesture(
+                page,
+                session,
+                profile,
+                runSpec.artifactPrefix,
+                gestureId,
+              ),
+        );
+      }
+      runs.push({
+        scenarioId: runSpec.scenarioId,
+        cameraMode: runSpec.cameraMode,
         cameraBounds: route.cameraBounds,
         initial: {
           bridgeExposed: false,
           mode: "observe-only",
           capture: initialCapture,
         },
-        gestures: [approach, reverseWest, reverseEast],
-      },
+        gestures,
+      });
+    }
+    return {
+      profileId,
+      runs,
     };
   } finally {
     await session?.detach();
@@ -596,10 +689,7 @@ async function main() {
       );
     const profiles = [];
     for (const raw of rawProfiles) {
-      const normalized = await normalizeProfile(
-        { ...raw.run, initial: raw.run.initial, gestures: raw.run.gestures },
-        raw.profileId,
-      );
+      const normalized = await normalizeProfile(raw, raw.profileId);
       profiles.push(normalized);
     }
     await fs.rm(path.join(OUTPUT, "video-tmp"), {
@@ -608,7 +698,10 @@ async function main() {
     });
     const evidence = {
       requiredProfiles: profileIds,
-      requiredScenarioIds: [SCENARIO_ID],
+      requiredRunSpecs: CAMERA_MOTION_RUN_SPECS,
+      requiredScenarioIds: CAMERA_MOTION_RUN_SPECS.map(
+        ({ scenarioId }) => scenarioId,
+      ),
       requiredGestureIds: [...CAMERA_MOTION_GESTURE_IDS],
       profiles,
     };
@@ -621,10 +714,13 @@ async function main() {
       checkId: "PRES-CAMERA-016",
       recipeId: "recipe:pres-camera-016",
       evaluator: "camera-motion-continuity-v1",
-      scenarioIds: [SCENARIO_ID],
-      actualScenarioIds: [SCENARIO_ID],
+      scenarioIds: CAMERA_MOTION_RUN_SPECS.map(({ scenarioId }) => scenarioId),
+      actualScenarioIds: CAMERA_MOTION_RUN_SPECS.map(
+        ({ scenarioId }) => scenarioId,
+      ),
       profileIds,
       gestureIds: [...CAMERA_MOTION_GESTURE_IDS],
+      runSpecs: CAMERA_MOTION_RUN_SPECS,
       source,
       environment: {
         platform: `${os.platform()} ${os.release()} ${os.arch()}`,
@@ -660,7 +756,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-CAMERA-016 PASS: ${profileIds.length} profiles, edge convergence, reversal, clamp, and five negative controls detected`,
+      `PRES-CAMERA-016 PASS: ${profileIds.length} profiles, ${CAMERA_MOTION_RUN_SPECS.length} camera modes/routes, and five negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {

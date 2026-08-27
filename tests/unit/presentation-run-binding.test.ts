@@ -238,9 +238,25 @@ describe("presentation run binding", () => {
     };
     const cameraMetadata = {
       source: { commit, dirty: false },
-      scenarioIds: ["map-edge-reversal"],
+      scenarioIds: [
+        "temporal-camera-track",
+        "map-edge-reversal",
+        "camera-diagonal-corner",
+        "camera-stop-center",
+        "fixed-camera-open-floor-arcanist",
+        "snap-camera-open-floor-arcanist",
+      ],
       profileIds: ["desktop", "phone-portrait"],
-      gestureIds: ["approach-map-edge", "reverse-west", "reverse-east"],
+      gestureIds: [
+        "approach-map-edge",
+        "reverse-west",
+        "reverse-east",
+        "diagonal-north-west",
+        "stop-after-diagonal",
+        "stop-center",
+        "fixed-travel",
+        "snap-travel",
+      ],
     };
     const spriteMetadata = {
       source: { commit, dirty: false },

@@ -7,6 +7,7 @@ import {
   TEMPORAL_LIVE_STRIP_LABELS,
   TEMPORAL_SEQUENCE_ENTRY_IDS,
 } from "./temporal-sequence-evidence.mjs";
+import { CAMERA_MOTION_RUN_SPECS } from "./camera-motion-evidence.mjs";
 
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
@@ -72,15 +73,24 @@ const INPUT_FRAME_FILES = [
   "frame-0011-tap-strike-before.png",
   "frame-0012-tap-strike-after.png",
 ];
-const CAMERA_FRAME_FILES = [
-  "frame-0000-initial.png",
-  "frame-0001-approach-map-edge-before.png",
-  "frame-0002-approach-map-edge-after.png",
-  "frame-0003-reverse-west-before.png",
-  "frame-0004-reverse-west-after.png",
-  "frame-0005-reverse-east-before.png",
-  "frame-0006-reverse-east-after.png",
-];
+function cameraMotionFrameFiles() {
+  let index = 0;
+  const files = [];
+  for (const { artifactPrefix, gestureIds } of CAMERA_MOTION_RUN_SPECS) {
+    files.push(
+      `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-initial.png`,
+    );
+    for (const gestureId of gestureIds) {
+      files.push(
+        `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-${gestureId}-before.png`,
+        `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-${gestureId}-after.png`,
+      );
+    }
+  }
+  return files;
+}
+
+const CAMERA_FRAME_FILES = cameraMotionFrameFiles();
 const LIVE_FRAME_FILES = {
   desktop: [
     "frame-0000-selection-ranger-before.png",

@@ -1,5 +1,9 @@
 export const CAMERA_MOTION_SCENARIO_IDS = {
   edgeReversal: "map-edge-reversal",
+  diagonalCorner: "camera-diagonal-corner",
+  stopCenter: "camera-stop-center",
+  fixed: "fixed-camera-open-floor-arcanist",
+  snap: "snap-camera-open-floor-arcanist",
 };
 
 export const CAMERA_MOTION_PROFILE_IDS = ["desktop", "phone-portrait"];
@@ -8,12 +12,56 @@ export const CAMERA_MOTION_GESTURE_IDS = [
   "approach-map-edge",
   "reverse-west",
   "reverse-east",
+  "diagonal-north-west",
+  "stop-after-diagonal",
+  "stop-center",
+  "fixed-travel",
+  "snap-travel",
+];
+
+export const CAMERA_MOTION_RUN_SPECS = [
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.edgeReversal,
+    cameraMode: "smooth",
+    artifactPrefix: "edge",
+    boundaryRequired: true,
+    gestureIds: ["approach-map-edge", "reverse-west", "reverse-east"],
+  },
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.diagonalCorner,
+    cameraMode: "smooth",
+    artifactPrefix: "diagonal-corner",
+    boundaryRequired: true,
+    gestureIds: ["diagonal-north-west", "stop-after-diagonal"],
+  },
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.stopCenter,
+    cameraMode: "smooth",
+    artifactPrefix: "stop-center",
+    boundaryRequired: false,
+    gestureIds: ["stop-center"],
+  },
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.fixed,
+    cameraMode: "fixed",
+    artifactPrefix: "fixed",
+    boundaryRequired: false,
+    gestureIds: ["fixed-travel"],
+  },
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.snap,
+    cameraMode: "snap",
+    artifactPrefix: "snap",
+    boundaryRequired: false,
+    gestureIds: ["snap-travel"],
+  },
 ];
 
 export const CAMERA_MOTION_SIGNAL_IDS = [
   "camera-converges",
   "camera-clamps",
   "camera-delta-continuous",
+  "camera-mode-contract",
 ];
 
 export const CAMERA_MOTION_FAILURE_IDS = [
@@ -23,6 +71,7 @@ export const CAMERA_MOTION_FAILURE_IDS = [
   "camera-clamp-mismatch",
   "camera-axis-jitter",
   "camera-evidence-desynchronized",
+  "camera-mode-contract",
 ];
 
 const CAMERA_DEAD_ZONE_PIXELS = 56;
@@ -74,6 +123,7 @@ function captureSynchronized(capture) {
     capture.manifestHash.length > 0 &&
     typeof capture.frameHash === "string" &&
     capture.frameHash.length > 0 &&
+    ["fixed", "snap", "smooth"].includes(capture.manifest?.cameraMode) &&
     cameraFromCapture(capture) &&
     targetFromCapture(capture),
   );
@@ -165,23 +215,24 @@ function gestureMap(run) {
   return new Map((run?.gestures ?? []).map((gesture) => [gesture.id, gesture]));
 }
 
-function runBasicsPass(run, expectedScenarioId) {
+function runBasicsPass(run, expectedScenarioId, expectedMode) {
   return Boolean(
     run &&
     run.scenarioId === expectedScenarioId &&
-    run.cameraMode === "smooth" &&
+    run.cameraMode === expectedMode &&
     run.initial?.bridgeExposed === false &&
     run.initial?.mode === "observe-only" &&
     captureSynchronized(run.initial?.capture),
   );
 }
 
-function runTimelinePass(run) {
-  const expectedMode = run?.cameraMode === "smooth" ? "smooth" : null;
+function runTimelinePass(run, expectedMode, requiredGestureIds) {
+  const gestures = gestureMap(run);
   return Boolean(
     Array.isArray(run?.timeline) &&
     run.timeline.length > 0 &&
     run.timeline.every((capture) => captureSynchronized(capture)) &&
+    requiredGestureIds.every((id) => gestures.has(id)) &&
     (run.gestures ?? []).every(
       (gesture) =>
         captureSynchronized(gesture.before) &&
@@ -195,7 +246,7 @@ function runTimelinePass(run) {
   );
 }
 
-function allRuns(profiles, requiredProfiles, requiredScenarioIds) {
+function allRuns(profiles, requiredProfiles, requiredRunSpecs) {
   const profileMap = new Map(
     (profiles ?? []).map((profile) => [profile.profileId, profile]),
   );
@@ -205,12 +256,11 @@ function allRuns(profiles, requiredProfiles, requiredScenarioIds) {
     for (const run of profile?.runs ?? []) runs.push({ profile, run });
   const expected = [];
   for (const profileId of requiredProfiles)
-    for (const scenarioId of requiredScenarioIds)
-      expected.push({ profileId, scenarioId });
+    for (const spec of requiredRunSpecs) expected.push({ profileId, ...spec });
   return { profileMap, selectedProfiles, runs, expected };
 }
 
-function convergenceObservation(run, requiredGestureIds) {
+function convergenceObservation(run, requiredGestureIds, expectedMode) {
   const gestures = gestureMap(run);
   const details = requiredGestureIds.map((id) => {
     const gesture = gestures.get(id);
@@ -224,12 +274,88 @@ function convergenceObservation(run, requiredGestureIds) {
   return {
     gestures: details,
     pass:
-      details.length > 0 &&
-      details.every(({ pass: endpointPass }) => endpointPass),
+      expectedMode !== "smooth" ||
+      (details.length > 0 &&
+        details.every(({ pass: endpointPass }) => endpointPass)),
   };
 }
 
-function clampObservation(run) {
+function cameraEqual(first, second) {
+  return Boolean(
+    first &&
+    second &&
+    Math.abs(first.x - second.x) <= EPSILON &&
+    Math.abs(first.y - second.y) <= EPSILON &&
+    Math.abs(first.zoom - second.zoom) <= EPSILON,
+  );
+}
+
+function modeObservation(run, expectedMode) {
+  const captures = runEntries(run);
+  const samples = runSamples(run);
+  const captureModes = captures.map((capture) => capture.manifest?.cameraMode);
+  const sampleModes = samples.map((sample) => sample.cameraMode);
+  const modesMatch =
+    captures.length > 0 &&
+    samples.length > 0 &&
+    [...captureModes, ...sampleModes].every((mode) => mode === expectedMode);
+  const cameras = [
+    ...captures.map(cameraFromCapture),
+    ...samples.map(cameraFromSample),
+  ];
+  const targets = [
+    ...captures.map(targetFromCapture),
+    ...samples.map(targetFromSample),
+  ];
+  const fixedCamera =
+    expectedMode !== "fixed" ||
+    (cameras.length > 0 &&
+      cameras.every((camera) => cameraEqual(camera, cameras[0])));
+  const snappedCamera =
+    expectedMode !== "snap" ||
+    (cameras.length > 0 &&
+      cameras.length === targets.length &&
+      captures.every((capture) =>
+        cameraEqual(cameraFromCapture(capture), targetFromCapture(capture)),
+      ) &&
+      samples.every((sample) => {
+        const camera = cameraFromSample(sample);
+        const target = targetFromSample(sample);
+        return (
+          camera !== null &&
+          target !== null &&
+          cameraError(camera, target) <= CAMERA_MAX_STEP_PER_TICK + EPSILON
+        );
+      }));
+  return {
+    expectedMode,
+    captureModes,
+    sampleModes,
+    modesMatch,
+    fixedCamera,
+    snappedCamera,
+    pass: modesMatch && fixedCamera && snappedCamera,
+  };
+}
+
+function resolveRunSpecs({
+  requiredRunSpecs,
+  requiredScenarioIds,
+  requiredGestureIds,
+}) {
+  if (requiredRunSpecs) return requiredRunSpecs;
+  if (requiredScenarioIds) {
+    return requiredScenarioIds.map((scenarioId) => ({
+      scenarioId,
+      cameraMode: "smooth",
+      artifactPrefix: scenarioId,
+      gestureIds: requiredGestureIds ?? CAMERA_MOTION_GESTURE_IDS,
+    }));
+  }
+  return CAMERA_MOTION_RUN_SPECS;
+}
+
+function clampObservation(run, boundaryRequired) {
   const bounds = boundsFor(run);
   const captures = runEntries(run);
   const samples = runSamples(run);
@@ -260,8 +386,12 @@ function clampObservation(run) {
     observationCount: observations.length,
     inside,
     targetAtBoundary,
+    boundaryRequired,
     pass: Boolean(
-      bounds && observations.length > 0 && inside && targetAtBoundary,
+      bounds &&
+      observations.length > 0 &&
+      inside &&
+      (!boundaryRequired || targetAtBoundary),
     ),
   };
 }
@@ -359,14 +489,20 @@ function signal(id, pass, detail) {
 export function evaluateCameraMotionEvidence({
   profiles,
   requiredProfiles = CAMERA_MOTION_PROFILE_IDS,
-  requiredScenarioIds = Object.values(CAMERA_MOTION_SCENARIO_IDS),
-  requiredGestureIds = CAMERA_MOTION_GESTURE_IDS,
+  requiredRunSpecs,
+  requiredScenarioIds,
+  requiredGestureIds,
 }) {
   const failures = [];
+  const runSpecs = resolveRunSpecs({
+    requiredRunSpecs,
+    requiredScenarioIds,
+    requiredGestureIds,
+  });
   const { profileMap, selectedProfiles, runs, expected } = allRuns(
     profiles,
     requiredProfiles,
-    requiredScenarioIds,
+    runSpecs,
   );
   const actualRuns = new Map(
     runs.map(({ profile, run }) => [
@@ -379,26 +515,45 @@ export function evaluateCameraMotionEvidence({
     actualRuns.has(`${profileId}:${scenarioId}`),
   );
   const timelinesSynchronized = selectedProfiles.every((profile) =>
-    (profile?.runs ?? []).every(runTimelinePass),
+    (profile?.runs ?? []).every((run) => {
+      const spec = runSpecs.find(
+        ({ scenarioId }) => scenarioId === run.scenarioId,
+      );
+      return spec
+        ? runTimelinePass(run, spec.cameraMode, spec.gestureIds)
+        : false;
+    }),
   );
   if (!timelinesSynchronized) failures.push("camera-evidence-desynchronized");
 
   const basicsPass =
     hasAllProfiles &&
     hasAllRuns &&
-    expected.every(({ profileId, scenarioId }) =>
+    expected.every(({ profileId, scenarioId, cameraMode }) =>
       runBasicsPass(
         actualRuns.get(`${profileId}:${scenarioId}`)?.run,
         scenarioId,
+        cameraMode,
       ),
     );
-  const runsDetails = expected.map(({ profileId, scenarioId }) => {
-    const run = actualRuns.get(`${profileId}:${scenarioId}`)?.run;
-    const convergence = convergenceObservation(run, requiredGestureIds);
-    const clamps = clampObservation(run);
-    const continuous = continuousObservation(run);
-    return { profileId, scenarioId, convergence, clamps, continuous };
-  });
+  const runsDetails = expected.map(
+    ({ profileId, scenarioId, cameraMode, gestureIds, boundaryRequired }) => {
+      const run = actualRuns.get(`${profileId}:${scenarioId}`)?.run;
+      const convergence = convergenceObservation(run, gestureIds, cameraMode);
+      const clamps = clampObservation(run, boundaryRequired);
+      const continuous = continuousObservation(run);
+      const mode = modeObservation(run, cameraMode);
+      return {
+        profileId,
+        scenarioId,
+        cameraMode,
+        convergence,
+        clamps,
+        continuous,
+        mode,
+      };
+    },
+  );
   const converges =
     basicsPass &&
     runsDetails.length > 0 &&
@@ -411,8 +566,13 @@ export function evaluateCameraMotionEvidence({
     basicsPass &&
     runsDetails.length > 0 &&
     runsDetails.every(({ continuous: observation }) => observation.pass);
+  const modes =
+    basicsPass &&
+    runsDetails.length > 0 &&
+    runsDetails.every(({ mode }) => mode.pass);
   if (!converges) failures.push("camera-convergence");
   if (!clamps) failures.push("camera-clamp-mismatch");
+  if (!modes) failures.push("camera-mode-contract");
   if (!continuous) {
     if (
       runsDetails.some(
@@ -457,10 +617,11 @@ export function evaluateCameraMotionEvidence({
       signal("camera-converges", converges, { runs: runsDetails }),
       signal("camera-clamps", clamps, { runs: runsDetails }),
       signal("camera-delta-continuous", continuous, { runs: runsDetails }),
+      signal("camera-mode-contract", modes, { runs: runsDetails }),
     ],
     profiles: selectedProfiles.map((profile) => profile?.profileId ?? null),
-    scenarios: [...requiredScenarioIds],
-    gestures: [...requiredGestureIds],
+    scenarios: [...new Set(runSpecs.map(({ scenarioId }) => scenarioId))],
+    gestures: [...new Set(runSpecs.flatMap(({ gestureIds }) => gestureIds))],
     coverage: {
       hasAllProfiles,
       hasAllRuns,
@@ -468,6 +629,7 @@ export function evaluateCameraMotionEvidence({
       actualRuns: runs.length,
       timelinesSynchronized,
       knownProfileIds: [...profileMap.keys()],
+      requiredRunSpecs: runSpecs,
     },
   };
 }
@@ -561,7 +723,7 @@ export function runCameraMotionNegativeControls(evidence) {
   const baseline = evidence ?? {
     requiredProfiles: ["desktop"],
     requiredScenarioIds: [CAMERA_MOTION_SCENARIO_IDS.edgeReversal],
-    requiredGestureIds: CAMERA_MOTION_GESTURE_IDS,
+    requiredGestureIds: CAMERA_MOTION_RUN_SPECS[0].gestureIds,
     profiles: [{ profileId: "desktop", runs: [cameraFixture()] }],
   };
   const definitions = [

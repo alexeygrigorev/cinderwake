@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  CAMERA_MOTION_GESTURE_IDS,
   CAMERA_MOTION_PROFILE_IDS,
+  CAMERA_MOTION_RUN_SPECS,
   CAMERA_MOTION_SCENARIO_IDS,
   evaluateCameraMotionEvidence,
   runCameraMotionNegativeControls,
@@ -117,12 +117,47 @@ function evidence() {
   return {
     requiredProfiles: [...CAMERA_MOTION_PROFILE_IDS],
     requiredScenarioIds: [CAMERA_MOTION_SCENARIO_IDS.edgeReversal],
-    requiredGestureIds: [...CAMERA_MOTION_GESTURE_IDS],
+    requiredGestureIds: [...CAMERA_MOTION_RUN_SPECS[0]!.gestureIds],
     profiles: CAMERA_MOTION_PROFILE_IDS.map((profileId) => ({
       profileId,
       runs: [run()],
     })),
   };
+}
+
+function modeRun(
+  mode: "fixed" | "snap",
+  scenarioId: string,
+  gestureId: string,
+) {
+  const value = structuredClone(run()) as any;
+  value.scenarioId = scenarioId;
+  value.cameraMode = mode;
+  value.gestures = [value.gestures[0]!];
+  value.gestures[0]!.id = gestureId;
+  const captures = [
+    value.initial.capture,
+    ...value.gestures.flatMap(
+      ({ before, after }: { before: any; after: any }) => [before, after],
+    ),
+  ];
+  for (const capture of captures) {
+    capture.manifest.cameraMode = mode;
+    if (mode === "fixed") capture.manifest.camera = camera(100);
+    else capture.manifest.camera = { ...capture.manifest.cameraTarget };
+  }
+  for (const sampleValue of value.gestures[0]!.samples) {
+    sampleValue.cameraMode = mode;
+    if (mode === "fixed") sampleValue.camera = camera(100);
+    else sampleValue.camera = { ...sampleValue.cameraTarget };
+  }
+  value.timeline = [
+    value.initial.capture,
+    ...value.gestures.flatMap(
+      ({ before, after }: { before: any; after: any }) => [before, after],
+    ),
+  ];
+  return value;
 }
 
 describe("camera motion evidence evaluator", () => {
@@ -131,7 +166,12 @@ describe("camera motion evidence evaluator", () => {
 
     expect(result.pass).toBe(true);
     expect(result.failures).toEqual([]);
-    expect(result.signals.map(({ pass }) => pass)).toEqual([true, true, true]);
+    expect(result.signals.map(({ pass }) => pass)).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
     expect(result.coverage).toMatchObject({
       hasAllProfiles: true,
       hasAllRuns: true,
@@ -167,5 +207,62 @@ describe("camera motion evidence evaluator", () => {
 
     expect(result.pass).toBe(false);
     expect(result.failures).toContain("camera-evidence-desynchronized");
+  });
+
+  it("checks fixed and snap camera modes as distinct run contracts", () => {
+    const requiredRunSpecs = [
+      {
+        scenarioId: CAMERA_MOTION_SCENARIO_IDS.fixed,
+        cameraMode: "fixed" as const,
+        gestureIds: ["fixed-travel"],
+      },
+      {
+        scenarioId: CAMERA_MOTION_SCENARIO_IDS.snap,
+        cameraMode: "snap" as const,
+        gestureIds: ["snap-travel"],
+      },
+    ];
+    const result = evaluateCameraMotionEvidence({
+      requiredProfiles: ["desktop"],
+      requiredRunSpecs,
+      profiles: [
+        {
+          profileId: "desktop",
+          runs: [
+            modeRun("fixed", CAMERA_MOTION_SCENARIO_IDS.fixed, "fixed-travel"),
+            modeRun("snap", CAMERA_MOTION_SCENARIO_IDS.snap, "snap-travel"),
+          ],
+        },
+      ],
+    });
+
+    expect(result.pass).toBe(true);
+    expect(
+      result.signals.find(({ id }) => id === "camera-mode-contract"),
+    ).toMatchObject({ pass: true });
+  });
+
+  it("rejects a moving fixed camera", () => {
+    const value = modeRun(
+      "fixed",
+      CAMERA_MOTION_SCENARIO_IDS.fixed,
+      "fixed-travel",
+    );
+    value.gestures[0]!.samples[1]!.camera.x += 1;
+
+    const result = evaluateCameraMotionEvidence({
+      requiredProfiles: ["desktop"],
+      requiredRunSpecs: [
+        {
+          scenarioId: CAMERA_MOTION_SCENARIO_IDS.fixed,
+          cameraMode: "fixed",
+          gestureIds: ["fixed-travel"],
+        },
+      ],
+      profiles: [{ profileId: "desktop", runs: [value] }],
+    });
+
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain("camera-mode-contract");
   });
 });

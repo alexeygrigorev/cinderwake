@@ -1747,12 +1747,18 @@ function vanguardStartStopScenario(
 
 function directionalMotionScenario(
   classId: CharacterClass,
-  cameraMode: "fixed" | "follow",
+  cameraMode: "fixed" | "follow" | "snap",
 ): ScenarioV1 {
-  const scenarioId = `${cameraMode === "fixed" ? "fixed" : "follow"}-camera-open-floor-${classId}`;
+  const modeId =
+    cameraMode === "fixed"
+      ? "fixed"
+      : cameraMode === "snap"
+        ? "snap"
+        : "follow";
+  const renderCameraMode = cameraMode === "follow" ? "smooth" : cameraMode;
   return {
     schemaVersion: 1,
-    id: scenarioId,
+    id: `${modeId}-camera-open-floor-${classId}`,
     seed: `quality-directional-motion-${cameraMode}-${classId}-01`,
     classId,
     map: { mode: "explicit", rows: arenaRows(30, 25) },
@@ -1761,12 +1767,40 @@ function directionalMotionScenario(
     settings: {
       ai: false,
       autoPickup: false,
-      cameraFollow: cameraMode === "follow",
+      cameraFollow: cameraMode !== "fixed",
     },
     camera: {
-      mode: cameraMode === "fixed" ? "fixed" : "smooth",
+      mode: renderCameraMode,
       centerTile: [15, 12],
     },
+  };
+}
+
+function cameraDiagonalCornerScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "camera-diagonal-corner",
+    seed: "quality-camera-diagonal-corner-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(38, 16) },
+    player: { tile: [36, 12] },
+    monsters: [],
+    camera: { mode: "smooth", centerTile: [11, 5.5] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  };
+}
+
+function cameraStopCenterScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "camera-stop-center",
+    seed: "quality-camera-stop-center-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(30, 25) },
+    player: { tile: [15, 12] },
+    monsters: [],
+    camera: { mode: "smooth", centerTile: [15, 12] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
   };
 }
 
@@ -1832,6 +1866,10 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     "arcanist",
     "follow",
   ),
+  "snap-camera-open-floor-arcanist": directionalMotionScenario(
+    "arcanist",
+    "snap",
+  ),
   "ashfang-start-stop-east": openingStartStopScenario("ashfang"),
   "arcanist-start-stop-east": openingStartStopScenario("arcanist"),
   "vanguard-start-stop-east": vanguardStartStopScenario("east"),
@@ -1869,6 +1907,8 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "map-edge-reversal": cameraEdgeReversalScenario(),
+  "camera-diagonal-corner": cameraDiagonalCornerScenario(),
+  "camera-stop-center": cameraStopCenterScenario(),
   "mid-action": {
     schemaVersion: 1,
     id: "mid-action",
