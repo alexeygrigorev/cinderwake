@@ -6,6 +6,8 @@ import {
   runLiveCompositorNegativeControls,
 } from "../../scripts/lib/compositor-evidence.mjs";
 
+type EffectKind = "slash" | "nova" | "impact";
+
 function liveFixture() {
   const ownerPaints = [
     { ownerId: "player", bodyPaintCount: 1 },
@@ -34,8 +36,8 @@ function liveFixture() {
     effects: [
       {
         effectId: "effect:impact",
-        kind: "impact",
-        expectedKind: "impact",
+        kind: "impact" as EffectKind,
+        expectedKind: "impact" as EffectKind,
         ownerId: "player",
         expectedOwnerId: "player",
         observedBefore: true,
