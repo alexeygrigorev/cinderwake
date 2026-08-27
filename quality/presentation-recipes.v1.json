@@ -713,11 +713,7 @@
       },
       "gestureSet": {
         "coverage": "partial",
-        "requiredIds": [
-          "sustained-move-east",
-          "reverse-west",
-          "approach-map-edge"
-        ]
+        "requiredIds": ["approach-map-edge", "reverse-west", "reverse-east"]
       },
       "evaluator": {
         "id": "camera-motion-continuity-v1",
@@ -728,7 +724,7 @@
           "camera-delta-continuous"
         ]
       },
-      "reproduce": "npx vitest run tests/unit/camera-projection.test.ts && npm run capture:matrix",
+      "reproduce": "npm run test:camera-motion && npm run capture:matrix && npx vitest run tests/unit/camera-motion-evidence.test.ts tests/unit/camera-projection.test.ts",
       "negativeControls": [
         {
           "id": "camera-updated-twice",

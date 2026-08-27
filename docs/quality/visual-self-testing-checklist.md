@@ -267,8 +267,8 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Ordered artifacts: target/camera position and zoom per simulation/presentation tick; player and stable scene screen anchors; full frames/contact sheet/video; viewport projection.
 - Machine signal and threshold: fixed-step convergence and acceleration use the camera profile in `docs/quality-model.md` lines 94–97; clamps never reveal outside-map void; no unexplained discontinuity; render-only calls do not advance camera.
 - Required negative control: double-update camera per render, one-tick snap in smooth mode, overshoot target, wrong clamp after zoom, and axis-only jitter.
-- Current evidence: `tests/e2e/browser-bridge.spec.ts` tests “advances smooth camera once…” and “honors cameraFollow false…”; camera profile in sequence matrix; `tests/unit/camera-projection.test.ts`.
-- Missing automation/next implementation: add the explicit jitter/overshoot/clamp mutations and a real-time production camera strip.
+- Current evidence: `npm run test:camera-motion` records desktop and phone-portrait production strips for `map-edge-reversal` (approach, west reversal, east reversal, edge clamp, retained camera/target timelines, frame sequences, contact sheets, and video); `camera-motion-continuity-v1` detects the five named mutations; the temporal camera sequence remains in the capture matrix; `tests/e2e/browser-bridge.spec.ts` covers one-update smooth follow and `cameraFollow: false`; `tests/unit/camera-projection.test.ts` covers projection bounds.
+- Missing automation/next implementation: add production strips for fixed/snap modes, diagonal/corner/stop coverage, and the independent visual review at normal playback speed.
 - Independent visual-agent review mandatory: **yes**, at normal playback speed for perceived comfort.
 
 ### PRES-ZOOM-017 — framing is neither too close nor unreadably far
