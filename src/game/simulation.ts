@@ -971,6 +971,15 @@ function updateMonsters(
       distance <= monster.attackRange &&
       state.tick >= monster.attackReadyTick
     ) {
+      // A close Hexer may retreat during this tick before firing. Recompute
+      // the attack vector from its final position so the attack animation,
+      // projectile, and target all agree instead of showing the Hexer firing
+      // over its shoulder.
+      const attackDirection = normalized(
+        monster.position,
+        state.player.position,
+      );
+      monster.facing = attackDirection;
       monster.attackReadyTick = state.tick + definition.attackCooldown;
       setAnimation(monster, "attack", state.tick, CLIP_DURATIONS.attack);
       const impactDelay =
@@ -981,7 +990,7 @@ function updateMonsters(
         kind: "primary",
         impactTick: state.tick + impactDelay,
         origin: { ...monster.position },
-        direction: { ...direction },
+        direction: attackDirection,
         range: monster.attackRange,
         damage: monster.attackDamage,
       });

@@ -146,6 +146,32 @@ describe("combat and lifecycle contracts", () => {
     }
   });
 
+  it("makes a retreating Hexer face its target before firing", () => {
+    const state = worldFromScenario(
+      scenario("hexer-retreat-shot", "vanguard", {
+        monsters: [
+          {
+            id: "monster:retreating-hexer",
+            kind: "hexer",
+            tile: [10, 7],
+            attackReadyTick: 0,
+          },
+        ],
+        settings: { ai: true, autoPickup: false, cameraFollow: true },
+      }),
+    );
+
+    stepGame(state, EMPTY_INPUT);
+
+    const monster = state.monsters[0]!;
+    const attack = state.pendingAttacks[0]!;
+    expect(monster.velocity.x).toBeGreaterThan(0);
+    expect(monster.animation.clip).toBe("attack");
+    expect(monster.facing).toEqual({ x: -1024, y: 0 });
+    expect(attack.direction).toEqual(monster.facing);
+    expect(attack.origin).toEqual(monster.position);
+  });
+
   it("retains a dying monster through its terminal frame and resolves rewards once", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["combat-loot"]!);
     stepGame(state, { ...EMPTY_INPUT, attack: true });
