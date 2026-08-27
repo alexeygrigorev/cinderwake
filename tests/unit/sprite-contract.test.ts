@@ -3,7 +3,11 @@ import fs from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { CLIP_DURATIONS } from "../../src/game/constants";
 import { stepGame } from "../../src/game/simulation";
-import { CITY_NPC_ACTOR_GEOMETRY } from "../../src/game/cityWorld";
+import {
+  CITY_NPC_ACTOR_GEOMETRY,
+  isEmbercrossMap,
+} from "../../src/game/cityWorld";
+import { tileCenter } from "../../src/game/dungeon";
 import { EMPTY_INPUT, type AnimationClip } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
 import {
@@ -18,7 +22,9 @@ import {
   EXPECTED_CLIP_CADENCE,
   RESIDENT_SPRITES,
   REQUIRED_SPRITE_CLIPS,
+  assessManifestSpriteAspectContract,
   assertDeterministicScenePlacement,
+  assertManifestSpriteAspectContract,
   assertRegisteredAssetFiles,
   loadProductionSpriteCatalog,
   validateManifestSpriteContract,
@@ -724,6 +730,119 @@ describe("sprite atlas quality contract", () => {
         expect(destinationAspect, actor.entityId).toBeCloseTo(sourceAspect, 6);
       }
     }
+  });
+
+  it("enforces one aspect contract across gameplay, scenery, city, and health roles", async () => {
+    const catalog = await loadProductionSpriteCatalog();
+    const manifests = [
+      "temporal-vanguard-primary",
+      "temporal-friendly-projectile",
+      "temporal-loot-bob",
+      "mid-action",
+    ].map((scenarioId) =>
+      buildRenderManifest(
+        worldFromScenario(BUILTIN_SCENARIOS[scenarioId]!),
+        CAMERA,
+      ),
+    );
+
+    const city = worldFromScenario(BUILTIN_SCENARIOS["temporal-city-entry"]!);
+    city.player.position = tileCenter(city.map.exit);
+    city.player.previousPosition = { ...city.player.position };
+    stepGame(city, EMPTY_INPUT);
+    expect(isEmbercrossMap(city.map)).toBe(true);
+    expect(city.city.locationPhase).toBe("inside");
+    manifests.push(buildRenderManifest(city, CAMERA));
+
+    for (const manifest of manifests) {
+      const assessment = assessManifestSpriteAspectContract(manifest, catalog);
+      expect(assessment.pass, assessment.violations.join("; ")).toBe(true);
+    }
+
+    const observedSpriteIds = new Set(
+      manifests.flatMap((manifest) => [
+        ...manifest.drawCalls.map(({ spriteId }) => spriteId),
+        ...manifest.sceneSprites.map(({ spriteId }) => spriteId),
+      ]),
+    );
+    expect([...observedSpriteIds]).toEqual(
+      expect.arrayContaining([
+        "effect:nova",
+        "loot:gold:common",
+        "projectile:friendly",
+        "resident:embercross:mara",
+        "scenery:structure:embercross-market",
+      ]),
+    );
+
+    const actorBroken = structuredClone(manifests[0]!);
+    actorBroken.drawCalls.find(
+      ({ entityId }) => entityId === "player",
+    )!.destinationRect.width *= 1.1;
+    expect(() =>
+      assertManifestSpriteAspectContract(actorBroken, catalog),
+    ).toThrow("manifest.drawCalls");
+
+    const sceneryBroken = structuredClone(manifests[0]!);
+    sceneryBroken.sceneSprites.find(
+      ({ spriteId }) => spriteId === "scenery:tile:floor",
+    )!.destinationRect.width *= 1.1;
+    expect(() =>
+      assertManifestSpriteAspectContract(sceneryBroken, catalog),
+    ).toThrow("manifest.sceneSprites");
+
+    const frameSprite = catalog.sprites["world-ui:health-frame"]!;
+    const fillSprite = catalog.sprites["world-ui:health-fill"]!;
+    const frameIdentity = frameSprite.clips.static!.frameIdentities[0]!;
+    const fillIdentity = fillSprite.clips.static!.frameIdentities[0]!;
+    const outer = { x: 100, y: 80, width: 60, height: 25 };
+    const healthManifest = {
+      schemaVersion: 2,
+      spriteCatalogRevision: catalog.revision,
+      drawCalls: [],
+      sceneSprites: [],
+      worldUi: [
+        {
+          id: "health:aspect",
+          type: "monster-health",
+          ownerId: "monster:aspect",
+          destinationRect: outer,
+          actorInkTop: 110,
+          healthRatio: 0.5,
+          frameOpacity: 0.8,
+          fillOpacity: 0.7,
+          visible: true,
+          frame: {
+            renderMode: "sprite",
+            spriteId: frameSprite.id,
+            assetId: frameSprite.assetId,
+            frameIdentity,
+            sourceRect: frameSprite.frames[frameIdentity],
+            destinationRect: outer,
+          },
+          fill: {
+            renderMode: "sprite",
+            spriteId: fillSprite.id,
+            assetId: fillSprite.assetId,
+            frameIdentity: fillIdentity,
+            sourceRect: {
+              ...fillSprite.frames[fillIdentity]!,
+              width: 127,
+            },
+            destinationRect: { x: 106, y: 88, width: 24, height: 9 },
+          },
+        },
+      ],
+      paintQueue: [],
+    };
+    expect(() =>
+      assertManifestSpriteAspectContract(healthManifest, catalog),
+    ).not.toThrow();
+    const healthBroken = structuredClone(healthManifest);
+    healthBroken.worldUi[0]!.fill.destinationRect.width = 12;
+    expect(() =>
+      assertManifestSpriteAspectContract(healthBroken, catalog),
+    ).toThrow("manifest.worldUi[0].fill");
   });
 
   it("keeps directional hero scenarios on their authored banks through action recovery", () => {

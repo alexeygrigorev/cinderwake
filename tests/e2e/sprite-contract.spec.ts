@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  assertManifestSpriteAspectContract,
   loadProductionSpriteCatalog,
   validateManifestSpriteContract,
 } from "../framework/sprite-contract";
@@ -74,6 +75,9 @@ test("the real canvas uses atlas image draws for every manifested sprite", async
     }
   });
   const manifest = validateManifestSpriteContract(evidence.manifest, catalog);
+  expect(() =>
+    assertManifestSpriteAspectContract(evidence.manifest, catalog),
+  ).not.toThrow();
   expect(manifest.worldUi).not.toHaveLength(0);
   for (const health of manifest.worldUi) {
     expect(health.frame.spriteId).toBe("world-ui:health-frame");

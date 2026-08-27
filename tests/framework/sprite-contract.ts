@@ -113,6 +113,20 @@ export interface RenderManifestV2Shape {
   worldUi: ManifestWorldUiCallV1[];
 }
 
+export interface ManifestAspectObservationV1 {
+  pathName: string;
+  spriteId: string;
+  sourceAspect: number;
+  destinationAspect: number;
+  relativeError: number;
+}
+
+export interface ManifestAspectAssessmentV1 {
+  pass: boolean;
+  observations: ManifestAspectObservationV1[];
+  violations: string[];
+}
+
 const ACTOR_CLIPS = ["idle", "walk", "attack", "ability", "hurt", "death"];
 const ACTOR_SPRITES = [
   "hero:vanguard",
@@ -655,6 +669,137 @@ export function validateManifestSpriteContract(
       fail(`manifest.paintQueue is missing scene:${scene.objectId}`);
   }
   return manifest as unknown as RenderManifestV2Shape;
+}
+
+// Small world-UI rectangles are quantized to integer logical pixels by the
+// renderer; allow that deterministic rounding while still rejecting ordinary
+// stretch regressions.
+const MANIFEST_ASPECT_TOLERANCE = 0.025;
+const HEALTH_FILL_ASPECT_TOLERANCE = 0.08;
+
+function aspectRatio(rect: { width: number; height: number }): number {
+  return rect.width / rect.height;
+}
+
+function relativeAspectError(actual: number, expected: number): number {
+  return Math.abs(actual / expected - 1);
+}
+
+function recordAspectObservation(
+  observations: ManifestAspectObservationV1[],
+  violations: string[],
+  pathName: string,
+  spriteId: string,
+  source: SourceRectV1,
+  destination: { width: number; height: number },
+  tolerance = MANIFEST_ASPECT_TOLERANCE,
+): void {
+  const sourceAspect = aspectRatio(source);
+  const destinationAspect = aspectRatio(destination);
+  const relativeError = relativeAspectError(destinationAspect, sourceAspect);
+  observations.push({
+    pathName,
+    spriteId,
+    sourceAspect,
+    destinationAspect,
+    relativeError,
+  });
+  if (relativeError > tolerance)
+    violations.push(
+      `${pathName} ${spriteId} changes aspect by ${(relativeError * 100).toFixed(2)}%`,
+    );
+}
+
+/**
+ * Check every resolved manifest image rectangle, including city and legacy
+ * scene roles and the horizontally cropped health fill.  Health fill width
+ * is intentionally variable, so its crop coverage and full-bar transform are
+ * checked separately from the ordinary source/destination aspect rule.
+ */
+export function assessManifestSpriteAspectContract(
+  input: unknown,
+  catalog: SpriteCatalogV1,
+): ManifestAspectAssessmentV1 {
+  const manifest = validateManifestSpriteContract(input, catalog);
+  const observations: ManifestAspectObservationV1[] = [];
+  const violations: string[] = [];
+
+  for (const [index, call] of manifest.drawCalls.entries())
+    recordAspectObservation(
+      observations,
+      violations,
+      `manifest.drawCalls[${index}]`,
+      call.spriteId,
+      call.sourceRect,
+      call.destinationRect,
+    );
+
+  for (const [index, scene] of manifest.sceneSprites.entries())
+    recordAspectObservation(
+      observations,
+      violations,
+      `manifest.sceneSprites[${index}]`,
+      scene.spriteId,
+      scene.sourceRect,
+      scene.destinationRect,
+    );
+
+  for (const [index, health] of manifest.worldUi.entries()) {
+    const pathName = `manifest.worldUi[${index}]`;
+    recordAspectObservation(
+      observations,
+      violations,
+      `${pathName}.frame`,
+      health.frame.spriteId,
+      health.frame.sourceRect,
+      health.frame.destinationRect,
+    );
+
+    const fillPath = `${pathName}.fill`;
+    const fillSprite = catalog.sprites[health.fill.spriteId]!;
+    const fullSource = fillSprite.frames[health.fill.frameIdentity]!;
+    const outer = health.destinationRect;
+    const fillDestination = health.fill.destinationRect;
+    const leftInset = fillDestination.x - outer.x;
+    const innerWidth = outer.width - leftInset * 2;
+    const sourceCoverage = health.fill.sourceRect.width / fullSource.width;
+    const destinationCoverage = fillDestination.width / innerWidth;
+    const coverageError = Math.max(
+      Math.abs(sourceCoverage - health.healthRatio),
+      Math.abs(destinationCoverage - health.healthRatio),
+    );
+    if (
+      !Number.isFinite(innerWidth) ||
+      innerWidth <= 0 ||
+      coverageError > HEALTH_FILL_ASPECT_TOLERANCE
+    )
+      violations.push(
+        `${fillPath} crop coverage differs from health ratio by ${(coverageError * 100).toFixed(2)}%`,
+      );
+
+    recordAspectObservation(
+      observations,
+      violations,
+      `${fillPath}.full-bar`,
+      health.fill.spriteId,
+      fullSource,
+      { width: innerWidth, height: fillDestination.height },
+      HEALTH_FILL_ASPECT_TOLERANCE,
+    );
+  }
+
+  return { pass: violations.length === 0, observations, violations };
+}
+
+export function assertManifestSpriteAspectContract(
+  input: unknown,
+  catalog: SpriteCatalogV1,
+): void {
+  const assessment = assessManifestSpriteAspectContract(input, catalog);
+  if (!assessment.pass)
+    fail(
+      `manifest aspect contract failed: ${assessment.violations.join("; ")}`,
+    );
 }
 
 export function assertDeterministicScenePlacement(
