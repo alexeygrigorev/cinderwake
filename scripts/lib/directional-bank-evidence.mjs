@@ -238,11 +238,18 @@ function targetAimPass(action, expectedFacing) {
 }
 
 function recoveryPass(action, expectedFacing) {
+  const afterPlayer = playerState(action?.after);
   const recoveryPlayer = playerState(action?.recovery);
   const recoveryBank = bankObservation(action?.recovery, expectedFacing);
   const recoveryClip = recoveryPlayer?.animation?.clip;
   const expectedActionClip = action?.kind === "ability" ? "ability" : "attack";
+  const lockedUntilTick = afterPlayer?.animation?.lockedUntilTick;
+  const recoveryTick = action?.recovery?.tick;
   return Boolean(
+    afterPlayer &&
+    Number.isInteger(lockedUntilTick) &&
+    Number.isInteger(recoveryTick) &&
+    recoveryTick >= lockedUntilTick &&
     recoveryPlayer &&
     recoveryClip &&
     recoveryClip !== expectedActionClip &&
