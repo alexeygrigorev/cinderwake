@@ -59,6 +59,7 @@ function liveFixture() {
     liveProfiles: [
       {
         id: "desktop-60hz",
+        required: true,
         samples: liveSamples,
       },
     ],

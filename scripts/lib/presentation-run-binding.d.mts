@@ -37,6 +37,8 @@ export interface PresentationRunBindingInput {
   mobileComparison: any;
   liveMetadata: any;
   liveComparison: any;
+  flickerMetadata?: any | null;
+  flickerComparison?: any | null;
   movementMetadata: any;
   movementComparison: any;
   spriteMetadata: any;
@@ -54,6 +56,7 @@ export interface PresentationRunBindingInput {
   inputArtifacts?: Array<readonly [string, string]>;
   mobileArtifacts?: Array<readonly [string, string]> | null;
   liveArtifacts?: Array<readonly [string, string]>;
+  flickerArtifacts?: Array<readonly [string, string]> | null;
   movementArtifacts?: Array<readonly [string, string]>;
   spriteArtifacts?: Array<readonly [string, string]>;
   temporalArtifacts?: Array<readonly [string, string]>;
@@ -69,3 +72,7 @@ export declare function bindPresentationRun(
   environment: { commit: string; reproduce: string };
   checks: PresentationRunEntry[];
 }>;
+
+export declare function flickerArtifactSpecifications(
+  repoRoot: string,
+): Promise<Array<readonly [string, string]>>;
