@@ -22,6 +22,7 @@ export class InputController {
   private attack = false;
   private ability = false;
   private tonic = false;
+  private resetMovePad: (() => void) | undefined;
   private readonly listeners = new AbortController();
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -113,6 +114,12 @@ export class InputController {
     else if (kind === "ability") this.ability = true;
     else this.tonic = true;
   }
+  /** Clear a world-space touch route after the map it was resolved against changes. */
+  cancelNavigation(): void {
+    this.cancelTouchNavigation();
+    this.touchMove = { x: 0, y: 0 };
+    this.resetMovePad?.();
+  }
   attachMovePad(element: HTMLElement): void {
     const knob = element.querySelector<HTMLElement>(".move-knob");
     let activePointer: number | undefined;
@@ -122,6 +129,7 @@ export class InputController {
       if (knob) knob.style.transform = "translate(0px, 0px)";
       element.dataset.direction = "0,0";
     };
+    this.resetMovePad = reset;
     const update = (event: PointerEvent): void => {
       const bounds = element.getBoundingClientRect();
       const dx = event.clientX - (bounds.left + bounds.width / 2);
@@ -176,8 +184,8 @@ export class InputController {
   destroy(): void {
     this.listeners.abort();
     this.keys.clear();
-    this.touchMove = { x: 0, y: 0 };
-    this.cancelTouchNavigation();
+    this.cancelNavigation();
+    this.resetMovePad = undefined;
   }
   private cancelTouchNavigation(clearAim = true): void {
     this.touchRoute = [];

@@ -254,6 +254,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
   );
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
+  host.onMapChange = () => input?.cancelNavigation();
   const playerObserver = installPlayerObserver(host);
   host.onRender = (state, manifest) => {
     updateHud(state);

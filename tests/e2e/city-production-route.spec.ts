@@ -298,6 +298,11 @@ test("physical touch discovers the sign and enters Embercross through the produc
   expect(entered.map.digest).not.toBe(wildernessDigest);
   expect(isEmbercrossMap(entered.map)).toBe(true);
   expect(entered.phase).toBe("playing");
+  expect(entered.player.position).toEqual(tileCenter(entered.map.spawn));
+  await expect(page.locator(".move-pad")).toHaveAttribute(
+    "data-direction",
+    "0,0",
+  );
   await expect(page.locator("#objective")).toHaveAttribute(
     "data-state",
     "seal-rift",

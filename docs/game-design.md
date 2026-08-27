@@ -44,7 +44,7 @@ Weapon drops add deterministic power to primary and ability damage. Tonics heal 
 - Left mouse or primary action button: primary attack.
 - Right mouse or ability action button: class ability.
 - `Q`: consume a tonic when injured.
-- Test lab controls: pause live time, load a built-in scenario, step exact ticks, export state, and capture a frame sequence.
+- Test lab controls: pause live time, load a built-in scenario, step exact ticks, export state, and capture a frame sequence. Touch navigation cancels when it stalls or when the world map changes, so a destination from the previous map cannot steer the new one.
 
 Browser events update a semantic `InputState`; only a simulation tick consumes it. Tests can therefore inject the same intent without depending on browser event timing, while a smaller Playwright suite still verifies that real keys and pointer buttons map correctly.
 

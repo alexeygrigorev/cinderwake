@@ -36,6 +36,7 @@ export class GameHost {
   private cameraMode: CameraMode;
   readonly testMode: boolean;
   onRender?: (state: GameState, manifest: RenderManifestV1) => void;
+  onMapChange?: (state: GameState) => void;
   constructor(
     canvas: HTMLCanvasElement,
     testMode = new URLSearchParams(location.search).get("testMode") === "1",
@@ -114,7 +115,7 @@ export class GameHost {
     options: { render?: boolean } = {},
   ): GameState {
     for (let i = 0; i < ticks; i++) {
-      stepGame(this.state, input ?? this.inputProvider?.() ?? this.input);
+      this.advance(input ?? this.inputProvider?.() ?? this.input);
       this.renderer.advanceCamera(this.state, this.cameraMode);
       if (options.render ?? true) this.render();
     }
@@ -201,6 +202,12 @@ export class GameHost {
     this.onRender?.(this.state, m);
     return m;
   }
+  private advance(input: InputState): void {
+    const previousMapDigest = this.state.map.digest;
+    stepGame(this.state, input);
+    if (this.state.map.digest !== previousMapDigest)
+      this.onMapChange?.(this.state);
+  }
   worldAt(screenX: number, screenY: number): Vec2 {
     return worldForScreen(
       { x: screenX, y: screenY },
@@ -227,7 +234,7 @@ export class GameHost {
     if (!this.testMode && !this.paused) {
       this.accumulator += elapsed;
       while (this.accumulator >= TICK_MS) {
-        stepGame(this.state, this.inputProvider?.() ?? this.input);
+        this.advance(this.inputProvider?.() ?? this.input);
         this.renderer.advanceCamera(this.state, this.cameraMode);
         this.accumulator -= TICK_MS;
       }
