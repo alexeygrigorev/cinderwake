@@ -211,10 +211,27 @@ function annotateSpriteRoles(root: ParentNode): void {
     [".city-service-button-copy", "ui-field"],
     [".sprite-text", "glyph-text"],
   ];
+  const declaredDecorations = [
+    ".selection-v2",
+    ".class-card",
+    ".class-portrait",
+    ".objective",
+    ".move-pad",
+    ".mobile-actions button",
+    ".city-service-sheet",
+    ".city-service-actions button",
+    ".lab",
+  ];
   for (const [selector, role] of roles)
     root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
       element.setAttribute("data-sprite-role", role);
     });
+  for (const selector of declaredDecorations)
+    root
+      .querySelectorAll<HTMLElement>(selector)
+      .forEach((element) =>
+        element.setAttribute("data-css-decoration-contract", "declared"),
+      );
   root
     .querySelector<HTMLElement>(".selection-v2")
     ?.setAttribute("data-provenance-decoration", "legibility-mask");
