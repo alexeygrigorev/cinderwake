@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
+import sharp from "sharp";
 import {
   runTemporalSequenceNegativeControls,
   TEMPORAL_SEQUENCE_ENTRY_IDS,
+  validateOrdinaryRouteTemporalStrips,
   validateTemporalSequenceCatalog,
 } from "../../scripts/lib/temporal-sequence-evidence.mjs";
+import { runTemporalProductionPixelNegativeControls } from "../../scripts/lib/temporal-pixel-evidence.mjs";
 
 function passingCatalog() {
   const checks = {
@@ -44,6 +47,27 @@ function passingCatalog() {
   };
 }
 
+function ordinaryRouteFixture() {
+  return {
+    profiles: ["desktop-60hz", "phone-portrait-rAF"].map((id) => ({
+      id,
+      required: id === "desktop-60hz",
+      actors: ["vanguard", "ranger", "arcanist"].map((actorId) => ({
+        actorId,
+        frameArtifacts: [
+          "initial",
+          "after-sustained-movement-and-turn",
+          "after-first-attack",
+          "after-second-attack",
+          "after-ability",
+        ].map((label, tick) => ({ label, tick })),
+        samples: Array.from({ length: 30 }, () => ({})),
+        videoArtifacts: { normal: { file: "normal.webm" } },
+      })),
+    })),
+  };
+}
+
 describe("temporal sequence evidence", () => {
   it("requires the complete passing capture matrix and named signal groups", () => {
     const assessment = validateTemporalSequenceCatalog(passingCatalog());
@@ -77,5 +101,48 @@ describe("temporal sequence evidence", () => {
       ["stale-recovery", "recovery-continuity-failed"],
       ["terminal-pose-skipped", "terminal-pose-failed"],
     ]);
+  });
+
+  it("requires every playable actor in both ordinary-route temporal profiles", () => {
+    const assessment = validateOrdinaryRouteTemporalStrips(
+      ordinaryRouteFixture(),
+    );
+
+    expect(assessment.pass).toBe(true);
+    expect(assessment.failures).toEqual([]);
+    expect(assessment.signal).toMatchObject({
+      id: "ordinary-route-temporal-strips",
+      pass: true,
+    });
+    expect(assessment.summary).toMatchObject({
+      strips: 6,
+      expectedStrips: 6,
+    });
+  });
+
+  it("detects named controls after mutating production PNG frames", async () => {
+    const frames = await Promise.all(
+      [10, 20, 30, 40, 50].map((red) =>
+        sharp({
+          create: {
+            width: 8,
+            height: 8,
+            channels: 4,
+            background: { r: red, g: 40, b: 60, alpha: 1 },
+          },
+        })
+          .png()
+          .toBuffer(),
+      ),
+    );
+    const controls = await runTemporalProductionPixelNegativeControls(frames);
+
+    expect(controls).toHaveLength(6);
+    expect(controls.every(({ status }) => status === "DETECTED")).toBe(true);
+    expect(
+      controls.every(
+        ({ pixelMutation }) => pixelMutation.changedFrameCount > 0,
+      ),
+    ).toBe(true);
   });
 });

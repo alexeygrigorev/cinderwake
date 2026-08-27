@@ -3,12 +3,22 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
+  TEMPORAL_LIVE_ACTOR_IDS,
+  TEMPORAL_LIVE_PROFILE_IDS,
   runTemporalSequenceNegativeControls,
+  validateOrdinaryRouteTemporalStrips,
   validateTemporalSequenceCatalog,
 } from "./lib/temporal-sequence-evidence.mjs";
+import { runTemporalProductionPixelNegativeControls } from "./lib/temporal-pixel-evidence.mjs";
 
 const ROOT = process.cwd();
 const SEQUENCE_ROOT = path.join(ROOT, "quality-results", "sequences");
+const FLICKER_ROOT = path.join(
+  ROOT,
+  "quality-results",
+  "compositor",
+  "pres-flicker-024",
+);
 const REPORT_ROOT = path.join(
   ROOT,
   "quality-results",
@@ -90,6 +100,87 @@ async function inspectEntry(entry, source) {
   };
 }
 
+async function inspectOrdinaryRoute(source) {
+  const metadata = await readJson(path.join(FLICKER_ROOT, "metadata.json"));
+  const timeline = await readJson(path.join(FLICKER_ROOT, "timeline.json"));
+  const sourceMatches =
+    metadata.source?.commit === source.commit &&
+    metadata.source?.dirty === false &&
+    metadata.source?.patchSha256 === EMPTY_PATCH_SHA256;
+  const validation = validateOrdinaryRouteTemporalStrips({
+    profiles: timeline.liveProfiles,
+  });
+  const artifactIntegrityErrors = [];
+  const selectedFrames = [];
+  for (const profile of timeline.liveProfiles ?? []) {
+    for (const actor of profile.actors ?? []) {
+      for (const artifact of actor.frameArtifacts ?? []) {
+        const file = path.join(FLICKER_ROOT, artifact.file);
+        try {
+          const bytes = await fs.readFile(file);
+          const actualHash = sha256(bytes);
+          if (actualHash !== artifact.sha256)
+            artifactIntegrityErrors.push({
+              profileId: profile.id,
+              actorId: actor.actorId,
+              file: artifact.file,
+              expected: artifact.sha256,
+              actual: actualHash,
+            });
+          if (profile.id === "desktop-60hz" && actor.actorId === "vanguard")
+            selectedFrames.push(bytes);
+        } catch {
+          artifactIntegrityErrors.push({
+            profileId: profile.id,
+            actorId: actor.actorId,
+            file: artifact.file,
+            missing: true,
+          });
+        }
+      }
+      for (const artifact of Object.values(actor.videoArtifacts ?? {})) {
+        const file = path.join(FLICKER_ROOT, artifact.file);
+        try {
+          const bytes = await fs.readFile(file);
+          const actualHash = sha256(bytes);
+          if (actualHash !== artifact.sha256)
+            artifactIntegrityErrors.push({
+              profileId: profile.id,
+              actorId: actor.actorId,
+              file: artifact.file,
+              expected: artifact.sha256,
+              actual: actualHash,
+            });
+        } catch {
+          artifactIntegrityErrors.push({
+            profileId: profile.id,
+            actorId: actor.actorId,
+            file: artifact.file,
+            missing: true,
+          });
+        }
+      }
+    }
+  }
+  if (selectedFrames.length !== 5)
+    artifactIntegrityErrors.push({
+      profileId: "desktop-60hz",
+      actorId: "vanguard",
+      expectedFrameCount: 5,
+      actualFrameCount: selectedFrames.length,
+    });
+  return {
+    sourceMatches,
+    validation,
+    artifactIntegrityErrors,
+    selectedFrames,
+    pass:
+      sourceMatches && validation.pass && artifactIntegrityErrors.length === 0,
+    expectedProfileIds: TEMPORAL_LIVE_PROFILE_IDS,
+    expectedActorIds: TEMPORAL_LIVE_ACTOR_IDS,
+  };
+}
+
 function reportHtml(report) {
   const signals = report.comparison.signals
     .map(
@@ -122,7 +213,11 @@ function reportHtml(report) {
 const source = currentSource();
 const catalog = await readJson(path.join(SEQUENCE_ROOT, "index.json"));
 const assessment = validateTemporalSequenceCatalog(catalog);
-const negativeControls = runTemporalSequenceNegativeControls();
+const semanticNegativeControls = runTemporalSequenceNegativeControls();
+const ordinaryRoute = await inspectOrdinaryRoute(source);
+const negativeControls = await runTemporalProductionPixelNegativeControls(
+  ordinaryRoute.selectedFrames,
+);
 const entries = await Promise.all(
   (catalog.entries ?? []).map((entry) => inspectEntry(entry, source)),
 );
@@ -137,8 +232,29 @@ const comparison = {
   pass:
     assessment.pass &&
     sourcePass &&
+    ordinaryRoute.pass &&
+    semanticNegativeControls.every(({ status }) => status === "DETECTED") &&
     negativeControls.every(({ status }) => status === "DETECTED"),
-  signals: assessment.signals,
+  signals: [
+    ...assessment.signals,
+    {
+      ...ordinaryRoute.validation.signal,
+      pass: ordinaryRoute.pass,
+      detail: {
+        ...ordinaryRoute.validation.signal.detail,
+        sourceMatches: ordinaryRoute.sourceMatches,
+        artifactIntegrityErrors: ordinaryRoute.artifactIntegrityErrors,
+      },
+    },
+    {
+      id: "production-compositor-pixel-mutations",
+      pass: negativeControls.every(({ status }) => status === "DETECTED"),
+      detail: {
+        controls: negativeControls,
+        sourceFrameCount: ordinaryRoute.selectedFrames.length,
+      },
+    },
+  ],
 };
 const report = {
   schemaVersion: 1,
@@ -156,9 +272,22 @@ const report = {
     ),
     deviceProfiles: assessment.summary.deviceProfiles,
     scenarioCoverage: assessment.summary.scenarioCoverage,
+    ordinaryRoute: {
+      pass: ordinaryRoute.pass,
+      expectedProfileIds: ordinaryRoute.expectedProfileIds,
+      expectedActorIds: ordinaryRoute.expectedActorIds,
+      strips: ordinaryRoute.validation.summary,
+      artifactIntegrityErrors: ordinaryRoute.artifactIntegrityErrors,
+    },
   },
   comparison,
   negativeControls,
+  semanticNegativeControls,
+  ordinaryRoute: {
+    pass: ordinaryRoute.pass,
+    validation: ordinaryRoute.validation,
+    artifactIntegrityErrors: ordinaryRoute.artifactIntegrityErrors,
+  },
   entries,
   catalog: {
     path: "quality-results/sequences/index.json",
@@ -173,17 +302,23 @@ const metadata = {
   recipeId: report.recipeId,
   evaluator: report.evaluator,
   scenarioIds: [
+    ...TEMPORAL_LIVE_ACTOR_IDS.map(
+      (actorId) => `ordinary-live-idle-move-turn-attack:${actorId}`,
+    ),
     "animation-walk",
     "all-temporal-hero-actions",
     "all-temporal-enemy-actions",
     "temporal-enemy-death",
   ],
   profileIds: ["desktop", "phone-portrait"],
-  gestureIds: ["capture-matrix-command-tapes"],
+  gestureIds: [
+    "capture-matrix-command-tapes",
+    "ordinary-live-idle-move-turn-attack",
+  ],
   source,
   environment: { catalogSha256: report.summary.catalogSha256 },
   reproductionCommand:
-    "npm run capture:matrix && npm run quality:temporal:check",
+    "npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check",
 };
 await fs.mkdir(REPORT_ROOT, { recursive: true });
 await Promise.all([

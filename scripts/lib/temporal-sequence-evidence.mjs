@@ -28,6 +28,15 @@ const TEMPORAL_SEQUENCE_IDS = [
 ];
 
 export const TEMPORAL_SEQUENCE_ENTRY_IDS = TEMPORAL_SEQUENCE_IDS;
+export const TEMPORAL_LIVE_PROFILE_IDS = ["desktop-60hz", "phone-portrait-rAF"];
+export const TEMPORAL_LIVE_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
+export const TEMPORAL_LIVE_STRIP_LABELS = [
+  "initial",
+  "after-sustained-movement-and-turn",
+  "after-first-attack",
+  "after-second-attack",
+  "after-ability",
+];
 
 function sameValues(first, second) {
   return (
@@ -102,6 +111,131 @@ function deviceProfiles(entries) {
     ),
   );
   return [...profiles];
+}
+
+/**
+ * Validate the ordinary public-route strips retained by the compositor
+ * recorder. These are intentionally separate from the deterministic matrix:
+ * the matrix proves exact state/clip contracts, while these strips prove that
+ * each playable actor is actually presented by the live browser route.
+ */
+export function validateOrdinaryRouteTemporalStrips(evidence) {
+  const failures = [];
+  const profiles = Array.isArray(evidence?.profiles) ? evidence.profiles : [];
+  const profileIds = profiles.map(({ id }) => id);
+  if (
+    TEMPORAL_LIVE_PROFILE_IDS.some((id) => !profileIds.includes(id)) ||
+    new Set(profileIds).size !== profileIds.length
+  )
+    failures.push({
+      code: "ordinary-route-profile-set-mismatch",
+      detail: {
+        expected: TEMPORAL_LIVE_PROFILE_IDS,
+        actual: profileIds,
+      },
+    });
+
+  const profileDetails = profiles.map((profile) => {
+    const actors = Array.isArray(profile?.actors) ? profile.actors : [];
+    const actorIds = actors.map(({ actorId }) => actorId);
+    const actorDetails = TEMPORAL_LIVE_ACTOR_IDS.map((actorId) => {
+      const actor = actors.find((candidate) => candidate.actorId === actorId);
+      const frameArtifacts = Array.isArray(actor?.frameArtifacts)
+        ? actor.frameArtifacts
+        : [];
+      const labels = frameArtifacts.map(({ label }) => label);
+      const labelsMatch = TEMPORAL_LIVE_STRIP_LABELS.every(
+        (label, index) => labels[index] === label,
+      );
+      const ticks = frameArtifacts.map(({ tick }) => tick);
+      const ticksOrdered = ticks.every(
+        (tick, index) => index === 0 || tick > ticks[index - 1],
+      );
+      const samples = Array.isArray(actor?.samples) ? actor.samples : [];
+      const hasNormalVideo =
+        typeof actor?.videoArtifacts?.normal?.file === "string";
+      const pass =
+        Boolean(actor) &&
+        frameArtifacts.length === TEMPORAL_LIVE_STRIP_LABELS.length &&
+        labelsMatch &&
+        ticksOrdered &&
+        samples.length >= 30 &&
+        hasNormalVideo;
+      if (!pass)
+        failures.push({
+          code: "ordinary-route-strip-incomplete",
+          detail: {
+            profileId: profile?.id ?? null,
+            actorId,
+            frameCount: frameArtifacts.length,
+            labels,
+            ticks,
+            sampleCount: samples.length,
+            hasNormalVideo,
+          },
+        });
+      return {
+        actorId,
+        frameCount: frameArtifacts.length,
+        sampleCount: samples.length,
+        labelsMatch,
+        ticksOrdered,
+        hasNormalVideo,
+        pass,
+      };
+    });
+    if (
+      actorIds.length !== TEMPORAL_LIVE_ACTOR_IDS.length ||
+      TEMPORAL_LIVE_ACTOR_IDS.some((id) => !actorIds.includes(id)) ||
+      new Set(actorIds).size !== actorIds.length
+    )
+      failures.push({
+        code: "ordinary-route-actor-set-mismatch",
+        detail: {
+          profileId: profile?.id ?? null,
+          expected: TEMPORAL_LIVE_ACTOR_IDS,
+          actual: actorIds,
+        },
+      });
+    return {
+      id: profile?.id ?? "",
+      required: profile?.required !== false,
+      actors: actorDetails,
+      pass:
+        actorDetails.every(({ pass }) => pass) &&
+        actorIds.length === TEMPORAL_LIVE_ACTOR_IDS.length &&
+        TEMPORAL_LIVE_ACTOR_IDS.every((id) => actorIds.includes(id)),
+    };
+  });
+  const expectedProfilesPresent = TEMPORAL_LIVE_PROFILE_IDS.every((id) =>
+    profileDetails.some(({ id: actual }) => actual === id),
+  );
+  const pass = failures.length === 0 && expectedProfilesPresent;
+  return {
+    pass,
+    failures,
+    signal: {
+      id: "ordinary-route-temporal-strips",
+      pass,
+      detail: {
+        profiles: profileDetails,
+        expectedProfileIds: TEMPORAL_LIVE_PROFILE_IDS,
+        expectedActorIds: TEMPORAL_LIVE_ACTOR_IDS,
+        expectedStripLabels: TEMPORAL_LIVE_STRIP_LABELS,
+      },
+    },
+    summary: {
+      profileIds,
+      actorIds: TEMPORAL_LIVE_ACTOR_IDS,
+      strips: profileDetails.reduce(
+        (total, { actors }) =>
+          total + actors.filter(({ pass: ok }) => ok).length,
+        0,
+      ),
+      expectedStrips:
+        TEMPORAL_LIVE_PROFILE_IDS.length * TEMPORAL_LIVE_ACTOR_IDS.length,
+    },
+  };
 }
 
 /**
