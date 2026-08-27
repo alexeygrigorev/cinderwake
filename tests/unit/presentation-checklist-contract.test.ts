@@ -317,10 +317,14 @@ describe("presentation checklist contract", () => {
       },
       "PRES-SPRITE-009": {
         evidence: [
+          "visible-dom-inventory",
+          "manifest-draw-provenance",
+          "decoded-role-inventory",
           "semantic-title-role-allowlist",
           "complete-visible-draw-provenance",
         ],
         controls: [
+          "role-replaced-with-css-or-text",
           "non-title-marked-as-title",
           "css-decoration-added-beside-sprite",
         ],
@@ -365,6 +369,10 @@ describe("presentation checklist contract", () => {
           ({ id: controlId }: { id: string }) => controlId,
         ),
       ).toEqual(contract.checks[index].negativeControlIds);
+      if (id === "PRES-SPRITE-009")
+        expect(recipes.recipes[index].reproduce).toBe(
+          "npm run test:sprite-provenance",
+        );
     }
   });
 
