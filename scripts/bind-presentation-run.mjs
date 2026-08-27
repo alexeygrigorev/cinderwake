@@ -184,7 +184,7 @@ async function main() {
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:flicker && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,

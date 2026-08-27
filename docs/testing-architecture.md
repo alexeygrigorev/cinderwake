@@ -72,11 +72,15 @@ checks exact deterministic cadence plus a real-clock desktop rAF profile,
 measures decoded PNG residuals between a transition and a fresh reconstruction,
 and records the runtime projectile impact plus owned `slash`, `nova`, and
 `impact` effect lifecycles. Each retained effect must match its state-backed
-geometry and owner and disappear at the declared first-absent tick. Six named
-mutations cover a skipped clear, offset double draw, omitted sample, retained
-despawned effect, mismatched effect owner, and frozen live renderer. The probe
-also retains a DPR-3 portrait rAF profile as observed-only diagnostic evidence;
-it does not infer high-refresh or physical-device performance from emulation.
+geometry and owner and disappear at the declared first-absent tick. The probe
+also runs the ordinary route for Vanguard, Ranger, and Arcanist on each profile,
+retaining five-frame temporal strips, per-actor rAF samples, and normal/slow
+video where cadence is gated. `quality:temporal:check` hashes those strips and
+applies six PNG-level production-compositor mutations—freeze, reorder,
+translated crop, scale/centroid pop, stale recovery, and skipped terminal
+pose—against the named temporal detector signals. The probe also retains a
+DPR-3 portrait rAF profile as observed-only diagnostic evidence; it does not
+infer high-refresh or physical-device performance from emulation.
 Normal/slow video review, physical high-refresh capture, calibrated temporal
 thresholds, and the retained presentation-run binding remain required before
 the flicker row can pass.
@@ -162,7 +166,7 @@ The evaluator proves geometry, containment, safe-area, text, and causal pressed
 feedback; the retained frames and video still require independent native-device
 visual review.
 
-The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 26 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails; `quality:temporal:check` validates that retained catalog against the temporal evaluator, source commit, required bundles, four machine signals, and six named detector controls. Every close-up records its logical crop, physical canvas backing, backing scale, and exact physical source rectangle; the assessor rejects a crop that uses logical coordinates directly against a high-DPI backing. The two start/stop tapes additionally declare exact idle/walk/idle phases and frame coverage in `commands.json`; the assessor mirrors expected and observed contracts into `animation-analysis.json`. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
+The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 26 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails; `quality:temporal:check` validates that retained catalog against the temporal evaluator, source commit, required bundles, four matrix signals, six ordinary-route actor strips, and six PNG-level production-compositor controls. Every close-up records its logical crop, physical canvas backing, backing scale, and exact physical source rectangle; the assessor rejects a crop that uses logical coordinates directly against a high-DPI backing. The two start/stop tapes additionally declare exact idle/walk/idle phases and frame coverage in `commands.json`; the assessor mirrors expected and observed contracts into `animation-analysis.json`. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
 State-replay evidence is self-consistent as well as repeatable: the comparator
 recomputes the browser bridge's canonical FNV state hash from every serialized

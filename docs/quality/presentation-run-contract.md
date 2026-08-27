@@ -45,8 +45,9 @@ The prose checklist remains the human explanation of what matters. The versioned
    profiles, five causal gestures/signals, safe-area and text metrics, and nine
    detected mutations. It also records `PRES-MOTION-005`
    as `NEEDS_VISUAL_REVIEW` after binding the 26-entry temporal catalog, its
-   per-tick manifests/contact sheets, four machine signals, and six named
-   detector controls. `PRES-DEPTH-019` is also bound as
+   per-tick manifests/contact sheets, six ordinary-route actor strips, six
+   PNG-level production-compositor controls, and six machine signals.
+   `PRES-DEPTH-019` is also bound as
    `NEEDS_VISUAL_REVIEW` after the depth recorder captures desktop and
    phone-portrait transitions, z-ordered manifests, attached-owner records,
    and seven named detector controls. Its output remains under `quality-results/`; it does not
