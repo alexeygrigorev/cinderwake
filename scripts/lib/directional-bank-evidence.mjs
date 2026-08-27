@@ -17,7 +17,7 @@ export const DIRECTIONAL_BANK_SIGNAL_IDS = [
 
 export const DIRECTIONAL_BANK_FAILURE_IDS = [
   "sprite-bank-mismatch",
-  "west-reflection-missing",
+  "east-reflection-missing",
   "stale-facing-bank",
   "target-aim-not-mirrored",
   "attack-origin-not-mirrored",
@@ -146,7 +146,7 @@ function expectedSprite(call, expectedFacing) {
       expectedFacing === "north" || expectedFacing === "south"
         ? `${call.geometryId}:${expectedFacing}`
         : call.geometryId,
-    flipX: expectedFacing === "west",
+    flipX: expectedFacing === "east",
   };
 }
 
@@ -567,10 +567,10 @@ export function evaluateDirectionalBankEvidence({
     if (
       directions.some(
         ({ expected, banks }) =>
-          expected?.facing === "west" && !banks.movement.reflectionMatches,
+          expected?.facing === "east" && !banks.movement.reflectionMatches,
       )
     )
-      failures.push("west-reflection-missing");
+      failures.push("east-reflection-missing");
     if (directions.some(({ banks }) => !banks.turn.matches))
       failures.push("stale-facing-bank");
     if (

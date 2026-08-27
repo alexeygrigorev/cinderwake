@@ -24,13 +24,13 @@
       "id": "east",
       "spriteSuffix": "",
       "sourceGroup": "clips",
-      "flipX": false
+      "flipX": true
     },
     {
       "id": "west",
       "spriteSuffix": "",
       "sourceGroup": "clips",
-      "flipX": true
+      "flipX": false
     },
     {
       "id": "north",

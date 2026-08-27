@@ -695,8 +695,8 @@
           "expectedSignal": "sprite-bank-mismatch"
         },
         {
-          "id": "west-reflection-missing",
-          "expectedSignal": "west-reflection-missing"
+          "id": "east-reflection-missing",
+          "expectedSignal": "east-reflection-missing"
         },
         {
           "id": "stale-bank-after-turn",

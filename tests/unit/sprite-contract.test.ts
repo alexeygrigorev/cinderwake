@@ -669,9 +669,9 @@ describe("sprite atlas quality contract", () => {
     } as const;
     const facings = {
       north: { vector: { x: 0, y: -1024 }, suffix: ":north", flipX: false },
-      east: { vector: { x: 1024, y: 0 }, suffix: "", flipX: false },
+      east: { vector: { x: 1024, y: 0 }, suffix: "", flipX: true },
       south: { vector: { x: 0, y: 1024 }, suffix: ":south", flipX: false },
-      west: { vector: { x: -1024, y: 0 }, suffix: "", flipX: true },
+      west: { vector: { x: -1024, y: 0 }, suffix: "", flipX: false },
     } as const;
 
     for (const [geometryId, [scenarioId, entityId]] of Object.entries(

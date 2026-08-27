@@ -18,7 +18,7 @@ export declare const DIRECTIONAL_BANK_SIGNAL_IDS: readonly [
 ];
 export declare const DIRECTIONAL_BANK_FAILURE_IDS: readonly [
   "sprite-bank-mismatch",
-  "west-reflection-missing",
+  "east-reflection-missing",
   "stale-facing-bank",
   "target-aim-not-mirrored",
   "attack-origin-not-mirrored",

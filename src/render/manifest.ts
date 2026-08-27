@@ -1019,7 +1019,10 @@ export function buildRenderManifest(
       bounds: { ...destinationRect },
       footAnchor: { ...screenAnchor },
       facingBucket: bucket,
-      flipX: bucket === "west",
+      // The accepted side-facing source cells point toward screen-left. Mirror
+      // them for world east so the character, weapon, and movement agree; the
+      // raw side bank is the west-facing presentation.
+      flipX: bucket === "east",
       visible: intersectsViewport(destinationRect),
       zOrder: 0,
     });

@@ -298,7 +298,7 @@
       ],
       "negativeControlIds": [
         "opposite-bank-selected",
-        "west-reflection-missing",
+        "east-reflection-missing",
         "stale-bank-after-turn",
         "unmirrored-attack-origin",
         "target-aim-points-to-wrong-quadrant",

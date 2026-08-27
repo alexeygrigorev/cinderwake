@@ -67,7 +67,7 @@ function playerCall(actorId: string, facing: Facing, clip: string) {
     spriteId: spriteId(actorId, facing),
     facing: facingVector,
     facingBucket: facing,
-    flipX: facing === "west",
+    flipX: facing === "east",
     clip,
   };
 }
@@ -273,11 +273,11 @@ describe("PRES-FACING-015 evidence oracle", () => {
       },
     ],
     [
-      "west reflection missing",
-      "west-reflection-missing",
+      "east reflection missing",
+      "east-reflection-missing",
       (value: ReturnType<typeof evidence>) => {
         const direction = value.profiles[0]!.runs[0]!.directions.find(
-          ({ directionId }) => directionId === "move-west",
+          ({ directionId }) => directionId === "move-east",
         )!;
         direction.movement.after.manifest.drawCalls[0]!.flipX = false;
       },

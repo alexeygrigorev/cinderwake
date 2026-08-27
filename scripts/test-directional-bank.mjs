@@ -620,11 +620,11 @@ function negativeControls(evidence) {
       },
     },
     {
-      id: "west-reflection-missing",
-      expectedSignal: "west-reflection-missing",
+      id: "east-reflection-missing",
+      expectedSignal: "east-reflection-missing",
       mutate(value) {
         const direction = value.profiles[0].runs[0].directions.find(
-          ({ directionId }) => directionId === "move-west",
+          ({ directionId }) => directionId === "move-east",
         );
         direction.movement.after.manifest.drawCalls[0].flipX = false;
       },
