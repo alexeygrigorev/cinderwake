@@ -1,7 +1,12 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { TEMPORAL_SEQUENCE_ENTRY_IDS } from "./temporal-sequence-evidence.mjs";
+import {
+  TEMPORAL_LIVE_ACTOR_IDS,
+  TEMPORAL_LIVE_PROFILE_IDS,
+  TEMPORAL_LIVE_STRIP_LABELS,
+  TEMPORAL_SEQUENCE_ENTRY_IDS,
+} from "./temporal-sequence-evidence.mjs";
 
 const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
@@ -604,6 +609,21 @@ function temporalSequenceArtifactSpecifications() {
       ["temporal-sequence-audit-report", `${sequenceRoot}/report.html`],
     );
   }
+  const liveRoot = "quality-results/compositor/pres-flicker-024/live";
+  for (const profileId of TEMPORAL_LIVE_PROFILE_IDS)
+    for (const actorId of TEMPORAL_LIVE_ACTOR_IDS) {
+      for (const label of TEMPORAL_LIVE_STRIP_LABELS) {
+        const index = TEMPORAL_LIVE_STRIP_LABELS.indexOf(label);
+        specifications.push([
+          "ordinary-route-temporal-strips",
+          `${liveRoot}/${profileId}/${actorId}/frame-${String(index).padStart(4, "0")}-${label}.png`,
+        ]);
+      }
+      specifications.push([
+        "ordinary-route-temporal-strips",
+        `${liveRoot}/${profileId}/${actorId}/normal.webm`,
+      ]);
+    }
   return specifications;
 }
 

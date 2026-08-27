@@ -190,8 +190,11 @@
       "id": "recipe:pres-motion-005",
       "checkId": "PRES-MOTION-005",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": [
+          "ordinary-live-idle-move-turn-attack:vanguard",
+          "ordinary-live-idle-move-turn-attack:ranger",
+          "ordinary-live-idle-move-turn-attack:arcanist",
           "animation-walk",
           "all-temporal-hero-actions",
           "all-temporal-enemy-actions",
@@ -204,19 +207,24 @@
       },
       "gestureSet": {
         "coverage": "implemented",
-        "requiredIds": ["capture-matrix-command-tapes"]
+        "requiredIds": [
+          "capture-matrix-command-tapes",
+          "ordinary-live-idle-move-turn-attack"
+        ]
       },
       "evaluator": {
         "id": "temporal-sequence-assessor-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "catalog-complete-and-passing",
           "cadence-continuity",
           "transition-continuity",
-          "terminal-pose-retained"
+          "terminal-pose-retained",
+          "ordinary-route-temporal-strips",
+          "production-compositor-pixel-mutations"
         ]
       },
-      "reproduce": "npm run capture:matrix && npm run quality:temporal:check",
+      "reproduce": "npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check",
       "negativeControls": [
         {
           "id": "frame-duplicated-or-frozen",

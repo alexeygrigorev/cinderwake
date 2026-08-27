@@ -109,7 +109,8 @@
         "all-clip-command-tapes",
         "per-tick-animation-manifest",
         "live-temporal-contact-sheet",
-        "temporal-sequence-audit-report"
+        "temporal-sequence-audit-report",
+        "ordinary-route-temporal-strips"
       ],
       "negativeControlIds": [
         "frame-duplicated-or-frozen",
