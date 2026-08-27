@@ -4,13 +4,24 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "@playwright/test";
+import sharp from "sharp";
 import {
   evaluateCompositorEvidence,
   runCompositorNegativeControls,
 } from "./lib/compositor-evidence.mjs";
+import {
+  SPRITE_LEAK_ALPHA_THRESHOLD,
+  assessSpriteLeakSample,
+  evaluateSpriteLeakAssessments,
+  runSpriteLeakNegativeControls,
+} from "./lib/sprite-leak-evidence.mjs";
 
 const OUTPUT = path.resolve("quality-results/compositor/pres-leak-012");
 const VIEWPORT = { width: 960, height: 540 };
+const ATLAS_DIRECTORY = path.resolve("public/assets/sprites");
+const LEAK_POLICY = JSON.parse(
+  await fs.readFile("quality/sprite-leak-policy.v1.json", "utf8"),
+);
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -99,6 +110,145 @@ function ownerPaintCounts(manifest) {
   }));
 }
 
+function pixelHasInk(rgba) {
+  for (let offset = 3; offset < rgba.length; offset += 4)
+    if (rgba[offset] >= SPRITE_LEAK_ALPHA_THRESHOLD) return true;
+  return false;
+}
+
+function extractCell(data, atlasWidth, cellWidth, cellHeight, column, row) {
+  const rgba = Buffer.alloc(cellWidth * cellHeight * 4);
+  for (let y = 0; y < cellHeight; y += 1) {
+    const sourceStart =
+      ((row * cellHeight + y) * atlasWidth + column * cellWidth) * 4;
+    rgba.set(
+      data.subarray(sourceStart, sourceStart + cellWidth * 4),
+      y * cellWidth * 4,
+    );
+  }
+  return rgba;
+}
+
+async function collectSpriteLeakCorpus() {
+  if (
+    LEAK_POLICY.alphaThreshold !== SPRITE_LEAK_ALPHA_THRESHOLD ||
+    !Array.isArray(LEAK_POLICY.contracts) ||
+    LEAK_POLICY.contracts.length === 0
+  )
+    throw new Error(
+      "sprite leak policy is invalid or disagrees with evaluator",
+    );
+
+  const assessments = [];
+  const representatives = [];
+  const contractSummaries = [];
+  for (const contract of LEAK_POLICY.contracts) {
+    let sampleCount = 0;
+    let firstSample;
+    for (const file of contract.files ?? []) {
+      const filePath = path.join(ATLAS_DIRECTORY, file);
+      const { data, info } = await sharp(filePath)
+        .ensureAlpha()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+      const cellWidth = contract.cell?.width;
+      const cellHeight = contract.cell?.height;
+      if (
+        !Number.isInteger(cellWidth) ||
+        !Number.isInteger(cellHeight) ||
+        info.width % cellWidth !== 0 ||
+        info.height % cellHeight !== 0
+      )
+        throw new Error(`${file} dimensions do not contain whole policy cells`);
+      for (let row = 0; row < info.height / cellHeight; row += 1) {
+        for (let column = 0; column < info.width / cellWidth; column += 1) {
+          const rgba = extractCell(
+            data,
+            info.width,
+            cellWidth,
+            cellHeight,
+            column,
+            row,
+          );
+          if (!pixelHasInk(rgba)) continue;
+          const sample = {
+            id: `${contract.id}:${file}:${row}:${column}`,
+            width: cellWidth,
+            height: cellHeight,
+            rgba,
+            cell: {
+              x: column * cellWidth,
+              y: row * cellHeight,
+              width: cellWidth,
+              height: cellHeight,
+            },
+            sourceRect: {
+              x: column * cellWidth,
+              y: row * cellHeight,
+              width: cellWidth,
+              height: cellHeight,
+            },
+            transparentBorder: { ...contract.transparentBorder },
+          };
+          assessments.push(assessSpriteLeakSample(sample));
+          sampleCount += 1;
+          if (!firstSample) firstSample = sample;
+        }
+      }
+    }
+    if (!firstSample)
+      throw new Error(`${contract.id} has no nonblank raster samples`);
+    representatives.push({ contractId: contract.id, sample: firstSample });
+    contractSummaries.push({
+      id: contract.id,
+      files: [...(contract.files ?? [])],
+      nonblankSampleCount: sampleCount,
+    });
+  }
+  return {
+    assessment: evaluateSpriteLeakAssessments(assessments),
+    representatives,
+    contractSummaries,
+  };
+}
+
+function checkerboardSvg(width, height) {
+  const half = width / 2;
+  return Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><pattern id="dark" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#243238"/><path d="M0 0h8v8H0zM8 8h8v8H8z" fill="#34464c"/></pattern><pattern id="light" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="16" fill="#d6c69e"/><path d="M0 0h8v8H0zM8 8h8v8H8z" fill="#b2a37c"/></pattern></defs><rect width="${half}" height="${height}" fill="url(#dark)"/><rect x="${half}" width="${half}" height="${height}" fill="url(#light)"/></svg>`,
+  );
+}
+
+async function writeCheckerboardArtifacts(representatives) {
+  const artifacts = {};
+  for (const { contractId, sample } of representatives) {
+    const file = `checkerboard-${contractId}.png`;
+    const background = checkerboardSvg(sample.width * 2, sample.height);
+    const sprite = await sharp(sample.rgba, {
+      raw: { width: sample.width, height: sample.height, channels: 4 },
+    })
+      .png()
+      .toBuffer();
+    await sharp({
+      create: {
+        width: sample.width * 2,
+        height: sample.height,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 1 },
+      },
+    })
+      .composite([
+        { input: background },
+        { input: sprite, left: 0, top: 0 },
+        { input: sprite, left: sample.width, top: 0 },
+      ])
+      .png({ compressionLevel: 9 })
+      .toFile(path.join(OUTPUT, file));
+    artifacts[contractId] = file;
+  }
+  return artifacts;
+}
+
 async function main() {
   const port = 44_000 + (process.pid % 1_000);
   await fs.rm(OUTPUT, { recursive: true, force: true });
@@ -175,15 +325,46 @@ async function main() {
       },
       ownerPaints: ownerPaintCounts(captures.populated.manifest),
     };
-    const comparison = evaluateCompositorEvidence(evidence);
-    const controls = runCompositorNegativeControls(evidence);
+    const spriteLeak = await collectSpriteLeakCorpus();
+    const checkerboardArtifacts = await writeCheckerboardArtifacts(
+      spriteLeak.representatives,
+    );
+    const compositor = evaluateCompositorEvidence(evidence);
+    const comparison = {
+      pass: spriteLeak.assessment.pass && compositor.pass,
+      failures: [
+        ...new Set([...spriteLeak.assessment.failures, ...compositor.failures]),
+      ],
+      signals: [
+        ...spriteLeak.assessment.signals,
+        {
+          id: "no-stale-or-duplicate-body",
+          pass: compositor.pass,
+          detail: {
+            signals: compositor.signals,
+          },
+        },
+      ],
+    };
+    const compositorControls = runCompositorNegativeControls(evidence).filter(
+      ({ id }) =>
+        id === "prior-frame-not-cleared" || id === "duplicate-body-draw",
+    );
+    const controls = [
+      ...runSpriteLeakNegativeControls(spriteLeak.representatives[0].sample),
+      ...compositorControls,
+    ];
     const source = sourceSnapshot();
     const metadata = {
       schemaVersion: 1,
       checkId: "PRES-LEAK-012",
       recipeId: "recipe:pres-leak-012",
-      evaluator: "compositor-reconstruction-v1",
-      scenarioIds: ["animation-idle", "combat-loot"],
+      evaluator: "sprite-leak-and-ghost-v1",
+      scenarioIds: [
+        "animation-idle",
+        "combat-loot",
+        "registered-raster-corpus",
+      ],
       deviceProfileIds: ["desktop"],
       viewport: { ...VIEWPORT, dpr: 1 },
       source,
@@ -198,8 +379,16 @@ async function main() {
       writeJson(path.join(OUTPUT, "captures.json"), captures),
       writeJson(path.join(OUTPUT, "comparison.json"), {
         schemaVersion: 1,
-        evaluator: "compositor-reconstruction-v1",
+        evaluator: "sprite-leak-and-ghost-v1",
         evidence,
+        spriteLeak: {
+          policyId: LEAK_POLICY.id,
+          alphaThreshold: LEAK_POLICY.alphaThreshold,
+          contracts: spriteLeak.contractSummaries,
+          assessment: spriteLeak.assessment,
+          checkerboardArtifacts,
+        },
+        compositor,
         comparison,
         negativeControls: controls,
       }),
@@ -208,6 +397,7 @@ async function main() {
 
     if (
       !comparison.pass ||
+      controls.length !== 5 ||
       controls.some(({ status }) => status !== "DETECTED")
     ) {
       throw new Error(
@@ -220,7 +410,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-LEAK-012 PASS: repeated and reconstructed frames are exact, ${controls.length} compositor controls detected`,
+      `PRES-LEAK-012 PASS: ${spriteLeak.assessment.assessments.length} raster cells and reconstructed frames are clean, ${controls.length} leak/compositor controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
