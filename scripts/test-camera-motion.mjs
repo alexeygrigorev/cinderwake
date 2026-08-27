@@ -299,10 +299,7 @@ async function prepareProductionPage(page, baseURL, runSpec) {
     throw new Error("Camera-motion route omitted map or camera telemetry");
   return {
     map: route.map,
-    cameraBounds: cameraBounds(
-      route,
-      route.camera?.zoom ?? route.cameraTarget.zoom,
-    ),
+    cameraBounds: cameraBounds(route, route.cameraTarget.zoom),
   };
 }
 
