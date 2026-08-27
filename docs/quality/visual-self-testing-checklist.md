@@ -50,7 +50,7 @@ If any box cannot be backed by its linked rows, leave it unchecked and record th
 
 1. Record commit, dirty patch, browser/runtime versions, asset hashes, viewport, DPR, locale, and exact reproduction command.
 2. Run asset decode, sprite-source, crop, blank-frame, aspect, and exhaustive animation-bank checks.
-3. Run deterministic arbitrary-state captures for motion, transitions, collision contact, camera, and compositing.
+3. Run deterministic arbitrary-state captures for motion, transitions, collision contact, camera, compositing, and responsive raster resolution.
 4. Run the ordinary production route with physical mouse, keyboard, and touch gestures; do not use a mutating test bridge for this step.
 5. Run the four screen profiles and at least one real high-DPR phone profile. Retain ordered frames, not only final screenshots.
 6. Run every named negative control through the same evaluator used on the candidate.
@@ -140,13 +140,13 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 ### PRES-CRISP-006 — crisp high-DPR rendering
 
 - Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Partial**.
-- Scenario/precondition: same deterministic scene at baseline DPR 1, desktop DPR 2, and portrait mobile DPR 3 with real cover-fit CSS; assets settled.
-- Production gesture: launch, stand idle, walk, and attack so both static edges and moving sprites are sampled.
-- Ordered artifacts: viewport/DPR; CSS canvas box; backing-store dimensions; manifest viewport/device scale; full-resolution PNGs before/during motion; 100% crops of player, prop, UI glyph, and diagonal edge.
-- Machine signal and threshold: backing and CSS aspect agree; backing pixels satisfy the renderer’s declared target physical-pixels-per-CSS-pixel policy on both axes; no unintended browser resample stage. Use the policy encoded and tested in `tests/e2e/render-resolution.spec.ts`, then calibrate an edge-acutance/alias metric from accepted DPR fixtures before gating perceived sharpness.
-- Required negative control: force the old 960×540 backing store at DPR 2/3; it must fail `backing-resolution-insufficient`. A separately blurred accepted crop must fail the future sharpness metric.
-- Current evidence: geometry assertions in `tests/e2e/render-resolution.spec.ts`; adaptive backing in `src/render/CanvasRenderer.ts` lines 51–80.
-- Missing automation/next implementation: no detector mutation or calibrated raster-sharpness oracle yet; current test proves resolution allocation, not that art looks crisp.
+- Scenario/precondition: ordinary production launch plus deterministic idle/walk scenes at desktop DPR 1 and portrait mobile DPR 3 with real cover-fit CSS; assets settled. The existing Playwright geometry suite also covers desktop DPR 2.
+- Production gesture: launch through the public selection route, then capture idle and east-walk states so static edges and moving player/terrain pixels are sampled.
+- Ordered artifacts: viewport/DPR; CSS canvas box; backing-store dimensions; manifest viewport/device scale; full-resolution PNGs before/during motion; twelve original-resolution player and terrain crops plus their deterministic blurred controls.
+- Machine signal and threshold: `render-resolution-contract-v1` mirrors the bounded backing policy and requires exact dimensions/aspect/manifest-DPR agreement. It measures a mean absolute Laplacian luma residual and calibrates a normalized native-to-blurred detail-retention threshold from the same accepted crops, so absolute texture frequency and DPR do not share one arbitrary cutoff.
+- Required negative control: replace a high-DPR backing with the legacy 960×540 surface; it must fail `backing-resolution-mismatch`. Replace each accepted crop with its Gaussian-blurred mutation; it must fail `sharpness-regression`.
+- Current evidence: `npm run test:crispness` retains `quality-results/render-resolution/pres-crisp-006/` with two responsive projections, ordinary production-launch evidence, idle/walk full-resolution frames, twelve physical-canvas crops, calibration details, and both detected controls. `tests/e2e/render-resolution.spec.ts` remains the focused geometry regression, and `src/render/CanvasRenderer.ts` lines 51–80 owns the production policy.
+- Missing automation/next implementation: native handset/high-refresh capture and independent review remain open; the retained corpus still needs UI glyph, prop, and diagonal-edge crop coverage before this partial row can claim the whole player-facing raster.
 - Independent visual-agent review mandatory: **yes**, on original-resolution mobile output rather than a zoomed screenshot viewer.
 
 ### PRES-ASPECT-007 — no stretched actors, buildings, props, or UI sprites

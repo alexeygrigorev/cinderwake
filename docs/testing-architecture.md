@@ -81,6 +81,20 @@ Normal/slow video review, physical high-refresh capture, calibrated temporal
 thresholds, and the retained presentation-run binding remain required before
 the flicker row can pass.
 
+The complementary `npm run test:crispness` probe checks the responsive raster
+contract on the real Canvas renderer. It enters the ordinary public launch route
+for production evidence, then uses the deterministic bridge only for named
+idle/walk samples on desktop DPR 1 and portrait DPR 3. The observer captures the
+full physical canvas rather than the bridge's logical 960 × 540 downsample;
+player and terrain destination rectangles are projected into that backing and
+retained as original-resolution crops. The pure evaluator mirrors the bounded
+backing allocation policy, measures a mean absolute Laplacian luma residual,
+calibrates a normalized native-to-Gaussian-blurred retention threshold from the
+same crop corpus, and detects both a legacy backing-store mutation and a blurred
+accepted-crop mutation. Existing Playwright geometry coverage still exercises
+desktop DPR 2. This is a machine raster signal, not a claim that an emulated
+portrait viewport substitutes for a native phone or independent visual review.
+
 Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
 
 ## Artifact layout
@@ -122,6 +136,24 @@ quality-results/mobile-screen/pres-mobile-010/
     mobile-screen.webm
   phone-landscape/           # same retained profile artifacts
 ```
+
+The render-resolution recorder writes the crispness bundle:
+
+```text
+quality-results/render-resolution/pres-crisp-006/
+  metadata.json              # source commit, profiles, launch and environment
+  dpr-projection.json        # CSS/backing/manifest-DPR projections
+  motion.json                # synchronized idle/walk snapshots and manifests
+  comparison.json            # calibration, signals, crops, and controls
+  desktop-dpr1/
+    production/              # ordinary launch frame, crops, and launch.json
+    controlled/              # idle/walk full-resolution frames and crops
+  phone-portrait-high-dpr/   # same retained profile structure at DPR 3
+```
+
+The binder hashes the entire retained tree when crispness evidence is supplied,
+and attaches `PRES-CRISP-006` as `NEEDS_VISUAL_REVIEW` while the versioned device
+coverage remains partial.
 
 `npm run test:mobile-screen` enters the public selection and launch route with
 physical Chromium touch events, records move/Strike/orientation feedback, and

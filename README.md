@@ -67,7 +67,7 @@ Run every source-level gate:
 npm run check
 ```
 
-That command includes the fixed actor validator, exhaustive actor-animation audit, deterministic mobile-selection rebuild, and generation-ingress verifier. The animation audit checks all 144 actor/clip/facing banks, 720 authored-facing comparisons, and four injected negative controls; its inspectable strips and report are written to `quality-results/actor-atlas-audit/index.html`. The generation verifier preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. Its local report is `quality-results/generation-pipeline/index.html`.
+That command includes the fixed actor validator, exhaustive actor-animation audit, deterministic mobile-selection rebuild, generation-ingress verifier, and the calibrated high-DPR crispness probe. The animation audit checks all 144 actor/clip/facing banks, 720 authored-facing comparisons, and four injected negative controls; its inspectable strips and report are written to `quality-results/actor-atlas-audit/index.html`. The generation verifier preserves exact prompt/reference/candidate hashes for three fresh trials, passes each candidate through the real packer without touching production, and rebuilds the complete Vanguard, Ranger, and Stonekin atlases twice to prove byte equality with the committed runtime art. The crispness probe writes its ordinary-launch, DPR projection, full-resolution motion, crop calibration, and two negative-control artifacts to `quality-results/render-resolution/pres-crisp-006/`; native-device capture and visual review remain explicit checklist gates. Its local report is `quality-results/generation-pipeline/index.html`.
 
 `npm run report:screens` builds the 16-image public screen matrix. The report becomes accepted only when the committed independent-review record matches both the screen-contract hash and the ordered screenshot-set hash; any changed viewport, rule, landmark, or PNG automatically returns it to candidate status.
 
@@ -94,6 +94,13 @@ npm run test:visual
 ```
 
 Each reproducibility bundle also includes `initial-state.json`, `commands.json`, transparent `mask-*.png` images, page captures, and metadata for the commit, Node, Chromium, Playwright, Vite, canvas/viewport/DPR, and exact command. Masks are rendered in isolation and measured from real alpha pixels, providing concrete evidence for ink bounds, centroid, foot relation, proportions, and clipping.
+
+For responsive raster evidence, `npm run test:crispness` retains the physical
+canvas PNG, the CSS/backing/DPR projection, player and terrain crops at their
+captured resolution, and a Gaussian-blurred counterpart for each crop. Its
+normalized detail-retention calibration is reproducible from the retained
+`comparison.json`; it does not turn a screenshot viewer zoom into evidence of
+native-device sharpness.
 
 ## Add characters without custom animation code
 
