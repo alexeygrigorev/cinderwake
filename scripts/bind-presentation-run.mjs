@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   bindPresentationRun,
   flickerArtifactSpecifications,
+  renderResolutionArtifactSpecifications,
 } from "./lib/presentation-run-binding.mjs";
 
 const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -83,6 +84,14 @@ async function main() {
       "quality-results/compositor/pres-flicker-024",
     ),
   );
+  const crispnessRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--crispness-root",
+      "quality-results/render-resolution/pres-crisp-006",
+    ),
+  );
   const movementRoot = path.resolve(
     repoRoot,
     option(
@@ -131,6 +140,8 @@ async function main() {
     liveComparison,
     flickerMetadata,
     flickerComparison,
+    crispnessMetadata,
+    crispnessComparison,
     movementMetadata,
     movementComparison,
     spriteMetadata,
@@ -157,6 +168,8 @@ async function main() {
     readJson(path.join(liveRoot, "comparison.json")),
     readJson(path.join(flickerRoot, "metadata.json")),
     readJson(path.join(flickerRoot, "comparison.json")),
+    readJson(path.join(crispnessRoot, "metadata.json")),
+    readJson(path.join(crispnessRoot, "comparison.json")),
     readJson(path.join(movementRoot, "metadata.json")),
     readJson(path.join(movementRoot, "comparison.json")),
     readJson(path.join(spriteRoot, "metadata.json")),
@@ -171,7 +184,7 @@ async function main() {
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:flicker && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:flicker && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -190,6 +203,8 @@ async function main() {
     liveComparison,
     flickerMetadata,
     flickerComparison,
+    crispnessMetadata,
+    crispnessComparison,
     movementMetadata,
     movementComparison,
     spriteMetadata,
@@ -201,6 +216,7 @@ async function main() {
     collisionMetadata,
     collisionComparison,
     flickerArtifacts: await flickerArtifactSpecifications(repoRoot),
+    crispnessArtifacts: await renderResolutionArtifactSpecifications(repoRoot),
     commit,
     reproduce,
   });
@@ -228,6 +244,7 @@ async function main() {
   console.log("PRES-DEPTH-019: NEEDS_VISUAL_REVIEW");
   console.log("PRES-COLLIDE-008: NEEDS_VISUAL_REVIEW");
   console.log("PRES-FLICKER-024: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-CRISP-006: NEEDS_VISUAL_REVIEW");
   console.log("PRES-LIVE-001: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CITY-027: NEEDS_VISUAL_REVIEW");
   console.log(

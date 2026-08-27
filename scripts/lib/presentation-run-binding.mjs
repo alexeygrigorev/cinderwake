@@ -475,6 +475,40 @@ export async function flickerArtifactSpecifications(repoRoot) {
   return specifications;
 }
 
+async function filesUnder(root) {
+  const entries = await fs.readdir(root, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const candidate = path.join(root, entry.name);
+    if (entry.isDirectory()) files.push(...(await filesUnder(candidate)));
+    else if (entry.isFile()) files.push(candidate);
+  }
+  return files.sort();
+}
+
+export async function renderResolutionArtifactSpecifications(repoRoot) {
+  const root = "quality-results/render-resolution/pres-crisp-006";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["dpr-projection-metadata", `${root}/dpr-projection.json`],
+    ["full-resolution-motion-frames", `${root}/motion.json`],
+    ["original-resolution-crops", `${root}/comparison.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+  ];
+  const files = await filesUnder(path.join(repoRoot, root));
+  for (const file of files) {
+    const relativePath = path.relative(repoRoot, file);
+    if (relativePath === `${root}/metadata.json`) continue;
+    if (relativePath.includes("/crops/"))
+      specifications.push(["original-resolution-crops", relativePath]);
+    else if (relativePath.endsWith(".png"))
+      specifications.push(["full-resolution-motion-frames", relativePath]);
+    else if (relativePath.endsWith(".json"))
+      specifications.push(["full-resolution-motion-frames", relativePath]);
+  }
+  return specifications;
+}
+
 function directionalMotionFrameFiles() {
   const files = [];
   let index = 0;
@@ -768,6 +802,8 @@ export async function bindPresentationRun({
   liveComparison,
   flickerMetadata = null,
   flickerComparison = null,
+  crispnessMetadata = null,
+  crispnessComparison = null,
   movementMetadata,
   movementComparison,
   spriteMetadata,
@@ -786,6 +822,7 @@ export async function bindPresentationRun({
   mobileArtifacts = null,
   liveArtifacts = liveArtifactSpecifications(),
   flickerArtifacts = null,
+  crispnessArtifacts = null,
   movementArtifacts = directionalMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
@@ -801,6 +838,9 @@ export async function bindPresentationRun({
   const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
   const flickerCheck = contract.checks.find(
     ({ id }) => id === "PRES-FLICKER-024",
+  );
+  const crispnessCheck = contract.checks.find(
+    ({ id }) => id === "PRES-CRISP-006",
   );
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
@@ -825,6 +865,9 @@ export async function bindPresentationRun({
   );
   const flickerRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-FLICKER-024",
+  );
+  const crispnessRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-CRISP-006",
   );
   const movementRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOVE-003",
@@ -852,6 +895,10 @@ export async function bindPresentationRun({
     flickerMetadata !== null ||
     flickerComparison !== null ||
     flickerArtifacts !== null;
+  const crispnessConfigured =
+    crispnessMetadata !== null ||
+    crispnessComparison !== null ||
+    crispnessArtifacts !== null;
   if (
     !cityCheck ||
     !stateCheck ||
@@ -863,6 +910,12 @@ export async function bindPresentationRun({
         !flickerMetadata ||
         !flickerComparison ||
         !flickerArtifacts)) ||
+    (crispnessConfigured &&
+      (!crispnessCheck ||
+        !crispnessRecipe ||
+        !crispnessMetadata ||
+        !crispnessComparison ||
+        !crispnessArtifacts)) ||
     !mobileCheck ||
     !cityRecipe ||
     !stateRecipe ||
@@ -892,6 +945,9 @@ export async function bindPresentationRun({
   const flickerSource = flickerMetadata
     ? sourceCommit(flickerMetadata, "PRES-FLICKER-024")
     : null;
+  const crispnessSource = crispnessMetadata
+    ? sourceCommit(crispnessMetadata, "PRES-CRISP-006")
+    : null;
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
@@ -908,6 +964,7 @@ export async function bindPresentationRun({
     citySource !== depthSource ||
     citySource !== collisionSource ||
     (flickerSource && citySource !== flickerSource) ||
+    (crispnessSource && citySource !== crispnessSource) ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -930,6 +987,9 @@ export async function bindPresentationRun({
   );
   const flickerIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-FLICKER-024",
+  );
+  const crispnessIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-CRISP-006",
   );
   const movementIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOVE-003",
@@ -956,6 +1016,9 @@ export async function bindPresentationRun({
   const liveComparisonData = comparisonData(liveComparison, "PRES-LIVE-001");
   const flickerComparisonData = flickerComparison
     ? comparisonData(flickerComparison, "PRES-FLICKER-024")
+    : null;
+  const crispnessComparisonData = crispnessComparison
+    ? comparisonData(crispnessComparison, "PRES-CRISP-006")
     : null;
   const movementComparisonData = comparisonData(
     movementComparison,
@@ -998,6 +1061,23 @@ export async function bindPresentationRun({
         scenarioIds: flickerMetadata.scenarioIds,
         deviceProfileIds: flickerMetadata.deviceProfileIds,
         gestureIds: flickerMetadata.gestureIds,
+      },
+    });
+  }
+  if (crispnessConfigured) {
+    checks[crispnessIndex] = await bindRow({
+      repoRoot,
+      contractCheck: crispnessCheck,
+      recipe: crispnessRecipe,
+      metadata: crispnessMetadata,
+      comparison: crispnessComparisonData,
+      artifactSpecifications: crispnessArtifacts,
+      result: "NEEDS_VISUAL_REVIEW",
+      deviceProfileIds: crispnessMetadata.deviceProfileIds,
+      observed: {
+        scenarioIds: crispnessMetadata.scenarioIds,
+        deviceProfileIds: crispnessMetadata.deviceProfileIds,
+        gestureIds: crispnessMetadata.gestureIds,
       },
     });
   }

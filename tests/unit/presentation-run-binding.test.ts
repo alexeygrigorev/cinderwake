@@ -82,6 +82,9 @@ describe("presentation run binding", () => {
     const flickerRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-FLICKER-024",
     );
+    const crispnessRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-CRISP-006",
+    );
     const movementRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     );
@@ -133,6 +136,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-FLICKER-024",
       ).evidenceRequirements,
     ];
+    const crispnessRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-CRISP-006",
+      ).evidenceRequirements,
+    ];
     const movementRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -169,6 +178,7 @@ describe("presentation run binding", () => {
     const mobileArtifacts = await artifactFixture(mobileRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
     const flickerArtifacts = await artifactFixture(flickerRequirements);
+    const crispnessArtifacts = await artifactFixture(crispnessRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
     const temporalArtifacts = await artifactFixture(temporalRequirements);
@@ -201,6 +211,16 @@ describe("presentation run binding", () => {
       ],
       deviceProfileIds: ["desktop-60hz", "phone-portrait-rAF"],
       gestureIds: ["sustained-movement", "repeated-attacks"],
+    };
+    const crispnessMetadata = {
+      source: { commit, dirty: false },
+      scenarioIds: [
+        "ordinary-production-launch",
+        "animation-idle",
+        "animation-walk",
+      ],
+      deviceProfileIds: ["desktop-dpr1", "phone-portrait-high-dpr"],
+      gestureIds: ["begin", "move-east"],
     };
     const movementMetadata = {
       source: { commit, dirty: false },
@@ -240,6 +260,8 @@ describe("presentation run binding", () => {
       liveComparison: comparison(liveRecipe),
       flickerMetadata,
       flickerComparison: comparison(flickerRecipe),
+      crispnessMetadata,
+      crispnessComparison: comparison(crispnessRecipe),
       movementMetadata,
       movementComparison: comparison(movementRecipe),
       spriteMetadata,
@@ -259,6 +281,7 @@ describe("presentation run binding", () => {
       mobileArtifacts,
       liveArtifacts,
       flickerArtifacts,
+      crispnessArtifacts,
       movementArtifacts,
       spriteArtifacts,
       temporalArtifacts,
@@ -286,6 +309,9 @@ describe("presentation run binding", () => {
     )!;
     const flicker = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-FLICKER-024",
+    )!;
+    const crispness = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-CRISP-006",
     )!;
     const movement = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
@@ -359,6 +385,18 @@ describe("presentation run binding", () => {
     );
     expect(
       flicker.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(crispness.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(crispness.observed).toEqual({
+      scenarioIds: crispnessMetadata.scenarioIds,
+      deviceProfileIds: crispnessMetadata.deviceProfileIds,
+      gestureIds: crispnessMetadata.gestureIds,
+    });
+    expect(crispness.signals).toHaveLength(
+      crispnessRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      crispness.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
     expect(movement.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(movement.observed.deviceProfileIds).toEqual([
