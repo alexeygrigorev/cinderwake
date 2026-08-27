@@ -1321,6 +1321,7 @@ export async function bindPresentationRun({
         "move-south",
         "move-west",
         "attack-each-facing",
+        "ability-each-facing",
       ],
     },
   });

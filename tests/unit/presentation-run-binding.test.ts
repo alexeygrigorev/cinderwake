@@ -481,6 +481,7 @@ describe("presentation run binding", () => {
         "move-south",
         "move-west",
         "attack-each-facing",
+        "ability-each-facing",
       ],
     });
     expect(facing.signals).toHaveLength(
