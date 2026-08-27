@@ -471,7 +471,8 @@
         "canvas-clear-skipped",
         "offset-double-draw",
         "presentation-frame-omitted",
-        "despawned-effect-retained"
+        "despawned-effect-retained",
+        "effect-owner-mismatched"
       ]
     },
     {

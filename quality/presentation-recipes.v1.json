@@ -1117,6 +1117,7 @@
         "requiredIds": [
           "ordinary-live-idle-move-turn-attack",
           "effect-despawn",
+          "effect-kind-corpus",
           "asset-state-transition"
         ]
       },
@@ -1136,6 +1137,7 @@
           "no-unexplained-absence",
           "no-stale-pixels",
           "presentation-cadence-complete",
+          "effect-ownership-complete",
           "effect-despawn-clean"
         ]
       },
@@ -1156,6 +1158,10 @@
         {
           "id": "despawned-effect-retained",
           "expectedSignal": "stale-effect-retained"
+        },
+        {
+          "id": "effect-owner-mismatched",
+          "expectedSignal": "effect-owner-mismatch"
         }
       ]
     },
