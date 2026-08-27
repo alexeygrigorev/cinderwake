@@ -76,6 +76,13 @@ export interface PresentationRunBindingInput {
   collisionArtifacts?: Array<readonly [string, string]> | null;
 }
 
+export declare function isBlankInitializedPresentationRun(
+  candidate: Record<string, unknown>,
+  template: { checks: PresentationRunEntry[]; [key: string]: unknown },
+  runId: string,
+  commit: string,
+): boolean;
+
 export declare function bindPresentationRun(
   input: PresentationRunBindingInput,
 ): Promise<{
