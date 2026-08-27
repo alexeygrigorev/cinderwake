@@ -123,15 +123,25 @@ function run(profileId: string, actorId: string) {
         y: moved.y - expected.y * 10,
       };
       const actionPosition = { x: 2_000 + index * 100, y: 2_000 };
-      const attack = {
-        id: `attack:${actorId}:${directionId}`,
-        ownerId: "player",
-        kind: "primary",
-        origin: { ...actionPosition },
-        direction: vector(expected.facing),
+      const aim = {
+        x: actionPosition.x + expected.x * 1_024,
+        y: actionPosition.y + expected.y * 1_024,
       };
-      const produced =
-        actorId === "vanguard"
+      const actionEvidence = (
+        kind: "primary" | "ability",
+        baseTick: number,
+      ) => {
+        const attack = {
+          id: `attack:${actorId}:${directionId}:${kind}`,
+          ownerId: "player",
+          kind,
+          origin: { ...actionPosition },
+          direction: vector(expected.facing),
+        };
+        const producesEffect =
+          actorId === "vanguard" ||
+          (actorId === "arcanist" && kind === "ability");
+        const produced = producesEffect
           ? [
               {
                 type: "effect",
@@ -150,6 +160,46 @@ function run(profileId: string, actorId: string) {
                 },
               },
             ];
+        const clip = kind === "primary" ? "attack" : "ability";
+        return {
+          kind,
+          input: {
+            [kind === "primary" ? "attack" : "ability"]: true,
+            aim,
+          },
+          before: capture(
+            baseTick,
+            actorId,
+            expected.facing,
+            actionPosition,
+            "idle",
+          ),
+          after: capture(
+            baseTick + 1,
+            actorId,
+            expected.facing,
+            actionPosition,
+            clip,
+            [attack],
+          ),
+          impact: capture(
+            baseTick + (kind === "primary" ? 8 : 12),
+            actorId,
+            expected.facing,
+            actionPosition,
+            clip,
+          ),
+          recovery: capture(
+            baseTick + (kind === "primary" ? 27 : 37),
+            actorId,
+            expected.facing,
+            actionPosition,
+            "idle",
+          ),
+          pendingAttack: attack,
+          produced,
+        };
+      };
       return {
         directionId,
         turnDirectionId: expected.opposite,
@@ -158,33 +208,8 @@ function run(profileId: string, actorId: string) {
           after: capture(index * 10 + 6, actorId, expected.facing, moved),
           turn: capture(index * 10 + 7, actorId, opposite.facing, turned),
         },
-        action: {
-          kind: "primary",
-          before: capture(
-            index * 10 + 20,
-            actorId,
-            expected.facing,
-            actionPosition,
-            "idle",
-          ),
-          after: capture(
-            index * 10 + 21,
-            actorId,
-            expected.facing,
-            actionPosition,
-            "attack",
-            [attack],
-          ),
-          impact: capture(
-            index * 10 + 29,
-            actorId,
-            expected.facing,
-            actionPosition,
-            "attack",
-          ),
-          pendingAttack: attack,
-          produced,
-        },
+        action: actionEvidence("primary", index * 100 + 20),
+        ability: actionEvidence("ability", index * 100 + 50),
       };
     }),
   };
@@ -209,7 +234,13 @@ describe("PRES-FACING-015 evidence oracle", () => {
     const result = evaluateDirectionalBankEvidence(evidence());
 
     expect(result).toMatchObject({ pass: true, failures: [] });
-    expect(result.signals.map(({ pass }) => pass)).toEqual([true, true, true]);
+    expect(result.signals.map(({ pass }) => pass)).toEqual([
+      true,
+      true,
+      true,
+      true,
+      true,
+    ]);
     expect(result.coverage).toMatchObject({
       hasAllProfiles: true,
       hasAllRuns: true,
@@ -262,6 +293,25 @@ describe("PRES-FACING-015 evidence oracle", () => {
         const attack =
           value.profiles[0]!.runs[0]!.directions[0]!.action.pendingAttack;
         attack.origin.x += 1;
+      },
+    ],
+    [
+      "target aim points at the wrong quadrant",
+      "target-aim-not-mirrored",
+      (value: ReturnType<typeof evidence>) => {
+        const action = value.profiles[0]!.runs[0]!.directions[0]!.action;
+        action.input.aim.x -= 2_048;
+      },
+    ],
+    [
+      "ability recovery uses a stale bank",
+      "ability-recovery-mismatch",
+      (value: ReturnType<typeof evidence>) => {
+        const recovery =
+          value.profiles[0]!.runs[0]!.directions[1]!.ability.recovery;
+        recovery.manifest.drawCalls[0]!.facingBucket = "west";
+        recovery.manifest.drawCalls[0]!.spriteId = "hero:vanguard";
+        recovery.manifest.drawCalls[0]!.flipX = false;
       },
     ],
   ])("detects %s", (_name, failure, mutate) => {
