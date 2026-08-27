@@ -224,23 +224,25 @@ describe("PRES-COLLIDE-008 evidence oracle", () => {
   it("accepts only declared map-blocked boundary exemptions", () => {
     const value = evidence();
     const scenario = value.profiles[0]!.scenarios[0]!;
-    const exempt = structuredClone(solid());
-    exempt.objectId = "architecture:opening:north-wall";
-    exempt.objectName = "north-wall-solid";
-    exempt.contactCoverage = {
-      principalSides: ["north", "east", "south", "west"],
-      requiredSides: [],
-      skippedSides: {
-        north: "outside-map-boundary",
-        east: "outside-map-boundary",
-        south: "outside-map-boundary",
-        west: "outside-map-boundary",
+    const exempt = {
+      ...solid(),
+      objectId: "architecture:opening:north-wall",
+      objectName: "north-wall-solid",
+      contactCoverage: {
+        principalSides: ["north", "east", "south", "west"],
+        requiredSides: [] as string[],
+        skippedSides: {
+          north: "outside-map-boundary",
+          east: "outside-map-boundary",
+          south: "outside-map-boundary",
+          west: "outside-map-boundary",
+        },
+        selected: false,
+        scope: "exhaustive-cardinal-matrix",
+        exemption: COLLISION_TOPOLOGY_EXEMPTION,
       },
-      selected: false,
-      scope: "exhaustive-cardinal-matrix",
-      exemption: COLLISION_TOPOLOGY_EXEMPTION,
     };
-    scenario.solids.push(exempt);
+    (scenario.solids as unknown[]).push(exempt);
     expect(evaluateCollisionEvidence(value)).toMatchObject({
       pass: true,
       failures: [],
