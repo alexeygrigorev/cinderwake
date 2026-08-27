@@ -19,6 +19,7 @@ export const LIVE_COMPOSITOR_SIGNAL_IDS = [
   "presentation-cadence-complete",
   "effect-ownership-complete",
   "effect-despawn-clean",
+  "real-clock-cadence-complete",
 ];
 
 export const LIVE_COMPOSITOR_FAILURE_IDS = [
@@ -27,6 +28,7 @@ export const LIVE_COMPOSITOR_FAILURE_IDS = [
   "stale-pixels-detected",
   "effect-owner-mismatch",
   "stale-effect-retained",
+  "presentation-cadence-stalled",
 ];
 
 export const LIVE_EFFECT_KINDS = ["slash", "nova", "impact"];
@@ -313,6 +315,65 @@ function segmentAssessment(segment) {
   };
 }
 
+const MIN_LIVE_PRESENTATION_SAMPLES = 30;
+const MAX_LIVE_PRESENTATION_GAP_MS = 250;
+const MIN_LIVE_PRESENTATION_TICKS = 4;
+const TARGET_PRESENTATION_INTERVAL_MS = 1000 / 60;
+
+function liveProfileAssessment(profile) {
+  const samples = Array.isArray(profile?.samples) ? profile.samples : [];
+  const timestamps = samples.map(({ observedAtMs }) => observedAtMs);
+  const intervals = timestamps.slice(1).map((value, index) => {
+    const previous = timestamps[index];
+    return value - previous;
+  });
+  const timestampOrderIsValid = timestamps.every(
+    (value, index) => index === 0 || value > timestamps[index - 1],
+  );
+  const maxIntervalMs = intervals.length > 0 ? Math.max(...intervals) : 0;
+  const distinctPresentationTicks = new Set(
+    samples.map(({ presentationTick }) => presentationTick),
+  ).size;
+  const oneCurrentBodyPerOwner =
+    samples.length > 0 &&
+    samples.every(({ ownerPaints }) => ownerPaintsAreUnique(ownerPaints));
+  const noUnexplainedAbsence =
+    samples.length > 0 &&
+    samples.every(({ expectedOwnerIds, observedOwnerIds }) =>
+      sameStringSet(expectedOwnerIds, observedOwnerIds),
+    );
+  const cadenceComplete =
+    samples.length >= MIN_LIVE_PRESENTATION_SAMPLES &&
+    timestampOrderIsValid &&
+    intervals.length > 0 &&
+    maxIntervalMs <= MAX_LIVE_PRESENTATION_GAP_MS &&
+    distinctPresentationTicks >= MIN_LIVE_PRESENTATION_TICKS;
+  const missedRefreshes = intervals.map((interval) =>
+    Math.max(0, Math.ceil(interval / TARGET_PRESENTATION_INTERVAL_MS) - 1),
+  );
+  return {
+    id: typeof profile?.id === "string" ? profile.id : "",
+    required: profile?.required !== false,
+    frameCount: samples.length,
+    durationMs: timestamps.length > 1 ? timestamps.at(-1) - timestamps[0] : 0,
+    minIntervalMs: intervals.length > 0 ? Math.min(...intervals) : 0,
+    medianIntervalMs:
+      intervals.length > 0
+        ? [...intervals].sort((first, second) => first - second)[
+            Math.floor(intervals.length / 2)
+          ]
+        : 0,
+    maxIntervalMs,
+    maxMissedRefreshes: missedRefreshes.length
+      ? Math.max(...missedRefreshes)
+      : 0,
+    distinctPresentationTicks,
+    oneCurrentBodyPerOwner,
+    noUnexplainedAbsence,
+    cadenceComplete,
+  };
+}
+
 /**
  * Evaluate ordered compositor samples. The recorder supplies independent
  * expected-owner lists from semantic state, observed-owner lists from the
@@ -322,19 +383,36 @@ export function evaluateLiveCompositorEvidence({
   segments,
   residuals,
   effects,
+  liveProfiles,
 }) {
   const assessments = Array.isArray(segments)
     ? segments.map(segmentAssessment)
     : [];
+  const liveAssessments = Array.isArray(liveProfiles)
+    ? liveProfiles.map(liveProfileAssessment)
+    : [];
+  const gatedLiveAssessments = liveAssessments.filter(
+    ({ required }) => required,
+  );
+  const allOwnershipAssessments = [...assessments, ...gatedLiveAssessments];
   const oneCurrentBodyPerOwner =
-    assessments.length > 0 &&
-    assessments.every(({ oneCurrentBodyPerOwner: pass }) => pass);
+    allOwnershipAssessments.length > 0 &&
+    allOwnershipAssessments.every(({ oneCurrentBodyPerOwner: pass }) => pass);
   const noUnexplainedAbsence =
-    assessments.length > 0 &&
-    assessments.every(({ noUnexplainedAbsence: pass }) => pass);
+    allOwnershipAssessments.length > 0 &&
+    allOwnershipAssessments.every(({ noUnexplainedAbsence: pass }) => pass);
   const presentationCadenceComplete =
     assessments.length > 0 &&
     assessments.every(({ presentationCadenceComplete: pass }) => pass);
+  const realClockCadenceComplete =
+    gatedLiveAssessments.length > 0 &&
+    gatedLiveAssessments.every(
+      ({
+        cadenceComplete,
+        oneCurrentBodyPerOwner: ownership,
+        noUnexplainedAbsence: absence,
+      }) => cadenceComplete && ownership && absence,
+    );
   const noStalePixels =
     Array.isArray(residuals) &&
     residuals.length > 0 &&
@@ -348,15 +426,18 @@ export function evaluateLiveCompositorEvidence({
   if (!noStalePixels) failures.push("stale-pixels-detected");
   if (!effectOwnershipComplete) failures.push("effect-owner-mismatch");
   if (!effectDespawnClean) failures.push("stale-effect-retained");
+  if (!realClockCadenceComplete) failures.push("presentation-cadence-stalled");
   return {
     pass: failures.length === 0,
     failures,
     signals: [
       signal("one-current-body-per-owner", oneCurrentBodyPerOwner, {
         segments: assessments,
+        profiles: liveAssessments,
       }),
       signal("no-unexplained-absence", noUnexplainedAbsence, {
         segments: assessments,
+        profiles: liveAssessments,
       }),
       signal("no-stale-pixels", noStalePixels, {
         residuals: residuals ?? [],
@@ -369,6 +450,21 @@ export function evaluateLiveCompositorEvidence({
       }),
       signal("effect-despawn-clean", effectDespawnClean, {
         effects: effects ?? [],
+      }),
+      signal("real-clock-cadence-complete", realClockCadenceComplete, {
+        profiles: liveAssessments,
+        gatedProfileIds: gatedLiveAssessments.map(({ id }) => id),
+        observedOnlyProfileIds: liveAssessments
+          .filter(({ required }) => !required)
+          .map(({ id }) => id),
+        observedOnlyFailures: liveAssessments
+          .filter(
+            ({ required, cadenceComplete }) => !required && !cadenceComplete,
+          )
+          .map(({ id }) => `${id}:cadence-stalled`),
+        minimumSamples: MIN_LIVE_PRESENTATION_SAMPLES,
+        maximumGapMs: MAX_LIVE_PRESENTATION_GAP_MS,
+        minimumDistinctPresentationTicks: MIN_LIVE_PRESENTATION_TICKS,
       }),
     ],
   };
@@ -411,6 +507,13 @@ export function runLiveCompositorNegativeControls(evidence) {
       expectedSignal: "effect-owner-mismatch",
       mutate(value) {
         value.effects[0].ownerId = "owner:wrong";
+      },
+    },
+    {
+      id: "live-renderer-frozen",
+      expectedSignal: "presentation-cadence-stalled",
+      mutate(value) {
+        value.liveProfiles[0].samples = [];
       },
     },
   ];

@@ -1,5 +1,4 @@
-import type { GameState } from "../game/types";
-import type { Vec2 } from "../game/types";
+import type { EffectState, GameState, Vec2 } from "../game/types";
 import { findStateNavigationRoute } from "../game/navigation";
 import type { RenderManifestV1 } from "../render/manifest";
 import { canonicalState } from "./canonical";
@@ -19,6 +18,31 @@ export interface LivePresentationSampleV1 {
     screenAnchor: { x: number; y: number };
   } | null;
   visibleMonsterIds: string[];
+  /** Every state entity expected to have a render-manifest owner. */
+  expectedOwnerIds: string[];
+  /** Every dynamic draw-call owner, including off-screen calls. */
+  observedOwnerIds: string[];
+  /** Visible entity-body paints grouped by their manifest owner. */
+  ownerPaints: Array<{
+    ownerId: string;
+    bodyPaintCount: number;
+  }>;
+  /** Visible effect draw calls with state-backed lifecycle metadata. */
+  effectDetails: Array<{
+    effectId: string;
+    kind: string;
+    ownerId: string | null;
+    startedAtTick: number;
+    expectedDespawnStateTick: number;
+  }>;
+  /** State-backed effect lifecycle metadata for this presentation sample. */
+  expectedEffects: Array<{
+    effectId: string;
+    kind: EffectState["kind"];
+    ownerId: string | null;
+    startedAtTick: number;
+    expectedDespawnStateTick: number;
+  }>;
   visibleMonsters: Array<{
     entityId: string;
     destinationRect: {
@@ -97,6 +121,7 @@ export function installPlayerObserver(
     clearPresentationSamples: () => samples.splice(0),
   };
   const record = (manifest: RenderManifestV1): void => {
+    const state = host.getState();
     const player = manifest.drawCalls.find(
       ({ entityId }) => entityId === "player",
     );
@@ -108,6 +133,29 @@ export function installPlayerObserver(
       // floor tile still gives the follow-camera oracle a scene anchor without
       // adding a test-only prop or changing the rendered world.
       manifest.sceneSprites.find(({ objectId }) => objectId === "tile:14:4");
+    const expectedOwnerIds = [
+      "player",
+      ...state.monsters.map(({ id }) => id),
+      ...state.projectiles.map(({ id }) => id),
+      ...state.loot.map(({ id }) => id),
+      ...state.effects.map(({ id }) => id),
+    ].sort();
+    const observedOwnerIds = manifest.drawCalls
+      .map(({ entityId }) => entityId)
+      .sort();
+    const ownerPaintCounts = new Map<string, number>();
+    for (const paint of manifest.paintQueue) {
+      if (
+        paint.kind !== "entity-body" ||
+        !paint.call.visible ||
+        typeof paint.ownerId !== "string"
+      )
+        continue;
+      ownerPaintCounts.set(
+        paint.ownerId,
+        (ownerPaintCounts.get(paint.ownerId) ?? 0) + 1,
+      );
+    }
     samples.push({
       observedAtMs: performance.now(),
       tick: manifest.tick,
@@ -128,6 +176,37 @@ export function installPlayerObserver(
         .filter(({ type, visible }) => type === "monster" && visible)
         .map(({ entityId }) => entityId)
         .sort(),
+      expectedOwnerIds,
+      observedOwnerIds,
+      ownerPaints: [...ownerPaintCounts]
+        .sort(([first], [second]) => first.localeCompare(second))
+        .map(([ownerId, bodyPaintCount]) => ({ ownerId, bodyPaintCount })),
+      effectDetails: manifest.drawCalls
+        .filter(({ type, visible }) => type === "effect" && visible)
+        .map(({ entityId, geometryId, ownerId }) => {
+          const expected = state.effects.find(({ id }) => id === entityId);
+          return {
+            effectId: entityId,
+            kind: geometryId.startsWith("effect:")
+              ? geometryId.slice("effect:".length)
+              : "",
+            ownerId: ownerId ?? null,
+            startedAtTick: expected?.startedAtTick ?? -1,
+            expectedDespawnStateTick: expected
+              ? expected.expiresAtTick + 1
+              : -1,
+          };
+        })
+        .sort((first, second) => first.effectId.localeCompare(second.effectId)),
+      expectedEffects: state.effects
+        .map((effect) => ({
+          effectId: effect.id,
+          kind: effect.kind,
+          ownerId: effect.ownerId ?? null,
+          startedAtTick: effect.startedAtTick,
+          expectedDespawnStateTick: effect.expiresAtTick + 1,
+        }))
+        .sort((first, second) => first.effectId.localeCompare(second.effectId)),
       visibleMonsters: manifest.drawCalls
         .filter(({ type, visible }) => type === "monster" && visible)
         .map(({ entityId, destinationRect }) => ({

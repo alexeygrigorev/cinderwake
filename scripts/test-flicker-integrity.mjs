@@ -12,6 +12,24 @@ import {
 
 const OUTPUT = path.resolve("quality-results/compositor/pres-flicker-024");
 const VIEWPORT = { width: 960, height: 540 };
+const LIVE_PROFILES = {
+  "desktop-60hz": {
+    viewport: { width: 1_440, height: 900 },
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    isMobile: false,
+  },
+  "phone-portrait-rAF": {
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 3,
+    hasTouch: true,
+    isMobile: true,
+  },
+};
+const LIVE_PACES = {
+  normal: { sustainedMovementMs: 700, turnMovementMs: 350, actionGapMs: 180 },
+  slow: { sustainedMovementMs: 1_200, turnMovementMs: 600, actionGapMs: 350 },
+};
 const SEGMENT_TICKS = {
   "mid-action-state": [240, 241, 242, 243],
   "loot-and-projectile-owners": [0, 1, 2, 3, 4],
@@ -238,6 +256,265 @@ function assertExpectedEffectCorpus(lifecycles) {
     throw new Error("Effect corpus did not cover three distinct effect kinds");
 }
 
+async function waitForLiveReady(page) {
+  await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
+  await page.waitForFunction(() => Boolean(window.__GAME_OBSERVE__?.ready), {
+    timeout: 30_000,
+  });
+  const route = await page.evaluate(() => ({
+    bridgeExposed: Boolean(window.__GAME_TEST__),
+    mode: window.__GAME_OBSERVE__?.mode,
+  }));
+  if (route.bridgeExposed || route.mode !== "observe-only")
+    throw new Error("Live flicker route was not observe-only");
+}
+
+async function beginLiveRoute(page, baseURL, profile) {
+  await page.goto(`${baseURL}/`, { waitUntil: "networkidle" });
+  const classCard = page.locator("[data-class='vanguard']");
+  await classCard.waitFor({ state: "visible" });
+  if (profile.hasTouch) await classCard.tap();
+  else await classCard.click();
+  const begin = page.locator("#begin");
+  if (profile.hasTouch) await begin.tap();
+  else await begin.click();
+  await waitForLiveReady(page);
+  await page.evaluate(() =>
+    window.__GAME_OBSERVE__?.clearPresentationSamples(),
+  );
+}
+
+async function captureLiveFrame(page, label) {
+  return page.evaluate((captureLabel) => {
+    const observer = window.__GAME_OBSERVE__;
+    if (!observer) throw new Error("Live flicker observer is unavailable");
+    const snapshot = observer.snapshot();
+    return {
+      label: captureLabel,
+      tick: snapshot.tick,
+      frame: observer.captureFrame(),
+    };
+  }, label);
+}
+
+async function holdKeyboardMovement(page, pace) {
+  await page.keyboard.down("d");
+  try {
+    await page.waitForTimeout(pace.sustainedMovementMs);
+  } finally {
+    await page.keyboard.up("d");
+  }
+  await page.waitForTimeout(80);
+  await page.keyboard.down("s");
+  try {
+    await page.waitForTimeout(pace.turnMovementMs);
+  } finally {
+    await page.keyboard.up("s");
+  }
+}
+
+async function holdTouchMovement(page, session, pace) {
+  const pad = page.locator(".move-pad");
+  const bounds = await pad.boundingBox();
+  if (!bounds) throw new Error("Live flicker movement pad has no bounds");
+  const center = {
+    x: bounds.x + bounds.width / 2,
+    y: bounds.y + bounds.height / 2,
+  };
+  const radius = Math.min(bounds.width, bounds.height) * 0.32;
+  const drag = async (id, target, duration) => {
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ ...center, id, radiusX: 1, radiusY: 1, force: 1 }],
+    });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ ...target, id, radiusX: 1, radiusY: 1, force: 1 }],
+    });
+    try {
+      await page.waitForTimeout(duration);
+    } finally {
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchEnd",
+        touchPoints: [],
+      });
+    }
+  };
+  await drag(
+    41,
+    { x: center.x + radius, y: center.y },
+    pace.sustainedMovementMs,
+  );
+  await page.waitForTimeout(80);
+  await drag(42, { x: center.x, y: center.y + radius }, pace.turnMovementMs);
+}
+
+async function actionEventCount(page, eventType) {
+  return page.evaluate(
+    (type) =>
+      (window.__GAME_OBSERVE__?.snapshot().eventLog ?? []).filter(
+        ({ type: current, sourceId }) =>
+          current === type && sourceId === "player",
+      ).length,
+    eventType,
+  );
+}
+
+async function activateLiveAction(page, profile, action, pace) {
+  const eventType = action === "ability" ? "ability_started" : "attack_started";
+  const before = await actionEventCount(page, eventType);
+  const button = page.locator(
+    `${profile.hasTouch ? ".mobile-actions" : ".skills"} [data-action='${action}']`,
+  );
+  if (profile.hasTouch) await button.tap();
+  else await button.click();
+  await page.waitForFunction(
+    ({ type, count }) =>
+      (window.__GAME_OBSERVE__?.snapshot().eventLog ?? []).filter(
+        ({ type: current, sourceId }) =>
+          current === type && sourceId === "player",
+      ).length > count,
+    { type: eventType, count: before },
+    { timeout: 3_000 },
+  );
+  await page.waitForTimeout(pace.actionGapMs);
+}
+
+function evaluatorLiveSample(sample) {
+  return {
+    observedAtMs: sample.observedAtMs,
+    tick: sample.tick,
+    presentationTick: sample.presentationTick,
+    expectedOwnerIds: sample.expectedOwnerIds,
+    observedOwnerIds: sample.observedOwnerIds,
+    ownerPaints: sample.ownerPaints,
+  };
+}
+
+async function runLiveRecording(
+  browser,
+  baseURL,
+  profileId,
+  profile,
+  paceId,
+  pace,
+  captureFrames,
+) {
+  const videoDirectory = path.join(
+    OUTPUT,
+    "video-tmp",
+    `${profileId}-${paceId}`,
+  );
+  const liveDirectory = path.join(OUTPUT, "live", profileId);
+  await fs.mkdir(videoDirectory, { recursive: true });
+  await fs.mkdir(liveDirectory, { recursive: true });
+  const context = await browser.newContext({
+    viewport: profile.viewport,
+    deviceScaleFactor: profile.deviceScaleFactor,
+    colorScheme: "dark",
+    hasTouch: profile.hasTouch,
+    isMobile: profile.isMobile,
+    recordVideo: { dir: videoDirectory, size: profile.viewport },
+  });
+  const page = await context.newPage();
+  const session = profile.hasTouch ? await context.newCDPSession(page) : null;
+  const faults = [];
+  const frames = [];
+  page.on("pageerror", (error) => faults.push(`page: ${error.message}`));
+  page.on("console", (message) => {
+    if (message.type() === "error") faults.push(`console: ${message.text()}`);
+  });
+  let result;
+  let videoPath;
+  try {
+    await beginLiveRoute(page, baseURL, profile);
+    const capture = async (label) => {
+      if (captureFrames) frames.push(await captureLiveFrame(page, label));
+    };
+    await capture("initial");
+    if (profile.hasTouch) await holdTouchMovement(page, session, pace);
+    else await holdKeyboardMovement(page, pace);
+    await capture("after-sustained-movement-and-turn");
+    await activateLiveAction(page, profile, "attack", pace);
+    await capture("after-first-attack");
+    await activateLiveAction(page, profile, "attack", pace);
+    await capture("after-second-attack");
+    await activateLiveAction(page, profile, "ability", pace);
+    await capture("after-ability");
+    await page.waitForTimeout(pace.actionGapMs * 2 + 250);
+    const samples = await page.evaluate(() => {
+      const observer = window.__GAME_OBSERVE__;
+      if (!observer) throw new Error("Live flicker observer disappeared");
+      return observer.presentationSamples();
+    });
+    if (faults.length > 0)
+      throw new Error(
+        `${profileId}/${paceId} browser faults: ${faults.join("; ")}`,
+      );
+    result = { samples, frames };
+  } finally {
+    await session?.detach();
+    const video = page.video();
+    await context.close();
+    videoPath = video ? await video.path() : null;
+    if (videoPath) {
+      const target = path.join(liveDirectory, `${paceId}.webm`);
+      await fs.copyFile(videoPath, target);
+    }
+  }
+  if (!videoPath) throw new Error(`${profileId}/${paceId} did not produce video`);
+  return result;
+}
+
+async function runLiveProfile(browser, baseURL, profileId, profile) {
+  const normal = await runLiveRecording(
+    browser,
+    baseURL,
+    profileId,
+    profile,
+    "normal",
+    LIVE_PACES.normal,
+    true,
+  );
+  const slow = await runLiveRecording(
+    browser,
+    baseURL,
+    profileId,
+    profile,
+    "slow",
+    LIVE_PACES.slow,
+    false,
+  );
+  const liveDirectory = path.join(OUTPUT, "live", profileId);
+  const frameArtifacts = [];
+  for (const [index, frame] of normal.frames.entries()) {
+    const bytes = dataUrlBuffer(frame.frame);
+    const name = `frame-${String(index).padStart(4, "0")}-${frame.label}.png`;
+    await fs.writeFile(path.join(liveDirectory, name), bytes);
+    frameArtifacts.push({
+      tick: frame.tick,
+      file: `live/${profileId}/${name}`,
+      sha256: sha256(bytes),
+    });
+  }
+  const videoArtifacts = {};
+  for (const paceId of ["normal", "slow"]) {
+    const file = `live/${profileId}/${paceId}.webm`;
+    const bytes = await fs.readFile(path.join(OUTPUT, file));
+    videoArtifacts[paceId] = { file, sha256: sha256(bytes) };
+  }
+  return {
+    id: profileId,
+    required: profileId === "desktop-60hz",
+    viewport: { ...profile.viewport, dpr: profile.deviceScaleFactor },
+    samples: normal.samples.map(evaluatorLiveSample),
+    sampleDetails: normal.samples,
+    frameArtifacts,
+    videoArtifacts,
+    slowSampleCount: slow.samples.length,
+  };
+}
+
 async function main() {
   const port = 45_000 + (process.pid % 1_000);
   await fs.rm(OUTPUT, { recursive: true, force: true });
@@ -340,6 +617,16 @@ async function main() {
       dataUrlBuffer(transitionFrame),
       dataUrlBuffer(freshFrame),
     );
+    const liveRuns = [];
+    for (const [profileId, profile] of Object.entries(LIVE_PROFILES))
+      liveRuns.push(
+        await runLiveProfile(browser, started.baseURL, profileId, profile),
+      );
+    const liveProfiles = liveRuns.map(({ id, samples, required }) => ({
+      id,
+      required,
+      samples,
+    }));
     const evidence = {
       segments: segments.map(({ id, expectedTicks, frames }) => ({
         id,
@@ -362,6 +649,7 @@ async function main() {
       })),
       residuals: [residual],
       effects,
+      liveProfiles,
     };
     const comparison = evaluateLiveCompositorEvidence(evidence);
     const controls = runLiveCompositorNegativeControls(evidence);
@@ -401,14 +689,40 @@ async function main() {
       recipeId: "recipe:pres-flicker-024",
       evaluator: "live-compositor-flicker-v1",
       scenarioIds: [
+        "ordinary-live-idle-move-turn-attack",
         "mid-action",
         "temporal-loot-bob",
         "temporal-friendly-projectile-impact",
         "temporal-effect-corpus",
         "animation-idle",
+        "asset-state-transition",
       ],
-      deviceProfileIds: ["desktop-deterministic"],
+      deviceProfileIds: liveRuns.map(({ id }) => id),
+      gatedDeviceProfileIds: liveRuns
+        .filter(({ required }) => required)
+        .map(({ id }) => id),
+      observedOnlyDeviceProfileIds: liveRuns
+        .filter(({ required }) => !required)
+        .map(({ id }) => id),
+      gestureIds: ["sustained-movement", "repeated-attacks"],
       viewport: { ...VIEWPORT, dpr: 1 },
+      liveProfiles: liveRuns.map(
+        ({
+          id,
+          required,
+          viewport,
+          frameArtifacts,
+          videoArtifacts,
+          slowSampleCount,
+        }) => ({
+          id,
+          required,
+          viewport,
+          frameArtifacts,
+          videoArtifacts,
+          slowSampleCount,
+        }),
+      ),
       source,
       environment: {
         platform: `${os.platform()} ${os.release()} ${os.arch()}`,
@@ -447,6 +761,25 @@ async function main() {
           ),
         })),
         frameArtifacts,
+        liveProfiles: liveRuns.map(
+          ({
+            id,
+            required,
+            viewport,
+            samples,
+            sampleDetails,
+            frameArtifacts,
+            videoArtifacts,
+          }) => ({
+            id,
+            required,
+            viewport,
+            samples,
+            sampleDetails,
+            frameArtifacts,
+            videoArtifacts,
+          }),
+        ),
       }),
       writeJson(path.join(OUTPUT, "transition.json"), {
         transition: {

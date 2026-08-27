@@ -13,6 +13,14 @@ function liveFixture() {
     { ownerId: "player", bodyPaintCount: 1 },
     { ownerId: "monster:ashfang", bodyPaintCount: 1 },
   ];
+  const liveSamples = Array.from({ length: 32 }, (_, index) => ({
+    observedAtMs: index * 16.667,
+    tick: 100 + Math.floor(index / 2),
+    presentationTick: 100 + index / 2,
+    expectedOwnerIds: ["monster:ashfang", "player"],
+    observedOwnerIds: ["monster:ashfang", "player"],
+    ownerPaints: structuredClone(ownerPaints),
+  }));
   return {
     segments: [
       {
@@ -48,6 +56,12 @@ function liveFixture() {
         expectedDespawnStateTick: 18,
       },
     ],
+    liveProfiles: [
+      {
+        id: "desktop-60hz",
+        samples: liveSamples,
+      },
+    ],
   };
 }
 
@@ -63,7 +77,7 @@ describe("live compositor evidence", () => {
   it("detects every named live-compositor mutation", () => {
     const controls = runLiveCompositorNegativeControls(liveFixture());
 
-    expect(controls).toHaveLength(5);
+    expect(controls).toHaveLength(6);
     expect(controls.every(({ status }) => status === "DETECTED")).toBe(true);
     expect(controls.map(({ signal }) => signal)).toEqual([
       "stale-pixels-detected",
@@ -71,6 +85,7 @@ describe("live compositor evidence", () => {
       "expected-frame-absent",
       "stale-effect-retained",
       "effect-owner-mismatch",
+      "presentation-cadence-stalled",
     ]);
   });
 
@@ -87,10 +102,33 @@ describe("live compositor evidence", () => {
     ).toBe(false);
   });
 
+  it("retains an observed-only profile without letting it mask gated evidence", () => {
+    const evidence = liveFixture();
+    evidence.liveProfiles!.push({
+      id: "phone-portrait-rAF",
+      required: false,
+      samples: [],
+    });
+
+    const result = evaluateLiveCompositorEvidence(evidence);
+    const cadence = result.signals.find(
+      ({ id }) => id === "real-clock-cadence-complete",
+    );
+
+    expect(result.pass).toBe(true);
+    expect(cadence?.pass).toBe(true);
+    expect(cadence?.detail).toMatchObject({
+      gatedProfileIds: ["desktop-60hz"],
+      observedOnlyProfileIds: ["phone-portrait-rAF"],
+      observedOnlyFailures: ["phone-portrait-rAF:cadence-stalled"],
+    });
+  });
+
   it("requires a residual measurement and a lifecycle observation", () => {
     const evidence = liveFixture();
     evidence.residuals = [];
     evidence.effects = [];
+    evidence.liveProfiles = [];
 
     const result = evaluateLiveCompositorEvidence(evidence);
 
@@ -99,6 +137,7 @@ describe("live compositor evidence", () => {
       "stale-pixels-detected",
       "effect-owner-mismatch",
       "stale-effect-retained",
+      "presentation-cadence-stalled",
     ]);
   });
 

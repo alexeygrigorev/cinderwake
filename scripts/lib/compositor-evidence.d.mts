@@ -96,6 +96,21 @@ export interface LiveCompositorEvidenceInput {
     startedAtTick: number;
     expectedDespawnStateTick: number;
   }>;
+  liveProfiles?: Array<{
+    id: string;
+    required?: boolean;
+    samples: Array<{
+      observedAtMs: number;
+      tick: number;
+      presentationTick: number;
+      expectedOwnerIds: string[];
+      observedOwnerIds: string[];
+      ownerPaints: Array<{
+        ownerId: string;
+        bodyPaintCount: number;
+      }>;
+    }>;
+  }>;
 }
 
 export declare function evaluateLiveCompositorEvidence(
