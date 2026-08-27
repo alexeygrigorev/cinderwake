@@ -1782,7 +1782,9 @@ function cameraEdgeReversalScenario(): ScenarioV1 {
     // reverses back across the open floor.
     player: { tile: [36, 6] },
     monsters: [],
-    camera: { mode: "smooth", centerTile: [4, 6] },
+    // Begin at the nearest valid left-side camera center so the convergence
+    // strip never relies on an intentionally void-filled starting frame.
+    camera: { mode: "smooth", centerTile: [11, 5.5] },
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   };
 }

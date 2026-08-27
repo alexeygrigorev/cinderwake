@@ -112,7 +112,7 @@ describe("uniform camera zoom projection", () => {
     const scenario = BUILTIN_SCENARIOS["map-edge-reversal"]!;
     const state = worldFromScenario(scenario);
 
-    expect(scenario.camera).toEqual({ mode: "smooth", centerTile: [4, 6] });
+    expect(scenario.camera).toEqual({ mode: "smooth", centerTile: [11, 5.5] });
     expect(scenario.settings?.cameraFollow).toBe(true);
     expect(state.map.width).toBe(38);
     expect(state.map.height).toBe(12);
