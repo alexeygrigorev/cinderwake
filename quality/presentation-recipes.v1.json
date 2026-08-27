@@ -673,7 +673,8 @@
           "move-east",
           "move-south",
           "move-west",
-          "attack-each-facing"
+          "attack-each-facing",
+          "ability-each-facing"
         ]
       },
       "evaluator": {
@@ -682,7 +683,9 @@
         "requiredSignalIds": [
           "facing-follows-intent",
           "bank-and-reflection-match",
-          "action-origin-mirrors"
+          "target-aim-follows-intent",
+          "action-origin-mirrors",
+          "ability-recovery-is-contiguous"
         ]
       },
       "reproduce": "npm run test:directional-bank && npx vitest run tests/unit/directional-bank-evidence.test.ts tests/unit/directional-motion.test.ts tests/unit/sprite-contract.test.ts && npm run capture:matrix",
@@ -702,6 +705,14 @@
         {
           "id": "unmirrored-attack-origin",
           "expectedSignal": "attack-origin-not-mirrored"
+        },
+        {
+          "id": "target-aim-points-to-wrong-quadrant",
+          "expectedSignal": "target-aim-not-mirrored"
+        },
+        {
+          "id": "ability-recovery-stale-bank",
+          "expectedSignal": "ability-recovery-mismatch"
         }
       ]
     },

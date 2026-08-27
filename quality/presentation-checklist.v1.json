@@ -300,7 +300,9 @@
         "opposite-bank-selected",
         "west-reflection-missing",
         "stale-bank-after-turn",
-        "unmirrored-attack-origin"
+        "unmirrored-attack-origin",
+        "target-aim-points-to-wrong-quadrant",
+        "ability-recovery-stale-bank"
       ]
     },
     {

@@ -749,6 +749,18 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "target-aim-points-to-wrong-quadrant",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "ability-recovery-stale-bank",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {
