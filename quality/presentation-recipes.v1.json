@@ -242,7 +242,7 @@
       "id": "recipe:pres-crisp-006",
       "checkId": "PRES-CRISP-006",
       "scenarioSet": {
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredIds": ["ordinary-production-launch", "animation-walk"]
       },
       "deviceProfileSet": {
@@ -255,13 +255,13 @@
       },
       "evaluator": {
         "id": "render-resolution-contract-v1",
-        "coverage": "partial",
+        "coverage": "implemented",
         "requiredSignalIds": [
           "backing-matches-dpr",
           "original-crop-retains-detail"
         ]
       },
-      "reproduce": "npx playwright test tests/e2e/render-resolution.spec.ts",
+      "reproduce": "npm run test:crispness && npx vitest run tests/unit/render-resolution-evidence.test.ts",
       "negativeControls": [
         {
           "id": "legacy-960x540-backing",
