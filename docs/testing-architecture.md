@@ -47,7 +47,12 @@ projectile is advanced far enough to cross an entire solid object within one
 tick; the replay must retain the earliest swept contact, remove the projectile,
 prevent damage behind cover, and render the state-backed impact. This proves
 that shared solid-world behavior holds between sampled endpoints rather than
-only at ordinary gameplay speeds.
+only at ordinary gameplay speeds. The collision recorder also inventories every
+generated and Embercross solid role, then drives a declared representative
+cardinal-contact matrix across the opening, later generated rooms, and city
+route. Each unreachable side is recorded with a topology reason, and the pure
+oracle joins contact sides to their profile and scenario so one viewport cannot
+mask another.
 
 Captures include single screenshots and multi-frame strips (adjacent frames at named ticks, with tick labels/metadata). The capturer also draws each tracked entity alone to a transparent canvas and records actual alpha-pixel ink bounds, centroid, bottom offset, count, and hash. This is pixel evidence for proportions, anchor adherence, and clipping; it is deliberately stronger than inferring those facts from a semantic rectangle. Screenshots, masks, and manifests are output from the same tick/state.
 

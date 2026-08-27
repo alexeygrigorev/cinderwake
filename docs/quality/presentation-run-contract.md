@@ -59,9 +59,11 @@ The prose checklist remains the human explanation of what matters. The versioned
    and seven named detector controls. Its output remains under `quality-results/`; it does not
    claim that the other checklist rows ran or that the live/city/input/mobile/movement/
    atlas/temporal/depth/collision evidence was visually accepted. `PRES-COLLIDE-008`
-   binds the generated and Embercross solid inventories, representative contact
-   journeys, swept projectile evidence, alpha-support measurements, and four
-   named detector controls as `NEEDS_VISUAL_REVIEW`. `PRES-CRISP-006` binds the
+   binds three-profile generated and Embercross solid inventories,
+   representative cardinal contact journeys, explicit topology skips, swept
+   projectile evidence, alpha-support measurements, compact contact-manifest
+   projections, and five named detector controls as `NEEDS_VISUAL_REVIEW`.
+   `PRES-CRISP-006` binds the
    ordinary production launch plus deterministic idle/walk captures at desktop
    DPR 1 and portrait DPR 3, twelve physical-canvas player/terrain crops, the
    policy-derived backing geometry, and its two detected resolution/sharpness
