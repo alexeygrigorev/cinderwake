@@ -1,6 +1,18 @@
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  isReusableMatrixEntry,
+  mergeMatrixEntries,
+  pendingMatrixEntry,
+  selectMatrixEntryIds,
+} from "./lib/capture-matrix.mjs";
+
+function option(name, fallback) {
+  const index = process.argv.indexOf(`--${name}`);
+  return index < 0 ? fallback : (process.argv[index + 1] ?? fallback);
+}
 
 const entries = [
   {
@@ -271,6 +283,52 @@ function runCapture(entry) {
   return new Promise((resolve) => child.on("exit", resolve));
 }
 
+function currentSource() {
+  const commit =
+    process.env.GITHUB_SHA ??
+    execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const status = execFileSync("git", ["status", "--porcelain"], {
+    encoding: "utf8",
+  });
+  const patch = execFileSync("git", ["diff", "--binary", "HEAD"], {
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  return {
+    commit,
+    dirty: status.trim().length > 0,
+    patchSha256: createHash("sha256").update(patch).digest("hex"),
+  };
+}
+
+async function readJsonIfPresent(file) {
+  try {
+    return JSON.parse(await fs.readFile(file, "utf8"));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+async function hasRequiredArtifacts(directory) {
+  for (const file of [
+    "metadata.json",
+    "commands.json",
+    "states.json",
+    "render-manifest-timeline.json",
+    "animation-analysis.json",
+    "contact-sheet.png",
+    "report.html",
+  ]) {
+    try {
+      await fs.access(path.join(directory, file));
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 async function retainedHref(directory, fileName, href) {
   try {
     await fs.access(path.join(directory, fileName));
@@ -282,26 +340,84 @@ async function retainedHref(directory, fileName, href) {
 
 const outputRoot = path.resolve("quality-results/sequences");
 await fs.mkdir(outputRoot, { recursive: true });
-const results = [];
+const source = currentSource();
+const onlyValue = option("only", null);
+const resume = process.argv.includes("--resume");
+const selectedIds = new Set(
+  selectMatrixEntryIds(
+    entries.map(({ id }) => id),
+    onlyValue,
+  ),
+);
+const previousCatalog = await readJsonIfPresent(
+  path.join(outputRoot, "index.json"),
+);
+const previousEntries = previousCatalog?.entries ?? [];
+const previousById = new Map(previousEntries.map((entry) => [entry.id, entry]));
+const reusableIds = new Set();
+if (resume) {
+  for (const entry of entries) {
+    if (!selectedIds.has(entry.id)) continue;
+    const directory = path.join(outputRoot, entry.id);
+    const analysis = await readJsonIfPresent(
+      path.join(directory, "animation-analysis.json"),
+    );
+    const metadata = await readJsonIfPresent(
+      path.join(directory, "metadata.json"),
+    );
+    if (
+      isReusableMatrixEntry({
+        catalogEntry: previousById.get(entry.id),
+        analysisPass: analysis?.pass === true,
+        metadata,
+        requiredFilesPresent: await hasRequiredArtifacts(directory),
+        expectedCaptureId: entry.id,
+        source,
+      })
+    )
+      reusableIds.add(entry.id);
+  }
+}
+
+const initialEntries = entries.map((entry) => {
+  const previous = previousById.get(entry.id);
+  if (!selectedIds.has(entry.id)) return previous ?? pendingMatrixEntry(entry);
+  if (reusableIds.has(entry.id)) return previous;
+  return pendingMatrixEntry(entry);
+});
+const resultById = new Map(initialEntries.map((entry) => [entry.id, entry]));
+const writeCatalog = async () => {
+  const results = mergeMatrixEntries(entries, [], [...resultById.values()]);
+  const catalog = {
+    schemaVersion: 1,
+    project: "Cinderwake",
+    pass: results.every(({ pass }) => pass),
+    total: results.length,
+    passed: results.filter(({ pass }) => pass).length,
+    entries: results,
+  };
+  const temporaryFile = path.join(outputRoot, "index.json.tmp");
+  await fs.writeFile(temporaryFile, `${JSON.stringify(catalog, null, 2)}\n`);
+  await fs.rename(temporaryFile, path.join(outputRoot, "index.json"));
+  return catalog;
+};
+await writeCatalog();
+
 for (const entry of entries) {
+  if (!selectedIds.has(entry.id)) continue;
+  if (reusableIds.has(entry.id)) {
+    console.log(`\n[quality matrix] ${entry.id} (retained)`);
+    continue;
+  }
   console.log(`\n[quality matrix] ${entry.id}`);
   const exitCode = await runCapture(entry);
   const directory = path.join(outputRoot, entry.id);
-  let analysis = null;
-  let metadata = null;
-  try {
-    analysis = JSON.parse(
-      await fs.readFile(
-        path.join(directory, "animation-analysis.json"),
-        "utf8",
-      ),
-    );
-    metadata = JSON.parse(
-      await fs.readFile(path.join(directory, "metadata.json"), "utf8"),
-    );
-  } catch {
-    // The entry below remains a useful explicit failure in the catalog.
-  }
+  const analysis = await readJsonIfPresent(
+    path.join(directory, "animation-analysis.json"),
+  );
+  const metadata = await readJsonIfPresent(
+    path.join(directory, "metadata.json"),
+  );
   const report = await retainedHref(
     directory,
     "report.html",
@@ -312,7 +428,7 @@ for (const entry of entries) {
     "contact-sheet.png",
     `${entry.id}/contact-sheet.png`,
   );
-  results.push({
+  resultById.set(entry.id, {
     id: entry.id,
     label: entry.label,
     category: entry.category,
@@ -330,20 +446,13 @@ for (const entry of entries) {
     metadata: `${entry.id}/metadata.json`,
     analysis: `${entry.id}/animation-analysis.json`,
   });
+  const progress = await writeCatalog();
+  console.log(
+    `[quality matrix] progress ${progress.passed}/${progress.total} sequences passed`,
+  );
 }
 
-const catalog = {
-  schemaVersion: 1,
-  project: "Cinderwake",
-  pass: results.every(({ pass }) => pass),
-  total: results.length,
-  passed: results.filter(({ pass }) => pass).length,
-  entries: results,
-};
-await fs.writeFile(
-  path.join(outputRoot, "index.json"),
-  `${JSON.stringify(catalog, null, 2)}\n`,
-);
+const catalog = await writeCatalog();
 console.log(
   `\n[quality matrix] ${catalog.passed}/${catalog.total} sequences passed`,
 );

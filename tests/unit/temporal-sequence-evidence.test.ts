@@ -7,6 +7,11 @@ import {
   validateTemporalSequenceCatalog,
 } from "../../scripts/lib/temporal-sequence-evidence.mjs";
 import { runTemporalProductionPixelNegativeControls } from "../../scripts/lib/temporal-pixel-evidence.mjs";
+import {
+  isReusableMatrixEntry,
+  mergeMatrixEntries,
+  selectMatrixEntryIds,
+} from "../../scripts/lib/capture-matrix.mjs";
 
 function passingCatalog() {
   const checks = {
@@ -69,6 +74,128 @@ function ordinaryRouteFixture() {
 }
 
 describe("temporal sequence evidence", () => {
+  it("selects explicit matrix IDs without changing their canonical order", () => {
+    const ids = ["first", "second", "third"];
+
+    expect(selectMatrixEntryIds(ids)).toEqual(ids);
+    expect(selectMatrixEntryIds(ids, " third, first ")).toEqual([
+      "third",
+      "first",
+    ]);
+    expect(() => selectMatrixEntryIds(ids, "second,second")).toThrow(
+      "Duplicate --only matrix entry ID(s): second",
+    );
+    expect(() => selectMatrixEntryIds(ids, "missing")).toThrow(
+      "Unknown --only matrix entry ID(s): missing",
+    );
+  });
+
+  it("reuses only a complete passing entry from the exact source state", () => {
+    const source = {
+      commit: "current-commit",
+      dirty: false,
+      patchSha256: "empty-patch",
+    };
+    const matchingMetadata = {
+      captureId: "sequence",
+      sourceCommit: "current-commit",
+      sourceDirty: false,
+      sourcePatchSha256: "empty-patch",
+    };
+    const catalogEntry = { id: "sequence", pass: true };
+
+    expect(
+      isReusableMatrixEntry({
+        catalogEntry,
+        analysisPass: true,
+        metadata: matchingMetadata,
+        requiredFilesPresent: true,
+        expectedCaptureId: "sequence",
+        source,
+      }),
+    ).toBe(true);
+    expect(
+      isReusableMatrixEntry({
+        catalogEntry,
+        analysisPass: true,
+        metadata: matchingMetadata,
+        requiredFilesPresent: false,
+        expectedCaptureId: "sequence",
+        source,
+      }),
+    ).toBe(false);
+    expect(
+      isReusableMatrixEntry({
+        catalogEntry: { ...catalogEntry, pass: false },
+        analysisPass: true,
+        metadata: matchingMetadata,
+        requiredFilesPresent: true,
+        expectedCaptureId: "sequence",
+        source,
+      }),
+    ).toBe(false);
+    expect(
+      isReusableMatrixEntry({
+        catalogEntry,
+        analysisPass: false,
+        metadata: matchingMetadata,
+        requiredFilesPresent: true,
+        expectedCaptureId: "sequence",
+        source,
+      }),
+    ).toBe(false);
+    expect(
+      isReusableMatrixEntry({
+        catalogEntry,
+        analysisPass: true,
+        metadata: { ...matchingMetadata, sourceCommit: "old-commit" },
+        requiredFilesPresent: true,
+        expectedCaptureId: "sequence",
+        source,
+      }),
+    ).toBe(false);
+  });
+
+  it("merges recovered entries into a complete canonical catalog", () => {
+    const entries = [
+      {
+        id: "first",
+        label: "First",
+        category: "test",
+        scenario: "first",
+        track: "player",
+        profile: "pose",
+      },
+      {
+        id: "second",
+        label: "Second",
+        category: "test",
+        scenario: "second",
+        track: "player",
+        profile: "pose",
+      },
+      {
+        id: "third",
+        label: "Third",
+        category: "test",
+        scenario: "third",
+        track: "player",
+        profile: "pose",
+      },
+    ];
+
+    const merged = mergeMatrixEntries(
+      entries,
+      [{ id: "second", pass: true, sourceCommit: "retained" }],
+      [{ id: "first", pass: true, sourceCommit: "captured" }],
+    );
+
+    expect(merged.map(({ id }) => id)).toEqual(["first", "second", "third"]);
+    expect(merged[0]).toMatchObject({ pass: true, sourceCommit: "captured" });
+    expect(merged[1]).toMatchObject({ pass: true, sourceCommit: "retained" });
+    expect(merged[2]).toMatchObject({ pass: false, sourceCommit: null });
+  });
+
   it("requires the complete passing capture matrix and named signal groups", () => {
     const assessment = validateTemporalSequenceCatalog(passingCatalog());
 
