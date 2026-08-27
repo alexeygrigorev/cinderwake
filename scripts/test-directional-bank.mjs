@@ -185,58 +185,41 @@ async function capture(page, label, retainFrame) {
   );
 }
 
-async function runDirection(page, scenarioId, actorId, direction) {
-  await loadFacing(page, scenarioId, direction.facing);
-  const movementBefore = await capture(
-    page,
-    `${actorId}-${direction.id}-movement-before`,
-    false,
-  );
-  await page.evaluate(({ x, y }) => {
-    const bridge = window.__GAME_TEST__;
-    bridge.setInput({ moveX: x, moveY: y });
-    bridge.step(6, { render: true });
-  }, direction);
-  const movementAfter = await capture(
-    page,
-    `${actorId}-${direction.id}-movement-after`,
-    true,
-  );
-  const opposite = DIRECTIONS.find(({ id }) => id === direction.opposite);
-  await page.evaluate(({ x, y }) => {
-    const bridge = window.__GAME_TEST__;
-    bridge.setInput({ moveX: x, moveY: y });
-    bridge.step(1, { render: true });
-    bridge.clearInput();
-  }, opposite);
-  const movementTurn = await capture(
-    page,
-    `${actorId}-${direction.id}-movement-turn`,
-    true,
-  );
-
+async function runAction(page, scenarioId, actorId, direction, kind) {
   await loadFacing(page, scenarioId, direction.facing);
   const actionBefore = await capture(
     page,
-    `${actorId}-${direction.id}-action-before`,
+    `${actorId}-${direction.id}-${kind}-before`,
     false,
   );
-  await page.evaluate(() => {
-    const bridge = window.__GAME_TEST__;
-    bridge.setInput({ attack: true });
-    bridge.step(1, { render: true });
-    bridge.clearInput();
-  });
+  const aim = {
+    x: actionBefore.snapshot.player.position.x + direction.x * 1_024,
+    y: actionBefore.snapshot.player.position.y + direction.y * 1_024,
+  };
+  const input = {
+    ...(kind === "primary" ? { attack: true } : { ability: true }),
+    aim,
+  };
+  await page.evaluate(
+    ({ actionInput }) => {
+      const bridge = window.__GAME_TEST__;
+      bridge.setInput(actionInput);
+      bridge.step(1, { render: true });
+      bridge.clearInput();
+    },
+    { actionInput: input },
+  );
   const actionAfter = await capture(
     page,
-    `${actorId}-${direction.id}-action-after`,
+    `${actorId}-${direction.id}-${kind}-after`,
     true,
   );
   const pendingAttack = actionAfter.snapshot.pendingAttacks.find(
-    ({ ownerId, kind }) => ownerId === "player" && kind === "primary",
+    ({ ownerId, kind: attackKind }) =>
+      ownerId === "player" && attackKind === kind,
   );
   if (!pendingAttack)
-    throw new Error(`No pending primary attack for ${actorId}/${direction.id}`);
+    throw new Error(`No pending ${kind} attack for ${actorId}/${direction.id}`);
   const impactTicks = pendingAttack.impactTick - actionAfter.snapshot.tick + 1;
   await page.evaluate((ticks) => {
     const bridge = window.__GAME_TEST__;
@@ -244,31 +227,36 @@ async function runDirection(page, scenarioId, actorId, direction) {
   }, impactTicks);
   const actionImpact = await capture(
     page,
-    `${actorId}-${direction.id}-action-impact`,
+    `${actorId}-${direction.id}-${kind}-impact`,
     true,
   );
-
+  const recoveryTicks =
+    actionAfter.snapshot.player.animation.lockedUntilTick -
+    actionAfter.snapshot.tick +
+    1;
+  await page.evaluate((ticks) => {
+    const bridge = window.__GAME_TEST__;
+    bridge.step(Math.max(1, ticks), { render: true });
+  }, recoveryTicks);
+  const actionRecovery = await capture(
+    page,
+    `${actorId}-${direction.id}-${kind}-recovery`,
+    true,
+  );
   return {
-    directionId: direction.id,
-    turnDirectionId: direction.opposite,
-    movement: {
-      before: movementBefore,
-      after: movementAfter,
-      turn: movementTurn,
-    },
-    action: {
-      kind: "primary",
-      before: actionBefore,
-      after: actionAfter,
-      impact: actionImpact,
-      pendingAttack,
-      produced: producedEntities(actorId, actionImpact.snapshot),
-    },
+    kind,
+    input,
+    before: actionBefore,
+    after: actionAfter,
+    impact: actionImpact,
+    recovery: actionRecovery,
+    pendingAttack,
+    produced: producedEntities(actorId, kind, actionImpact.snapshot),
   };
 }
 
-function producedEntities(actorId, snapshot) {
-  if (actorId === "vanguard")
+function producedEntities(actorId, kind, snapshot) {
+  if (actorId === "vanguard" || (actorId === "arcanist" && kind === "ability"))
     return snapshot.effects
       .filter(({ ownerId }) => ownerId === "player")
       .map(({ id, ownerId, kind, position }) => ({
@@ -292,8 +280,47 @@ function producedEntities(actorId, snapshot) {
 async function runActor(page, actorId) {
   const scenarioId = `fixed-camera-open-floor-${actorId}`;
   const directions = [];
-  for (const direction of DIRECTIONS)
-    directions.push(await runDirection(page, scenarioId, actorId, direction));
+  for (const direction of DIRECTIONS) {
+    await loadFacing(page, scenarioId, direction.facing);
+    const movementBefore = await capture(
+      page,
+      `${actorId}-${direction.id}-movement-before`,
+      false,
+    );
+    await page.evaluate(({ x, y }) => {
+      const bridge = window.__GAME_TEST__;
+      bridge.setInput({ moveX: x, moveY: y });
+      bridge.step(6, { render: true });
+    }, direction);
+    const movementAfter = await capture(
+      page,
+      `${actorId}-${direction.id}-movement-after`,
+      true,
+    );
+    const opposite = DIRECTIONS.find(({ id }) => id === direction.opposite);
+    await page.evaluate(({ x, y }) => {
+      const bridge = window.__GAME_TEST__;
+      bridge.setInput({ moveX: x, moveY: y });
+      bridge.step(1, { render: true });
+      bridge.clearInput();
+    }, opposite);
+    const movementTurn = await capture(
+      page,
+      `${actorId}-${direction.id}-movement-turn`,
+      true,
+    );
+    directions.push({
+      directionId: direction.id,
+      turnDirectionId: direction.opposite,
+      movement: {
+        before: movementBefore,
+        after: movementAfter,
+        turn: movementTurn,
+      },
+      action: await runAction(page, scenarioId, actorId, direction, "primary"),
+      ability: await runAction(page, scenarioId, actorId, direction, "ability"),
+    });
+  }
   return { profileId: null, actorId, scenarioId, directions };
 }
 
@@ -496,13 +523,18 @@ async function normalizeProfile(raw, profileId) {
   const normalizedCaptures = [];
   const lookup = new Map();
   const rawTimeline = raw.runs.flatMap((run) =>
-    run.directions.flatMap(({ movement, action }) => [
+    run.directions.flatMap(({ movement, action, ability }) => [
       movement.before,
       movement.after,
       movement.turn,
       action.before,
       action.after,
       action.impact,
+      action.recovery,
+      ability.before,
+      ability.after,
+      ability.impact,
+      ability.recovery,
     ]),
   );
   for (const [index, current] of rawTimeline.entries()) {
@@ -529,11 +561,23 @@ async function normalizeProfile(raw, profileId) {
       },
       action: {
         kind: direction.action.kind,
+        input: direction.action.input,
         before: publicCapture(lookup.get(direction.action.before.label)),
         after: publicCapture(lookup.get(direction.action.after.label)),
         impact: publicCapture(lookup.get(direction.action.impact.label)),
+        recovery: publicCapture(lookup.get(direction.action.recovery.label)),
         pendingAttack: publicAttack(direction.action.pendingAttack),
         produced: direction.action.produced.map(publicProduced),
+      },
+      ability: {
+        kind: direction.ability.kind,
+        input: direction.ability.input,
+        before: publicCapture(lookup.get(direction.ability.before.label)),
+        after: publicCapture(lookup.get(direction.ability.after.label)),
+        impact: publicCapture(lookup.get(direction.ability.impact.label)),
+        recovery: publicCapture(lookup.get(direction.ability.recovery.label)),
+        pendingAttack: publicAttack(direction.ability.pendingAttack),
+        produced: direction.ability.produced.map(publicProduced),
       },
     })),
   }));
@@ -603,6 +647,29 @@ function negativeControls(evidence) {
       expectedSignal: "attack-origin-not-mirrored",
       mutate(value) {
         value.profiles[0].runs[0].directions[0].action.pendingAttack.origin.x += 1;
+      },
+    },
+    {
+      id: "target-aim-points-to-wrong-quadrant",
+      expectedSignal: "target-aim-not-mirrored",
+      mutate(value) {
+        const direction = value.profiles[0].runs[0].directions.find(
+          ({ directionId }) => directionId === "move-north",
+        );
+        direction.action.input.aim.x += 2_048;
+      },
+    },
+    {
+      id: "ability-recovery-stale-bank",
+      expectedSignal: "ability-recovery-mismatch",
+      mutate(value) {
+        const direction = value.profiles[0].runs[0].directions.find(
+          ({ directionId }) => directionId === "move-east",
+        );
+        direction.ability.recovery.manifest.drawCalls[0].facingBucket = "west";
+        direction.ability.recovery.manifest.drawCalls[0].spriteId =
+          "hero:vanguard";
+        direction.ability.recovery.manifest.drawCalls[0].flipX = false;
       },
     },
   ];
@@ -692,15 +759,19 @@ async function main() {
       actorIds: [...DIRECTIONAL_BANK_ACTOR_IDS],
       profileIds,
       directionIds: [...DIRECTIONAL_BANK_DIRECTION_IDS],
-      actionKinds: ["primary"],
+      actionKinds: ["primary", "ability"],
       capturePolicy: {
-        semanticCapturesPerDirection: 6,
-        retainedPngCapturesPerDirection: 4,
+        semanticCapturesPerDirection: 11,
+        retainedPngCapturesPerDirection: 8,
         retainedPngStages: [
           "movement-after",
           "movement-turn",
-          "action-after",
-          "action-impact",
+          "primary-after",
+          "primary-impact",
+          "primary-recovery",
+          "ability-after",
+          "ability-impact",
+          "ability-recovery",
         ],
       },
       source,
@@ -738,7 +809,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${DIRECTIONAL_BANK_ACTOR_IDS.length} actors, four directions, movement turns, primary impacts, and four negative controls detected`,
+      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${DIRECTIONAL_BANK_ACTOR_IDS.length} actors, four directions, target-directed primary/ability recovery, and six negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
