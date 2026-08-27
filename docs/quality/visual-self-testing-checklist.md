@@ -219,8 +219,8 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Ordered artifacts: raw/prepared hashes; alpha masks and connected components; source crop; isolated frame on checkerboards; ordered full-scene frames/video.
 - Machine signal and threshold: safe-border ink, cross-cell ink, opaque matte, disconnected unexpected component, and isolated-vs-composed render signatures follow existing role contracts; suspected persistence across cleared frames requires calibration from accepted effects.
 - Required negative control: cross-cell pixel shift, opaque rectangular matte, colored fringe, failure to clear prior frame, and duplicate body draw.
-- Current evidence: environment mutations in `tests/unit/environment-composition.test.ts`; actor safe-crop audit; isolated draw signatures in sequence reports.
-- Missing automation/next implementation: add a cleared-canvas persistence/duplicate-body compositor oracle with temporal mutations.
+- Current evidence: environment mutations in `tests/unit/environment-composition.test.ts`; actor safe-crop audit; isolated draw signatures in sequence reports; and `npm run test:compositor`, which compares exact production PNGs across repeated renders and a populated-state→fresh-state transition while checking one manifest body paint per owner.
+- Missing automation/next implementation: extend the compositor probe to checkerboard cross-cell/matte/fringe measurements, every playable actor and effect, and calibrated temporal persistence thresholds; its three current stale/duplicate controls are machine evidence, not a complete row pass.
 - Independent visual-agent review mandatory: **yes**, especially for subtle chroma fringe and intentional particles.
 
 ### PRES-ANCHOR-013 — planted anchors and no scale pop

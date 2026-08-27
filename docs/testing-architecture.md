@@ -51,6 +51,15 @@ only at ordinary gameplay speeds.
 
 Captures include single screenshots and multi-frame strips (adjacent frames at named ticks, with tick labels/metadata). The capturer also draws each tracked entity alone to a transparent canvas and records actual alpha-pixel ink bounds, centroid, bottom offset, count, and hash. This is pixel evidence for proportions, anchor adherence, and clipping; it is deliberately stronger than inferring those facts from a semantic rectangle. Screenshots, masks, and manifests are output from the same tick/state.
 
+The compositor probe `npm run test:compositor` adds a small live-rendering
+boundary around that evidence. It renders an identical state twice, swaps from
+a populated combat state to a fresh idle state, and requires exact PNG
+reconstruction after both operations. It also joins manifest `body:<owner>`
+paint IDs to draw calls so a duplicated body cannot hide behind a plausible
+single screenshot. The three named mutations are evaluated by a pure
+comparator; broader checkerboard fringe and effect coverage remains a separate
+follow-up.
+
 Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
 
 ## Artifact layout
