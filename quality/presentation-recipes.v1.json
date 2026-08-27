@@ -1345,13 +1345,15 @@
         ]
       },
       "evaluator": {
-        "id": "state-replay-determinism-v1",
+        "id": "state-replay-determinism-v2",
         "coverage": "implemented",
         "requiredSignalIds": [
           "loaded-state-matches",
           "reset-isolates-runs",
           "replay-state-hashes-match",
-          "replay-manifest-frame-hashes-match"
+          "replay-manifest-frame-hashes-match",
+          "state-hashes-self-consistent",
+          "manifest-hashes-self-consistent"
         ]
       },
       "reproduce": "npm run test:state-replay && npx vitest run tests/unit/state-replay.test.ts",
@@ -1370,6 +1372,18 @@
         },
         {
           "id": "manifest-frame-tick-desynchronized",
+          "expectedSignal": "evidence-timeline-desynchronized"
+        },
+        {
+          "id": "replay-snapshot-hash-diverged",
+          "expectedSignal": "state-hash-integrity-failed"
+        },
+        {
+          "id": "replay-manifest-hash-diverged",
+          "expectedSignal": "manifest-hash-integrity-failed"
+        },
+        {
+          "id": "replay-declared-ticks-diverged",
           "expectedSignal": "evidence-timeline-desynchronized"
         }
       ]

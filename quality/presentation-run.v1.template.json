@@ -1427,6 +1427,24 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "replay-snapshot-hash-diverged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "replay-manifest-hash-diverged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
+          "id": "replay-declared-ticks-diverged",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {

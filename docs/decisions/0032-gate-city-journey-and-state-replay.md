@@ -20,7 +20,7 @@ Generic liveness, scenery, mobile, motion, and review rows cannot substitute for
 Append two stable P0 rows without renumbering the published checks:
 
 - `PRES-CITY-027` requires the no-injection production journey through discovery, entry, the reachable return-gate win, all service intents and outcomes, desktop/mobile evidence, and mutations for missing discovery, inert entry/win, inert controls, and suppressed outcomes.
-- `PRES-STATE-028` requires scenario and exact-state loading, reset isolation, identical replay hashes for state/manifests/frames, and mutations for stale state, nondeterministic replay, and evidence desynchronization.
+- `PRES-STATE-028` requires scenario and exact-state loading, reset isolation, identical replay hashes for state/manifests/frames, self-consistent serialized hashes, and mutations for stale state, nondeterministic replay, and evidence desynchronization.
 
 Both rows receive canonical recipes and blank run entries. The validator now requires all 28 IDs in exact order, so older or partial run records cannot silently omit the added gates.
 

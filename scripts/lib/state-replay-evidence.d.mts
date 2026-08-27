@@ -4,6 +4,7 @@ export declare const STATE_REPLAY_FAILURE_IDS: readonly string[];
 export declare function stableJson(value: unknown): string;
 export declare function sha256(value: string | Uint8Array): string;
 export declare function hashJson(value: unknown): string;
+export declare function stateHash(value: unknown): string;
 
 export interface StateReplayCaptureEvidence {
   tick: number;
@@ -11,6 +12,7 @@ export interface StateReplayCaptureEvidence {
   manifestTick: number;
   snapshot: unknown;
   stateHash: string;
+  manifest: unknown;
   manifestHash: string;
   frameHash: string;
 }

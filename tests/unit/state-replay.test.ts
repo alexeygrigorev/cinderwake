@@ -2,27 +2,33 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateStateReplayEvidence,
   hashJson,
+  stateHash,
   stableJson,
 } from "../../scripts/lib/state-replay-evidence.mjs";
 
 function evidenceFixture() {
   const initialState = { tick: 0, player: { position: { x: 12, y: 24 } } };
   const ticks = [0, 5, 10];
-  const capture = (tick: number) => ({
-    tick,
-    stateTick: tick,
-    manifestTick: tick,
-    snapshot: {
+  const capture = (tick: number) => {
+    const snapshot = {
       tick,
       player: { position: { ...initialState.player.position } },
-    },
-    stateHash: `state-${tick}`,
-    manifestHash: `manifest-${tick}`,
-    frameHash: `frame-${tick}`,
-  });
+    };
+    const manifest = { tick, drawCalls: [{ entityId: "player" }] };
+    return {
+      tick,
+      stateTick: tick,
+      manifestTick: tick,
+      snapshot,
+      stateHash: stateHash(snapshot),
+      manifest,
+      manifestHash: hashJson(manifest),
+      frameHash: `frame-${tick}`,
+    };
+  };
   return {
     initialState,
-    initialStateHash: "state-0",
+    initialStateHash: stateHash(initialState),
     loaded: {
       ...capture(0),
     },
@@ -55,6 +61,24 @@ describe("state replay evidence evaluator", () => {
     expect(result.failures).toEqual([]);
     expect(result.signals.every(({ pass }) => pass)).toBe(true);
     expect(result.timeline.synchronized).toBe(true);
+  });
+
+  it("requires replay declarations and recorded hashes to agree with evidence", () => {
+    const value = evidenceFixture();
+    value.replayB.declaredTicks[1] += 1;
+    value.replayB.timeline[1].snapshot.player.position.x += 1;
+    value.replayB.timeline[1].manifest.tick += 1;
+
+    const result = evaluateStateReplayEvidence(value);
+
+    expect(result.pass).toBe(false);
+    expect(result.failures).toEqual(
+      expect.arrayContaining([
+        "evidence-timeline-desynchronized",
+        "state-hash-integrity-failed",
+        "manifest-hash-integrity-failed",
+      ]),
+    );
   });
 
   it.each([

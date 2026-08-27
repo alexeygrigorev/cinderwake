@@ -5,6 +5,8 @@ export const STATE_REPLAY_SIGNAL_IDS = [
   "reset-isolates-runs",
   "replay-state-hashes-match",
   "replay-manifest-frame-hashes-match",
+  "state-hashes-self-consistent",
+  "manifest-hashes-self-consistent",
 ];
 
 export const STATE_REPLAY_FAILURE_IDS = [
@@ -14,17 +16,43 @@ export const STATE_REPLAY_FAILURE_IDS = [
   "replay-manifest-hash-mismatch",
   "replay-frame-hash-mismatch",
   "evidence-timeline-desynchronized",
+  "state-hash-integrity-failed",
+  "manifest-hash-integrity-failed",
 ];
 
+const ENTITY_ARRAY_KEYS = new Set([
+  "monsters",
+  "pendingAttacks",
+  "projectiles",
+  "loot",
+  "effects",
+]);
+
 function canonicalize(value) {
-  if (Array.isArray(value)) return value.map((item) => canonicalize(item));
+  return canonicalizeValue(value);
+}
+
+function canonicalizeValue(value, key) {
+  if (Array.isArray(value)) {
+    const items = value.map((item) => canonicalizeValue(item));
+    if (key && ENTITY_ARRAY_KEYS.has(key))
+      items.sort((left, right) =>
+        String(left?.id ?? "").localeCompare(String(right?.id ?? "")),
+      );
+    return items;
+  }
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.keys(value)
         .sort()
-        .map((key) => [key, canonicalize(value[key])]),
+        .map((childKey) => [
+          childKey,
+          canonicalizeValue(value[childKey], childKey),
+        ]),
     );
   }
+  if (typeof value === "number" && !Number.isFinite(value))
+    return String(value);
   return value;
 }
 
@@ -41,12 +69,44 @@ export function hashJson(value) {
   return sha256(stableJson(value));
 }
 
+function fnv1a(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+/** Match the browser bridge's canonical FNV-1a state hash. */
+export function stateHash(value) {
+  return fnv1a(stableJson(value));
+}
+
 function sameJson(left, right) {
   return stableJson(left) === stableJson(right);
 }
 
 function timelineTicks(timeline) {
   return timeline.map((entry) => entry.tick);
+}
+
+function captureStateHashIsValid(capture) {
+  return (
+    capture &&
+    typeof capture.stateHash === "string" &&
+    capture.snapshot !== undefined &&
+    stateHash(capture.snapshot) === capture.stateHash
+  );
+}
+
+function captureManifestHashIsValid(capture) {
+  return (
+    capture &&
+    typeof capture.manifestHash === "string" &&
+    capture.manifest !== undefined &&
+    hashJson(capture.manifest) === capture.manifestHash
+  );
 }
 
 function timelineIsSynchronized(timeline, declaredTicks) {
@@ -103,6 +163,20 @@ export function evaluateStateReplayEvidence({
   if (initialStateHash && loaded?.stateHash !== initialStateHash)
     failures.push("loaded-state-mismatch");
 
+  const captures = [
+    loaded,
+    reset,
+    ...(replayA?.timeline ?? []),
+    ...(replayB?.timeline ?? []),
+  ];
+  const stateHashesSelfConsistent = captures.every(captureStateHashIsValid);
+  if (!stateHashesSelfConsistent) failures.push("state-hash-integrity-failed");
+  const manifestHashesSelfConsistent = captures.every(
+    captureManifestHashIsValid,
+  );
+  if (!manifestHashesSelfConsistent)
+    failures.push("manifest-hash-integrity-failed");
+
   const resetIsolated =
     sameJson(loaded?.snapshot, reset?.snapshot) &&
     loaded?.stateHash === reset?.stateHash &&
@@ -111,11 +185,13 @@ export function evaluateStateReplayEvidence({
   if (!resetIsolated) failures.push("reset-isolation-failed");
 
   const declaredTicks = replayA?.declaredTicks ?? [];
+  const secondDeclaredTicks = replayB?.declaredTicks ?? [];
   const firstTimeline = replayA?.timeline ?? [];
   const secondTimeline = replayB?.timeline ?? [];
   const timelineSynchronized =
     timelineIsSynchronized(firstTimeline, declaredTicks) &&
     timelineIsSynchronized(secondTimeline, declaredTicks) &&
+    sameJson(declaredTicks, secondDeclaredTicks) &&
     sameJson(timelineTicks(firstTimeline), timelineTicks(secondTimeline));
   if (!timelineSynchronized) failures.push("evidence-timeline-desynchronized");
 
@@ -166,6 +242,12 @@ export function evaluateStateReplayEvidence({
         ),
       },
     ),
+    signal("state-hashes-self-consistent", stateHashesSelfConsistent, {
+      captureCount: captures.length,
+    }),
+    signal("manifest-hashes-self-consistent", manifestHashesSelfConsistent, {
+      captureCount: captures.length,
+    }),
   ];
 
   return {

@@ -87,6 +87,7 @@ function publicCapture(capture) {
     manifestTick: capture.manifestTick,
     snapshot: capture.snapshot,
     stateHash: capture.stateHash,
+    manifest: capture.manifest,
     manifestHash: capture.manifestHash,
     frameHash: capture.frameHash,
     frameFile: capture.frameFile,
@@ -158,6 +159,27 @@ function negativeControls(evidence) {
       expectedSignal: "evidence-timeline-desynchronized",
       mutate(value) {
         value.replayB.timeline[1].manifestTick += 1;
+      },
+    },
+    {
+      id: "replay-snapshot-hash-diverged",
+      expectedSignal: "state-hash-integrity-failed",
+      mutate(value) {
+        value.replayB.timeline[2].snapshot.player.position.x += 1;
+      },
+    },
+    {
+      id: "replay-manifest-hash-diverged",
+      expectedSignal: "manifest-hash-integrity-failed",
+      mutate(value) {
+        value.replayB.timeline[2].manifest.tick += 1;
+      },
+    },
+    {
+      id: "replay-declared-ticks-diverged",
+      expectedSignal: "evidence-timeline-desynchronized",
+      mutate(value) {
+        value.replayB.declaredTicks[2] += 1;
       },
     },
   ];
@@ -367,7 +389,7 @@ async function main() {
       schemaVersion: 1,
       checkId: "PRES-STATE-028",
       recipeId: "recipe:pres-state-028",
-      evaluator: "state-replay-determinism-v1",
+      evaluator: "state-replay-determinism-v2",
       scenarioId: SCENARIO_ID,
       initialTick: browserEvidence.initialTick,
       captureTicks: browserEvidence.captureTicks,
@@ -415,7 +437,7 @@ async function main() {
       }),
       writeJson(path.join(OUTPUT, "comparison.json"), {
         schemaVersion: 1,
-        evaluator: "state-replay-determinism-v1",
+        evaluator: "state-replay-determinism-v2",
         comparison,
         negativeControls: controls,
       }),
@@ -436,7 +458,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-STATE-028 PASS: ${browserEvidence.captureTicks.length} synchronized ticks, four negative controls detected`,
+      `PRES-STATE-028 PASS: ${browserEvidence.captureTicks.length} synchronized ticks, seven negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {

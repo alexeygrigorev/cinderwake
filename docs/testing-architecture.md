@@ -102,6 +102,12 @@ visual review.
 
 The metadata includes the exact reproduction command plus commit, Node, Chromium, Playwright, Vite, package version, browser viewport/DPR, logical canvas, and mobile setting. A dirty local capture also bundles source status and a patch. Temporal artifacts deliberately live outside Playwright's disposable `test-results/` root, so the order of browser and sequence verification cannot destroy evidence. `capture:matrix` runs 26 named profiles sequentially, writes a machine-readable catalog, and fails if any member fails; `quality:temporal:check` validates that retained catalog against the temporal evaluator, source commit, required bundles, four machine signals, and six named detector controls. Every close-up records its logical crop, physical canvas backing, backing scale, and exact physical source rectangle; the assessor rejects a crop that uses logical coordinates directly against a high-DPI backing. The two start/stop tapes additionally declare exact idle/walk/idle phases and frame coverage in `commands.json`; the assessor mirrors expected and observed contracts into `animation-analysis.json`. GitHub Actions retains failure evidence and publishes successful Playwright and temporal reports beside the game. These artifacts are the handoff between automated assertions and agent/human review: an evaluator can identify the exact injected state, reproduced commands, game state, drawing decisions, and execution environment behind any image.
 
+State-replay evidence is self-consistent as well as repeatable: the comparator
+recomputes the browser bridge's canonical FNV state hash from every serialized
+snapshot, recomputes every manifest hash, and requires both replay bundles to
+declare the same ordered capture ticks. A report cannot pass by changing a
+snapshot or manifest while leaving its copied hash unchanged.
+
 The public quality index is generated only after the component reports exist
 and links them from one commit. It also publishes the canonical 28-row
 presentation checklist as a machine-readable ID/result summary. The index

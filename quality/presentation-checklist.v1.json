@@ -547,7 +547,10 @@
         "stale-state-retained-after-reset",
         "same-tape-state-diverged",
         "same-state-frame-diverged",
-        "manifest-frame-tick-desynchronized"
+        "manifest-frame-tick-desynchronized",
+        "replay-snapshot-hash-diverged",
+        "replay-manifest-hash-diverged",
+        "replay-declared-ticks-diverged"
       ]
     }
   ]

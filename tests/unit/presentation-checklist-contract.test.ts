@@ -202,6 +202,8 @@ describe("presentation checklist contract", () => {
           "reset-isolates-runs",
           "replay-state-hashes-match",
           "replay-manifest-frame-hashes-match",
+          "state-hashes-self-consistent",
+          "manifest-hashes-self-consistent",
         ],
       },
     ];
@@ -238,7 +240,7 @@ describe("presentation checklist contract", () => {
     expect(recipe).toMatchObject({
       scenarioSet: { coverage: "implemented" },
       evaluator: {
-        id: "state-replay-determinism-v1",
+        id: "state-replay-determinism-v2",
         coverage: "implemented",
       },
       reproduce:
