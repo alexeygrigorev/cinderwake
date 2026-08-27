@@ -255,8 +255,8 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Ordered artifacts: input/aim vector; actor facing state; sprite ID, `facingBucket`, `flipX`, frame; world/screen displacement; ordered crops/contact sheet.
 - Machine signal and threshold: deterministic vector→bank/flip mapping is exact; movement sign agrees with input; recovery remains on the selected bank; weapon/projectile origin aligns with authored anchor contract.
 - Required negative control: select opposite bank, forget west reflection, retain stale bank after turn, and mirror pose without mirrored attack origin.
-- Current evidence: cardinal mapping in `tests/unit/sprite-contract.test.ts`; `tests/unit/directional-motion.test.ts`; directional action recovery fixtures; actor facing comparisons.
-- Missing automation/next implementation: add the four named mutations and projectile/weapon-origin coupling for every class.
+- Current evidence: `npm run test:directional-bank` records desktop and phone-portrait browser evidence for Vanguard, Ranger, and Arcanist across all four cardinal movement directions, immediate opposite turns, and primary impacts. `directional-bank-selection-v1` checks exact `spriteId`/`facingBucket`/`flipX` mapping plus pending-attack and produced-effect/projectile origins; `tests/unit/directional-bank-evidence.test.ts` detects all four named mutations. Each profile retains synchronized semantic state/manifest timelines and representative ordered PNGs/contact sheets under `quality-results/directional-bank/pres-facing-015/`.
+- Missing automation/next implementation: extend the live recorder to target-directed input, ability/recovery timelines, and authored weapon-anchor offsets; the remaining independent visual-agent review must confirm pose readability at normal playback speed.
 - Independent visual-agent review mandatory: **yes**, for pose readability even when metadata is correct.
 
 ### PRES-CAMERA-016 — smooth camera without jitter, lurch, overshoot, or void

@@ -28,6 +28,7 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:state-replay
    npm run test:input-intents
    npm run test:directional-motion
+   npm run test:directional-bank
    npm run test:production-liveness
    npm run test:mobile-screen
    npm run test:depth-transition
@@ -45,7 +46,7 @@ The prose checklist remains the human explanation of what matters. The versioned
    The binder refuses dirty or stale recorder metadata, hashes every referenced
    artifact, copies the canonical signals and detected mutations, records
    `PRES-STATE-028` as a machine `PASS`, and records `PRES-LIVE-001`,
-   `PRES-CITY-027`, `PRES-INPUT-002`, `PRES-MOBILE-010`, `PRES-MOVE-003`, and `PRES-SPRITE-004`
+   `PRES-CITY-027`, `PRES-INPUT-002`, `PRES-MOBILE-010`, `PRES-MOVE-003`, `PRES-FACING-015`, and `PRES-SPRITE-004`
    as `NEEDS_VISUAL_REVIEW` because their ordered frames, videos, strips, and
    overviews still need independent review. The mobile row binds its two phone
    profiles, five causal gestures/signals, safe-area and text metrics, and nine
@@ -79,6 +80,14 @@ The prose checklist remains the human explanation of what matters. The versioned
    synchronized target/camera timelines, and the five named detector controls. It
    remains `NEEDS_VISUAL_REVIEW` until its contact sheets and videos receive the
    required independent playback review.
+
+   `PRES-FACING-015` binds desktop and phone-portrait directional-bank evidence
+   for all three actors and four cardinal directions. Its synchronized movement,
+   opposite-turn, and primary-impact captures prove exact bank/reflection mapping
+   and authored effect/projectile origins, while the four named mutations remain
+   detected. The row remains `NEEDS_VISUAL_REVIEW` because pose readability,
+   target-directed actions, ability recovery, and native high-DPR review are not
+   claims of this deterministic bridge slice.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.

@@ -40,6 +40,16 @@ proves the browser adapters and visible animation are actually connected.
 
 The renderer emits a **render manifest** alongside each capture. It records logical viewport, device scale, camera transform, ordered draw calls/layers, atlas/sprite identity, source rectangle, world/screen/foot anchors, destination bounds, facing, scale, opacity, tint, animation clip and frame, visibility, and stable Z order. Solid scenery additionally records its world collision shape, center, dimensions, and solid/passable mode. Monster world-UI records the owning entity, health ratio, destination, and current frame's measured alpha-ink top, so a floating health bar is diagnosable as geometry rather than a vague screenshot complaint. Simulation and rendering derive scenery placements from the same pure `DungeonMap` layout, so a browser test can join real input, actor position, visible object ID, and collision footprint without making gameplay depend on the renderer. The manifest explains a pixel regression in ways an image diff cannot; it contains no nondeterministic timestamps or object iteration order. The corresponding [art pipeline](art-pipeline.md) requires atlas decoding/validation before capture readiness.
 
+The `PRES-FACING-015` directional-bank recorder uses the same bridge and
+manifest boundary to exercise every playable actor in all four cardinal
+directions. Each direction records open-floor movement, a one-tick opposite turn,
+and a primary action through impact. The pure
+`directional-bank-selection-v1` evaluator joins the authoritative facing vector
+to the expected north/south bank or east/west reflection, then joins the pending
+attack origin and direction to the produced Vanguard effect or Ranger/Arcanist
+projectile spawn. Semantic evidence covers every run; only representative PNGs
+are retained for the contact sheet so the browser artifact remains bounded.
+
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
 
 Collision checks use deliberate tunneling inputs as negative controls. A

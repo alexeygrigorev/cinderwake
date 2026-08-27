@@ -685,7 +685,7 @@
           "action-origin-mirrors"
         ]
       },
-      "reproduce": "npx vitest run tests/unit/directional-motion.test.ts tests/unit/sprite-contract.test.ts && npm run capture:matrix",
+      "reproduce": "npm run test:directional-bank && npx vitest run tests/unit/directional-bank-evidence.test.ts tests/unit/directional-motion.test.ts tests/unit/sprite-contract.test.ts && npm run capture:matrix",
       "negativeControls": [
         {
           "id": "opposite-bank-selected",
