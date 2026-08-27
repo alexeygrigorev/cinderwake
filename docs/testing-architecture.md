@@ -60,6 +60,16 @@ single screenshot. The three named mutations are evaluated by a pure
 comparator; broader checkerboard fringe and effect coverage remains a separate
 follow-up.
 
+The complementary `npm run test:flicker` probe evaluates ordered compositor
+segments. It derives expected owner IDs from serialized state, compares them
+with visible manifest bodies on every sampled tick, checks exact presentation
+cadence, measures decoded PNG residuals between a transition and a fresh
+reconstruction, and records an effect's visible-to-despawn lifecycle. Its four
+named mutations cover a skipped clear, offset double draw, omitted sample, and
+retained despawned effect. This is deterministic compositor evidence; ordinary
+requestAnimationFrame timing, high-refresh hardware, and normal/slow visual
+review remain required before the flicker row can pass.
+
 Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
 
 ## Artifact layout

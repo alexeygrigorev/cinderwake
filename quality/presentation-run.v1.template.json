@@ -1196,7 +1196,7 @@
       "checkId": "PRES-FLICKER-024",
       "executionRecipeId": "recipe:pres-flicker-024",
       "result": "UNRUN",
-      "coverageAtRun": "missing",
+      "coverageAtRun": "partial",
       "observed": {
         "scenarioIds": [],
         "deviceProfileIds": [],

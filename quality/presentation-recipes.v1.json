@@ -1113,7 +1113,7 @@
       "id": "recipe:pres-flicker-024",
       "checkId": "PRES-FLICKER-024",
       "scenarioSet": {
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredIds": [
           "ordinary-live-idle-move-turn-attack",
           "effect-despawn",
@@ -1125,19 +1125,21 @@
         "requiredIds": ["desktop-60hz", "high-refresh-phone"]
       },
       "gestureSet": {
-        "coverage": "partial",
+        "coverage": "missing",
         "requiredIds": ["sustained-movement", "repeated-attacks"]
       },
       "evaluator": {
         "id": "live-compositor-flicker-v1",
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredSignalIds": [
           "one-current-body-per-owner",
           "no-unexplained-absence",
-          "no-stale-pixels"
+          "no-stale-pixels",
+          "presentation-cadence-complete",
+          "effect-despawn-clean"
         ]
       },
-      "reproduce": "npm run capture:matrix",
+      "reproduce": "npm run test:flicker && npx vitest run tests/unit/live-compositor-evidence.test.ts",
       "negativeControls": [
         {
           "id": "canvas-clear-skipped",

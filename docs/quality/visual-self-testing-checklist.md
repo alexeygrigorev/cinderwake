@@ -357,14 +357,14 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-FLICKER-024 — no frame flicker, stale pixels, double images, or transient disappearance
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P1**; current coverage **Missing** as a dedicated live-compositor gate.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P1**; current coverage **Partial** as a deterministic compositor gate; independent visual review remains mandatory.
 - Scenario/precondition: ordinary live route during idle, movement, turn, attack/effect, camera movement, and asset/state transition at 60 Hz plus a high-refresh presentation sample.
 - Production gesture: sustained movement and repeated attacks while crossing contrasting ground.
 - Ordered artifacts: consecutive lossless frames at presentation cadence; manifests/draw signatures; isolated owner masks; canvas clear/backing geometry; video at normal and slowed speed.
 - Machine signal and threshold: every expected-present entity has exactly one manifested draw; no unexplained absent sample; pixels outside the union of current draws must match the freshly rendered scene. Temporal difference/ghost thresholds have **calibration required** from accepted effects and camera motion.
 - Required negative control: skip `clearRect`, draw actor twice with an offset, omit one presentation frame, and retain a prior effect after despawn.
-- Current evidence: presence lifecycle and isolated mask synchronization in `scripts/assess-sequence.mjs`; live observer samples. There is no named compositor mutation suite.
-- Missing automation/next implementation: implement current-frame reconstruction/residual comparison and the four mutations.
+- Current evidence: `npm run test:flicker` retains three ordered deterministic compositor segments covering actor, monster, loot, projectile, and effect ownership; compares a populated-state transition against a fresh reconstruction with decoded pixel residual bounds; records effect despawn ticks; and runs the four named mutations through `tests/unit/live-compositor-evidence.test.ts` and the browser recorder.
+- Missing automation/next implementation: run the same evaluator on the ordinary production route with a sustained physical gesture, capture every expected `requestAnimationFrame` sample at 60 Hz and a high-refresh phone profile, and bind normal/slow video plus independent review. Deterministic evidence does not claim live display cadence or calibrated temporal thresholds.
 - Independent visual-agent review mandatory: **yes**, at normal playback speed.
 
 ## P2 — broadening and audit integrity

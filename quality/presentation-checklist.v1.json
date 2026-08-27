@@ -460,7 +460,7 @@
       "id": "PRES-FLICKER-024",
       "executionRecipeId": "recipe:pres-flicker-024",
       "priority": "P1",
-      "coverage": "missing",
+      "coverage": "partial",
       "mandatoryReview": true,
       "evidenceRequirements": [
         "presentation-cadence-frames",
