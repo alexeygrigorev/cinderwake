@@ -88,6 +88,9 @@ describe("presentation run binding", () => {
     const movementRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     );
+    const facingRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-FACING-015",
+    );
     const cameraRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-CAMERA-016",
     );
@@ -151,6 +154,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-MOVE-003",
       ).evidenceRequirements,
     ];
+    const facingRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-FACING-015",
+      ).evidenceRequirements,
+    ];
     const cameraRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -189,6 +198,7 @@ describe("presentation run binding", () => {
     const flickerArtifacts = await artifactFixture(flickerRequirements);
     const crispnessArtifacts = await artifactFixture(crispnessRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
+    const facingArtifacts = await artifactFixture(facingRequirements);
     const cameraArtifacts = await artifactFixture(cameraRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
     const temporalArtifacts = await artifactFixture(temporalRequirements);
@@ -235,6 +245,11 @@ describe("presentation run binding", () => {
     const movementMetadata = {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
+    };
+    const facingMetadata = {
+      source: { commit, dirty: false },
+      profileIds: ["desktop", "phone-portrait"],
+      scenarioIds: facingRecipe.scenarioSet.requiredIds,
     };
     const cameraMetadata = {
       source: { commit, dirty: false },
@@ -299,6 +314,8 @@ describe("presentation run binding", () => {
       crispnessComparison: comparison(crispnessRecipe),
       movementMetadata,
       movementComparison: comparison(movementRecipe),
+      facingMetadata,
+      facingComparison: comparison(facingRecipe),
       cameraMetadata,
       cameraComparison: comparison(cameraRecipe),
       spriteMetadata,
@@ -320,6 +337,7 @@ describe("presentation run binding", () => {
       flickerArtifacts,
       crispnessArtifacts,
       movementArtifacts,
+      facingArtifacts,
       cameraArtifacts,
       spriteArtifacts,
       temporalArtifacts,
@@ -353,6 +371,9 @@ describe("presentation run binding", () => {
     )!;
     const movement = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
+    )!;
+    const facing = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-FACING-015",
     )!;
     const camera = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-CAMERA-016",
@@ -449,6 +470,24 @@ describe("presentation run binding", () => {
     );
     expect(
       movement.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(facing.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(facing.observed).toEqual({
+      scenarioIds: facingMetadata.scenarioIds,
+      deviceProfileIds: facingMetadata.profileIds,
+      gestureIds: [
+        "move-north",
+        "move-east",
+        "move-south",
+        "move-west",
+        "attack-each-facing",
+      ],
+    });
+    expect(facing.signals).toHaveLength(
+      facingRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      facing.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
     expect(camera.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(camera.observed).toEqual({
