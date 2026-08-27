@@ -12,6 +12,18 @@ export const COLLISION_GESTURE_IDS = [
 
 export const COLLISION_SIDE_IDS = ["north", "east", "south", "west"];
 
+export const COLLISION_TOPOLOGY_EXEMPTION = "map-blocked-boundary";
+
+const MAP_BLOCKED_BOUNDARY_OBJECT_ID =
+  /^architecture:opening:(?:north-wall|backdrop:[0-2]:(?:gatehouse|chapel|watchtower))$/;
+
+export function isMapBlockedBoundaryObjectId(objectId) {
+  return (
+    typeof objectId === "string" &&
+    MAP_BLOCKED_BOUNDARY_OBJECT_ID.test(objectId)
+  );
+}
+
 export const COLLISION_SIGNAL_IDS = [
   "solid-support-blocks",
   "blocked-object-visible",
@@ -335,6 +347,10 @@ function sideCoveragePass(solid, contacts) {
   );
   const skippedSides = object(declaration?.skippedSides) ?? {};
   const selected = declaration?.selected === true;
+  const topologyExemption = declaration?.exemption;
+  const mapBlockedBoundary = isMapBlockedBoundaryObjectId(solid.objectId);
+  const validTopologyExemption =
+    mapBlockedBoundary && topologyExemption === COLLISION_TOPOLOGY_EXEMPTION;
   const failures = [];
   if (!declaration) {
     failures.push(
@@ -344,6 +360,25 @@ function sideCoveragePass(solid, contacts) {
   if (!COLLISION_SIDE_IDS.every((side) => principalSides.includes(side)))
     failures.push(
       `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:principal-sides`,
+    );
+  if (
+    topologyExemption !== undefined &&
+    (!mapBlockedBoundary || topologyExemption !== COLLISION_TOPOLOGY_EXEMPTION)
+  )
+    failures.push(
+      `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:exemption`,
+    );
+  if (!selected && !validTopologyExemption)
+    failures.push(
+      `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:selection`,
+    );
+  if (validTopologyExemption && selected)
+    failures.push(
+      `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:selection`,
+    );
+  if (validTopologyExemption && requiredSides.length > 0)
+    failures.push(
+      `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:required-sides`,
     );
   if (selected && requiredSides.length === 0)
     failures.push(
@@ -399,6 +434,8 @@ function sideCoveragePass(solid, contacts) {
         ),
       ),
       selected,
+      topologyExemption: topologyExemption ?? null,
+      mapBlockedBoundary,
     },
   };
 }

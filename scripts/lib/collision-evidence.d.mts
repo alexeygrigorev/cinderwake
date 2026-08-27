@@ -12,9 +12,13 @@ export interface CollisionEvidenceAssessment {
 export declare const COLLISION_SCENARIO_IDS: string[];
 export declare const COLLISION_GESTURE_IDS: string[];
 export declare const COLLISION_SIDE_IDS: string[];
+export declare const COLLISION_TOPOLOGY_EXEMPTION: string;
 export declare const COLLISION_SIGNAL_IDS: string[];
 export declare const COLLISION_FAILURE_IDS: string[];
 export declare const COLLISION_LIMITS: Record<string, unknown>;
+export declare function isMapBlockedBoundaryObjectId(
+  objectId: unknown,
+): boolean;
 export declare function evaluateCollisionEvidence(
   evidence: unknown,
 ): CollisionEvidenceAssessment;

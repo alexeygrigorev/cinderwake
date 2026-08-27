@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  COLLISION_TOPOLOGY_EXEMPTION,
   evaluateCollisionEvidence,
   runCollisionNegativeControls,
 } from "../../scripts/lib/collision-evidence.mjs";
@@ -25,6 +26,8 @@ function solid() {
       principalSides: ["north", "east", "south", "west"],
       requiredSides: ["north", "east", "south", "west"],
       skippedSides: {},
+      selected: true,
+      scope: "exhaustive-cardinal-matrix",
     },
     support: {
       source: "alpha-mask",
@@ -215,6 +218,41 @@ describe("PRES-COLLIDE-008 evidence oracle", () => {
         "gesture-coverage-missing:fire-through-solid",
         "solid-overlap:prop:crate",
       ]),
+    );
+  });
+
+  it("accepts only declared map-blocked boundary exemptions", () => {
+    const value = evidence();
+    const scenario = value.profiles[0]!.scenarios[0]!;
+    const exempt = structuredClone(solid());
+    exempt.objectId = "architecture:opening:north-wall";
+    exempt.objectName = "north-wall-solid";
+    exempt.contactCoverage = {
+      principalSides: ["north", "east", "south", "west"],
+      requiredSides: [],
+      skippedSides: {
+        north: "outside-map-boundary",
+        east: "outside-map-boundary",
+        south: "outside-map-boundary",
+        west: "outside-map-boundary",
+      },
+      selected: false,
+      scope: "exhaustive-cardinal-matrix",
+      exemption: COLLISION_TOPOLOGY_EXEMPTION,
+    };
+    scenario.solids.push(exempt);
+    expect(evaluateCollisionEvidence(value)).toMatchObject({
+      pass: true,
+      failures: [],
+    });
+
+    const invalid = structuredClone(value);
+    const invalidSolid = invalid.profiles[0]!.scenarios[0]!.solids[1]!;
+    invalidSolid.objectId = "prop:unreachable-crate";
+    const result = evaluateCollisionEvidence(invalid);
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain(
+      "contact-side-exemption-invalid:prop:unreachable-crate:exemption",
     );
   });
 });

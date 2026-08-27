@@ -5,9 +5,11 @@ import path from "node:path";
 import { chromium } from "@playwright/test";
 import sharp from "sharp";
 import {
+  COLLISION_TOPOLOGY_EXEMPTION,
   COLLISION_GESTURE_IDS,
   COLLISION_SCENARIO_IDS,
   evaluateCollisionEvidence,
+  isMapBlockedBoundaryObjectId,
   runCollisionNegativeControls,
 } from "./lib/collision-evidence.mjs";
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
@@ -37,7 +39,11 @@ const PROFILES = {
 
 const CONTACT_SIDES = ["north", "east", "south", "west"];
 
-const GENERATED_CONTACT_TARGET_IDS = [
+// Keep lossless contact PNGs for a small visual review subset. Every solid
+// role still receives the semantic contact journey below; retaining a frame
+// triplet for all three DPR profiles would turn this bundle into gigabytes of
+// duplicate raster data.
+const GENERATED_CONTACT_FRAME_TARGET_IDS = [
   "prop:0:barricade-v2",
   "structure:0:forge",
   "structure:2:rubble",
@@ -47,7 +53,7 @@ const GENERATED_CONTACT_TARGET_IDS = [
   "structure:6:mausoleum",
 ];
 
-const CITY_CONTACT_TARGET_IDS = [
+const CITY_CONTACT_FRAME_TARGET_IDS = [
   "building:embercross:smithy",
   "building:embercross:market",
   "building:embercross:tavern",
@@ -498,12 +504,13 @@ async function runContact(
   label,
   side,
   persistCapture,
+  retainFrames = true,
 ) {
   const setup = await setupContact(page, scenario, targetId, side);
   if (setup.skipped) return setup;
-  const initial = await persistCapture(
-    await capture(page, `${label}-initial`, targetId),
-  );
+  const initial = retainFrames
+    ? await persistCapture(await capture(page, `${label}-initial`, targetId))
+    : null;
   await page.keyboard.down(
     setup.direction.x > 0
       ? "d"
@@ -607,9 +614,9 @@ async function runContact(
     throw new Error(
       `Contact did not produce movement_blocked for ${targetId} from ${side}`,
     );
-  const blocked = await persistCapture(
-    await capture(page, `${label}-blocked`, targetId),
-  );
+  const blocked = retainFrames
+    ? await persistCapture(await capture(page, `${label}-blocked`, targetId))
+    : null;
   const blockedFeedback = await page.evaluate(
     ({ targetId }) => {
       const bridge = window.__GAME_TEST__;
@@ -643,10 +650,17 @@ async function runContact(
     bridge.step(10, { render: true, useBrowserInput: true });
   });
   await page.keyboard.up(setup.tangent);
-  const slide = await persistCapture(
-    await capture(page, `${label}-slide`, targetId),
-  );
-  const slidePosition = slide.snapshot.player.position;
+  const slide = retainFrames
+    ? await persistCapture(await capture(page, `${label}-slide`, targetId))
+    : null;
+  const slidePosition =
+    slide?.snapshot.player.position ??
+    (await page.evaluate(
+      () => window.__GAME_TEST__.snapshot().player.position,
+    ));
+  const slideTick =
+    slide?.tick ??
+    (await page.evaluate(() => window.__GAME_TEST__.snapshot().tick));
   return {
     objectId: targetId,
     objectName: blockedFeedback.event?.detail ?? targetId,
@@ -666,9 +680,9 @@ async function runContact(
     slide: {
       from: movement.blockedPosition ?? blocked.snapshot.player.position,
       to: slidePosition,
-      tick: slide.tick,
+      tick: slideTick,
     },
-    captures: [initial, blocked, slide],
+    captures: [initial, blocked, slide].filter(Boolean),
   };
 }
 
@@ -1004,12 +1018,10 @@ function withContactCoverage(solids, coverage) {
     ...solid,
     contactCoverage: coverage.get(solid.objectId) ?? {
       principalSides: CONTACT_SIDES,
-      requiredSides: [],
-      skippedSides: Object.fromEntries(
-        CONTACT_SIDES.map((side) => [side, "representative-scope"]),
-      ),
-      selected: false,
-      scope: "inventory-only",
+      requiredSides: CONTACT_SIDES,
+      skippedSides: {},
+      selected: true,
+      scope: "exhaustive-cardinal-matrix",
     },
   }));
 }
@@ -1021,6 +1033,7 @@ async function recordSolidContacts(
   gestureId,
   labelPrefix,
   persistCapture,
+  frameTargetIds,
 ) {
   const contacts = [];
   const coverage = new Map();
@@ -1036,6 +1049,7 @@ async function recordSolidContacts(
         `${labelPrefix}-${slug(solid.objectId)}-${side}`,
         side,
         persistCapture,
+        frameTargetIds.has(solid.objectId),
       );
       if (contact.skipped) skippedSides[side] = contact.reason;
       else {
@@ -1043,12 +1057,16 @@ async function recordSolidContacts(
         contacts.push(contact);
       }
     }
+    const topologyExempt =
+      requiredSides.length === 0 &&
+      isMapBlockedBoundaryObjectId(solid.objectId);
     coverage.set(solid.objectId, {
       principalSides: CONTACT_SIDES,
       requiredSides,
       skippedSides,
-      selected: true,
-      scope: "representative-cardinal-matrix",
+      selected: !topologyExempt,
+      scope: "exhaustive-cardinal-matrix",
+      ...(topologyExempt ? { exemption: COLLISION_TOPOLOGY_EXEMPTION } : {}),
     });
   }
   return { contacts, coverage };
@@ -1072,15 +1090,15 @@ async function recordProfile(page, profileId) {
   const generatedSolids = inventoryEvidence(generatedInventory, profileId);
   const citySolids = inventoryEvidence(cityInventory, profileId);
   await persistInventoryMasks(directory, [...generatedSolids, ...citySolids]);
-  const generatedContactSolids = selectContactSolids(
+  const generatedContactFrameSolids = selectContactSolids(
     generatedSolids,
-    GENERATED_CONTACT_TARGET_IDS,
-    "Generated scenery",
+    GENERATED_CONTACT_FRAME_TARGET_IDS,
+    "Generated scenery frame",
   );
-  const cityContactSolids = selectContactSolids(
+  const cityContactFrameSolids = selectContactSolids(
     citySolids,
-    CITY_CONTACT_TARGET_IDS,
-    "Embercross",
+    CITY_CONTACT_FRAME_TARGET_IDS,
+    "Embercross frame",
   );
   let captureIndex = 0;
   const captures = [];
@@ -1098,10 +1116,11 @@ async function recordProfile(page, profileId) {
   const generatedContactResult = await recordSolidContacts(
     page,
     GENERATED_SCENARIO,
-    generatedContactSolids,
+    generatedSolids,
     "walk-into-solid",
     "generated-contact",
     persistCapture,
+    new Set(generatedContactFrameSolids.map(({ objectId }) => objectId)),
   );
   if (generatedContactResult.contacts.length === 0)
     throw new Error("Generated scenery produced no contact target");
@@ -1114,10 +1133,11 @@ async function recordProfile(page, profileId) {
   const cityContactResult = await recordSolidContacts(
     page,
     EMBERCROSS_SCENARIO,
-    cityContactSolids,
+    citySolids,
     "tap-route-into-solid",
     "city-contact",
     persistCapture,
+    new Set(cityContactFrameSolids.map(({ objectId }) => objectId)),
   );
   if (cityContactResult.contacts.length === 0)
     throw new Error("Embercross produced no contact target");
@@ -1343,6 +1363,10 @@ async function main() {
               Object.keys(solid.contactCoverage?.skippedSides ?? {}).length,
             0,
           ),
+          topologyExemptionCount: scenario.solids.filter(
+            (solid) =>
+              solid.contactCoverage?.exemption === COLLISION_TOPOLOGY_EXEMPTION,
+          ).length,
         })),
         captureCount: evidence.captures.length,
       })),
@@ -1388,7 +1412,7 @@ async function main() {
       0,
     );
     console.log(
-      `PRES-COLLIDE-008 PASS: ${results.length} profiles, ${solidCount} solid roles, ${contactCount} cardinal contacts, five negative controls`,
+      `PRES-COLLIDE-008 PASS: ${results.length} profiles, ${solidCount} solid roles, ${contactCount} exhaustive cardinal contacts, five negative controls`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
