@@ -18,6 +18,10 @@ The prose checklist remains the human explanation of what matters. The versioned
 
    This initializes a record; it does not execute a recipe, collect evidence, run a mutation, or perform visual review.
 
+   The binder may later replace this exact blank initializer when its run ID and
+   commit match. Once a run contains bound evidence, it is immutable; use a new
+   run ID for another capture instead of overwriting it.
+
 2. Run the executable P0 recorders and bind their fresh bundles into a row-level run:
 
    ```sh
@@ -38,6 +42,9 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:camera-motion
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
+
+   When `<run-id>` is the blank initializer from step 1, binding fills that
+   file in place. Binding an existing nonblank or stale run still fails safely.
 
    The 26-entry capture is resumable: use `npm run capture:matrix -- --resume`
    after an interrupted run, or `npm run capture:matrix -- --only <id,...>` to
