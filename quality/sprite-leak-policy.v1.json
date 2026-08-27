@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "sprite-leak-v1",
+  "alphaThreshold": 8,
+  "contracts": [
+    {
+      "id": "actor-atlas",
+      "files": [
+        "actor-vanguard.png",
+        "actor-ranger.png",
+        "actor-arcanist.png",
+        "actor-ashfang.png",
+        "actor-hexer.png",
+        "actor-stonekin.png"
+      ],
+      "cell": { "width": 128, "height": 128 },
+      "transparentBorder": { "left": 5, "top": 4, "right": 5, "bottom": 12 }
+    },
+    {
+      "id": "effects-atlas",
+      "files": ["effects.png"],
+      "cell": { "width": 256, "height": 256 },
+      "transparentBorder": { "left": 8, "top": 8, "right": 8, "bottom": 8 }
+    },
+    {
+      "id": "loot-atlas",
+      "files": ["loot.png"],
+      "cell": { "width": 256, "height": 256 },
+      "transparentBorder": { "left": 8, "top": 8, "right": 8, "bottom": 8 }
+    }
+  ]
+}
