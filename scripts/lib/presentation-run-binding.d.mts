@@ -43,6 +43,8 @@ export interface PresentationRunBindingInput {
   crispnessComparison?: any | null;
   movementMetadata: any;
   movementComparison: any;
+  facingMetadata: any;
+  facingComparison: any;
   cameraMetadata: any;
   cameraComparison: any;
   spriteMetadata: any;
@@ -63,6 +65,7 @@ export interface PresentationRunBindingInput {
   flickerArtifacts?: Array<readonly [string, string]> | null;
   crispnessArtifacts?: Array<readonly [string, string]> | null;
   movementArtifacts?: Array<readonly [string, string]>;
+  facingArtifacts?: Array<readonly [string, string]> | null;
   cameraArtifacts?: Array<readonly [string, string]>;
   spriteArtifacts?: Array<readonly [string, string]>;
   temporalArtifacts?: Array<readonly [string, string]>;
@@ -84,6 +87,10 @@ export declare function flickerArtifactSpecifications(
 ): Promise<Array<readonly [string, string]>>;
 
 export declare function renderResolutionArtifactSpecifications(
+  repoRoot: string,
+): Promise<Array<readonly [string, string]>>;
+
+export declare function directionalBankArtifactSpecifications(
   repoRoot: string,
 ): Promise<Array<readonly [string, string]>>;
 
