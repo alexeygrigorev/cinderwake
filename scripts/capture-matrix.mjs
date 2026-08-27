@@ -228,6 +228,9 @@ const entries = [
     profile: "static-pose",
     frames: 14,
     step: 4,
+    // The loss overlay retains the defeated player's terminal body; the
+    // present-until contract belongs to despawning enemy/projectile strips.
+    presence: "always",
   },
 ];
 
