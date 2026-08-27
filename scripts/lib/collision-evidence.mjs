@@ -358,10 +358,7 @@ function sideCoveragePass(solid, contacts) {
       (contact) => belongsToSolid(contact) && contact.side === side,
     );
     const skipped = skippedSides[side];
-    if (
-      hasContact &&
-      (!requiredSides.includes(side) || skipped !== undefined)
-    )
+    if (hasContact && (!requiredSides.includes(side) || skipped !== undefined))
       failures.push(
         `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:${side}`,
       );
@@ -686,10 +683,7 @@ export function runCollisionNegativeControls(evidence) {
             if (!solid || !side) continue;
             scenario.contacts = (scenario.contacts ?? []).filter(
               (contact) =>
-                !(
-                  contact.objectId === solid.objectId &&
-                  contact.side === side
-                ),
+                !(contact.objectId === solid.objectId && contact.side === side),
             );
             return;
           }
