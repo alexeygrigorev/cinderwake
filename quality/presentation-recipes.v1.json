@@ -705,7 +705,14 @@
       "checkId": "PRES-CAMERA-016",
       "scenarioSet": {
         "coverage": "partial",
-        "requiredIds": ["temporal-camera-track", "map-edge-reversal"]
+        "requiredIds": [
+          "temporal-camera-track",
+          "map-edge-reversal",
+          "camera-diagonal-corner",
+          "camera-stop-center",
+          "fixed-camera-open-floor-arcanist",
+          "snap-camera-open-floor-arcanist"
+        ]
       },
       "deviceProfileSet": {
         "coverage": "partial",
@@ -713,7 +720,16 @@
       },
       "gestureSet": {
         "coverage": "partial",
-        "requiredIds": ["approach-map-edge", "reverse-west", "reverse-east"]
+        "requiredIds": [
+          "approach-map-edge",
+          "reverse-west",
+          "reverse-east",
+          "diagonal-north-west",
+          "stop-after-diagonal",
+          "stop-center",
+          "fixed-travel",
+          "snap-travel"
+        ]
       },
       "evaluator": {
         "id": "camera-motion-continuity-v1",
@@ -721,7 +737,8 @@
         "requiredSignalIds": [
           "camera-converges",
           "camera-clamps",
-          "camera-delta-continuous"
+          "camera-delta-continuous",
+          "camera-mode-contract"
         ]
       },
       "reproduce": "npm run test:camera-motion && npm run capture:matrix && npx vitest run tests/unit/camera-motion-evidence.test.ts tests/unit/camera-projection.test.ts",

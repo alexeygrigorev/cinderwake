@@ -33,6 +33,7 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:depth-transition
    npm run test:collision
    npm run test:crispness
+   npm run test:camera-motion
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
 
@@ -67,6 +68,12 @@ The prose checklist remains the human explanation of what matters. The versioned
    controls as `NEEDS_VISUAL_REVIEW`. Its emulated device matrix remains partial
    until native high-DPR capture and independent original-resolution review are
    supplied.
+
+   `PRES-CAMERA-016` binds the desktop and portrait production camera bundle with
+   separate smooth edge/reversal, diagonal/corner, stop, fixed, and snap run specs,
+   synchronized target/camera timelines, and the five named detector controls. It
+   remains `NEEDS_VISUAL_REVIEW` until its contact sheets and videos receive the
+   required independent playback review.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.

@@ -94,7 +94,7 @@ correct, and visual review retains veto authority.
 | Camera convergence / acceleration                   | final error `≤ 2` px; acceleration `≤ 40` px/tick²      | catches reversal, lurch, and incomplete follow                          |
 | Actual ink visibility, geometry envelope, clipping  | visible, plausible, and inside viewport when required   | catches blank, degenerate, disproportionate, or chopped drawing         |
 
-Camera acceleration is measured and retained for diagnosis, but is not globally gated because deliberate camera snaps and tracked-camera scenarios need distinct thresholds. Scenario-specific tests assert camera clamping and stable screen anchors. The current smooth camera uses a deterministic fixed per-tick follow rule; captured test frames use alpha 1 and can use snap/fixed camera mode so display interpolation never makes a state assertion ambiguous.
+Camera acceleration is measured and retained for diagnosis, but is not globally gated because deliberate camera snaps and tracked-camera scenarios need distinct thresholds. Scenario-specific tests assert camera clamping and stable screen anchors. The current smooth camera uses a deterministic fixed per-tick follow rule; the production camera recorder now carries explicit smooth edge/diagonal/stop, fixed, and snap run contracts. Synchronized captures assert fixed cameras remain fixed and snap cameras equal their targets; rAF samples retain the documented display-interpolation envelope.
 
 ## Exhaustive actor-atlas gate
 
