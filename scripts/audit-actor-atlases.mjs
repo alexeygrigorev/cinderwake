@@ -1167,7 +1167,7 @@ function reportHtml(report) {
 <body>
 <h1>Every runtime actor animation bank</h1><p class="summary"><strong>${report.pass ? "PASS" : "FAIL"}</strong> · ${report.summary.passingBanks}/${report.summary.totalBanks} runtime-facing banks pass; ${report.summary.passingFacingComparisons}/${report.summary.totalFacingComparisons} authored-facing comparisons pass; ${report.summary.passingTransitionComparisons}/${report.summary.totalTransitionComparisons} declared clip-transition comparisons pass.</p>
 <p class="coverage"><strong>Vanguard promotion: ${htmlEscape(report.vanguardMotionCalibration.disposition)}</strong>. Detector health is not art approval. The exact current bytes retain ${report.vanguardMotionCalibration.failures.length} named rejection findings; changed bytes must clear the all-facing height and semantic landmark contract.</p>
-<p>This is an exhaustive byte-level and visual audit of all six actors, six clips, and four runtime facings. West strips are the exact horizontal reflection used by the renderer. A gold outline marks the loop-wrap frame or idle recovery frame. Metrics diagnose continuity; the strips retain visual-review authority.</p>
+<p>This is an exhaustive byte-level and visual audit of all six actors, six clips, and four runtime facings. East strips are the exact horizontal reflection used by the renderer. A gold outline marks the loop-wrap frame or idle recovery frame. Metrics diagnose continuity; the strips retain visual-review authority.</p>
 <h2>Defects found before repair</h2><p>The same gate replayed against immutable atlas bytes from commit <code>${htmlEscape(report.repairBaseline.commit)}</code> passed only ${report.repairBaseline.summary.passingBanks}/${report.repairBaseline.summary.totalBanks} banks and ${report.repairBaseline.summary.passingFacingComparisons}/${report.repairBaseline.summary.totalFacingComparisons} authored-facing comparisons. Existing narrower tests had passed that art.</p><ul>${baselineDefects}</ul>
 <p class="coverage"><strong>Existing-test gap:</strong> ${htmlEscape(report.coverageGap)}</p><ul>${findings}</ul>
 <p class="coverage"><strong>Runtime registry layout:</strong> ${report.summary.actorSpriteDefinitions}/${report.actorLayout.summary.expectedSpriteCount} actor definitions, ${report.summary.actorLayoutBanks}/${report.actorLayout.summary.expectedBankCount} clip/facing banks, and ${report.actorLayout.summary.expectedFrameCount} exact frame cells map through the production catalog. The eight layout and continuity controls are all detected.</p>
@@ -1263,7 +1263,7 @@ for (const actorId of ACTORS) {
           info.width,
           bank.atlasRow,
           frameIndex,
-          facing === "west",
+          facing === "east",
         ),
       );
       framesByBank.set(`${facing}:${clip}`, frames);
@@ -1296,7 +1296,7 @@ for (const actorId of ACTORS) {
         facing,
         clip,
         atlasRow: bankFor(facing, clip).atlasRow,
-        reflectedFromEast: facing === "west",
+        reflectedAtRuntime: facing === "east",
         reachableInGameplay: !(MONSTER_IDS.has(actorId) && clip === "ability"),
         frames: frames.map((frame, frameIndex) => ({
           frameIndex,
