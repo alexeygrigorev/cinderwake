@@ -33,7 +33,12 @@ Every character is one actor ID with six square, 4 × 4 source sheets. The gener
 | `{actor}-direction-actions-source.png`   | Rows: north attack, north ability, south attack, south ability                          |
 | `{actor}-direction-reactions-source.png` | Rows: north hurt/death, south hurt/death                                                |
 
-West is the only reflected facing and is derived by horizontally flipping east at render time. North and south are authored views. Cross-dissolves and translucent duplicate bodies are not production frames: movement and combat must use discrete, articulated poses. Large detached projectiles remain separate entities, while small contact flashes may stay attached to an action frame.
+The accepted horizontal source cells point toward screen-left, so the runtime
+mirrors that side bank for world east/right and uses the raw bank for west/left.
+North and south are authored views. Cross-dissolves and translucent duplicate
+bodies are not production frames: movement and combat must use discrete,
+articulated poses. Large detached projectiles remain separate entities, while
+small contact flashes may stay attached to an action frame.
 
 When complete-sheet generation collapses pose semantics, use the
 manifest-driven isolated-pose path documented in
