@@ -187,6 +187,7 @@ describe("presentation checklist contract", () => {
         recipeId: "recipe:pres-city-027",
         signals: [
           "ordinary-route-reachable",
+          "ordinary-route-won",
           "city-route-discoverable",
           "gate-transition-completes",
           "all-service-intents-live",
@@ -266,6 +267,7 @@ describe("presentation checklist contract", () => {
       [
         "city-sign-removed",
         "gate-entry-disabled",
+        "return-gate-win-disabled",
         "service-listener-removed",
         "service-outcome-suppressed",
       ],

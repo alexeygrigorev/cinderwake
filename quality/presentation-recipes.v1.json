@@ -1275,6 +1275,7 @@
           "find-city-sign",
           "navigate-to-gate",
           "enter-embercross",
+          "return-to-city-gate",
           "open-merchant-and-buy-sell",
           "open-tavern-and-eat-sleep",
           "open-healer-and-heal"
@@ -1285,6 +1286,7 @@
         "coverage": "implemented",
         "requiredSignalIds": [
           "ordinary-route-reachable",
+          "ordinary-route-won",
           "city-route-discoverable",
           "gate-transition-completes",
           "all-service-intents-live",
@@ -1300,6 +1302,10 @@
         {
           "id": "gate-entry-disabled",
           "expectedSignal": "gate-transition-inert"
+        },
+        {
+          "id": "return-gate-win-disabled",
+          "expectedSignal": "ordinary-route-win-inert"
         },
         {
           "id": "service-listener-removed",

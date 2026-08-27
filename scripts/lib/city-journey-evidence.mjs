@@ -5,6 +5,7 @@ export const CITY_SCENARIO_IDS = {
 
 export const CITY_JOURNEY_SIGNAL_IDS = [
   "ordinary-route-reachable",
+  "ordinary-route-won",
   "city-route-discoverable",
   "gate-transition-completes",
   "all-service-intents-live",
@@ -13,6 +14,7 @@ export const CITY_JOURNEY_SIGNAL_IDS = [
 
 export const CITY_JOURNEY_FAILURE_IDS = [
   "ordinary-route-inert",
+  "ordinary-route-win-inert",
   "city-route-undiscoverable",
   "gate-transition-inert",
   "service-control-inert",
@@ -197,6 +199,21 @@ export function evaluateCityJourneyEvidence({
     });
   if (!ordinaryRouteReachable) failures.push("ordinary-route-inert");
 
+  const ordinaryRouteWon =
+    hasAllProfiles &&
+    hasRequiredScenarios &&
+    selectedProfiles.every((profile) => {
+      const won = profile.ordinaryRoute?.won;
+      return (
+        won?.snapshot?.phase === "won" &&
+        won?.eventTypes?.includes("run_won") &&
+        won?.runWonTargetId === "gate:embercross:south" &&
+        won?.objectiveState === "won" &&
+        won?.outcomeVisible === true
+      );
+    });
+  if (!ordinaryRouteWon) failures.push("ordinary-route-win-inert");
+
   const routeDiscoverable =
     hasAllProfiles &&
     selectedProfiles.every(
@@ -249,6 +266,15 @@ export function evaluateCityJourneyEvidence({
     {
       id: "ordinary-route-reachable",
       pass: ordinaryRouteReachable,
+      detail: {
+        profiles: selectedProfiles
+          .filter(Boolean)
+          .map((profile) => profile.profileId),
+      },
+    },
+    {
+      id: "ordinary-route-won",
+      pass: ordinaryRouteWon,
       detail: {
         profiles: selectedProfiles
           .filter(Boolean)

@@ -526,6 +526,7 @@
       "negativeControlIds": [
         "city-sign-removed",
         "gate-entry-disabled",
+        "return-gate-win-disabled",
         "service-listener-removed",
         "service-outcome-suppressed"
       ]

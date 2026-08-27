@@ -1363,6 +1363,12 @@
           "artifacts": []
         },
         {
+          "id": "return-gate-win-disabled",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
           "id": "service-listener-removed",
           "status": "UNRUN",
           "signal": "",

@@ -80,6 +80,11 @@ function fixture() {
   ordinaryInitial.scenarioId = "production-city-route";
   const ordinaryDiscovered = structuredClone(discovered);
   const ordinaryEntered = structuredClone(entered);
+  const ordinaryWon = structuredClone(ordinaryEntered) as any;
+  ordinaryWon.phase = "won";
+  ordinaryWon.eventLog = [
+    { type: "run_won", targetId: "gate:embercross:south" },
+  ];
   const ordinaryRoute = {
     scenarioId: "production-city-route",
     initial: {
@@ -99,10 +104,18 @@ function fixture() {
       gateVisible: true,
       residentIds: ["mara", "oren", "tess", "ileya"],
     },
+    won: {
+      snapshot: ordinaryWon,
+      eventTypes: ["run_won"],
+      runWonTargetId: "gate:embercross:south",
+      objectiveState: "won",
+      outcomeVisible: true,
+    },
     timeline: [
       capture(0, ordinaryInitial),
       capture(4, ordinaryDiscovered),
       capture(8, ordinaryEntered),
+      capture(10, ordinaryWon),
     ],
   };
   return {
@@ -171,6 +184,17 @@ describe("city journey evidence evaluator", () => {
       "gate-transition-inert",
       (value: any) => {
         value.profiles[0].entered.snapshot.city.locationPhase = "at_gate";
+      },
+    ],
+    [
+      "missing return-gate win",
+      "ordinary-route-win-inert",
+      (value: any) => {
+        value.profiles[0].ordinaryRoute.won.snapshot.phase = "playing";
+        value.profiles[0].ordinaryRoute.won.eventTypes = [];
+        value.profiles[0].ordinaryRoute.won.runWonTargetId = null;
+        value.profiles[0].ordinaryRoute.won.objectiveState = "seal-rift";
+        value.profiles[0].ordinaryRoute.won.outcomeVisible = false;
       },
     ],
     [

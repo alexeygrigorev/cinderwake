@@ -617,12 +617,43 @@ async function runOrdinaryProfile(browser, profileId, profile, baseURL) {
       capture: enteredCapture,
       history: enteredRoute.history,
     };
+    const returnGateTarget = tileCenter(enteredCapture.snapshot.map.exit);
+    const wonRoute = await driveTo(
+      page,
+      session,
+      profile,
+      bounds,
+      returnGateTarget,
+      (snapshot) => snapshot.phase === "won",
+      "ordinary seal Embercross",
+    );
+    gestures.push(...wonRoute.gestures);
+    await page.locator("#outcome").waitFor({
+      state: "visible",
+      timeout: 5_000,
+    });
+    const wonCapture = await capture(page, "ordinary-city-won");
+    const wonEvent = wonCapture.snapshot.eventLog.find(
+      ({ type }) => type === "run_won",
+    );
+    const won = {
+      snapshot: wonCapture.snapshot,
+      eventTypes: eventTypes(wonCapture.snapshot),
+      runWonTargetId: wonEvent?.targetId ?? null,
+      objectiveState: await page
+        .locator("#objective")
+        .getAttribute("data-state"),
+      outcomeVisible: await page.locator("#outcome").isVisible(),
+      capture: wonCapture,
+      history: wonRoute.history,
+    };
     return {
       scenarioId: ORDINARY_SCENARIO_ID,
       initial,
       discovered,
       entered,
-      timeline: [initialCapture, discoveredCapture, enteredCapture],
+      won,
+      timeline: [initialCapture, discoveredCapture, enteredCapture, wonCapture],
       gestures,
     };
   } finally {
@@ -798,6 +829,7 @@ async function normalizeProfile(raw, profileId) {
     raw.ordinaryRoute.initial.capture,
     raw.ordinaryRoute.discovered.capture,
     raw.ordinaryRoute.entered.capture,
+    raw.ordinaryRoute.won.capture,
     raw.initial.capture,
     raw.discovered.capture,
     raw.entered.capture,
@@ -830,10 +862,15 @@ async function normalizeProfile(raw, profileId) {
       ...raw.ordinaryRoute.entered,
       capture: publicCapture(lookup(raw.ordinaryRoute.entered.capture)),
     },
+    won: {
+      ...raw.ordinaryRoute.won,
+      capture: publicCapture(lookup(raw.ordinaryRoute.won.capture)),
+    },
     timeline: [
       publicCapture(lookup(raw.ordinaryRoute.initial.capture)),
       publicCapture(lookup(raw.ordinaryRoute.discovered.capture)),
       publicCapture(lookup(raw.ordinaryRoute.entered.capture)),
+      publicCapture(lookup(raw.ordinaryRoute.won.capture)),
     ],
   };
   const initial = {
@@ -863,6 +900,7 @@ async function normalizeProfile(raw, profileId) {
           ordinaryRoute.initial.capture,
           ordinaryRoute.discovered.capture,
           ordinaryRoute.entered.capture,
+          ordinaryRoute.won.capture,
         ],
       },
       milestones: [initial.capture, discovered.capture, entered.capture],
@@ -929,6 +967,17 @@ function negativeControls(evidence) {
       expectedSignal: "gate-transition-inert",
       mutate(value) {
         value.profiles[0].entered.snapshot.city.locationPhase = "at_gate";
+      },
+    },
+    {
+      id: "return-gate-win-disabled",
+      expectedSignal: "ordinary-route-win-inert",
+      mutate(value) {
+        value.profiles[0].ordinaryRoute.won.snapshot.phase = "playing";
+        value.profiles[0].ordinaryRoute.won.eventTypes = [];
+        value.profiles[0].ordinaryRoute.won.runWonTargetId = null;
+        value.profiles[0].ordinaryRoute.won.objectiveState = "seal-rift";
+        value.profiles[0].ordinaryRoute.won.outcomeVisible = false;
       },
     },
     {
@@ -1089,7 +1138,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-CITY-027 PASS: ${profileIds.length} profiles, ${CITY_SERVICE_EXPECTATIONS.length} service actions, four negative controls detected`,
+      `PRES-CITY-027 PASS: ${profileIds.length} profiles, ${CITY_SERVICE_EXPECTATIONS.length} service actions, five negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
