@@ -83,11 +83,11 @@ The prose checklist remains the human explanation of what matters. The versioned
 
    `PRES-FACING-015` binds desktop and phone-portrait directional-bank evidence
    for all three actors and four cardinal directions. Its synchronized movement,
-   opposite-turn, and primary-impact captures prove exact bank/reflection mapping
-   and authored effect/projectile origins, while the four named mutations remain
-   detected. The row remains `NEEDS_VISUAL_REVIEW` because pose readability,
-   target-directed actions, ability recovery, and native high-DPR review are not
-   claims of this deterministic bridge slice.
+   opposite-turn, target-directed primary/ability impact, and lock-release
+   recovery captures prove exact bank/reflection mapping, action origins, and
+   recovery continuity, while six named mutations remain detected. The row
+   remains `NEEDS_VISUAL_REVIEW` because authored weapon offsets, native high-DPR
+   capture, and independent pose review are still open.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.

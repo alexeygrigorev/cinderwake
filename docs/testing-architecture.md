@@ -43,12 +43,14 @@ The renderer emits a **render manifest** alongside each capture. It records logi
 The `PRES-FACING-015` directional-bank recorder uses the same bridge and
 manifest boundary to exercise every playable actor in all four cardinal
 directions. Each direction records open-floor movement, a one-tick opposite turn,
-and a primary action through impact. The pure
-`directional-bank-selection-v1` evaluator joins the authoritative facing vector
-to the expected north/south bank or east/west reflection, then joins the pending
-attack origin and direction to the produced Vanguard effect or Ranger/Arcanist
-projectile spawn. Semantic evidence covers every run; only representative PNGs
-are retained for the contact sheet so the browser artifact remains bounded.
+target-directed primary and ability actions through impact, and lock-release
+recovery. The pure `directional-bank-selection-v1` evaluator joins the
+authoritative facing vector to the expected north/south bank or east/west
+reflection, checks the aim point and selected action clips, then joins each
+pending action origin and direction to the produced Vanguard/Arcanist effect or
+Ranger projectile spawn. Semantic evidence covers every run; only representative
+PNG stages are retained for the contact sheet so the browser artifact remains
+bounded.
 
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
 
