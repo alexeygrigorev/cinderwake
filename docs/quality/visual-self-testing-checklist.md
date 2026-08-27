@@ -151,14 +151,14 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 
 ### PRES-ASPECT-007 — no stretched actors, buildings, props, or UI sprites
 
-- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for actors and reviewed environment-kit sprites, **Partial** globally.
+- Result: `[ ] PASS` `[ ] FAIL` `[ ] NEEDS VISUAL REVIEW`; priority **P0**; current coverage **Automatic** for manifested actors, effects, loot, projectiles, scenery, Embercross residents, and health-bar crops, **Partial** globally.
 - Scenario/precondition: manifest containing every sprite role at each supported camera zoom and device profile.
 - Production gesture: launch, move until each role is visible, trigger all action/effect roles.
 - Ordered artifacts: catalog logical/source dimensions; per-frame source and destination rectangles; camera zoom timeline; PNG/mask crops; role inventory and hashes.
 - Machine signal and threshold: destination aspect must equal the declared source/logical aspect within deterministic numeric precision; zoom must multiply X and Y uniformly. Exceptions require an explicit reviewed transform contract, never an ad hoc destination width/height.
 - Required negative control: widen one actor destination, stretch one wall, and apply unequal X/Y camera scaling; each must fail the role/aspect oracle.
-- Current evidence: `tests/unit/sprite-contract.test.ts` test “preserves every actor source-cell aspect ratio at runtime” lines 474–496; environment logical-aspect validation in `tests/framework/sprite-contract.ts`; stretched-wall mutation in `tests/unit/opening-composition.test.ts`; `tests/unit/camera-projection.test.ts`.
-- Missing automation/next implementation: inventory every UI/effect/legacy scenery role through the same source→destination aspect evaluator and add actor/non-wall mutations.
+- Current evidence: `assertManifestSpriteAspectContract` in `tests/framework/sprite-contract.ts`, its gameplay/city/health fixtures and actor/scenery/UI mutations in `tests/unit/sprite-contract.test.ts`, the real-canvas assertion in `tests/e2e/sprite-contract.spec.ts`, and `tests/unit/camera-projection.test.ts`.
+- Missing automation/next implementation: include renderer-only actor-shadow paints and service-screen sprite components in the same manifest contract, then run the role inventory across the required zoom/device profiles with original-resolution crops.
 - Independent visual-agent review mandatory: **yes**, because technically uniform scale can still produce bad authored proportions.
 
 ### PRES-COLLIDE-008 — visible solid footprint and understandable blocked movement
