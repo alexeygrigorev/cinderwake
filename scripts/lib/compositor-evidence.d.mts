@@ -2,6 +2,7 @@ export declare const COMPOSITOR_SIGNAL_IDS: readonly string[];
 export declare const COMPOSITOR_FAILURE_IDS: readonly string[];
 export declare const LIVE_COMPOSITOR_SIGNAL_IDS: readonly string[];
 export declare const LIVE_COMPOSITOR_FAILURE_IDS: readonly string[];
+export declare const LIVE_EFFECT_KINDS: readonly string[];
 
 export interface PngResidualV1 {
   width: number;
@@ -84,8 +85,16 @@ export interface LiveCompositorEvidenceInput {
   }>;
   effects?: Array<{
     effectId: string;
+    kind: "slash" | "nova" | "impact";
+    expectedKind: "slash" | "nova" | "impact";
+    ownerId: string;
+    expectedOwnerId: string;
     observedBefore: boolean;
     observedAfter: boolean;
+    beforeTick: number;
+    afterTick: number;
+    startedAtTick: number;
+    expectedDespawnStateTick: number;
   }>;
 }
 

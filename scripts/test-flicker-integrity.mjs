@@ -16,7 +16,25 @@ const SEGMENT_TICKS = {
   "mid-action-state": [240, 241, 242, 243],
   "loot-and-projectile-owners": [0, 1, 2, 3, 4],
   "effect-despawn": Array.from({ length: 32 }, (_, index) => index),
+  "effect-kind-corpus": Array.from({ length: 26 }, (_, index) => index),
 };
+const EXPECTED_EFFECT_CORPUS = [
+  {
+    effectId: "effect:temporal-slash",
+    kind: "slash",
+    ownerId: "player",
+  },
+  {
+    effectId: "effect:temporal-nova",
+    kind: "nova",
+    ownerId: "player",
+  },
+  {
+    effectId: "effect:temporal-impact",
+    kind: "impact",
+    ownerId: "player",
+  },
+];
 
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
@@ -118,11 +136,22 @@ function ownerPaints(manifest) {
     .map(([ownerId, bodyPaintCount]) => ({ ownerId, bodyPaintCount }));
 }
 
-function manifestEffectIds(manifest) {
+function manifestEffects(manifest) {
   return (manifest.drawCalls ?? [])
     .filter(({ type, visible }) => type === "effect" && visible)
-    .map(({ entityId }) => entityId)
-    .sort();
+    .map(({ entityId, geometryId, ownerId }) => ({
+      effectId: entityId,
+      kind:
+        typeof geometryId === "string" && geometryId.startsWith("effect:")
+          ? geometryId.slice("effect:".length)
+          : "",
+      ownerId: ownerId ?? null,
+    }))
+    .sort((first, second) => first.effectId.localeCompare(second.effectId));
+}
+
+function manifestEffectIds(manifest) {
+  return manifestEffects(manifest).map(({ effectId }) => effectId);
 }
 
 function frameRecord(capture) {
@@ -134,8 +163,79 @@ function frameRecord(capture) {
     observedOwnerIds: observedOwnerIds(capture.manifest),
     ownerPaints: ownerPaints(capture.manifest),
     effectIds: manifestEffectIds(capture.manifest),
+    effectDetails: manifestEffects(capture.manifest),
     frame: capture.frame,
   };
+}
+
+function collectEffectLifecycles(effectFrames) {
+  const expectedById = new Map();
+  for (const frame of effectFrames) {
+    for (const effect of frame.snapshot.effects ?? [])
+      expectedById.set(effect.id, effect);
+  }
+  if (expectedById.size === 0)
+    throw new Error("Effect lifecycle fixture contained no state effects");
+
+  return [...expectedById.values()]
+    .sort((first, second) => first.id.localeCompare(second.id))
+    .map((expected) => {
+      const beforeIndex = effectFrames.findIndex(({ effectDetails }) =>
+        effectDetails.some(({ effectId }) => effectId === expected.id),
+      );
+      const afterIndex =
+        beforeIndex < 0
+          ? -1
+          : effectFrames.findIndex(
+              ({ effectDetails }, index) =>
+                index > beforeIndex &&
+                !effectDetails.some(({ effectId }) => effectId === expected.id),
+            );
+      if (beforeIndex < 0 || afterIndex < 0)
+        throw new Error(
+          `Effect ${expected.id} did not contain both a visible and a despawned sample`,
+        );
+      const before = effectFrames[beforeIndex];
+      const observed = before.effectDetails.find(
+        ({ effectId }) => effectId === expected.id,
+      );
+      return {
+        effectId: expected.id,
+        kind: observed?.kind ?? "",
+        expectedKind: expected.kind,
+        ownerId: observed?.ownerId ?? null,
+        expectedOwnerId: expected.ownerId ?? null,
+        observedBefore: true,
+        observedAfter: false,
+        beforeTick: before.tick,
+        afterTick: effectFrames[afterIndex].tick,
+        startedAtTick: expected.startedAtTick,
+        expectedDespawnStateTick: expected.expiresAtTick + 1,
+      };
+    });
+}
+
+function assertExpectedEffectCorpus(lifecycles) {
+  for (const expected of EXPECTED_EFFECT_CORPUS) {
+    const actual = lifecycles.find(
+      ({ effectId }) => effectId === expected.effectId,
+    );
+    if (
+      !actual ||
+      actual.kind !== expected.kind ||
+      actual.expectedKind !== expected.kind ||
+      actual.ownerId !== expected.ownerId ||
+      actual.expectedOwnerId !== expected.ownerId
+    )
+      throw new Error(
+        `Effect corpus mismatch for ${expected.effectId}: expected ${expected.kind}/${expected.ownerId}`,
+      );
+  }
+  if (
+    new Set(lifecycles.map(({ kind }) => kind)).size !==
+    EXPECTED_EFFECT_CORPUS.length
+  )
+    throw new Error("Effect corpus did not cover three distinct effect kinds");
 }
 
 async function main() {
@@ -190,6 +290,10 @@ async function main() {
             "temporal-friendly-projectile-impact",
             segmentTicks.effectDespawn,
           ),
+          effectCorpus: captureSegment(
+            "temporal-effect-corpus",
+            segmentTicks.effectKindCorpus,
+          ),
           populated: captureSegment("mid-action", [240]),
           afterTransition: captureSegment("animation-idle", [0]),
           fresh: captureSegment("animation-idle", [0]),
@@ -199,6 +303,7 @@ async function main() {
         midAction: SEGMENT_TICKS["mid-action-state"],
         lootAndProjectile: SEGMENT_TICKS["loot-and-projectile-owners"],
         effectDespawn: SEGMENT_TICKS["effect-despawn"],
+        effectKindCorpus: SEGMENT_TICKS["effect-kind-corpus"],
       },
     );
 
@@ -218,24 +323,17 @@ async function main() {
         expectedTicks: SEGMENT_TICKS["effect-despawn"],
         frames: raw.effect.map(frameRecord),
       },
+      {
+        id: "effect-kind-corpus",
+        expectedTicks: SEGMENT_TICKS["effect-kind-corpus"],
+        frames: raw.effectCorpus.map(frameRecord),
+      },
     ];
 
-    const effectFrames = segments[2].frames;
-    const effectStartIndex = effectFrames.findIndex(
-      ({ effectIds }) => effectIds.length > 0,
-    );
-    const effectEndIndex =
-      effectStartIndex < 0
-        ? -1
-        : effectFrames.findIndex(
-            ({ effectIds }, index) =>
-              index > effectStartIndex && effectIds.length === 0,
-          );
-    if (effectStartIndex < 0 || effectEndIndex < 0)
-      throw new Error(
-        "Effect lifecycle fixture did not contain both a visible and a despawned sample",
-      );
-    const effectId = effectFrames[effectStartIndex].effectIds[0];
+    const runtimeEffectLifecycles = collectEffectLifecycles(segments[2].frames);
+    const corpusEffectLifecycles = collectEffectLifecycles(segments[3].frames);
+    assertExpectedEffectCorpus(corpusEffectLifecycles);
+    const effects = [...runtimeEffectLifecycles, ...corpusEffectLifecycles];
     const transitionFrame = raw.afterTransition[0].frame;
     const freshFrame = raw.fresh[0].frame;
     const residual = await measurePngResidual(
@@ -247,24 +345,23 @@ async function main() {
         id,
         expectedTicks,
         frames: frames.map(
-          ({ tick, expectedOwnerIds, observedOwnerIds, ownerPaints }) => ({
+          ({
             tick,
             expectedOwnerIds,
             observedOwnerIds,
             ownerPaints,
+            effectDetails,
+          }) => ({
+            tick,
+            expectedOwnerIds,
+            observedOwnerIds,
+            ownerPaints,
+            effectDetails,
           }),
         ),
       })),
       residuals: [residual],
-      effects: [
-        {
-          effectId,
-          observedBefore: true,
-          observedAfter: false,
-          beforeTick: effectFrames[effectStartIndex].tick,
-          afterTick: effectFrames[effectEndIndex].tick,
-        },
-      ],
+      effects,
     };
     const comparison = evaluateLiveCompositorEvidence(evidence);
     const controls = runLiveCompositorNegativeControls(evidence);
@@ -307,6 +404,7 @@ async function main() {
         "mid-action",
         "temporal-loot-bob",
         "temporal-friendly-projectile-impact",
+        "temporal-effect-corpus",
         "animation-idle",
       ],
       deviceProfileIds: ["desktop-deterministic"],
@@ -335,6 +433,7 @@ async function main() {
               observedOwnerIds,
               ownerPaints,
               effectIds,
+              effectDetails,
             }) => ({
               tick,
               snapshot,
@@ -343,6 +442,7 @@ async function main() {
               observedOwnerIds,
               ownerPaints,
               effectIds,
+              effectDetails,
             }),
           ),
         })),

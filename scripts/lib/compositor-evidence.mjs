@@ -17,6 +17,7 @@ export const LIVE_COMPOSITOR_SIGNAL_IDS = [
   "no-unexplained-absence",
   "no-stale-pixels",
   "presentation-cadence-complete",
+  "effect-ownership-complete",
   "effect-despawn-clean",
 ];
 
@@ -24,8 +25,11 @@ export const LIVE_COMPOSITOR_FAILURE_IDS = [
   "duplicate-owner-body",
   "expected-frame-absent",
   "stale-pixels-detected",
+  "effect-owner-mismatch",
   "stale-effect-retained",
 ];
+
+export const LIVE_EFFECT_KINDS = ["slash", "nova", "impact"];
 
 function signal(id, pass, detail) {
   return { id, pass, detail };
@@ -243,6 +247,46 @@ function residualIsClean(residual) {
   );
 }
 
+function effectOwnershipIsComplete(effects) {
+  return (
+    Array.isArray(effects) &&
+    effects.length > 0 &&
+    effects.every(
+      (effect) =>
+        typeof effect?.effectId === "string" &&
+        effect.effectId.length > 0 &&
+        LIVE_EFFECT_KINDS.includes(effect.kind) &&
+        effect.kind === effect.expectedKind &&
+        typeof effect.ownerId === "string" &&
+        effect.ownerId.length > 0 &&
+        typeof effect.expectedOwnerId === "string" &&
+        effect.expectedOwnerId.length > 0 &&
+        effect.ownerId === effect.expectedOwnerId,
+    )
+  );
+}
+
+function effectDespawnIsClean(effects) {
+  return (
+    Array.isArray(effects) &&
+    effects.length > 0 &&
+    effects.every(
+      (effect) =>
+        typeof effect?.effectId === "string" &&
+        effect.effectId.length > 0 &&
+        effect.observedBefore === true &&
+        effect.observedAfter === false &&
+        Number.isInteger(effect.beforeTick) &&
+        Number.isInteger(effect.afterTick) &&
+        Number.isInteger(effect.startedAtTick) &&
+        Number.isInteger(effect.expectedDespawnStateTick) &&
+        effect.beforeTick >= effect.startedAtTick &&
+        effect.beforeTick < effect.afterTick &&
+        effect.afterTick === effect.expectedDespawnStateTick,
+    )
+  );
+}
+
 function segmentAssessment(segment) {
   const frames = Array.isArray(segment?.frames) ? segment.frames : [];
   const hasFrames = frames.length > 0;
@@ -295,21 +339,14 @@ export function evaluateLiveCompositorEvidence({
     Array.isArray(residuals) &&
     residuals.length > 0 &&
     residuals.every(residualIsClean);
-  const effectDespawnClean =
-    Array.isArray(effects) &&
-    effects.length > 0 &&
-    effects.every(
-      (effect) =>
-        typeof effect?.effectId === "string" &&
-        effect.effectId.length > 0 &&
-        effect.observedBefore === true &&
-        effect.observedAfter === false,
-    );
+  const effectOwnershipComplete = effectOwnershipIsComplete(effects);
+  const effectDespawnClean = effectDespawnIsClean(effects);
   const failures = [];
   if (!oneCurrentBodyPerOwner) failures.push("duplicate-owner-body");
   if (!noUnexplainedAbsence || !presentationCadenceComplete)
     failures.push("expected-frame-absent");
   if (!noStalePixels) failures.push("stale-pixels-detected");
+  if (!effectOwnershipComplete) failures.push("effect-owner-mismatch");
   if (!effectDespawnClean) failures.push("stale-effect-retained");
   return {
     pass: failures.length === 0,
@@ -326,6 +363,9 @@ export function evaluateLiveCompositorEvidence({
       }),
       signal("presentation-cadence-complete", presentationCadenceComplete, {
         segments: assessments,
+      }),
+      signal("effect-ownership-complete", effectOwnershipComplete, {
+        effects: effects ?? [],
       }),
       signal("effect-despawn-clean", effectDespawnClean, {
         effects: effects ?? [],
@@ -364,6 +404,13 @@ export function runLiveCompositorNegativeControls(evidence) {
       expectedSignal: "stale-effect-retained",
       mutate(value) {
         value.effects[0].observedAfter = true;
+      },
+    },
+    {
+      id: "effect-owner-mismatched",
+      expectedSignal: "effect-owner-mismatch",
+      mutate(value) {
+        value.effects[0].ownerId = "owner:wrong";
       },
     },
   ];

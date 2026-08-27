@@ -34,8 +34,16 @@ function liveFixture() {
     effects: [
       {
         effectId: "effect:impact",
+        kind: "impact",
+        expectedKind: "impact",
+        ownerId: "player",
+        expectedOwnerId: "player",
         observedBefore: true,
         observedAfter: false,
+        beforeTick: 10,
+        afterTick: 18,
+        startedAtTick: 10,
+        expectedDespawnStateTick: 18,
       },
     ],
   };
@@ -53,13 +61,14 @@ describe("live compositor evidence", () => {
   it("detects every named live-compositor mutation", () => {
     const controls = runLiveCompositorNegativeControls(liveFixture());
 
-    expect(controls).toHaveLength(4);
+    expect(controls).toHaveLength(5);
     expect(controls.every(({ status }) => status === "DETECTED")).toBe(true);
     expect(controls.map(({ signal }) => signal)).toEqual([
       "stale-pixels-detected",
       "duplicate-owner-body",
       "expected-frame-absent",
       "stale-effect-retained",
+      "effect-owner-mismatch",
     ]);
   });
 
@@ -86,8 +95,19 @@ describe("live compositor evidence", () => {
     expect(result.pass).toBe(false);
     expect(result.failures).toEqual([
       "stale-pixels-detected",
+      "effect-owner-mismatch",
       "stale-effect-retained",
     ]);
+  });
+
+  it("rejects an effect whose kind or owner disagrees with its expected metadata", () => {
+    const evidence = liveFixture();
+    evidence.effects[0]!.kind = "slash";
+
+    const result = evaluateLiveCompositorEvidence(evidence);
+
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain("effect-owner-mismatch");
   });
 
   it("locates exact pixel residuals between reconstructed PNG frames", async () => {
