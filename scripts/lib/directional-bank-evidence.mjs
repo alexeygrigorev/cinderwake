@@ -10,14 +10,18 @@ export const DIRECTIONAL_BANK_DIRECTION_IDS = [
 export const DIRECTIONAL_BANK_SIGNAL_IDS = [
   "facing-follows-intent",
   "bank-and-reflection-match",
+  "target-aim-follows-intent",
   "action-origin-mirrors",
+  "ability-recovery-is-contiguous",
 ];
 
 export const DIRECTIONAL_BANK_FAILURE_IDS = [
   "sprite-bank-mismatch",
   "west-reflection-missing",
   "stale-facing-bank",
+  "target-aim-not-mirrored",
   "attack-origin-not-mirrored",
+  "ability-recovery-mismatch",
   "directional-bank-evidence-desynchronized",
 ];
 
@@ -181,12 +185,14 @@ function bankObservation(capture, expectedFacing) {
 }
 
 function actionAttack(action) {
+  const expectedKind = action?.kind;
+  if (typeof expectedKind !== "string") return null;
   if (isObject(action?.pendingAttack)) return action.pendingAttack;
   const attacks = action?.after?.snapshot?.pendingAttacks;
   if (!Array.isArray(attacks)) return null;
   return (
     attacks.find(
-      ({ ownerId, kind }) => ownerId === "player" && kind === "primary",
+      ({ ownerId, kind }) => ownerId === "player" && kind === expectedKind,
     ) ?? null
   );
 }
@@ -194,7 +200,10 @@ function actionAttack(action) {
 function producedOriginPass(actorId, action, attack) {
   const produced = Array.isArray(action?.produced) ? action.produced : [];
   if (!attack || !finiteVector(attack.origin)) return false;
-  if (actorId === "vanguard") {
+  if (
+    actorId === "vanguard" ||
+    (actorId === "arcanist" && action?.kind === "ability")
+  ) {
     return produced.some(
       (entry) =>
         entry?.type === "effect" &&
@@ -214,32 +223,111 @@ function producedOriginPass(actorId, action, attack) {
   );
 }
 
+function targetAimPass(action, expectedFacing) {
+  const before = playerState(action?.before);
+  const aim = action?.input?.aim;
+  if (!before || !finiteVector(before.position) || !finiteVector(aim))
+    return false;
+  return (
+    !equalVector(aim, before.position) &&
+    facingBucket({
+      x: aim.x - before.position.x,
+      y: aim.y - before.position.y,
+    }) === expectedFacing
+  );
+}
+
+function recoveryPass(action, expectedFacing) {
+  const recoveryPlayer = playerState(action?.recovery);
+  const recoveryBank = bankObservation(action?.recovery, expectedFacing);
+  const recoveryClip = recoveryPlayer?.animation?.clip;
+  const expectedActionClip = action?.kind === "ability" ? "ability" : "attack";
+  return Boolean(
+    recoveryPlayer &&
+    recoveryClip &&
+    recoveryClip !== expectedActionClip &&
+    ["idle", "walk"].includes(recoveryClip) &&
+    recoveryBank.matches,
+  );
+}
+
+function actionObservation(actorId, action, expectedFacing) {
+  const beforePlayer = playerState(action?.before);
+  const afterPlayer = playerState(action?.after);
+  const afterFacing = facingBucket(afterPlayer?.facing);
+  const expectedActionClip = action?.kind === "ability" ? "ability" : "attack";
+  const afterClip = afterPlayer?.animation?.clip ?? null;
+  const attack = actionAttack(action);
+  const originPass = Boolean(
+    beforePlayer &&
+    afterPlayer &&
+    attack &&
+    equalVector(attack.origin, beforePlayer.position) &&
+    equalVector(attack.direction, afterPlayer.facing) &&
+    producedOriginPass(actorId, action, attack),
+  );
+  const aimPass = targetAimPass(action, expectedFacing);
+  const recovery = {
+    clip: playerState(action?.recovery)?.animation?.clip ?? null,
+    bank: bankObservation(action?.recovery, expectedFacing),
+    pass: recoveryPass(action, expectedFacing),
+  };
+  return {
+    kind: action?.kind ?? null,
+    beforeFacing: facingBucket(beforePlayer?.facing),
+    afterFacing,
+    input: action?.input ?? null,
+    aimPass,
+    clip: afterClip,
+    clipPass: afterClip === expectedActionClip,
+    pendingAttack: attack
+      ? {
+          origin: attack.origin,
+          direction: attack.direction,
+          kind: attack.kind,
+        }
+      : null,
+    producedCount: Array.isArray(action?.produced) ? action.produced.length : 0,
+    originPass,
+    recovery,
+    pass: Boolean(
+      aimPass &&
+      afterFacing === expectedFacing &&
+      afterClip === expectedActionClip &&
+      originPass &&
+      recovery.pass,
+    ),
+  };
+}
+
 function directionObservation(runDirection, expected, actorId) {
   const movement = runDirection?.movement;
   const action = runDirection?.action;
+  const ability = runDirection?.ability;
   const turnExpected =
     direction(runDirection?.turnDirectionId) ?? direction(expected?.opposite);
   const movementDelta = delta(movement?.before, movement?.after);
   const afterPlayer = playerState(movement?.after);
   const turnPlayer = playerState(movement?.turn);
   const actionBeforePlayer = playerState(action?.before);
-  const actionAfterPlayer = playerState(action?.after);
   const afterFacing = facingBucket(afterPlayer?.facing);
   const turnFacing = facingBucket(turnPlayer?.facing);
   const actionBeforeFacing = facingBucket(actionBeforePlayer?.facing);
-  const actionAfterFacing = facingBucket(actionAfterPlayer?.facing);
   const movementBank = bankObservation(movement?.after, expected?.facing);
   const turnBank = bankObservation(movement?.turn, turnExpected?.facing);
   const actionBeforeBank = bankObservation(action?.before, expected?.facing);
   const actionAfterBank = bankObservation(action?.after, expected?.facing);
-  const attack = actionAttack(action);
-  const actionOriginPass = Boolean(
-    actionBeforePlayer &&
-    actionAfterPlayer &&
-    attack &&
-    equalVector(attack.origin, actionBeforePlayer.position) &&
-    equalVector(attack.direction, actionBeforePlayer.facing) &&
-    producedOriginPass(actorId, action, attack),
+  const abilityBeforeBank = bankObservation(ability?.before, expected?.facing);
+  const abilityAfterBank = bankObservation(ability?.after, expected?.facing);
+  const actionObservationValue = actionObservation(
+    actorId,
+    action,
+    expected?.facing,
+  );
+  const abilityObservationValue = actionObservation(
+    actorId,
+    ability,
+    expected?.facing,
   );
   const movementPass = Boolean(
     expected &&
@@ -254,10 +342,17 @@ function directionObservation(runDirection, expected, actorId) {
     movementBank.matches &&
     turnBank.matches &&
     actionBeforeFacing === expected?.facing &&
-    actionAfterFacing === expected?.facing &&
     actionBeforeBank.matches &&
-    actionAfterBank.matches,
+    actionAfterBank.matches &&
+    actionObservationValue.recovery.bank.matches &&
+    abilityBeforeBank.matches &&
+    abilityAfterBank.matches &&
+    abilityObservationValue.recovery.bank.matches,
   );
+  const aimPass = Boolean(
+    actionObservationValue.aimPass && abilityObservationValue.aimPass,
+  );
+  const abilityRecoveryPass = abilityObservationValue.recovery.pass;
   return {
     directionId: runDirection?.directionId ?? null,
     turnDirectionId: runDirection?.turnDirectionId ?? null,
@@ -279,22 +374,26 @@ function directionObservation(runDirection, expected, actorId) {
       turn: turnBank,
       actionBefore: actionBeforeBank,
       actionAfter: actionAfterBank,
+      abilityBefore: abilityBeforeBank,
+      abilityAfter: abilityAfterBank,
       pass: bankPass,
     },
     action: {
-      beforeFacing: actionBeforeFacing,
-      afterFacing: actionAfterFacing,
-      pendingAttack: attack
-        ? {
-            origin: attack.origin,
-            direction: attack.direction,
-            kind: attack.kind,
-          }
-        : null,
-      producedCount: Array.isArray(action?.produced)
-        ? action.produced.length
-        : 0,
-      pass: actionOriginPass,
+      ...actionObservationValue,
+      pass: actionObservationValue.pass,
+    },
+    ability: {
+      ...abilityObservationValue,
+      pass: abilityObservationValue.pass,
+    },
+    aim: {
+      pass: aimPass,
+      primary: actionObservationValue.aimPass,
+      ability: abilityObservationValue.aimPass,
+    },
+    recovery: {
+      pass: abilityRecoveryPass,
+      ability: abilityObservationValue.recovery,
     },
     synchronized: [
       movement?.before,
@@ -303,6 +402,11 @@ function directionObservation(runDirection, expected, actorId) {
       action?.before,
       action?.after,
       action?.impact,
+      action?.recovery,
+      ability?.before,
+      ability?.after,
+      ability?.impact,
+      ability?.recovery,
     ].every(captureSynchronized),
   };
 }
@@ -355,6 +459,11 @@ function profileCoverage(
           entry.action?.before,
           entry.action?.after,
           entry.action?.impact,
+          entry.action?.recovery,
+          entry.ability?.before,
+          entry.ability?.after,
+          entry.ability?.impact,
+          entry.ability?.recovery,
         ].every(captureSynchronized),
       );
     }),
@@ -374,9 +483,10 @@ function profileCoverage(
 }
 
 /**
- * Evaluate exact directional sprite-bank, reflection, and authored attack
- * origin evidence. The recorder supplies synchronized bridge captures; this
- * module owns the vector-to-bank oracle and named mutation verdicts.
+ * Evaluate exact directional sprite-bank, reflection, target-aim, authored
+ * action-origin, and recovery evidence. The recorder supplies synchronized
+ * bridge captures; this module owns the directional oracle and named mutation
+ * verdicts.
  */
 export function evaluateDirectionalBankEvidence({
   profiles,
@@ -434,7 +544,14 @@ export function evaluateDirectionalBankEvidence({
   const facingPass =
     complete && directions.every(({ movement }) => movement.pass);
   const bankPass = complete && directions.every(({ banks }) => banks.pass);
-  const actionPass = complete && directions.every(({ action }) => action.pass);
+  const aimPass = complete && directions.every(({ aim }) => aim.pass);
+  const actionPass =
+    complete &&
+    directions.every(
+      ({ action, ability }) => action.originPass && ability.originPass,
+    );
+  const recoveryPass =
+    complete && directions.every(({ recovery }) => recovery.pass);
 
   if (!facingPass) failures.push("stale-facing-bank");
   if (!bankPass) {
@@ -457,7 +574,9 @@ export function evaluateDirectionalBankEvidence({
     )
       failures.push("sprite-bank-mismatch");
   }
+  if (!aimPass) failures.push("target-aim-not-mirrored");
   if (!actionPass) failures.push("attack-origin-not-mirrored");
+  if (!recoveryPass) failures.push("ability-recovery-mismatch");
 
   return {
     pass: failures.length === 0,
@@ -465,7 +584,9 @@ export function evaluateDirectionalBankEvidence({
     signals: [
       signal("facing-follows-intent", facingPass, { directions }),
       signal("bank-and-reflection-match", bankPass, { directions }),
+      signal("target-aim-follows-intent", aimPass, { directions }),
       signal("action-origin-mirrors", actionPass, { directions }),
+      signal("ability-recovery-is-contiguous", recoveryPass, { directions }),
     ],
     actors: [...requiredActorIds],
     directions: [...requiredDirectionIds],

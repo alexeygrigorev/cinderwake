@@ -12,13 +12,17 @@ export declare const DIRECTIONAL_BANK_DIRECTION_IDS: readonly [
 export declare const DIRECTIONAL_BANK_SIGNAL_IDS: readonly [
   "facing-follows-intent",
   "bank-and-reflection-match",
+  "target-aim-follows-intent",
   "action-origin-mirrors",
+  "ability-recovery-is-contiguous",
 ];
 export declare const DIRECTIONAL_BANK_FAILURE_IDS: readonly [
   "sprite-bank-mismatch",
   "west-reflection-missing",
   "stale-facing-bank",
+  "target-aim-not-mirrored",
   "attack-origin-not-mirrored",
+  "ability-recovery-mismatch",
   "directional-bank-evidence-desynchronized",
 ];
 
