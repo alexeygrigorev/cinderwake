@@ -99,7 +99,7 @@ accepted-crop mutation. Existing Playwright geometry coverage still exercises
 desktop DPR 2. This is a machine raster signal, not a claim that an emulated
 portrait viewport substitutes for a native phone or independent visual review.
 
-Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests. The production camera recorder keeps separate run specs for smooth edge/diagonal/stop routes, fixed follow-disabled movement, and snap follow; synchronized captures enforce the selected mode while rAF samples retain the display interpolation boundary.
+Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests. The production camera recorder keeps separate run specs for smooth edge/reversal, west/south edge, diagonal/stop routes, fixed follow-disabled movement, and snap follow; synchronized captures enforce the selected mode while rAF samples retain the display interpolation boundary.
 
 ## Artifact layout
 

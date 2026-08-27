@@ -70,7 +70,8 @@ The prose checklist remains the human explanation of what matters. The versioned
    supplied.
 
    `PRES-CAMERA-016` binds the desktop and portrait production camera bundle with
-   separate smooth edge/reversal, diagonal/corner, stop, fixed, and snap run specs,
+   separate smooth edge/reversal, west/south edge, diagonal/corner, stop, fixed,
+   and snap run specs,
    synchronized target/camera timelines, and the five named detector controls. It
    remains `NEEDS_VISUAL_REVIEW` until its contact sheets and videos receive the
    required independent playback review.
