@@ -12,6 +12,7 @@ import {
 
 const OUTPUT = path.resolve("quality-results/compositor/pres-flicker-024");
 const VIEWPORT = { width: 960, height: 540 };
+const PLAYABLE_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
 const LIVE_PROFILES = {
   "desktop-60hz": {
     viewport: { width: 1_440, height: 900 },
@@ -269,9 +270,9 @@ async function waitForLiveReady(page) {
     throw new Error("Live flicker route was not observe-only");
 }
 
-async function beginLiveRoute(page, baseURL, profile) {
+async function beginLiveRoute(page, baseURL, profile, actorId) {
   await page.goto(`${baseURL}/`, { waitUntil: "networkidle" });
-  const classCard = page.locator("[data-class='vanguard']");
+  const classCard = page.locator(`[data-class='${actorId}']`);
   await classCard.waitFor({ state: "visible" });
   if (profile.hasTouch) await classCard.tap();
   else await classCard.click();
@@ -380,8 +381,9 @@ async function activateLiveAction(page, profile, action, pace) {
   await page.waitForTimeout(pace.actionGapMs);
 }
 
-function evaluatorLiveSample(sample) {
+function evaluatorLiveSample(sample, actorId) {
   return {
+    actorId,
     observedAtMs: sample.observedAtMs,
     tick: sample.tick,
     presentationTick: sample.presentationTick,
@@ -396,6 +398,7 @@ async function runLiveRecording(
   baseURL,
   profileId,
   profile,
+  actorId,
   paceId,
   pace,
   captureFrames,
@@ -403,9 +406,9 @@ async function runLiveRecording(
   const videoDirectory = path.join(
     OUTPUT,
     "video-tmp",
-    `${profileId}-${paceId}`,
+    `${profileId}-${actorId}-${paceId}`,
   );
-  const liveDirectory = path.join(OUTPUT, "live", profileId);
+  const liveDirectory = path.join(OUTPUT, "live", profileId, actorId);
   await fs.mkdir(videoDirectory, { recursive: true });
   await fs.mkdir(liveDirectory, { recursive: true });
   const context = await browser.newContext({
@@ -427,7 +430,7 @@ async function runLiveRecording(
   let result;
   let videoPath;
   try {
-    await beginLiveRoute(page, baseURL, profile);
+    await beginLiveRoute(page, baseURL, profile, actorId);
     const capture = async (label) => {
       if (captureFrames) frames.push(await captureLiveFrame(page, label));
     };
@@ -449,7 +452,7 @@ async function runLiveRecording(
     });
     if (faults.length > 0)
       throw new Error(
-        `${profileId}/${paceId} browser faults: ${faults.join("; ")}`,
+        `${profileId}/${actorId}/${paceId} browser faults: ${faults.join("; ")}`,
       );
     result = { samples, frames };
   } finally {
@@ -463,56 +466,91 @@ async function runLiveRecording(
     }
   }
   if (!videoPath)
-    throw new Error(`${profileId}/${paceId} did not produce video`);
+    throw new Error(`${profileId}/${actorId}/${paceId} did not produce video`);
   return result;
 }
 
 async function runLiveProfile(browser, baseURL, profileId, profile) {
-  const normal = await runLiveRecording(
-    browser,
-    baseURL,
-    profileId,
-    profile,
-    "normal",
-    LIVE_PACES.normal,
-    true,
-  );
-  const slow = await runLiveRecording(
-    browser,
-    baseURL,
-    profileId,
-    profile,
-    "slow",
-    LIVE_PACES.slow,
-    false,
-  );
-  const liveDirectory = path.join(OUTPUT, "live", profileId);
-  const frameArtifacts = [];
-  for (const [index, frame] of normal.frames.entries()) {
-    const bytes = dataUrlBuffer(frame.frame);
-    const name = `frame-${String(index).padStart(4, "0")}-${frame.label}.png`;
-    await fs.writeFile(path.join(liveDirectory, name), bytes);
-    frameArtifacts.push({
-      tick: frame.tick,
-      file: `live/${profileId}/${name}`,
-      sha256: sha256(bytes),
+  const actors = [];
+  for (const actorId of PLAYABLE_ACTOR_IDS) {
+    const normal = await runLiveRecording(
+      browser,
+      baseURL,
+      profileId,
+      profile,
+      actorId,
+      "normal",
+      LIVE_PACES.normal,
+      true,
+    );
+    const slow =
+      actorId === "vanguard"
+        ? await runLiveRecording(
+            browser,
+            baseURL,
+            profileId,
+            profile,
+            actorId,
+            "slow",
+            LIVE_PACES.slow,
+            false,
+          )
+        : { samples: [] };
+    const liveDirectory = path.join(OUTPUT, "live", profileId, actorId);
+    const frameArtifacts = [];
+    for (const [index, frame] of normal.frames.entries()) {
+      const bytes = dataUrlBuffer(frame.frame);
+      const name = `frame-${String(index).padStart(4, "0")}-${frame.label}.png`;
+      await fs.writeFile(path.join(liveDirectory, name), bytes);
+      frameArtifacts.push({
+        actorId,
+        tick: frame.tick,
+        label: frame.label,
+        file: `live/${profileId}/${actorId}/${name}`,
+        sha256: sha256(bytes),
+      });
+    }
+    const videoArtifacts = {};
+    for (const paceId of actorId === "vanguard"
+      ? ["normal", "slow"]
+      : ["normal"]) {
+      const file = `live/${profileId}/${actorId}/${paceId}.webm`;
+      const bytes = await fs.readFile(path.join(OUTPUT, file));
+      videoArtifacts[paceId] = { file, sha256: sha256(bytes) };
+    }
+    actors.push({
+      actorId,
+      samples: normal.samples.map((sample) =>
+        evaluatorLiveSample(sample, actorId),
+      ),
+      sampleDetails: normal.samples,
+      frameArtifacts,
+      videoArtifacts,
+      slowSampleCount: slow.samples.length,
     });
   }
-  const videoArtifacts = {};
-  for (const paceId of ["normal", "slow"]) {
-    const file = `live/${profileId}/${paceId}.webm`;
-    const bytes = await fs.readFile(path.join(OUTPUT, file));
-    videoArtifacts[paceId] = { file, sha256: sha256(bytes) };
-  }
+  const frameArtifacts = actors.flatMap(({ frameArtifacts: frames }) => frames);
+  const videoArtifacts = Object.fromEntries(
+    actors.flatMap(({ actorId, videoArtifacts: videos }) =>
+      Object.entries(videos).map(([paceId, artifact]) => [
+        `${actorId}-${paceId}`,
+        artifact,
+      ]),
+    ),
+  );
   return {
     id: profileId,
     required: profileId === "desktop-60hz",
     viewport: { ...profile.viewport, dpr: profile.deviceScaleFactor },
-    samples: normal.samples.map(evaluatorLiveSample),
-    sampleDetails: normal.samples,
+    actors,
+    samples: actors.flatMap(({ samples: actorSamples }) => actorSamples),
+    sampleDetails: actors.flatMap(({ sampleDetails }) => sampleDetails),
     frameArtifacts,
     videoArtifacts,
-    slowSampleCount: slow.samples.length,
+    slowSampleCount: actors.reduce(
+      (total, { slowSampleCount }) => total + slowSampleCount,
+      0,
+    ),
   };
 }
 
@@ -623,11 +661,14 @@ async function main() {
       liveRuns.push(
         await runLiveProfile(browser, started.baseURL, profileId, profile),
       );
-    const liveProfiles = liveRuns.map(({ id, samples, required }) => ({
-      id,
-      required,
-      samples,
-    }));
+    const liveProfiles = liveRuns.flatMap(({ id, actors, required }) =>
+      actors.map(({ actorId, samples }) => ({
+        id: `${id}:${actorId}`,
+        actorId,
+        required,
+        samples,
+      })),
+    );
     const evidence = {
       segments: segments.map(({ id, expectedTicks, frames }) => ({
         id,
@@ -690,7 +731,9 @@ async function main() {
       recipeId: "recipe:pres-flicker-024",
       evaluator: "live-compositor-flicker-v1",
       scenarioIds: [
-        "ordinary-live-idle-move-turn-attack",
+        ...PLAYABLE_ACTOR_IDS.map(
+          (actorId) => `ordinary-live-idle-move-turn-attack:${actorId}`,
+        ),
         "mid-action",
         "temporal-loot-bob",
         "temporal-friendly-projectile-impact",
@@ -706,12 +749,14 @@ async function main() {
         .filter(({ required }) => !required)
         .map(({ id }) => id),
       gestureIds: ["sustained-movement", "repeated-attacks"],
+      actorIds: PLAYABLE_ACTOR_IDS,
       viewport: { ...VIEWPORT, dpr: 1 },
       liveProfiles: liveRuns.map(
         ({
           id,
           required,
           viewport,
+          actors,
           frameArtifacts,
           videoArtifacts,
           slowSampleCount,
@@ -719,6 +764,7 @@ async function main() {
           id,
           required,
           viewport,
+          actors,
           frameArtifacts,
           videoArtifacts,
           slowSampleCount,
@@ -767,6 +813,7 @@ async function main() {
             id,
             required,
             viewport,
+            actors,
             samples,
             sampleDetails,
             frameArtifacts,
@@ -775,6 +822,7 @@ async function main() {
             id,
             required,
             viewport,
+            actors,
             samples,
             sampleDetails,
             frameArtifacts,
