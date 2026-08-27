@@ -53,6 +53,48 @@ describe("public temporal scenario catalog", () => {
     }
   });
 
+  it("keeps every owned effect geometry visible until its exact despawn tick", () => {
+    const contract = TEMPORAL_SCENARIO_CONTRACTS["temporal-effect-corpus"]!;
+    const state = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-effect-corpus"]!,
+    );
+
+    expect(contract.effectLifecycles).toHaveLength(3);
+    expect(new Set(state.effects.map(({ kind }) => kind))).toEqual(
+      new Set(["slash", "nova", "impact"]),
+    );
+    expect(
+      state.effects.map(({ id, ownerId, kind }) => ({ id, ownerId, kind })),
+    ).toEqual([
+      {
+        id: TEMPORAL_ENTITY_IDS.effectSlash,
+        ownerId: "player",
+        kind: "slash",
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.effectNova,
+        ownerId: "player",
+        kind: "nova",
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.effectImpact,
+        ownerId: "player",
+        kind: "impact",
+      },
+    ]);
+
+    for (const lifecycle of contract.effectLifecycles!) {
+      advanceUntilStateTick(state, lifecycle.despawnStateTick - 1);
+      expect(state.effects.some(({ id }) => id === lifecycle.effectId)).toBe(
+        true,
+      );
+      advanceUntilStateTick(state, lifecycle.despawnStateTick);
+      expect(state.effects.some(({ id }) => id === lifecycle.effectId)).toBe(
+        false,
+      );
+    }
+  });
+
   const heroCases: Array<{
     scenarioId: string;
     classId: CharacterClass;

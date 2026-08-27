@@ -1300,9 +1300,20 @@ export const TEMPORAL_ENTITY_IDS = {
   weaponLoot: "loot:temporal-weapon",
   lossAttacker: "monster:temporal-loss",
   lossContact: "attack:temporal-loss-contact",
+  effectSlash: "effect:temporal-slash",
+  effectNova: "effect:temporal-nova",
+  effectImpact: "effect:temporal-impact",
 } as const;
 
 export type TemporalInputAction = "attack" | "ability" | "move-right" | null;
+
+export interface TemporalEffectLifecycleContract {
+  effectId: string;
+  kind: EffectState["kind"];
+  ownerId: string;
+  startedAtTick: number;
+  despawnStateTick: number;
+}
 
 export interface TemporalScenarioContract {
   scenarioId: string;
@@ -1315,6 +1326,8 @@ export interface TemporalScenarioContract {
   despawnStateTick?: number;
   /** Exact state ticks recommended for synchronized state/manifest/PNG capture. */
   captureTicks: readonly number[];
+  /** Owned effect geometries and their first absent state ticks. */
+  effectLifecycles?: readonly TemporalEffectLifecycleContract[];
 }
 
 /**
@@ -1432,6 +1445,35 @@ export const TEMPORAL_SCENARIO_CONTRACTS = {
     contactEventTick: 18,
     despawnStateTick: 19,
     captureTicks: [0, 3, 6, 9, 12, 15, 17, 18, 19, 21, 24, 27, 30, 31],
+  },
+  "temporal-effect-corpus": {
+    scenarioId: "temporal-effect-corpus",
+    subjectId: TEMPORAL_ENTITY_IDS.effectSlash,
+    inputAction: null,
+    captureTicks: [0, 8, 9, 16, 17, 24, 25],
+    effectLifecycles: [
+      {
+        effectId: TEMPORAL_ENTITY_IDS.effectSlash,
+        kind: "slash",
+        ownerId: "player",
+        startedAtTick: 0,
+        despawnStateTick: 9,
+      },
+      {
+        effectId: TEMPORAL_ENTITY_IDS.effectNova,
+        kind: "nova",
+        ownerId: "player",
+        startedAtTick: 0,
+        despawnStateTick: 17,
+      },
+      {
+        effectId: TEMPORAL_ENTITY_IDS.effectImpact,
+        kind: "impact",
+        ownerId: "player",
+        startedAtTick: 0,
+        despawnStateTick: 25,
+      },
+    ],
   },
   "temporal-loot-bob": {
     scenarioId: "temporal-loot-bob",
@@ -1564,6 +1606,51 @@ function temporalEnemyAttack(kind: MonsterKind): ScenarioV1 {
       },
     ],
     settings: { ai: true, autoPickup: false, cameraFollow: true },
+  };
+}
+
+function temporalEffectCorpus(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "temporal-effect-corpus",
+    seed: "quality-effect-corpus-01",
+    classId: "vanguard",
+    map: { mode: "explicit", rows: arenaRows(30, 15) },
+    player: { tile: [9, 7], facing: [1024, 0] },
+    monsters: [],
+    effects: [
+      {
+        id: TEMPORAL_ENTITY_IDS.effectSlash,
+        ownerId: "player",
+        kind: "slash",
+        tile: [9, 7],
+        color: "#f4c15d",
+        startedAtTick: 0,
+        expiresAtTick: 8,
+        radius: 720,
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.effectNova,
+        ownerId: "player",
+        kind: "nova",
+        tile: [10, 7],
+        color: "#b477ff",
+        startedAtTick: 0,
+        expiresAtTick: 16,
+        radius: 720,
+      },
+      {
+        id: TEMPORAL_ENTITY_IDS.effectImpact,
+        ownerId: "player",
+        kind: "impact",
+        tile: [11, 7],
+        color: "#f2a65a",
+        startedAtTick: 0,
+        expiresAtTick: 24,
+        radius: 720,
+      },
+    ],
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
   };
 }
 
@@ -1877,6 +1964,7 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     ],
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
+  "temporal-effect-corpus": temporalEffectCorpus(),
   "temporal-friendly-projectile": {
     schemaVersion: 1,
     id: "temporal-friendly-projectile",
