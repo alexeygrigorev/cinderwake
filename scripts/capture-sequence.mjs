@@ -2,6 +2,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import fs from "node:fs/promises";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -10,6 +11,24 @@ import { chromium } from "@playwright/test";
 function option(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
   return index < 0 ? fallback : (process.argv[index + 1] ?? fallback);
+}
+
+async function availablePort() {
+  const probe = net.createServer();
+  await new Promise((resolve, reject) => {
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", resolve);
+  });
+  const address = probe.address();
+  if (!address || typeof address === "string") {
+    probe.close();
+    throw new Error("Could not determine an available capture port");
+  }
+  const port = address.port;
+  await new Promise((resolve, reject) =>
+    probe.close((error) => (error ? reject(error) : resolve())),
+  );
+  return port;
 }
 
 function inputForAction(action) {
@@ -165,7 +184,8 @@ if (
 if (!new Set(["always", "present-until", "appears-at"]).has(presenceContract))
   throw new Error(`Unknown --presence ${presenceContract}`);
 
-const port = Number(option("port", String(43_000 + (process.pid % 1_000))));
+const requestedPort = option("port");
+const port = Number(requestedPort ?? (await availablePort()));
 if (!Number.isInteger(port) || port < 1024 || port > 65_535)
   throw new Error("--port must be an available TCP port");
 const baseURL = `http://127.0.0.1:${port}`;
@@ -497,11 +517,19 @@ try {
     "sequences",
     captureId,
   );
-  const reproductionCommand = [
+  const reproductionArguments = [
     "npm run capture:sequence --",
     `--id ${shellQuote(`${captureId}-reproduced`)}`,
-    `--state-file ${shellQuote(path.join(artifactDirectory, "initial-state.json"))}`,
-    `--commands-file ${shellQuote(path.join(artifactDirectory, "commands.json"))}`,
+    ...(stateFile
+      ? [
+          `--state-file ${shellQuote(path.join(artifactDirectory, "initial-state.json"))}`,
+        ]
+      : []),
+    ...(commandsFile
+      ? [
+          `--commands-file ${shellQuote(path.join(artifactDirectory, "commands.json"))}`,
+        ]
+      : []),
     `--scenario ${shellQuote(scenario)}`,
     `--action ${shellQuote(action)}`,
     `--track ${shellQuote(trackedEntityId)}`,
@@ -513,7 +541,8 @@ try {
     `--viewport-width ${viewportWidth}`,
     `--viewport-height ${viewportHeight}`,
     ...(mobile ? ["--mobile true"] : []),
-  ].join(" ");
+  ];
+  const reproductionCommand = reproductionArguments.join(" ");
   const metadata = {
     schemaVersion: 2,
     captureId,
