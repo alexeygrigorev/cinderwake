@@ -209,6 +209,7 @@ function annotateSpriteRoles(root: ParentNode): void {
     [".scenario-value", "ui-field"],
     [".city-service-actions button", "ui-button"],
     [".city-service-button-copy", "ui-field"],
+    [".sprite-text", "glyph-text"],
   ];
   for (const [selector, role] of roles)
     root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
@@ -491,7 +492,7 @@ function updateHud(state: GameState): void {
     const outcomeLabel =
         state.phase === "won" ? "Rift sealed" : "The wake consumes you",
       outcomeTitle = state.phase === "won" ? "Cinders quieted." : "Run ended.";
-    out.innerHTML = `<p>${spriteText(outcomeLabel, "sprite-outcome-label")}</p><h2 data-ui-title>${outcomeTitle}</h2><button aria-label="Try again">${spriteText("Try again", "sprite-button-label")}</button>`;
+    out.innerHTML = `<p>${spriteText(outcomeLabel, "sprite-outcome-label")}</p><h2 data-ui-title>${outcomeTitle}</h2><button data-sprite-role="ui-button" aria-label="Try again">${spriteText("Try again", "sprite-button-label")}</button>`;
     out.querySelector("button")!.addEventListener("click", () => {
       void boot(activeScenario!);
     });
