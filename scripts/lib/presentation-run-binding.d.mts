@@ -49,6 +49,8 @@ export interface PresentationRunBindingInput {
   cameraComparison: any;
   spriteMetadata: any;
   spriteComparison: any;
+  visibleSpriteMetadata: any;
+  visibleSpriteComparison: any;
   temporalMetadata: any;
   temporalComparison: any;
   depthMetadata: any;
@@ -68,6 +70,7 @@ export interface PresentationRunBindingInput {
   facingArtifacts?: Array<readonly [string, string]> | null;
   cameraArtifacts?: Array<readonly [string, string]>;
   spriteArtifacts?: Array<readonly [string, string]>;
+  visibleSpriteArtifacts?: Array<readonly [string, string]> | null;
   temporalArtifacts?: Array<readonly [string, string]>;
   depthArtifacts?: Array<readonly [string, string]>;
   collisionArtifacts?: Array<readonly [string, string]> | null;
@@ -98,3 +101,8 @@ export declare function cameraMotionArtifactSpecifications(
   cameraRoot?: string,
   temporalRoot?: string,
 ): Array<readonly [string, string]>;
+
+export declare function visibleSpriteArtifactSpecifications(
+  repoRoot: string,
+  root?: string,
+): Promise<Array<readonly [string, string]>>;

@@ -570,7 +570,7 @@ describe("presentation run binding", () => {
     ).toBe(true);
     const visibleSprite = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-009",
-    );
+    )!;
     expect(visibleSprite.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(visibleSprite.observed).toEqual({
       scenarioIds: visibleSpriteMetadata.scenarioIds,
