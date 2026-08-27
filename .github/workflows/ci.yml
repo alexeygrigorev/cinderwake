@@ -31,6 +31,8 @@ jobs:
       - run: npm run build
       - name: Validate presentation contract, recipes, and blank run template
         run: npm run quality:presentation:lint
+      - name: Audit visible sprite provenance
+        run: npm run test:sprite-provenance
       - run: npm run art:check
       - name: Inspect environment composition and negative controls
         run: npm run quality:environment:check
@@ -131,6 +133,13 @@ jobs:
           name: quality-index
           path: quality-results/quality-index/
           if-no-files-found: error
+      - name: Upload visible-sprite provenance evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: visible-sprite-provenance
+          path: quality-results/visible-sprite-provenance/
+          if-no-files-found: error
 
   deploy:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -203,6 +212,11 @@ jobs:
         with:
           name: quality-index
           path: site/quality
+      - name: Download visible-sprite provenance evidence
+        uses: actions/download-artifact@v8
+        with:
+          name: visible-sprite-provenance
+          path: site/quality/visible-sprite-provenance
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
