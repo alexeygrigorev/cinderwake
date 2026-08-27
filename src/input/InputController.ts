@@ -139,7 +139,11 @@ export class InputController {
       const scale = length > radius ? radius / length : 1;
       const x = dx * scale;
       const y = dy * scale;
-      const deadZone = radius * 0.28;
+      // Keep the dead zone below the smallest diagonal component produced by
+      // a routed waypoint. Otherwise a nearly horizontal joystick gesture can
+      // quantize to pure horizontal movement and stop against a tangent prop
+      // even though the full routed segment is walkable.
+      const deadZone = radius * 0.2;
       this.touchMove = {
         x: Math.abs(dx) < deadZone ? 0 : dx < 0 ? -1 : 1,
         y: Math.abs(dy) < deadZone ? 0 : dy < 0 ? -1 : 1,
