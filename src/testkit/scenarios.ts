@@ -1770,6 +1770,23 @@ function directionalMotionScenario(
   };
 }
 
+function cameraEdgeReversalScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "map-edge-reversal",
+    seed: "quality-camera-edge-reversal-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(38, 12) },
+    // The player starts against the east interior wall. The smooth camera
+    // target therefore exercises the exact right clamp before the route
+    // reverses back across the open floor.
+    player: { tile: [36, 6] },
+    monsters: [],
+    camera: { mode: "smooth", centerTile: [4, 6] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1849,6 +1866,7 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     camera: { mode: "smooth", centerTile: [4, 6] },
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
+  "map-edge-reversal": cameraEdgeReversalScenario(),
   "mid-action": {
     schemaVersion: 1,
     id: "mid-action",

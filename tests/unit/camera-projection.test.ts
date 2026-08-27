@@ -107,4 +107,15 @@ describe("uniform camera zoom projection", () => {
       }
     }
   });
+
+  it("declares a smooth edge-reversal route at the map clamp", () => {
+    const scenario = BUILTIN_SCENARIOS["map-edge-reversal"]!;
+    const state = worldFromScenario(scenario);
+
+    expect(scenario.camera).toEqual({ mode: "smooth", centerTile: [4, 6] });
+    expect(scenario.settings?.cameraFollow).toBe(true);
+    expect(state.map.width).toBe(38);
+    expect(state.map.height).toBe(12);
+    expect(state.player.position).toEqual({ x: 36.5 * 1024, y: 6.5 * 1024 });
+  });
 });
