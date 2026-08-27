@@ -52,6 +52,20 @@ Ranger projectile spawn. Semantic evidence covers every run; only representative
 PNG stages are retained for the contact sheet so the browser artifact remains
 bounded.
 
+The `PRES-SPRITE-009` recorder (`npm run test:sprite-provenance`) audits the
+production presentation boundary rather than trusting a curated selector list.
+It captures public selection, ordinary production launch, Test Lab, win/loss,
+and Embercross service states on desktop and phone portrait. For every visible
+state it inventories sprite/layout/title roles, text, pseudo-elements,
+CSS-decorations, canvas operations, and manifest draws, then joins each local
+raster reference to a decoded asset with dimensions. The pure
+`visible-dom-sprite-provenance-v1` evaluator requires the exact title allowlist,
+rejects visible non-title text and unproven draws, and runs three mutations that
+replace a role, mislabel ordinary copy, or add an undeclared decoration. The
+recorder retains state timelines and original-resolution frames; the
+presentation binder hashes the full tree into `PRES-SPRITE-009` while leaving
+the row partial and `NEEDS_VISUAL_REVIEW`.
+
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
 
 Collision checks use deliberate tunneling inputs as negative controls. A
@@ -173,6 +187,20 @@ quality-results/render-resolution/pres-crisp-006/
     production/              # ordinary launch frame, crops, and launch.json
     controlled/              # idle/walk full-resolution frames and crops
   phone-portrait-high-dpr/   # same retained profile structure at DPR 3
+```
+
+The visible-sprite provenance recorder writes:
+
+```text
+quality-results/visible-sprite-provenance/pres-sprite-009/
+  metadata.json              # source commit, title allowlist, profiles, environment
+  evidence.json              # inventories and decoded-asset records
+  comparison.json            # four signals and three detected mutations
+  negative-controls.json
+  desktop/
+    states.json              # state-scoped inventories and timelines
+    *.png                    # ordered original-resolution frames
+  phone-portrait/            # same retained profile structure
 ```
 
 The binder hashes the entire retained tree when crispness evidence is supplied,

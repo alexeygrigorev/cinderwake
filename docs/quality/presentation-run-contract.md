@@ -30,6 +30,7 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run test:directional-motion
    npm run test:directional-bank
    npm run test:production-liveness
+   npm run test:sprite-provenance
    npm run test:mobile-screen
    npm run test:depth-transition
    npm run test:collision
@@ -88,6 +89,15 @@ The prose checklist remains the human explanation of what matters. The versioned
    recovery continuity, while six named mutations remain detected. The row
    remains `NEEDS_VISUAL_REVIEW` because authored weapon offsets, native high-DPR
    capture, and independent pose review are still open.
+
+   `PRES-SPRITE-009` binds the visible-sprite provenance recorder across desktop
+   and phone-portrait selection, production launch, Test Lab, terminal, and
+   Embercross service states. Its visible DOM/text/title, pseudo-element,
+   CSS-decoration, canvas-operation, manifest-draw, decoded-asset, state, and
+   original-resolution frame artifacts are hash-bound to the row, and all three
+   declared negative controls must be detected. It remains
+   `NEEDS_VISUAL_REVIEW`; the recipe is intentionally partial until new or
+   conditional screens are added to the required scenario matrix.
 
 3. Replace every placeholder and run the exact ordered matrix in the row's `executionRecipeId`. Copy the recipe's required IDs into the three `observed` arrays only after they were actually observed.
 4. For each claimed artifact, record its repository-relative path, lowercase SHA-256, and `requirement` ID. A `PASS` has every shared and check-specific requirement.
