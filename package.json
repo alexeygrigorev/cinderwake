@@ -26,6 +26,7 @@
     "test:directional-bank": "node scripts/test-directional-bank.mjs",
     "test:camera-motion": "node scripts/test-camera-motion.mjs",
     "test:production-liveness": "node scripts/test-production-liveness.mjs",
+    "test:sprite-provenance": "node scripts/test-visible-sprite-provenance.mjs",
     "test:mobile-screen": "node scripts/test-mobile-screen.mjs",
     "test:depth-transition": "node scripts/test-depth-transition.mjs",
     "test:collision": "node scripts/test-collision.mjs",
