@@ -136,6 +136,7 @@ async function driveProductionRoute(
     routeLength: number;
     input?: "tap" | "joystick";
   }> = [];
+  let completedState: GameState | undefined;
   for (let attempt = 0; attempt < 16; attempt += 1) {
     const before = await observerState(page);
     if (complete(before)) return before;
@@ -197,7 +198,10 @@ async function driveProductionRoute(
       .poll(
         async () => {
           const state = await observerState(page);
-          if (complete(state)) return true;
+          if (complete(state)) {
+            completedState = state;
+            return true;
+          }
           if (tapped)
             return (
               Math.hypot(
@@ -215,6 +219,7 @@ async function driveProductionRoute(
         { timeout: 3_000, intervals: [50, 100, 150] },
       )
       .toBe(true);
+    if (completedState) return completedState;
   }
   throw new Error(
     `Production touch route exceeded 16 physical waypoints: ${JSON.stringify(history)}`,
@@ -293,6 +298,14 @@ test("physical touch discovers the sign and enters Embercross through the produc
   expect(entered.map.digest).not.toBe(wildernessDigest);
   expect(isEmbercrossMap(entered.map)).toBe(true);
   expect(entered.phase).toBe("playing");
+  await expect(page.locator("#objective")).toHaveAttribute(
+    "data-state",
+    "seal-rift",
+  );
+  await expect(page.locator("#objective")).toHaveAttribute(
+    "data-target-id",
+    "gate:embercross:south",
+  );
   expect(entered.eventLog.some(({ type }) => type === "city_entered")).toBe(
     true,
   );
@@ -336,5 +349,25 @@ test("physical touch discovers the sign and enters Embercross through the produc
     ),
   );
   await attachObserverFrame(page, testInfo, "city-route-03-entered");
+
+  const returnGate = tileCenter(entered.map.exit);
+  const won = await driveProductionRoute(
+    page,
+    session,
+    inputGeometry,
+    returnGate,
+    (state) => state.phase === "won",
+  );
+  expect(won.phase).toBe("won");
+  expect(
+    won.eventLog.some(
+      ({ type, targetId }) =>
+        type === "run_won" && targetId === "gate:embercross:south",
+    ),
+  ).toBe(true);
+  await expect(page.locator("#objective")).toHaveAttribute("data-state", "won");
+  await expect(page.locator("#outcome")).toBeVisible();
+  await expect(page.locator("#outcome h2")).toHaveText("Cinders quieted.");
+  await attachObserverFrame(page, testInfo, "city-route-04-won");
   expect(faults).toEqual([]);
 });

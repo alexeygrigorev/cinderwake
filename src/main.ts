@@ -1,6 +1,7 @@
 import "./styles.css";
 import { ARCHETYPES } from "./game/content";
 import {
+  CITY_GATE_ID,
   EMBERCROSS_CITY,
   executeCityService,
   type CityServiceActionId,
@@ -326,20 +327,7 @@ function updateHud(state: GameState): void {
   setSpriteGlyphs(cd!, cooldown);
   setSpriteGlyphs(mobileCd!, cooldown);
   const nearestResident = insideCity
-    ? [...EMBERCROSS_CITY.npcs].sort((first, second) => {
-        const firstAnchor = cityNpcWorldAnchor(first.id);
-        const secondAnchor = cityNpcWorldAnchor(second.id);
-        return (
-          Math.hypot(
-            firstAnchor.x - p.position.x,
-            firstAnchor.y - p.position.y,
-          ) -
-            Math.hypot(
-              secondAnchor.x - p.position.x,
-              secondAnchor.y - p.position.y,
-            ) || first.id.localeCompare(second.id)
-        );
-      })[0]!
+    ? EMBERCROSS_CITY.npcs.find(({ id }) => id === state.city.nearbyNpcId)
     : undefined;
   const target = livingMonsters.length
     ? [...livingMonsters].sort((first, second) => {
@@ -365,27 +353,43 @@ function updateHud(state: GameState): void {
             id: EMBERCROSS_CITY.discoveryLandmarkId,
             position: wildernessCityLandmarkAnchor(state.map),
           }
-        : {
-            id: "exit:rift-gate",
-            position: {
-              x: (state.map.exit.x + 0.5) * 1024,
-              y: (state.map.exit.y + 0.5) * 1024,
-            },
-          };
-  const objectiveHeading = livingMonsters.length
-    ? "Hunt the cinders"
-    : nearestResident
-      ? "Seek shelter"
-      : state.city.locationPhase === "undiscovered"
-        ? "Find Embercross"
-        : "The city gate";
-  const objectiveCopy = livingMonsters.length
-    ? `${livingMonsters.length} remain`
-    : nearestResident
-      ? `Speak with ${nearestResident.name}`
-      : state.city.locationPhase === "undiscovered"
-        ? "Follow the road sign"
-        : "Enter Embercross";
+        : isEmbercrossMap(state.map)
+          ? {
+              id: CITY_GATE_ID,
+              position: {
+                x: (state.map.exit.x + 0.5) * 1024,
+                y: (state.map.exit.y + 0.5) * 1024,
+              },
+            }
+          : {
+              id: "exit:rift-gate",
+              position: {
+                x: (state.map.exit.x + 0.5) * 1024,
+                y: (state.map.exit.y + 0.5) * 1024,
+              },
+            };
+  const objectiveHeading =
+    state.phase === "won"
+      ? "Rift sealed"
+      : livingMonsters.length
+        ? "Hunt the cinders"
+        : nearestResident
+          ? "Seek shelter"
+          : state.city.locationPhase === "undiscovered"
+            ? "Find Embercross"
+            : "The city gate";
+  const objectiveCopy =
+    state.phase === "won"
+      ? "Embercross is safe"
+      : livingMonsters.length
+        ? `${livingMonsters.length} remain`
+        : nearestResident
+          ? `Speak with ${nearestResident.name}`
+          : state.city.locationPhase === "undiscovered"
+            ? "Follow the road sign"
+            : isEmbercrossMap(state.map)
+              ? "Seal the rift"
+              : "Enter Embercross";
   setSpriteGlyphs(objectiveTitle!, objectiveHeading);
   setSpriteGlyphs(objectiveDetail!, objectiveCopy);
   const targetAngle =
@@ -398,13 +402,18 @@ function updateHud(state: GameState): void {
     90;
   objectiveDirection!.style.transform = `rotate(${targetAngle.toFixed(2)}deg)`;
   objective!.dataset.targetId = target.id;
-  objective!.dataset.state = livingMonsters.length
-    ? "hunt"
-    : nearestResident
-      ? "city-service"
-      : state.city.locationPhase === "undiscovered"
-        ? "discover-city"
-        : "enter-city";
+  objective!.dataset.state =
+    state.phase === "won"
+      ? "won"
+      : livingMonsters.length
+        ? "hunt"
+        : nearestResident
+          ? "city-service"
+          : state.city.locationPhase === "undiscovered"
+            ? "discover-city"
+            : isEmbercrossMap(state.map)
+              ? "seal-rift"
+              : "enter-city";
   objective!.setAttribute(
     "aria-label",
     `${objectiveHeading}. ${objectiveCopy}. Direction marker points toward ${target.id}.`,

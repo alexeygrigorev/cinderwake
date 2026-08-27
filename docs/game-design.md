@@ -12,7 +12,7 @@ The shipped vertical slice is intentionally shorter than a commercial ARPG run. 
 4. Fight three enemy types with a class-specific primary attack and ability.
 5. Collect gold, restorative tonics, and weapon-power drops.
 6. Clear every enemy to unlock the rift gate.
-7. Reach the gate to win. Reaching zero health loses the run.
+7. Reach Embercross, then return to its open south gate to seal the rift and win. Reaching zero health loses the run.
 8. Retry the exact seed or return to character selection.
 
 ## Simulation constants
@@ -80,11 +80,12 @@ The pelt has a stable `loot:ashfang-pelt:<rarity>` sprite role and four-frame lo
 
 When the final monster dies, the route to Embercross unlocks once and emits
 `exit_unlocked`. Reaching the landmark discovers the city; reaching the open
-gate then replaces the wilderness with the city domain. Lethal damage emits
-`player_died` once and freezes active play into `lost`. The current vertical
-slice has no reachable victory transition. Its pre-won scenario exists only to
-prove arbitrary-state restoration, the dormant victory overlay, and terminal
-state freezing; it is not evidence of a production path to victory.
+gate then replaces the wilderness with the city domain. Returning to the open
+city gate after the wilderness is cleared emits `run_won` once and freezes
+active play into `won`. Lethal damage emits `player_died` once and freezes
+active play into `lost`. The pre-won scenario remains exact-state restoration
+coverage for the terminal overlay and state freeze; the production city route
+also proves the reachable victory path.
 
 ## Visual language and animation
 

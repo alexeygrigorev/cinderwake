@@ -12,6 +12,7 @@ The run begins in the wilderness. Embercross is neither visible on the map nor a
 4. Travel to `gate:embercross:south` through a second wilderness section.
 5. Enter a safe, persistent city scene.
 6. Walk to a visible NPC and interact by tapping the NPC or a context button.
+7. Return to the open south gate to seal the rift and complete the run.
 
 This makes the city something the player earns and finds. Discovery, gate arrival, and entry are separate facts so tests can begin at any one of those boundaries.
 
@@ -58,6 +59,9 @@ discovered
 
 at_gate
   -- enter south gate --> inside
+
+inside
+  -- reach open south gate --> run won
 ```
 
 Each accepted transition records its simulation tick and appends a stable event. A command with a tick older than the city state is rejected. The timestamps make progression observable in replays and prevent state from appearing to travel backward in time.

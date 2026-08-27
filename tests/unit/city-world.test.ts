@@ -360,4 +360,42 @@ describe("deterministic Embercross world", () => {
       ),
     ).toBe(false);
   });
+
+  it("seals the rift at the Embercross return gate and freezes the run", () => {
+    const state = worldFromScenario(
+      createRunScenario("city-route-win", "vanguard"),
+    );
+    state.monsters = [];
+    state.exitUnlocked = true;
+    const wildernessGate = tileCenter(state.map.exit);
+    const landmark = wildernessCityLandmarkAnchor(state.map);
+
+    state.player.position = { x: landmark.x + 600, y: landmark.y };
+    state.player.previousPosition = { ...state.player.position };
+    stepGame(state, EMPTY_INPUT);
+    state.player.position = { ...wildernessGate };
+    state.player.previousPosition = { ...wildernessGate };
+    stepGame(state, EMPTY_INPUT);
+
+    expect(isEmbercrossMap(state.map)).toBe(true);
+    expect(state.phase).toBe("playing");
+    const cityGate = tileCenter(state.map.exit);
+    state.player.position = { ...cityGate };
+    state.player.previousPosition = { ...cityGate };
+    stepGame(state, EMPTY_INPUT);
+
+    expect(state.phase).toBe("won");
+    expect(state.eventLog).toContainEqual(
+      expect.objectContaining({
+        type: "run_won",
+        targetId: "gate:embercross:south",
+        detail: "The rift is sealed",
+      }),
+    );
+    const eventCount = state.eventLog.length;
+    const frozenPosition = { ...state.player.position };
+    stepGame(state, { ...EMPTY_INPUT, moveY: -1, attack: true });
+    expect(state.player.position).toEqual(frozenPosition);
+    expect(state.eventLog).toHaveLength(eventCount);
+  });
 });

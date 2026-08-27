@@ -1255,9 +1255,33 @@ function enterEmbercross(state: GameState): void {
   });
 }
 
+function sealRiftAtCityGate(state: GameState): void {
+  if (
+    !state.exitUnlocked ||
+    state.city.locationPhase !== "inside" ||
+    state.city.enteredAtTick === state.tick ||
+    state.monsters.some((monster) => monster.health > 0)
+  )
+    return;
+  const gate = tileCenter(state.map.exit);
+  if (distanceSquared(gate, state.player.position) > 650 * 650) return;
+  state.phase = "won";
+  state.player.velocity = { x: 0, y: 0 };
+  state.player.previousPosition = { ...state.player.position };
+  emit(state, {
+    type: "run_won",
+    sourceId: "player",
+    targetId: CITY_GATE_ID,
+    detail: "The rift is sealed",
+  });
+}
+
 function checkExit(state: GameState): void {
   if (!state.exitUnlocked || state.phase !== "playing") return;
-  if (isEmbercrossMap(state.map)) return;
+  if (isEmbercrossMap(state.map)) {
+    sealRiftAtCityGate(state);
+    return;
+  }
   const landmark = wildernessCityLandmarkAnchor(state.map);
   if (
     state.city.locationPhase === "undiscovered" &&
