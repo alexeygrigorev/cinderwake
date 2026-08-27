@@ -23,6 +23,7 @@
     "test:city-journey": "node scripts/test-city-journey.mjs",
     "test:input-intents": "node scripts/test-input-intents.mjs",
     "test:directional-motion": "node scripts/test-directional-motion.mjs",
+    "test:camera-motion": "node scripts/test-camera-motion.mjs",
     "test:production-liveness": "node scripts/test-production-liveness.mjs",
     "test:mobile-screen": "node scripts/test-mobile-screen.mjs",
     "test:depth-transition": "node scripts/test-depth-transition.mjs",

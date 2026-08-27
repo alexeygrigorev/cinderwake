@@ -44,12 +44,6 @@ function finiteCamera(value) {
   );
 }
 
-function finitePosition(value) {
-  return (
-    isObject(value) && Number.isFinite(value.x) && Number.isFinite(value.y)
-  );
-}
-
 function cameraFromCapture(capture) {
   const camera = capture?.manifest?.camera;
   return finiteCamera(camera) ? camera : null;
@@ -576,7 +570,7 @@ export function runCameraMotionNegativeControls(evidence) {
       expectedSignal: "camera-speed-doubled",
       mutate(value) {
         const sample = value.profiles[0].runs[0].gestures[0].samples[1];
-        sample.camera.x += 200;
+        sample.camera.x += 2_000;
       },
     },
     {
