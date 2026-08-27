@@ -225,6 +225,30 @@ describe("deterministic fixtures", () => {
     expect(worldFromScenario(BUILTIN_SCENARIOS["mid-action"]!)).toEqual(state);
   });
 
+  it("preserves effect ownership in scenario fixtures", () => {
+    const scenario = structuredClone(BUILTIN_SCENARIOS["animation-idle"]!);
+    scenario.effects = [
+      {
+        id: "effect:owned-fixture",
+        ownerId: "player",
+        kind: "slash",
+        tile: [9, 7],
+        color: "#f4c15d",
+        startedAtTick: 0,
+        expiresAtTick: 8,
+        radius: 512,
+      },
+    ];
+
+    expect(worldFromScenario(scenario).effects).toEqual([
+      expect.objectContaining({
+        id: "effect:owned-fixture",
+        ownerId: "player",
+        kind: "slash",
+      }),
+    ]);
+  });
+
   it("rejects malformed arbitrary states before mutating a world", () => {
     const malformed = structuredClone(BUILTIN_SCENARIOS["mid-action"]!);
     malformed.projectiles![0]!.id = "monster:winding-up";

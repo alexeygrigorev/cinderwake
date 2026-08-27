@@ -979,6 +979,7 @@ export function validateScenario(input: unknown): asserts input is ScenarioV1 {
       effect,
       [
         "id",
+        "ownerId",
         "kind",
         "tile",
         "color",
