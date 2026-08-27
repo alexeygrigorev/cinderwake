@@ -688,10 +688,11 @@ function buildSceneSprites(
         };
         const screenAnchor = screenFor(worldAnchor, camera);
         const cadence = ((x * 3 + y * 5) % 5) - 2;
+        const width = 52 + cadence * 3;
         const destinationRect = destinationAt(
           screenAnchor,
-          52 + cadence * 3,
-          10 + Math.abs(cadence),
+          width,
+          width / 4,
           {
             x: 128,
             y: 128,
@@ -730,7 +731,7 @@ function buildSceneSprites(
           const facadeRect = destinationAt(
             screenAnchor,
             62,
-            72,
+            62,
             {
               x: 128,
               y: 232,

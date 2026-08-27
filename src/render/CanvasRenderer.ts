@@ -560,10 +560,17 @@ export class CanvasRenderer {
         Math.min(1, monster.health / monster.maxHealth),
       );
       const horizontalInset = Math.round(width * 0.09);
-      const fillHeight = Math.max(1, Math.round(height * (48 / 82)));
+      const innerWidth = Math.max(1, width - horizontalInset * 2);
+      const fillHeight = Math.max(
+        1,
+        Math.round(
+          (innerWidth * fillBase.sourceRect.height) /
+            fillBase.sourceRect.width,
+        ),
+      );
       const fillWidth = Math.max(
         1,
-        Math.round((width - horizontalInset * 2) * healthRatio),
+        Math.round(innerWidth * healthRatio),
       );
       return [
         {
