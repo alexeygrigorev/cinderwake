@@ -21,10 +21,70 @@ function solid() {
     visible: true,
     camera: { x: 0, y: 0, zoom: 1 },
     collision: collision(),
+    contactCoverage: {
+      principalSides: ["north", "east", "south", "west"],
+      requiredSides: ["north", "east", "south", "west"],
+      skippedSides: {},
+    },
     support: {
       source: "alpha-mask",
       alphaPixels: 100,
       bounds: { x: 520, y: 310, width: 80, height: 80 },
+    },
+  };
+}
+
+function contact(side: "north" | "east" | "south" | "west") {
+  const values = {
+    north: {
+      from: { x: 1000, y: 860 },
+      attemptedPosition: { x: 1000, y: 930 },
+      blockedPosition: { x: 1000, y: 879 },
+      slideTo: { x: 1030, y: 879 },
+    },
+    east: {
+      from: { x: 1160, y: 1000 },
+      attemptedPosition: { x: 1090, y: 1000 },
+      blockedPosition: { x: 1141, y: 1000 },
+      slideTo: { x: 1141, y: 1030 },
+    },
+    south: {
+      from: { x: 1000, y: 1140 },
+      attemptedPosition: { x: 1000, y: 1070 },
+      blockedPosition: { x: 1000, y: 1121 },
+      slideTo: { x: 1030, y: 1121 },
+    },
+    west: {
+      from: { x: 840, y: 1000 },
+      attemptedPosition: { x: 910, y: 1000 },
+      blockedPosition: { x: 859, y: 1000 },
+      slideTo: { x: 859, y: 1030 },
+    },
+  }[side];
+  return {
+    objectId: "prop:crate",
+    objectName: "crate",
+    side,
+    radius: 20,
+    collision: collision(),
+    approach: {
+      from: values.from,
+      attemptedPosition: values.attemptedPosition,
+    },
+    blockedPosition: values.blockedPosition,
+    feedback: {
+      event: {
+        type: "movement_blocked",
+        sourceId: "player",
+        targetId: "prop:crate",
+        detail: "crate",
+      },
+      impactVisible: true,
+      log: "Blocked: crate",
+    },
+    slide: {
+      from: values.blockedPosition,
+      to: values.slideTo,
     },
   };
 }
@@ -40,33 +100,9 @@ function evidence() {
             id: "scenery-contact",
             gestureIds: ["walk-into-solid", "tap-route-into-solid"],
             solids: [solid()],
-            contacts: [
-              {
-                objectId: "prop:crate",
-                objectName: "crate",
-                radius: 20,
-                collision: collision(),
-                approach: {
-                  from: { x: 1000, y: 1140 },
-                  attemptedPosition: { x: 1000, y: 1070 },
-                },
-                blockedPosition: { x: 1000, y: 1121 },
-                feedback: {
-                  event: {
-                    type: "movement_blocked",
-                    sourceId: "player",
-                    targetId: "prop:crate",
-                    detail: "crate",
-                  },
-                  impactVisible: true,
-                  log: "Blocked: crate",
-                },
-                slide: {
-                  from: { x: 1000, y: 1121 },
-                  to: { x: 1030, y: 1121 },
-                },
-              },
-            ],
+            contacts: (["north", "east", "south", "west"] as const).map(
+              contact,
+            ),
           },
           {
             id: "projectile-scenery-contact",
@@ -121,14 +157,42 @@ describe("PRES-COLLIDE-008 evidence oracle", () => {
 
   it("detects every named collision negative control", () => {
     const controls = runCollisionNegativeControls(evidence());
-    expect(controls).toHaveLength(4);
+    expect(controls).toHaveLength(5);
     expect(controls.every(({ status }) => status === "DETECTED")).toBe(true);
     expect(controls.map(({ signal }) => signal)).toEqual([
       "collider-support-mismatch",
       "invisible-collision",
       "blocked-feedback-missing",
       "swept-contact-missed",
+      "contact-side-coverage-missing",
     ]);
+  });
+
+  it("reports an omitted principal side for a retained solid", () => {
+    const value = evidence();
+    const scenario = value.profiles[0]!.scenarios[0]!;
+    if (!Array.isArray(scenario.contacts))
+      throw new Error("fixture must include contacts");
+    scenario.contacts = scenario.contacts.filter(
+      (current) => current.side !== "north",
+    );
+    const result = evaluateCollisionEvidence(value);
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain(
+      "contact-side-coverage-missing:prop:crate:north",
+    );
+  });
+
+  it("does not borrow a cardinal contact from another profile", () => {
+    const value = evidence();
+    value.profiles[1] = structuredClone(value.profiles[0]);
+    value.profiles[1]!.profileId = "phone-landscape";
+    value.profiles[1]!.scenarios[0]!.contacts = [];
+    const result = evaluateCollisionEvidence(value);
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain(
+      "contact-side-coverage-missing:prop:crate:north",
+    );
   });
 
   it("reports missing coverage and overlap as actionable failures", () => {

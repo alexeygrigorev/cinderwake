@@ -166,7 +166,8 @@
         "collider-enlarged-or-offset",
         "collision-without-visible-sprite",
         "blocked-feedback-removed",
-        "endpoint-only-collision"
+        "endpoint-only-collision",
+        "principal-side-omitted"
       ]
     },
     {

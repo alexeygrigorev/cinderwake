@@ -10,10 +10,13 @@ export const COLLISION_GESTURE_IDS = [
   "fire-through-solid",
 ];
 
+export const COLLISION_SIDE_IDS = ["north", "east", "south", "west"];
+
 export const COLLISION_SIGNAL_IDS = [
   "solid-support-blocks",
   "blocked-object-visible",
   "swept-contact-holds",
+  "principal-sides-covered",
 ];
 
 export const COLLISION_FAILURE_IDS = [
@@ -24,6 +27,9 @@ export const COLLISION_FAILURE_IDS = [
   "contact-started-inside-solid",
   "solid-overlap",
   "contact-did-not-enter-solid",
+  "contact-side-invalid",
+  "contact-side-coverage-missing",
+  "contact-side-exemption-invalid",
   "blocked-feedback-missing",
   "slide-stalled",
   "collider-support-mismatch",
@@ -272,6 +278,8 @@ function contactPass(contact, solids) {
     };
   }
   const failures = [];
+  if (!COLLISION_SIDE_IDS.includes(contact.side))
+    failures.push("contact-side-invalid");
   if (overlap(before, radius, footprint))
     failures.push("contact-started-inside-solid");
   if (overlap(blocked, radius, footprint))
@@ -315,6 +323,85 @@ function contactPass(contact, solids) {
         slideFrom && slideTo
           ? Math.hypot(slideTo.x - slideFrom.x, slideTo.y - slideFrom.y)
           : 0,
+    },
+  };
+}
+
+function sideCoveragePass(solid, contacts) {
+  const declaration = object(solid.contactCoverage);
+  const principalSides = unique(declaration?.principalSides ?? []);
+  const requiredSides = unique(declaration?.requiredSides ?? []).filter(
+    (side) => COLLISION_SIDE_IDS.includes(side),
+  );
+  const skippedSides = object(declaration?.skippedSides) ?? {};
+  const selected = declaration?.selected === true;
+  const failures = [];
+  if (!declaration) {
+    failures.push(
+      `contact-side-coverage-missing:${solid.objectId ?? "unknown"}:declaration`,
+    );
+  }
+  if (!COLLISION_SIDE_IDS.every((side) => principalSides.includes(side)))
+    failures.push(
+      `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:principal-sides`,
+    );
+  if (selected && requiredSides.length === 0)
+    failures.push(
+      `contact-side-coverage-missing:${solid.objectId ?? "unknown"}:no-recorded-side`,
+    );
+  const belongsToSolid = (contact) =>
+    contact.objectId === solid.objectId &&
+    contact.profileId === solid.profileId &&
+    contact.scenarioId === solid.scenarioId;
+  for (const side of COLLISION_SIDE_IDS) {
+    const hasContact = contacts.some(
+      (contact) => belongsToSolid(contact) && contact.side === side,
+    );
+    const skipped = skippedSides[side];
+    if (
+      hasContact &&
+      (!requiredSides.includes(side) || skipped !== undefined)
+    )
+      failures.push(
+        `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:${side}`,
+      );
+    else if (!hasContact && !requiredSides.includes(side)) {
+      if (typeof skipped !== "string" || skipped.length === 0)
+        failures.push(
+          `contact-side-coverage-missing:${solid.objectId ?? "unknown"}:${side}`,
+        );
+    }
+    if (
+      skipped !== undefined &&
+      (typeof skipped !== "string" || skipped.length === 0)
+    )
+      failures.push(
+        `contact-side-exemption-invalid:${solid.objectId ?? "unknown"}:${side}`,
+      );
+  }
+  for (const side of requiredSides) {
+    if (
+      !contacts.some(
+        (contact) => belongsToSolid(contact) && contact.side === side,
+      )
+    )
+      failures.push(
+        `contact-side-coverage-missing:${solid.objectId ?? "unknown"}:${side}`,
+      );
+  }
+  return {
+    failures: [...new Set(failures)],
+    detail: {
+      objectId: solid.objectId ?? null,
+      principalSides: COLLISION_SIDE_IDS,
+      requiredSides,
+      skippedSides,
+      observedSides: COLLISION_SIDE_IDS.filter((side) =>
+        contacts.some(
+          (contact) => belongsToSolid(contact) && contact.side === side,
+        ),
+      ),
+      selected,
     },
   };
 }
@@ -425,6 +512,15 @@ export function evaluateCollisionEvidence(evidence) {
     });
     failures.push(...result.failures);
   }
+  const sideCoverageDetails = solids.map((solid) => {
+    const result = sideCoveragePass(solid, contacts);
+    failures.push(...result.failures);
+    return {
+      profileId: solid.profileId ?? null,
+      scenarioId: solid.scenarioId ?? null,
+      ...result,
+    };
+  });
   const projectileDetails = [];
   if (projectiles.length === 0) failures.push("projectile-evidence-missing");
   for (const projectile of projectiles) {
@@ -491,6 +587,19 @@ export function evaluateCollisionEvidence(evidence) {
         count: projectiles.length,
       },
     },
+    {
+      id: "principal-sides-covered",
+      pass:
+        solids.length > 0 &&
+        sideCoverageDetails.every(
+          ({ failures: current }) => current.length === 0,
+        ),
+      detail: {
+        solids: sideCoverageDetails,
+        count: sideCoverageDetails.length,
+        principalSides: COLLISION_SIDE_IDS,
+      },
+    },
   ];
   return {
     pass:
@@ -505,6 +614,10 @@ export function evaluateCollisionEvidence(evidence) {
       solidCount: solids.length,
       contactCount: contacts.length,
       projectileCount: projectiles.length,
+      principalSideCount: sideCoverageDetails.reduce(
+        (count, detail) => count + detail.detail.observedSides.length,
+        0,
+      ),
     },
   };
 }
@@ -558,12 +671,40 @@ export function runCollisionNegativeControls(evidence) {
         if (projectile) projectile.impact.t = 1;
       },
     },
+    {
+      id: "principal-side-omitted",
+      expectedSignal: "contact-side-coverage-missing",
+      mutate(value) {
+        for (const profile of profilesFor(value)) {
+          for (const scenario of scenariosFor(profile)) {
+            const solid = scenario.solids?.find(
+              (candidate) =>
+                Array.isArray(candidate.contactCoverage?.requiredSides) &&
+                candidate.contactCoverage.requiredSides.length > 0,
+            );
+            const side = solid?.contactCoverage?.requiredSides?.[0];
+            if (!solid || !side) continue;
+            scenario.contacts = (scenario.contacts ?? []).filter(
+              (contact) =>
+                !(
+                  contact.objectId === solid.objectId &&
+                  contact.side === side
+                ),
+            );
+            return;
+          }
+        }
+      },
+    },
   ];
   return definitions.map(({ id, expectedSignal, mutate }) => {
     const mutated = structuredClone(evidence);
     mutate(mutated);
     const result = evaluateCollisionEvidence(mutated);
-    const detected = result.failures.includes(expectedSignal);
+    const detected = result.failures.some(
+      (failure) =>
+        failure === expectedSignal || failure.startsWith(`${expectedSignal}:`),
+    );
     return {
       id,
       status: detected ? "DETECTED" : "NOT_DETECTED",

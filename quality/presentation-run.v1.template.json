@@ -383,6 +383,12 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "principal-side-omitted",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {

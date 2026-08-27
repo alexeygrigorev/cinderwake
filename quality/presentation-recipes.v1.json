@@ -330,7 +330,7 @@
       },
       "deviceProfileSet": {
         "coverage": "partial",
-        "requiredIds": ["desktop", "phone-portrait"]
+        "requiredIds": ["desktop", "phone-portrait", "phone-landscape"]
       },
       "gestureSet": {
         "coverage": "partial",
@@ -346,7 +346,8 @@
         "requiredSignalIds": [
           "solid-support-blocks",
           "blocked-object-visible",
-          "swept-contact-holds"
+          "swept-contact-holds",
+          "principal-sides-covered"
         ]
       },
       "reproduce": "npm run test:collision && npx vitest run tests/unit/scenery-collision.test.ts tests/unit/projectile-scenery-collision.test.ts && npx playwright test tests/e2e/scenery-collision.spec.ts tests/e2e/projectile-scenery-collision.spec.ts",
@@ -366,6 +367,10 @@
         {
           "id": "endpoint-only-collision",
           "expectedSignal": "swept-contact-missed"
+        },
+        {
+          "id": "principal-side-omitted",
+          "expectedSignal": "contact-side-coverage-missing"
         }
       ]
     },

@@ -27,7 +27,33 @@ const PROFILES = {
     isMobile: true,
     hasTouch: true,
   },
+  "phone-landscape": {
+    viewport: { width: 844, height: 390 },
+    deviceScaleFactor: 3,
+    isMobile: true,
+    hasTouch: true,
+  },
 };
+
+const CONTACT_SIDES = ["north", "east", "south", "west"];
+
+const GENERATED_CONTACT_TARGET_IDS = [
+  "prop:0:barricade-v2",
+  "structure:0:forge",
+  "structure:2:rubble",
+  "prop:3:0:thorn-pillar",
+  "structure:4:forge",
+  "prop:5:1:ritual-totem",
+  "structure:6:mausoleum",
+];
+
+const CITY_CONTACT_TARGET_IDS = [
+  "building:embercross:smithy",
+  "building:embercross:market",
+  "building:embercross:tavern",
+  "building:embercross:infirmary",
+  "gate:embercross:south",
+];
 
 const GENERATED_SCENARIO = {
   schemaVersion: 1,
@@ -133,24 +159,45 @@ function slug(value) {
     .replace(/^-|-$/g, "");
 }
 
-async function capture(page, id) {
-  return page.evaluate((captureId) => {
-    const bridge = window.__GAME_TEST__;
-    if (!bridge) throw new Error("Game test bridge is unavailable");
-    bridge.render({ interpolationAlpha: 1 });
-    const snapshot = bridge.snapshot();
-    const manifest = bridge.renderManifest();
-    return {
-      id: captureId,
-      tick: Number(snapshot.tick),
-      stateTick: Number(snapshot.tick),
-      manifestTick: Number(manifest.tick),
-      snapshot,
-      manifest,
-      stateHash: bridge.stateHash(),
-      frame: bridge.captureFrame(),
-    };
-  }, id);
+async function capture(page, id, targetId) {
+  return page.evaluate(
+    ({ captureId, targetSceneId }) => {
+      const bridge = window.__GAME_TEST__;
+      if (!bridge) throw new Error("Game test bridge is unavailable");
+      bridge.render({ interpolationAlpha: 1 });
+      const snapshot = bridge.snapshot();
+      const manifest = bridge.renderManifest();
+      const compactManifest = {
+        ...manifest,
+        // The terrain layer contains thousands of deterministic tile entries and
+        // is already represented by the full per-profile inventory. Contact
+        // captures only need the target scenery entry plus actor/effect calls.
+        sceneSprites: manifest.sceneSprites.filter(
+          ({ objectId }) => objectId === targetSceneId,
+        ),
+        // Keep the target's scene paint and all dynamic paint entries. The
+        // omitted terrain plan is deterministic inventory context, not contact
+        // evidence, and repeating it for every tick makes the bundle enormous.
+        paintQueue: manifest.paintQueue
+          .filter(
+            ({ kind, scene }) =>
+              kind !== "scene" || scene?.objectId === targetSceneId,
+          )
+          .map((paint, zOrder) => ({ ...paint, zOrder })),
+      };
+      return {
+        id: captureId,
+        tick: Number(snapshot.tick),
+        stateTick: Number(snapshot.tick),
+        manifestTick: Number(manifest.tick),
+        snapshot,
+        manifest: compactManifest,
+        stateHash: bridge.stateHash(),
+        frame: bridge.captureFrame(),
+      };
+    },
+    { captureId: id, targetSceneId: targetId },
+  );
 }
 
 async function inventoryScenario(page, scenario, scenarioId) {
@@ -219,9 +266,9 @@ async function inventoryScenario(page, scenario, scenarioId) {
   return { scenarioId, entries };
 }
 
-async function setupContact(page, scenario, targetId) {
+async function setupContact(page, scenario, targetId, sideId) {
   return page.evaluate(
-    ({ value, objectId }) => {
+    ({ value, objectId, side }) => {
       const bridge = window.__GAME_TEST__;
       const overlaps = (point, radius, footprint) => {
         const horizontal = footprint.halfWidth + radius;
@@ -230,33 +277,52 @@ async function setupContact(page, scenario, targetId) {
         const y = (point.y - footprint.worldCenter.y) / vertical;
         return x * x + y * y < 1;
       };
-      const makeCandidate = (side, footprint, radius, moveSpeed) => {
+      const makeCandidate = (
+        currentSide,
+        footprint,
+        radius,
+        moveSpeed,
+        offset,
+      ) => {
         const gap = radius + 32;
         const direction = {
           north: { x: 0, y: 1 },
           east: { x: -1, y: 0 },
           south: { x: 0, y: -1 },
           west: { x: 1, y: 0 },
-        }[side];
-        const tangent = { north: "d", east: "s", south: "d", west: "s" }[side];
+        }[currentSide];
+        const tangentVector = {
+          north: { x: 1, y: 0 },
+          east: { x: 0, y: 1 },
+          south: { x: 1, y: 0 },
+          west: { x: 0, y: 1 },
+        }[currentSide];
+        const tangent = {
+          north: "d",
+          east: "s",
+          south: "d",
+          west: "s",
+        }[currentSide];
         const from = {
           x:
             footprint.worldCenter.x +
-            (side === "east"
+            (currentSide === "east"
               ? gap + footprint.halfWidth
-              : side === "west"
+              : currentSide === "west"
                 ? -(gap + footprint.halfWidth)
-                : 0),
+                : 0) +
+            tangentVector.x * offset,
           y:
             footprint.worldCenter.y +
-            (side === "south"
+            (currentSide === "south"
               ? gap + footprint.halfHeight
-              : side === "north"
+              : currentSide === "north"
                 ? -(gap + footprint.halfHeight)
-                : 0),
+                : 0) +
+            tangentVector.y * offset,
         };
         return {
-          side,
+          side: currentSide,
           from,
           attemptedPosition: {
             x: from.x + direction.x * moveSpeed,
@@ -277,42 +343,121 @@ async function setupContact(page, scenario, targetId) {
       const base = bridge.snapshot();
       const solids = manifest.sceneSprites
         .filter((scene) => scene.collision?.mode === "solid")
-        .map((scene) => scene.collision);
-      const sides = ["south", "north", "east", "west"];
-      const candidate = sides
-        .map((side) =>
-          makeCandidate(
-            side,
-            target.collision,
-            base.player.radius,
-            base.player.moveSpeed,
-          ),
-        )
-        .find((current) => {
-          const tile = {
-            x: Math.floor(current.from.x / 1024),
-            y: Math.floor(current.from.y / 1024),
-          };
-          const floor =
-            tile.x >= 0 &&
-            tile.y >= 0 &&
-            tile.x < base.map.width &&
-            tile.y < base.map.height &&
-            base.map.tiles[tile.y * base.map.width + tile.x] === 0;
-          return (
-            floor &&
-            !solids.some((solid) =>
-              overlaps(current.from, base.player.radius, solid),
-            ) &&
-            overlaps(
-              current.attemptedPosition,
-              base.player.radius,
-              target.collision,
-            )
+        .flatMap((scene) =>
+          [scene.collision, ...(scene.collisionParts ?? [])]
+            .filter(Boolean)
+            .map((collision) => ({ objectId: scene.objectId, collision })),
+        );
+      const offsets = [
+        0,
+        ...Array.from(
+          { length: Math.max(base.map.width, base.map.height) * 4 },
+          (_, index) => 256 * (index + 1),
+        ).flatMap((offset) => [offset, -offset]),
+      ];
+      const inMap = (point) => {
+        const tile = {
+          x: Math.floor(point.x / 1024),
+          y: Math.floor(point.y / 1024),
+        };
+        return (
+          tile.x >= 0 &&
+          tile.y >= 0 &&
+          tile.x < base.map.width &&
+          tile.y < base.map.height &&
+          base.map.tiles[tile.y * base.map.width + tile.x] === 0
+        );
+      };
+      const walkablePoint = (point) =>
+        [
+          [-base.player.radius, -base.player.radius],
+          [base.player.radius, -base.player.radius],
+          [-base.player.radius, base.player.radius],
+          [base.player.radius, base.player.radius],
+        ].every(([x, y]) => inMap({ x: point.x + x, y: point.y + y }));
+      const segmentHitTime = (from, to, footprint) => {
+        const horizontal = footprint.halfWidth + base.player.radius;
+        const vertical = footprint.halfHeight + base.player.radius;
+        const startX = (from.x - footprint.worldCenter.x) / horizontal;
+        const startY = (from.y - footprint.worldCenter.y) / vertical;
+        const deltaX = (to.x - from.x) / horizontal;
+        const deltaY = (to.y - from.y) / vertical;
+        const c = startX * startX + startY * startY - 1;
+        if (c <= 0) return 0;
+        const a = deltaX * deltaX + deltaY * deltaY;
+        if (a < Number.EPSILON) return null;
+        const b = 2 * (startX * deltaX + startY * deltaY);
+        const discriminant = b * b - 4 * a * c;
+        if (discriminant < 0) return null;
+        const enter = (-b - Math.sqrt(discriminant)) / (2 * a);
+        return enter >= 0 && enter <= 1 ? enter : null;
+      };
+      const pathClear = (candidate) => {
+        const targetEntry = segmentHitTime(
+          candidate.from,
+          candidate.attemptedPosition,
+          target.collision,
+        );
+        if (targetEntry === null || targetEntry <= 0) return false;
+        for (let index = 0; index <= 20; index += 1) {
+          const fraction = Math.min(
+            (index / 20) * targetEntry,
+            targetEntry - 0.001,
           );
-        });
-      if (!candidate)
-        throw new Error(`No floor-backed contact side for ${objectId}`);
+          const point = {
+            x:
+              candidate.from.x +
+              (candidate.attemptedPosition.x - candidate.from.x) * fraction,
+            y:
+              candidate.from.y +
+              (candidate.attemptedPosition.y - candidate.from.y) * fraction,
+          };
+          if (
+            !walkablePoint(point) ||
+            solids.some(
+              ({ objectId: candidateId, collision }) =>
+                candidateId !== objectId &&
+                overlaps(point, base.player.radius, collision),
+            )
+          )
+            return false;
+        }
+        return true;
+      };
+      const candidates = offsets.map((offset) =>
+        makeCandidate(
+          side,
+          target.collision,
+          base.player.radius,
+          base.player.moveSpeed,
+          offset,
+        ),
+      );
+      const candidate = candidates.find(
+        (current) =>
+          inMap(current.from) &&
+          inMap(current.attemptedPosition) &&
+          walkablePoint(current.from) &&
+          overlaps(
+            current.attemptedPosition,
+            base.player.radius,
+            target.collision,
+          ) &&
+          pathClear(current),
+      );
+      if (!candidate) {
+        const hasFloorBackedCandidate = candidates.some(
+          (current) => inMap(current.from) && inMap(current.attemptedPosition),
+        );
+        return {
+          skipped: true,
+          objectId,
+          side,
+          reason: hasFloorBackedCandidate
+            ? "no-clear-floor-approach"
+            : "outside-map-boundary",
+        };
+      }
       const state = bridge.snapshot();
       state.player.position = { ...candidate.from };
       state.player.previousPosition = { ...candidate.from };
@@ -332,6 +477,7 @@ async function setupContact(page, scenario, targetId) {
       };
       bridge.setCamera(camera, "fixed");
       return {
+        skipped: false,
         objectId,
         collision: target.collision,
         radius: base.player.radius,
@@ -340,13 +486,24 @@ async function setupContact(page, scenario, targetId) {
         camera,
       };
     },
-    { value: scenario, objectId: targetId },
+    { value: scenario, objectId: targetId, side: sideId },
   );
 }
 
-async function runContact(page, scenario, targetId, gestureId, label) {
-  const setup = await setupContact(page, scenario, targetId);
-  const initial = await capture(page, `${label}-initial`);
+async function runContact(
+  page,
+  scenario,
+  targetId,
+  gestureId,
+  label,
+  side,
+  persistCapture,
+) {
+  const setup = await setupContact(page, scenario, targetId, side);
+  if (setup.skipped) return setup;
+  const initial = await persistCapture(
+    await capture(page, `${label}-initial`, targetId),
+  );
   await page.keyboard.down(
     setup.direction.x > 0
       ? "d"
@@ -421,6 +578,7 @@ async function runContact(page, scenario, targetId, gestureId, label) {
           })(),
           blocked: Boolean(event),
         });
+        if (event) break;
       }
       const attemptedPosition = blockedPosition
         ? {
@@ -445,7 +603,13 @@ async function runContact(page, scenario, targetId, gestureId, label) {
           ? "s"
           : "w",
   );
-  const blocked = await capture(page, `${label}-blocked`);
+  if (!movement.blockedEvent)
+    throw new Error(
+      `Contact did not produce movement_blocked for ${targetId} from ${side}`,
+    );
+  const blocked = await persistCapture(
+    await capture(page, `${label}-blocked`, targetId),
+  );
   const blockedFeedback = await page.evaluate(
     ({ targetId }) => {
       const bridge = window.__GAME_TEST__;
@@ -479,7 +643,9 @@ async function runContact(page, scenario, targetId, gestureId, label) {
     bridge.step(10, { render: true, useBrowserInput: true });
   });
   await page.keyboard.up(setup.tangent);
-  const slide = await capture(page, `${label}-slide`);
+  const slide = await persistCapture(
+    await capture(page, `${label}-slide`, targetId),
+  );
   const slidePosition = slide.snapshot.player.position;
   return {
     objectId: targetId,
@@ -506,7 +672,14 @@ async function runContact(page, scenario, targetId, gestureId, label) {
   };
 }
 
-async function runProjectile(page, scenario, targetId, hostile, label) {
+async function runProjectile(
+  page,
+  scenario,
+  targetId,
+  hostile,
+  label,
+  persistCapture,
+) {
   const setup = await page.evaluate(
     ({ value, objectId, isHostile }) => {
       const bridge = window.__GAME_TEST__;
@@ -662,12 +835,16 @@ async function runProjectile(page, scenario, targetId, hostile, label) {
     },
     { value: scenario, objectId: targetId, isHostile: hostile },
   );
-  const initial = await capture(page, `${label}-initial`);
+  const initial = await persistCapture(
+    await capture(page, `${label}-initial`, targetId),
+  );
   await page.evaluate(() => {
     const bridge = window.__GAME_TEST__;
     bridge.step(2, { render: true });
   });
-  const impact = await capture(page, `${label}-impact`);
+  const impact = await persistCapture(
+    await capture(page, `${label}-impact`, targetId),
+  );
   const result = await page.evaluate(
     ({ projectileId, from, to, targetHealthBefore }) => {
       const bridge = window.__GAME_TEST__;
@@ -721,14 +898,16 @@ async function runProjectile(page, scenario, targetId, hostile, label) {
   };
 }
 
-async function persistCaptures(directory, captures) {
+async function persistCaptures(directory, captures, startIndex = 0) {
   const persisted = [];
   for (const [index, captureValue] of captures.entries()) {
-    const frameFile = `frame-${String(index).padStart(4, "0")}-${slug(captureValue.id)}.png`;
+    const frameFile = `frame-${String(startIndex + index).padStart(4, "0")}-${slug(captureValue.id)}.png`;
     const frame = dataUrlBuffer(captureValue.frame);
     await fs.writeFile(path.join(directory, frameFile), frame);
+    const withoutFrame = { ...captureValue };
+    delete withoutFrame.frame;
     persisted.push({
-      ...captureValue,
+      ...withoutFrame,
       frameFile,
       frameHash: sha256(frame),
       manifestHash: hashJson(captureValue.manifest),
@@ -811,6 +990,70 @@ function publicCapture(captureValue) {
   };
 }
 
+function selectContactSolids(solids, targetIds, label) {
+  const available = new Set(solids.map(({ objectId }) => objectId));
+  const missing = targetIds.filter((objectId) => !available.has(objectId));
+  if (missing.length > 0)
+    throw new Error(`${label} contact targets missing: ${missing.join(", ")}`);
+  const selected = new Set(targetIds);
+  return solids.filter(({ objectId }) => selected.has(objectId));
+}
+
+function withContactCoverage(solids, coverage) {
+  return solids.map((solid) => ({
+    ...solid,
+    contactCoverage: coverage.get(solid.objectId) ?? {
+      principalSides: CONTACT_SIDES,
+      requiredSides: [],
+      skippedSides: Object.fromEntries(
+        CONTACT_SIDES.map((side) => [side, "representative-scope"]),
+      ),
+      selected: false,
+      scope: "inventory-only",
+    },
+  }));
+}
+
+async function recordSolidContacts(
+  page,
+  scenario,
+  solids,
+  gestureId,
+  labelPrefix,
+  persistCapture,
+) {
+  const contacts = [];
+  const coverage = new Map();
+  for (const solid of solids) {
+    const requiredSides = [];
+    const skippedSides = {};
+    for (const side of CONTACT_SIDES) {
+      const contact = await runContact(
+        page,
+        scenario,
+        solid.objectId,
+        gestureId,
+        `${labelPrefix}-${slug(solid.objectId)}-${side}`,
+        side,
+        persistCapture,
+      );
+      if (contact.skipped) skippedSides[side] = contact.reason;
+      else {
+        requiredSides.push(side);
+        contacts.push(contact);
+      }
+    }
+    coverage.set(solid.objectId, {
+      principalSides: CONTACT_SIDES,
+      requiredSides,
+      skippedSides,
+      selected: true,
+      scope: "representative-cardinal-matrix",
+    });
+  }
+  return { contacts, coverage };
+}
+
 async function recordProfile(page, profileId) {
   const directory = path.join(OUTPUT, profileId);
   await fs.rm(directory, { recursive: true, force: true });
@@ -829,33 +1072,59 @@ async function recordProfile(page, profileId) {
   const generatedSolids = inventoryEvidence(generatedInventory, profileId);
   const citySolids = inventoryEvidence(cityInventory, profileId);
   await persistInventoryMasks(directory, [...generatedSolids, ...citySolids]);
-
-  const generatedTargetIds = new Set(
-    generatedSolids.map(({ objectId }) => objectId),
+  const generatedContactSolids = selectContactSolids(
+    generatedSolids,
+    GENERATED_CONTACT_TARGET_IDS,
+    "Generated scenery",
   );
-  const generatedContacts = [];
-  for (const [targetId, gestureId, label] of [
-    ["structure:0:forge", "walk-into-solid", "generated-walk"],
-    ["prop:0:barricade-v2", "tap-route-into-solid", "generated-route"],
-  ]) {
-    if (!generatedTargetIds.has(targetId)) continue;
-    generatedContacts.push(
-      await runContact(page, GENERATED_SCENARIO, targetId, gestureId, label),
+  const cityContactSolids = selectContactSolids(
+    citySolids,
+    CITY_CONTACT_TARGET_IDS,
+    "Embercross",
+  );
+  let captureIndex = 0;
+  const captures = [];
+  const persistCapture = async (captureValue) => {
+    const [persisted] = await persistCaptures(
+      directory,
+      [captureValue],
+      captureIndex,
     );
-  }
-  if (generatedContacts.length === 0)
-    throw new Error("Generated scenery produced no contact target");
+    captureIndex += 1;
+    captures.push(persisted);
+    return persisted;
+  };
 
-  const cityTarget =
-    citySolids.find(({ objectId }) => objectId.includes("market-crates")) ??
-    citySolids[0];
-  if (!cityTarget) throw new Error("Embercross produced no solid target");
-  const cityContact = await runContact(
+  const generatedContactResult = await recordSolidContacts(
+    page,
+    GENERATED_SCENARIO,
+    generatedContactSolids,
+    "walk-into-solid",
+    "generated-contact",
+    persistCapture,
+  );
+  if (generatedContactResult.contacts.length === 0)
+    throw new Error("Generated scenery produced no contact target");
+  const generatedContacts = generatedContactResult.contacts;
+  const generatedSolidsWithCoverage = withContactCoverage(
+    generatedSolids,
+    generatedContactResult.coverage,
+  );
+
+  const cityContactResult = await recordSolidContacts(
     page,
     EMBERCROSS_SCENARIO,
-    cityTarget.objectId,
+    cityContactSolids,
     "tap-route-into-solid",
-    "city-route",
+    "city-contact",
+    persistCapture,
+  );
+  if (cityContactResult.contacts.length === 0)
+    throw new Error("Embercross produced no contact target");
+  const cityContacts = cityContactResult.contacts;
+  const citySolidsWithCoverage = withContactCoverage(
+    citySolids,
+    cityContactResult.coverage,
   );
   const projectiles = [
     await runProjectile(
@@ -864,6 +1133,7 @@ async function recordProfile(page, profileId) {
       "structure:0:forge",
       false,
       "projectile-friendly",
+      persistCapture,
     ),
     await runProjectile(
       page,
@@ -871,15 +1141,10 @@ async function recordProfile(page, profileId) {
       "structure:0:forge",
       true,
       "projectile-hostile",
+      persistCapture,
     ),
   ];
 
-  const rawCaptures = [
-    ...generatedContacts.flatMap(({ captures }) => captures),
-    ...[cityContact].flatMap(({ captures }) => captures),
-    ...projectiles.flatMap(({ captures }) => captures),
-  ];
-  const captures = await persistCaptures(directory, rawCaptures);
   await writeContactSheet(directory, captures);
   const captureById = new Map(
     captures.map((captureValue) => [captureValue.id, captureValue]),
@@ -906,7 +1171,7 @@ async function recordProfile(page, profileId) {
       {
         id: "scenery-contact",
         gestureIds: ["walk-into-solid", "tap-route-into-solid"],
-        solids: generatedSolids,
+        solids: generatedSolidsWithCoverage,
         contacts: generatedContacts.map(resolveContact),
         projectiles: [],
       },
@@ -920,8 +1185,8 @@ async function recordProfile(page, profileId) {
       {
         id: "embercross-solid-objects",
         gestureIds: ["tap-route-into-solid"],
-        solids: citySolids,
-        contacts: [resolveContact(cityContact)],
+        solids: citySolidsWithCoverage,
+        contacts: cityContacts.map(resolveContact),
         projectiles: [],
       },
     ],
@@ -969,6 +1234,7 @@ function aggregate(results) {
     "solid-support-blocks",
     "blocked-object-visible",
     "swept-contact-holds",
+    "principal-sides-covered",
   ].map((id) => ({
     id,
     pass: results.every(
@@ -1066,6 +1332,17 @@ async function main() {
           contactCount: scenario.contacts.length,
           projectileCount: scenario.projectiles.length,
           gestureIds: scenario.gestureIds,
+          principalSideCount: scenario.solids.reduce(
+            (count, solid) =>
+              count + (solid.contactCoverage?.requiredSides?.length ?? 0),
+            0,
+          ),
+          skippedSideCount: scenario.solids.reduce(
+            (count, solid) =>
+              count +
+              Object.keys(solid.contactCoverage?.skippedSides ?? {}).length,
+            0,
+          ),
         })),
         captureCount: evidence.captures.length,
       })),
@@ -1092,8 +1369,26 @@ async function main() {
             .map(({ id }) => `${id}-not-detected`),
         ].join(", ")}`,
       );
+    const solidCount = results.reduce(
+      (count, result) =>
+        count +
+        result.evidence.scenarios.reduce(
+          (total, scenario) => total + scenario.solids.length,
+          0,
+        ),
+      0,
+    );
+    const contactCount = results.reduce(
+      (count, result) =>
+        count +
+        result.evidence.scenarios.reduce(
+          (total, scenario) => total + scenario.contacts.length,
+          0,
+        ),
+      0,
+    );
     console.log(
-      `PRES-COLLIDE-008 PASS: ${results.length} profiles, ${results.reduce((count, result) => count + result.evidence.scenarios.reduce((total, scenario) => total + scenario.solids.length, 0), 0)} solid roles, four negative controls`,
+      `PRES-COLLIDE-008 PASS: ${results.length} profiles, ${solidCount} solid roles, ${contactCount} cardinal contacts, five negative controls`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
