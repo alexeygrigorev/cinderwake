@@ -462,7 +462,8 @@ async function runLiveRecording(
       await fs.copyFile(videoPath, target);
     }
   }
-  if (!videoPath) throw new Error(`${profileId}/${paceId} did not produce video`);
+  if (!videoPath)
+    throw new Error(`${profileId}/${paceId} did not produce video`);
   return result;
 }
 
