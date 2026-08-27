@@ -731,7 +731,10 @@ export function assessManifestSpriteAspectContract(
       `manifest.drawCalls[${index}]`,
       call.spriteId,
       call.sourceRect,
-      call.destinationRect,
+      destinationRect(
+        call.destinationRect,
+        `manifest.drawCalls[${index}].destinationRect`,
+      ),
     );
 
   for (const [index, scene] of manifest.sceneSprites.entries())
@@ -741,7 +744,10 @@ export function assessManifestSpriteAspectContract(
       `manifest.sceneSprites[${index}]`,
       scene.spriteId,
       scene.sourceRect,
-      scene.destinationRect,
+      destinationRect(
+        scene.destinationRect,
+        `manifest.sceneSprites[${index}].destinationRect`,
+      ),
     );
 
   for (const [index, health] of manifest.worldUi.entries()) {
@@ -752,14 +758,26 @@ export function assessManifestSpriteAspectContract(
       `${pathName}.frame`,
       health.frame.spriteId,
       health.frame.sourceRect,
-      health.frame.destinationRect,
+      destinationRect(
+        health.frame.destinationRect,
+        `${pathName}.frame.destinationRect`,
+      ),
     );
 
     const fillPath = `${pathName}.fill`;
     const fillSprite = catalog.sprites[health.fill.spriteId]!;
     const fullSource = fillSprite.frames[health.fill.frameIdentity]!;
     const outer = health.destinationRect;
-    const fillDestination = health.fill.destinationRect;
+    const fillDestination = destinationRect(
+      health.fill.destinationRect,
+      `${fillPath}.destinationRect`,
+    );
+    if (
+      health.fill.sourceRect.x !== fullSource.x ||
+      health.fill.sourceRect.y !== fullSource.y ||
+      health.fill.sourceRect.height !== fullSource.height
+    )
+      violations.push(`${fillPath} must crop the source width only`);
     const leftInset = fillDestination.x - outer.x;
     const innerWidth = outer.width - leftInset * 2;
     const sourceCoverage = health.fill.sourceRect.width / fullSource.width;

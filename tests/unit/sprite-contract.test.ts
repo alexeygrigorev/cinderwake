@@ -843,6 +843,12 @@ describe("sprite atlas quality contract", () => {
     expect(() =>
       assertManifestSpriteAspectContract(healthBroken, catalog),
     ).toThrow("manifest.worldUi[0].fill");
+
+    const nonHorizontalCrop = structuredClone(healthManifest);
+    nonHorizontalCrop.worldUi[0]!.fill.sourceRect.height = 47;
+    expect(() =>
+      assertManifestSpriteAspectContract(nonHorizontalCrop, catalog),
+    ).toThrow("source width only");
   });
 
   it("keeps directional hero scenarios on their authored banks through action recovery", () => {
