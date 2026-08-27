@@ -1,5 +1,13 @@
 export declare const TEMPORAL_PIXEL_MUTATION_IDS: readonly string[];
 
+export interface TemporalPixelMutation {
+  kind: "production-compositor-png";
+  changedFrameIndices: number[];
+  changedFrameCount: number;
+  sourceFrameHashes: string[];
+  mutatedFrameHashes: string[];
+}
+
 export declare function runTemporalProductionPixelNegativeControls(
   frames: Uint8Array[],
 ): Promise<
@@ -8,6 +16,6 @@ export declare function runTemporalProductionPixelNegativeControls(
     status: "DETECTED" | "NOT_DETECTED";
     signal: string;
     expectedSignal: string;
-    pixelMutation: Record<string, unknown>;
+    pixelMutation: TemporalPixelMutation;
   }>
 >;
