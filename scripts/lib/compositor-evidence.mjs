@@ -10,6 +10,21 @@ export const COMPOSITOR_FAILURE_IDS = [
   "duplicate-owner-body",
 ];
 
+export const LIVE_COMPOSITOR_SIGNAL_IDS = [
+  "one-current-body-per-owner",
+  "no-unexplained-absence",
+  "no-stale-pixels",
+  "presentation-cadence-complete",
+  "effect-despawn-clean",
+];
+
+export const LIVE_COMPOSITOR_FAILURE_IDS = [
+  "duplicate-owner-body",
+  "expected-frame-absent",
+  "stale-pixels-detected",
+  "stale-effect-retained",
+];
+
 function signal(id, pass, detail) {
   return { id, pass, detail };
 }
@@ -115,6 +130,184 @@ export function runCompositorNegativeControls(evidence) {
     const mutated = structuredClone(evidence);
     mutate(mutated);
     const result = evaluateCompositorEvidence(mutated);
+    const detected = result.failures.includes(expectedSignal);
+    return {
+      id,
+      status: detected ? "DETECTED" : "NOT_DETECTED",
+      signal: detected ? expectedSignal : "",
+      expectedSignal,
+      failures: result.failures,
+    };
+  });
+}
+
+function sameStringSet(first, second) {
+  return (
+    Array.isArray(first) &&
+    Array.isArray(second) &&
+    first.every((value) => typeof value === "string" && value.length > 0) &&
+    second.every((value) => typeof value === "string" && value.length > 0) &&
+    new Set(first).size === first.length &&
+    new Set(second).size === second.length &&
+    first.length === second.length &&
+    first.every((value) => second.includes(value))
+  );
+}
+
+function sameNumberList(first, second) {
+  return (
+    Array.isArray(first) &&
+    Array.isArray(second) &&
+    first.length === second.length &&
+    first.every(
+      (value, index) =>
+        Number.isInteger(value) &&
+        Number.isInteger(second[index]) &&
+        value === second[index],
+    )
+  );
+}
+
+function residualIsClean(residual) {
+  return (
+    residual &&
+    Number.isInteger(residual.differingPixels) &&
+    residual.differingPixels >= 0 &&
+    Number.isInteger(residual.maxChannelDelta) &&
+    residual.maxChannelDelta >= 0 &&
+    residual.differingPixels === 0 &&
+    residual.maxChannelDelta === 0
+  );
+}
+
+function segmentAssessment(segment) {
+  const frames = Array.isArray(segment?.frames) ? segment.frames : [];
+  const hasFrames = frames.length > 0;
+  const oneCurrentBodyPerOwner =
+    hasFrames &&
+    frames.every((frame) => ownerPaintsAreUnique(frame?.ownerPaints));
+  const noUnexplainedAbsence =
+    hasFrames &&
+    frames.every((frame) =>
+      sameStringSet(frame?.expectedOwnerIds, frame?.observedOwnerIds),
+    );
+  const presentationCadenceComplete =
+    hasFrames &&
+    sameNumberList(
+      segment?.expectedTicks,
+      frames.map(({ tick }) => tick),
+    );
+  return {
+    id: typeof segment?.id === "string" ? segment.id : "",
+    frameCount: frames.length,
+    oneCurrentBodyPerOwner,
+    noUnexplainedAbsence,
+    presentationCadenceComplete,
+  };
+}
+
+/**
+ * Evaluate ordered compositor samples. The recorder supplies independent
+ * expected-owner lists from semantic state, observed-owner lists from the
+ * render manifest, and decoded pixel residuals against a fresh reconstruction.
+ */
+export function evaluateLiveCompositorEvidence({
+  segments,
+  residuals,
+  effects,
+}) {
+  const assessments = Array.isArray(segments)
+    ? segments.map(segmentAssessment)
+    : [];
+  const oneCurrentBodyPerOwner =
+    assessments.length > 0 &&
+    assessments.every(({ oneCurrentBodyPerOwner: pass }) => pass);
+  const noUnexplainedAbsence =
+    assessments.length > 0 &&
+    assessments.every(({ noUnexplainedAbsence: pass }) => pass);
+  const presentationCadenceComplete =
+    assessments.length > 0 &&
+    assessments.every(({ presentationCadenceComplete: pass }) => pass);
+  const noStalePixels =
+    Array.isArray(residuals) &&
+    residuals.length > 0 &&
+    residuals.every(residualIsClean);
+  const effectDespawnClean =
+    Array.isArray(effects) &&
+    effects.length > 0 &&
+    effects.every(
+      (effect) =>
+        typeof effect?.effectId === "string" &&
+        effect.effectId.length > 0 &&
+        effect.observedBefore === true &&
+        effect.observedAfter === false,
+    );
+  const failures = [];
+  if (!oneCurrentBodyPerOwner) failures.push("duplicate-owner-body");
+  if (!noUnexplainedAbsence || !presentationCadenceComplete)
+    failures.push("expected-frame-absent");
+  if (!noStalePixels) failures.push("stale-pixels-detected");
+  if (!effectDespawnClean) failures.push("stale-effect-retained");
+  return {
+    pass: failures.length === 0,
+    failures,
+    signals: [
+      signal("one-current-body-per-owner", oneCurrentBodyPerOwner, {
+        segments: assessments,
+      }),
+      signal("no-unexplained-absence", noUnexplainedAbsence, {
+        segments: assessments,
+      }),
+      signal("no-stale-pixels", noStalePixels, {
+        residuals: residuals ?? [],
+      }),
+      signal("presentation-cadence-complete", presentationCadenceComplete, {
+        segments: assessments,
+      }),
+      signal("effect-despawn-clean", effectDespawnClean, {
+        effects: effects ?? [],
+      }),
+    ],
+  };
+}
+
+/** Exercise every named live-compositor mutation against a clean fixture. */
+export function runLiveCompositorNegativeControls(evidence) {
+  const definitions = [
+    {
+      id: "canvas-clear-skipped",
+      expectedSignal: "stale-pixels-detected",
+      mutate(value) {
+        value.residuals[0].differingPixels = 1;
+        value.residuals[0].maxChannelDelta = 255;
+      },
+    },
+    {
+      id: "offset-double-draw",
+      expectedSignal: "duplicate-owner-body",
+      mutate(value) {
+        value.segments[0].frames[0].ownerPaints[0].bodyPaintCount = 2;
+      },
+    },
+    {
+      id: "presentation-frame-omitted",
+      expectedSignal: "expected-frame-absent",
+      mutate(value) {
+        value.segments[0].frames.splice(1, 1);
+      },
+    },
+    {
+      id: "despawned-effect-retained",
+      expectedSignal: "stale-effect-retained",
+      mutate(value) {
+        value.effects[0].observedAfter = true;
+      },
+    },
+  ];
+  return definitions.map(({ id, expectedSignal, mutate }) => {
+    const mutated = structuredClone(evidence);
+    mutate(mutated);
+    const result = evaluateLiveCompositorEvidence(mutated);
     const detected = result.failures.includes(expectedSignal);
     return {
       id,
