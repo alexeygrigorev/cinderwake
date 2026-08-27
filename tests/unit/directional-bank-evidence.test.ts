@@ -94,7 +94,16 @@ function capture(
         classId: actorId,
         position,
         facing: facingVector,
-        animation: { clip },
+        animation: {
+          clip,
+          startedAtTick: tick,
+          lockedUntilTick:
+            clip === "attack"
+              ? tick + 26
+              : clip === "ability"
+                ? tick + 36
+                : tick,
+        },
         pendingAttacks,
       },
     },
