@@ -199,6 +199,41 @@ describe("camera motion evidence evaluator", () => {
     ]);
   });
 
+  it("declares west and south edge traversal as separate required axes", () => {
+    const spec = CAMERA_MOTION_RUN_SPECS.find(
+      ({ scenarioId }) =>
+        scenarioId === CAMERA_MOTION_SCENARIO_IDS.westSouthEdge,
+    );
+
+    expect(spec).toMatchObject({
+      cameraMode: "smooth",
+      boundaryRequired: true,
+      boundaryAxes: ["x", "y"],
+      gestureIds: ["edge-west", "edge-south"],
+    });
+  });
+
+  it("rejects an edge route that misses a declared boundary axis", () => {
+    const result = evaluateCameraMotionEvidence({
+      requiredProfiles: ["desktop"],
+      requiredRunSpecs: [
+        {
+          ...CAMERA_MOTION_RUN_SPECS[0]!,
+          boundaryAxes: ["x", "y"],
+        },
+      ],
+      profiles: [
+        {
+          profileId: "desktop",
+          runs: [run()],
+        },
+      ],
+    });
+
+    expect(result.pass).toBe(false);
+    expect(result.failures).toContain("camera-clamp-mismatch");
+  });
+
   it("rejects a missing camera sample contract", () => {
     const value = evidence();
     delete (value.profiles[0]!.runs[0]!.gestures[0]!.samples[1] as any).camera;

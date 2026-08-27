@@ -19,6 +19,7 @@ const REFERENCE_SCENE_ID = "tile:14:4";
 const TILE_PIXELS = 48;
 const LOGICAL_VIEWPORT = { width: 960, height: 540 };
 const APPROACH_MS = 1_000;
+const EDGE_HOLD_MS = 2_500;
 // Crossing the camera's right clamp requires leaving the one-tile wall margin
 // before the target can move left. Keep the reversal long enough to show that
 // transition instead of recording a stationary clamped target.
@@ -57,6 +58,20 @@ const DIRECTIONS = {
     y: 0,
     axes: [["x", 1]],
     holdMs: HOLD_MS,
+  },
+  "edge-west": {
+    keys: ["a"],
+    x: -1,
+    y: 0,
+    axes: [["x", -1]],
+    holdMs: EDGE_HOLD_MS,
+  },
+  "edge-south": {
+    keys: ["s"],
+    x: 0,
+    y: 1,
+    axes: [["y", 1]],
+    holdMs: EDGE_HOLD_MS,
   },
   "diagonal-north-west": {
     keys: ["a", "w"],
@@ -368,7 +383,7 @@ async function touchGesture(page, session, before, direction) {
   });
   try {
     await waitForMovement(page, before, direction);
-    await page.waitForTimeout(HOLD_MS);
+    await page.waitForTimeout(direction.holdMs);
   } finally {
     await session.send("Input.dispatchTouchEvent", {
       type: "touchEnd",

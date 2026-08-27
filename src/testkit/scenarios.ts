@@ -1823,6 +1823,20 @@ function cameraEdgeReversalScenario(): ScenarioV1 {
   };
 }
 
+function cameraWestSouthEdgeScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "camera-west-south-edge",
+    seed: "quality-camera-west-south-edge-01",
+    classId: "arcanist",
+    map: { mode: "explicit", rows: arenaRows(30, 25) },
+    player: { tile: [15, 12] },
+    monsters: [],
+    camera: { mode: "smooth", centerTile: [15, 12] },
+    settings: { ai: false, autoPickup: false, cameraFollow: true },
+  };
+}
+
 export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
   "animation-idle": {
     schemaVersion: 1,
@@ -1907,6 +1921,7 @@ export const BUILTIN_SCENARIOS: Record<string, ScenarioV1> = {
     settings: { ai: false, autoPickup: false, cameraFollow: true },
   },
   "map-edge-reversal": cameraEdgeReversalScenario(),
+  "camera-west-south-edge": cameraWestSouthEdgeScenario(),
   "camera-diagonal-corner": cameraDiagonalCornerScenario(),
   "camera-stop-center": cameraStopCenterScenario(),
   "mid-action": {

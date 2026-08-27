@@ -1,5 +1,6 @@
 export const CAMERA_MOTION_SCENARIO_IDS = {
   edgeReversal: "map-edge-reversal",
+  westSouthEdge: "camera-west-south-edge",
   diagonalCorner: "camera-diagonal-corner",
   stopCenter: "camera-stop-center",
   fixed: "fixed-camera-open-floor-arcanist",
@@ -12,6 +13,8 @@ export const CAMERA_MOTION_GESTURE_IDS = [
   "approach-map-edge",
   "reverse-west",
   "reverse-east",
+  "edge-west",
+  "edge-south",
   "diagonal-north-west",
   "stop-after-diagonal",
   "stop-center",
@@ -26,6 +29,14 @@ export const CAMERA_MOTION_RUN_SPECS = [
     artifactPrefix: "edge",
     boundaryRequired: true,
     gestureIds: ["approach-map-edge", "reverse-west", "reverse-east"],
+  },
+  {
+    scenarioId: CAMERA_MOTION_SCENARIO_IDS.westSouthEdge,
+    cameraMode: "smooth",
+    artifactPrefix: "west-south-edge",
+    boundaryRequired: true,
+    boundaryAxes: ["x", "y"],
+    gestureIds: ["edge-west", "edge-south"],
   },
   {
     scenarioId: CAMERA_MOTION_SCENARIO_IDS.diagonalCorner,
@@ -355,7 +366,7 @@ function resolveRunSpecs({
   return CAMERA_MOTION_RUN_SPECS;
 }
 
-function clampObservation(run, boundaryRequired) {
+function clampObservation(run, boundaryRequired, boundaryAxes = []) {
   const bounds = boundsFor(run);
   const captures = runEntries(run);
   const samples = runSamples(run);
@@ -381,17 +392,35 @@ function clampObservation(run, boundaryRequired) {
       (boundaryTouch(target.x, bounds?.minX, bounds?.maxX) ||
         boundaryTouch(target.y, bounds?.minY, bounds?.maxY)),
   );
+  const targetBoundaryAxes = {
+    x: observations.some(
+      ({ target }) =>
+        target && boundaryTouch(target.x, bounds?.minX, bounds?.maxX),
+    ),
+    y: observations.some(
+      ({ target }) =>
+        target && boundaryTouch(target.y, bounds?.minY, bounds?.maxY),
+    ),
+  };
+  const requiredBoundaryAxes = boundaryAxes.filter((axis) =>
+    ["x", "y"].includes(axis),
+  );
+  const requiredAxesAtBoundary = requiredBoundaryAxes.every(
+    (axis) => targetBoundaryAxes[axis],
+  );
   return {
     bounds,
     observationCount: observations.length,
     inside,
     targetAtBoundary,
+    targetBoundaryAxes,
+    requiredBoundaryAxes,
     boundaryRequired,
     pass: Boolean(
       bounds &&
       observations.length > 0 &&
       inside &&
-      (!boundaryRequired || targetAtBoundary),
+      (!boundaryRequired || (targetAtBoundary && requiredAxesAtBoundary)),
     ),
   };
 }
@@ -537,10 +566,17 @@ export function evaluateCameraMotionEvidence({
       ),
     );
   const runsDetails = expected.map(
-    ({ profileId, scenarioId, cameraMode, gestureIds, boundaryRequired }) => {
+    ({
+      profileId,
+      scenarioId,
+      cameraMode,
+      gestureIds,
+      boundaryRequired,
+      boundaryAxes,
+    }) => {
       const run = actualRuns.get(`${profileId}:${scenarioId}`)?.run;
       const convergence = convergenceObservation(run, gestureIds, cameraMode);
-      const clamps = clampObservation(run, boundaryRequired);
+      const clamps = clampObservation(run, boundaryRequired, boundaryAxes);
       const continuous = continuousObservation(run);
       const mode = modeObservation(run, cameraMode);
       return {

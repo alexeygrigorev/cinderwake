@@ -241,6 +241,7 @@ describe("presentation run binding", () => {
       scenarioIds: [
         "temporal-camera-track",
         "map-edge-reversal",
+        "camera-west-south-edge",
         "camera-diagonal-corner",
         "camera-stop-center",
         "fixed-camera-open-floor-arcanist",
@@ -251,6 +252,8 @@ describe("presentation run binding", () => {
         "approach-map-edge",
         "reverse-west",
         "reverse-east",
+        "edge-west",
+        "edge-south",
         "diagonal-north-west",
         "stop-after-diagonal",
         "stop-center",

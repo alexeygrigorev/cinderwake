@@ -1,5 +1,6 @@
 export declare const CAMERA_MOTION_SCENARIO_IDS: {
   readonly edgeReversal: "map-edge-reversal";
+  readonly westSouthEdge: "camera-west-south-edge";
   readonly diagonalCorner: "camera-diagonal-corner";
   readonly stopCenter: "camera-stop-center";
   readonly fixed: "fixed-camera-open-floor-arcanist";
@@ -13,6 +14,8 @@ export declare const CAMERA_MOTION_GESTURE_IDS: readonly [
   "approach-map-edge",
   "reverse-west",
   "reverse-east",
+  "edge-west",
+  "edge-south",
   "diagonal-north-west",
   "stop-after-diagonal",
   "stop-center",
@@ -30,6 +33,14 @@ export declare const CAMERA_MOTION_RUN_SPECS: readonly [
       "reverse-west",
       "reverse-east",
     ];
+  },
+  {
+    readonly scenarioId: "camera-west-south-edge";
+    readonly cameraMode: "smooth";
+    readonly artifactPrefix: "west-south-edge";
+    readonly boundaryRequired: true;
+    readonly boundaryAxes: readonly ["x", "y"];
+    readonly gestureIds: readonly ["edge-west", "edge-south"];
   },
   {
     readonly scenarioId: "camera-diagonal-corner";
@@ -87,7 +98,8 @@ export interface CameraMotionEvidenceInput {
     cameraMode: "fixed" | "snap" | "smooth";
     artifactPrefix?: string;
     boundaryRequired?: boolean;
-    gestureIds: string[];
+    boundaryAxes?: readonly string[];
+    gestureIds: readonly string[];
   }>;
   requiredScenarioIds?: string[];
   requiredGestureIds?: string[];
