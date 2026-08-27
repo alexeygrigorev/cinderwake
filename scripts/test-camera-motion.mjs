@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { chromium } from "@playwright/test";
 import sharp from "sharp";
+import { availablePort } from "./lib/available-port.mjs";
 import {
   CAMERA_MOTION_GESTURE_IDS,
   CAMERA_MOTION_PROFILE_IDS,
@@ -570,7 +571,8 @@ async function main() {
     : [...CAMERA_MOTION_PROFILE_IDS];
   if (profileIds.length === 0)
     throw new Error("--profiles must name at least one known camera profile");
-  const port = Number(option("port", String(48_000 + (process.pid % 1_000))));
+  const requestedPort = option("port");
+  const port = Number(requestedPort ?? (await availablePort()));
   if (!Number.isInteger(port) || port < 1_024 || port > 65_535)
     throw new Error("--port must be an available TCP port");
 

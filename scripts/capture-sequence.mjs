@@ -2,33 +2,15 @@ import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { once } from "node:events";
 import fs from "node:fs/promises";
-import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
+import { availablePort } from "./lib/available-port.mjs";
 
 function option(name, fallback) {
   const index = process.argv.indexOf(`--${name}`);
   return index < 0 ? fallback : (process.argv[index + 1] ?? fallback);
-}
-
-async function availablePort() {
-  const probe = net.createServer();
-  await new Promise((resolve, reject) => {
-    probe.once("error", reject);
-    probe.listen(0, "127.0.0.1", resolve);
-  });
-  const address = probe.address();
-  if (!address || typeof address === "string") {
-    probe.close();
-    throw new Error("Could not determine an available capture port");
-  }
-  const port = address.port;
-  await new Promise((resolve, reject) =>
-    probe.close((error) => (error ? reject(error) : resolve())),
-  );
-  return port;
 }
 
 function inputForAction(action) {
