@@ -160,12 +160,13 @@ function spriteGlyphs(value: string): string {
 }
 
 function spriteText(value: string, className = ""): string {
-  return `<span class="sprite-text ${className}" aria-label="${escapeAttribute(value)}">${spriteGlyphs(value)}</span>`;
+  return `<span class="sprite-text ${className}" data-sprite-role="glyph-text" aria-label="${escapeAttribute(value)}">${spriteGlyphs(value)}</span>`;
 }
 
 function setSpriteGlyphs(element: HTMLElement, value: string): void {
   element.innerHTML = spriteGlyphs(value);
   element.setAttribute("aria-label", value);
+  element.setAttribute("data-sprite-role", "glyph-text");
 }
 
 function setSpriteLabel(
@@ -175,6 +176,47 @@ function setSpriteLabel(
 ): void {
   element.innerHTML = spriteText(value, className);
   element.setAttribute("aria-label", value);
+  element.setAttribute("data-sprite-role", "glyph-text");
+}
+
+function annotateSpriteRoles(root: ParentNode): void {
+  const roles: Array<[string, string]> = [
+    [".selection-v2", "selection-screen"],
+    [".selection-art", "selection-art"],
+    [".class-card", "ui-panel"],
+    [".class-portrait", "class-portrait"],
+    [".seed-control", "ui-field"],
+    [".begin", "ui-button"],
+    [".selection-lab-toggle", "ui-button"],
+    [".loading-failed [data-loading]", "ui-button"],
+    ["canvas:not(.mini)", "canvas-manifest"],
+    [".objective", "ui-panel"],
+    [".objective-direction", "ui-icon"],
+    ["#monsters", "ui-panel"],
+    [".health b", "ui-panel"],
+    ["#hpbar", "ui-meter"],
+    [".skills button", "ui-button"],
+    [".loot-log", "ui-panel"],
+    ["#outcome", "ui-panel"],
+    ["#city-services", "city-service-panel"],
+    [".mobile-controls", "ui-panel"],
+    [".move-pad", "ui-control"],
+    [".move-ring, .move-knob", "ui-icon"],
+    [".mobile-actions button", "ui-button"],
+    [".game > .lab-toggle", "ui-button"],
+    [".lab", "ui-panel"],
+    [".lab .close, .lab [data-lab]", "ui-button"],
+    [".scenario-value", "ui-field"],
+    [".city-service-actions button", "ui-button"],
+    [".city-service-button-copy", "ui-field"],
+  ];
+  for (const [selector, role] of roles)
+    root.querySelectorAll<HTMLElement>(selector).forEach((element) => {
+      element.setAttribute("data-sprite-role", role);
+    });
+  root
+    .querySelector<HTMLElement>(".selection-v2")
+    ?.setAttribute("data-provenance-decoration", "legibility-mask");
 }
 
 function selectionScene(classId: CharacterClass): string {
@@ -183,16 +225,17 @@ function selectionScene(classId: CharacterClass): string {
 
 function screen(): void {
   const archetype = ARCHETYPES[selected];
-  app.innerHTML = `<main class="selection selection-v2${testMode ? " test-mode" : ""}" data-selected-class="${selected}" style="--selection-art:url('${selectionScene(selected)}');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="selection-art" role="img" aria-label="${escapeAttribute(`${archetype.name} standing before the ruined settlement`)}"></div><header class="selection-header"><p class="eyebrow">${spriteText("Choose your ember", "sprite-eyebrow")}</p><h1 data-ui-title>Cinderwake</h1></header><section class="choose" aria-label="Character selection"><div class="selected-class"><h2 data-ui-title>${archetype.name}</h2>${spriteText(archetype.role, "sprite-role")}${spriteText(`HP ${archetype.health} / ARM ${archetype.armor}`, "sprite-stats")}</div><div class="cards" role="group" aria-label="Playable characters">${Object.values(
+  app.innerHTML = `<main class="selection selection-v2${testMode ? " test-mode" : ""}" data-selected-class="${selected}" data-provenance-decoration="legibility-mask" data-sprite-role="selection-screen" style="--selection-art:url('${selectionScene(selected)}');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="selection-art" data-sprite-role="selection-art" role="img" aria-label="${escapeAttribute(`${archetype.name} standing before the ruined settlement`)}"></div><header class="selection-header"><p class="eyebrow">${spriteText("Choose your ember", "sprite-eyebrow")}</p><h1 data-ui-title>Cinderwake</h1></header><section class="choose" aria-label="Character selection"><div class="selected-class"><h2 data-ui-title>${archetype.name}</h2>${spriteText(archetype.role, "sprite-role")}${spriteText(`HP ${archetype.health} / ARM ${archetype.armor}`, "sprite-stats")}</div><div class="cards" role="group" aria-label="Playable characters">${Object.values(
     ARCHETYPES,
   )
     .map(
       (candidate) =>
-        `<button class="class-card ${selected === candidate.id ? "selected" : ""}" data-class="${candidate.id}" style="--accent:${candidate.accent};--portrait:url('${selectionScene(candidate.id)}')" aria-label="${escapeAttribute(`${candidate.name}. ${candidate.role}. ${candidate.description}`)}" aria-pressed="${selected === candidate.id}"><span class="class-portrait" aria-hidden="true"></span><strong data-ui-title>${candidate.name}</strong></button>`,
+        `<button class="class-card ${selected === candidate.id ? "selected" : ""}" data-class="${candidate.id}" data-sprite-role="ui-panel" style="--accent:${candidate.accent};--portrait:url('${selectionScene(candidate.id)}')" aria-label="${escapeAttribute(`${candidate.name}. ${candidate.role}. ${candidate.description}`)}" aria-pressed="${selected === candidate.id}"><span class="class-portrait" data-sprite-role="class-portrait" aria-hidden="true"></span><strong data-ui-title>${candidate.name}</strong></button>`,
     )
     .join(
       "",
-    )}</div><form class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" type="submit" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></form></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
+    )}</div><form class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control" data-sprite-role="ui-field"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" data-sprite-role="ui-button" type="submit" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></form></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" data-sprite-role="ui-button" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
+  annotateSpriteRoles(app);
   app.querySelectorAll<HTMLButtonElement>("[data-class]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -231,7 +274,8 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    app.innerHTML = `<main class="loading loading-failed" style="--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Atlas failed.</h1><p>${spriteText(message, "sprite-loading-error")}</p><div><button data-loading="retry" aria-label="Retry loading">${spriteText("Retry", "sprite-button-label")}</button><button data-loading="back" aria-label="Back to character selection">${spriteText("Back", "sprite-button-label")}</button></div></main>`;
+    app.innerHTML = `<main class="loading loading-failed" style="--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Atlas failed.</h1><p>${spriteText(message, "sprite-loading-error")}</p><div><button data-loading="retry" data-sprite-role="ui-button" aria-label="Retry loading">${spriteText("Retry", "sprite-button-label")}</button><button data-loading="back" data-sprite-role="ui-button" aria-label="Back to character selection">${spriteText("Back", "sprite-button-label")}</button></div></main>`;
+    annotateSpriteRoles(app);
     app.querySelector<HTMLButtonElement>("[data-loading='retry']")!.onclick =
       () => void boot(scenario);
     app.querySelector<HTMLButtonElement>("[data-loading='back']")!.onclick =
@@ -239,6 +283,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     return;
   }
   app.innerHTML = `<main class="game${testMode ? " test-mode" : ""}" style="--terrain-atlas:url('${assetBase}assets/sprites/environment-terrain.png');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--ui-service-panel:url('${assetBase}assets/sprites/ui-service-panel.png');--ui-service-button:url('${assetBase}assets/sprites/ui-service-button.png');--ui-service-field:url('${assetBase}assets/sprites/ui-service-field.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="stage"><canvas aria-label="Cinderwake game view"></canvas><div class="hud top"><div class="brand" data-ui-title>CINDERWAKE <small></small></div><div class="objective" id="objective" aria-live="polite"><i class="objective-direction" aria-hidden="true"></i><span><strong id="objective-title"></strong><small id="objective-detail"></small></span></div><div class="counter" id="monsters"></div></div><div class="hud bottom"><div class="health"><div class="health-label">${spriteText("Vitality", "sprite-hud-label")}</div><b><i id="hpbar"></i></b><em id="hp"></em></div><div class="skills"><button data-action="attack" aria-label="Strike">${spriteText("Click", "sprite-shortcut")}${spriteText("Strike", "sprite-action-label")}</button><button data-action="ability" aria-label="Use ability">${spriteText("Right click", "sprite-shortcut")}${spriteText("Ability", "sprite-action-label")}<i id="cd"></i></button><button data-action="tonic" aria-label="Drink tonic">${spriteText("Q", "sprite-shortcut")}${spriteText("Tonic", "sprite-action-label")}<i id="tonics"></i></button></div></div><aside class="loot-log"><strong>${spriteText("Run log", "sprite-panel-label")}</strong><div id="log"></div></aside><div id="outcome" class="outcome hidden"></div></div><aside id="city-services" class="city-service-sheet hidden" aria-live="polite" aria-label="Nearby city services"></aside><nav class="mobile-controls" aria-label="Touch game controls"><div class="move-pad" data-direction="0,0" role="application" aria-label="Eight-direction movement pad"><span class="move-ring"></span><span class="move-knob"></span><small>${spriteText("Move", "sprite-control-label")}</small></div><div class="mobile-actions"><button class="primary-action" data-action="attack" aria-label="Strike"><strong>${spriteText("Strike", "sprite-action-label")}</strong><span>${spriteText("Primary", "sprite-action-detail")}</span></button><button class="ability-action" data-action="ability" aria-label="Use ability"><strong>${spriteText("Ability", "sprite-action-label")}</strong><span id="mobile-cd"></span></button><button class="tonic-action" data-action="tonic" aria-label="Drink tonic"><strong>${spriteText("Tonic", "sprite-action-label")}</strong><span id="mobile-tonics"></span></button></div></nav>${testMode ? `<button class="lab-toggle" aria-label="Open Test lab">${spriteText("Test lab", "sprite-button-label")}</button>` : ""}</main>`;
+  annotateSpriteRoles(app);
   const canvas = app.querySelector<HTMLCanvasElement>("canvas")!;
   host?.stop();
   input?.destroy();
@@ -496,6 +541,7 @@ function updateCityServices(state: GameState): void {
   if (sheet.dataset.contentKey === contentKey) return;
   sheet.dataset.contentKey = contentKey;
   sheet.innerHTML = `<div class="city-service-heading">${spriteText(npc.name, "sprite-city-npc")}${spriteText(status, "sprite-city-status")}${spriteText(needs, "sprite-city-needs")}${spriteText(stock, "sprite-city-stock")}</div><div class="city-service-actions">${presentations.map(({ actionId, label, detail, previewStatus, previewDeltas, rejectionCode }) => `<button data-city-action="${actionId}" data-preview-status="${previewStatus}"${previewDeltas ? ` data-preview-deltas="${escapeAttribute(JSON.stringify(previewDeltas))}"` : ""}${rejectionCode ? ` data-preview-rejection="${escapeAttribute(rejectionCode)}"` : ""} aria-label="${escapeAttribute(`${label}. ${detail}`)}"><span class="city-service-button-copy">${spriteText(label, "sprite-city-action")}${spriteText(detail, "sprite-city-detail")}</span></button>`).join("")}</div><output class="city-service-feedback" aria-label="${escapeAttribute(feedback)}">${spriteText(feedbackVisible, "sprite-city-feedback")}</output>`;
+  annotateSpriteRoles(sheet);
 }
 function lab(): void {
   const existing = document.querySelector(".lab");
@@ -516,7 +562,9 @@ function lab(): void {
     `url('${assetBase}assets/sprites/glyphs.png')`,
   );
   node.innerHTML = `<button class="close" aria-label="Close Test lab">${spriteText("X", "sprite-button-label")}</button><p class="eyebrow">${spriteText("Deterministic tools", "sprite-eyebrow")}</p><h2 data-ui-title>Test lab</h2><div class="lab-field"><span class="lab-field-label">${spriteText("Scenario", "sprite-field-label")}</span><div class="scenario-chooser" role="group" aria-label="Scenario chooser"><button data-lab="scenario-previous" aria-label="Previous scenario">${spriteText("<", "sprite-button-label")}</button><output class="scenario-value" aria-label="${escapeAttribute(scenarioIds[scenarioIndex]!)}" aria-live="polite">${spriteText(scenarioIds[scenarioIndex]!, "sprite-scenario-value")}</output><button data-lab="scenario-next" aria-label="Next scenario">${spriteText(">", "sprite-button-label")}</button></div></div><div class="lab-actions"><button data-lab="load" aria-label="Load scenario">${spriteText("Load", "sprite-button-label")}</button><button data-lab="pause" aria-label="Pause">${spriteText("Pause", "sprite-button-label")}</button><button data-lab="step" aria-label="Step one tick">${spriteText("Step +1", "sprite-button-label")}</button></div><button data-lab="capture" aria-label="Download state JSON">${spriteText("Download state JSON", "sprite-button-label")}</button><p class="frame">${spriteText("Frame strip uses the current deterministic canvas frame.", "sprite-lab-copy")}</p><canvas class="mini" width="240" height="135" aria-label="Current deterministic canvas frame"></canvas></aside>`;
+  node.dataset.spriteRole = "ui-panel";
   document.body.append(node);
+  annotateSpriteRoles(node);
   node.querySelector(".close")!.addEventListener("click", () => node.remove());
   const scenarioValue =
     node.querySelector<HTMLOutputElement>(".scenario-value")!;
