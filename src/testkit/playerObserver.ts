@@ -1,12 +1,21 @@
 import type { EffectState, GameState, Vec2 } from "../game/types";
 import { findStateNavigationRoute } from "../game/navigation";
-import type { RenderManifestV1 } from "../render/manifest";
+import type {
+  CameraMode,
+  CameraV1,
+  RenderManifestV1,
+} from "../render/manifest";
 import { canonicalState } from "./canonical";
 
 export interface LivePresentationSampleV1 {
   observedAtMs: number;
   tick: number;
   presentationTick: number;
+  /** Camera used by this presentation sample after display interpolation. */
+  camera: CameraV1;
+  /** Camera target derived from the same authoritative game state. */
+  cameraTarget: CameraV1;
+  cameraMode: CameraMode;
   playerFrameIdentity: string | null;
   playerFrameIndex: number | null;
   playerClip: string | null;
@@ -160,6 +169,9 @@ export function installPlayerObserver(
       observedAtMs: performance.now(),
       tick: manifest.tick,
       presentationTick: manifest.presentationTick,
+      camera: { ...manifest.camera },
+      cameraTarget: { ...manifest.cameraTarget },
+      cameraMode: manifest.cameraMode,
       playerFrameIdentity: player?.frameIdentity ?? null,
       playerFrameIndex: player?.frameIndex ?? null,
       playerClip: player?.clip ?? null,

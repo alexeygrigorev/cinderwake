@@ -23,6 +23,9 @@ describe("production player observer", () => {
     const manifest = {
       tick: 9,
       presentationTick: 9.5,
+      camera: { x: 720, y: 420, zoom: 0.9 },
+      cameraTarget: { x: 728, y: 420, zoom: 0.9 },
+      cameraMode: "smooth",
       sceneSprites: [],
       drawCalls: [
         { entityId: "player", type: "player", visible: true },
@@ -64,6 +67,9 @@ describe("production player observer", () => {
       {
         tick: 9,
         presentationTick: 9.5,
+        camera: { x: 720, y: 420, zoom: 0.9 },
+        cameraTarget: { x: 728, y: 420, zoom: 0.9 },
+        cameraMode: "smooth",
         expectedOwnerIds: [
           "effect:impact",
           "monster:ashfang",
