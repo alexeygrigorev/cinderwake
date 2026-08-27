@@ -56,9 +56,14 @@ boundary around that evidence. It renders an identical state twice, swaps from
 a populated combat state to a fresh idle state, and requires exact PNG
 reconstruction after both operations. It also joins manifest `body:<owner>`
 paint IDs to draw calls so a duplicated body cannot hide behind a plausible
-single screenshot. The three named mutations are evaluated by a pure
-comparator; broader checkerboard fringe and effect coverage remains a separate
-follow-up.
+single screenshot. The same command scans all 720 nonblank actor cells, 16
+effect cells, and 36 loot cells using `quality/sprite-leak-policy.v1.json`,
+retains representative dark/light checkerboard pairs, and evaluates the
+cross-cell, opaque-matte, colored-fringe, stale-frame, and duplicate-body
+mutations through the pure evaluators. This remains deterministic source and
+compositor evidence; checkerboard captures for every live-rendered role and
+device profile, calibrated temporal thresholds, and independent review remain
+required.
 
 The complementary `npm run test:flicker` probe evaluates ordered compositor
 segments. It derives expected owner IDs from serialized state, compares them

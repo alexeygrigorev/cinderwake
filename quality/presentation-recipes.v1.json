@@ -543,7 +543,7 @@
           "no-stale-or-duplicate-body"
         ]
       },
-      "reproduce": "npm run art:animation:check && npx playwright test tests/visual/animation.spec.ts",
+      "reproduce": "npm run art:animation:check && npm run test:compositor && npx playwright test tests/visual/animation.spec.ts",
       "negativeControls": [
         {
           "id": "cross-cell-shift",
