@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   bindPresentationRun,
   cameraMotionArtifactSpecifications,
+  directionalBankArtifactSpecifications,
   flickerArtifactSpecifications,
   renderResolutionArtifactSpecifications,
 } from "./lib/presentation-run-binding.mjs";
@@ -101,6 +102,14 @@ async function main() {
       "quality-results/directional-motion/pres-move-003",
     ),
   );
+  const facingRoot = path.resolve(
+    repoRoot,
+    option(
+      args,
+      "--facing-root",
+      "quality-results/directional-bank/pres-facing-015",
+    ),
+  );
   const cameraRoot = path.resolve(
     repoRoot,
     option(
@@ -153,6 +162,8 @@ async function main() {
     crispnessComparison,
     movementMetadata,
     movementComparison,
+    facingMetadata,
+    facingComparison,
     cameraMetadata,
     cameraComparison,
     spriteMetadata,
@@ -183,6 +194,8 @@ async function main() {
     readJson(path.join(crispnessRoot, "comparison.json")),
     readJson(path.join(movementRoot, "metadata.json")),
     readJson(path.join(movementRoot, "comparison.json")),
+    readJson(path.join(facingRoot, "metadata.json")),
+    readJson(path.join(facingRoot, "comparison.json")),
     readJson(path.join(cameraRoot, "metadata.json")),
     readJson(path.join(cameraRoot, "comparison.json")),
     readJson(path.join(spriteRoot, "metadata.json")),
@@ -197,7 +210,7 @@ async function main() {
   const commit = currentCommit(repoRoot);
   const reproduce =
     option(args, "--reproduce") ??
-    `npm run art:animation:check && npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:camera-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
+    `npm run art:animation:check && npm run test:flicker && npm run capture:matrix && npm run quality:temporal:check && npm run test:city-journey && npm run test:state-replay && npm run test:input-intents && npm run test:directional-motion && npm run test:directional-bank && npm run test:camera-motion && npm run test:production-liveness && npm run test:mobile-screen && npm run test:depth-transition && npm run test:collision && npm run test:crispness && npm run quality:presentation:bind -- --run-id ${runId}-reproduced`;
   const presentationRun = await bindPresentationRun({
     repoRoot,
     runId,
@@ -220,6 +233,8 @@ async function main() {
     crispnessComparison,
     movementMetadata,
     movementComparison,
+    facingMetadata,
+    facingComparison,
     cameraMetadata,
     cameraComparison,
     spriteMetadata,
@@ -232,6 +247,7 @@ async function main() {
     collisionComparison,
     flickerArtifacts: await flickerArtifactSpecifications(repoRoot),
     crispnessArtifacts: await renderResolutionArtifactSpecifications(repoRoot),
+    facingArtifacts: await directionalBankArtifactSpecifications(repoRoot),
     cameraArtifacts: cameraMotionArtifactSpecifications(
       path.relative(repoRoot, cameraRoot),
     ),
@@ -257,6 +273,7 @@ async function main() {
   console.log("PRES-INPUT-002: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOBILE-010: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOVE-003: NEEDS_VISUAL_REVIEW");
+  console.log("PRES-FACING-015: NEEDS_VISUAL_REVIEW");
   console.log("PRES-CAMERA-016: NEEDS_VISUAL_REVIEW");
   console.log("PRES-SPRITE-004: NEEDS_VISUAL_REVIEW");
   console.log("PRES-MOTION-005: NEEDS_VISUAL_REVIEW");

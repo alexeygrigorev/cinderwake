@@ -583,6 +583,49 @@ function directionalMotionArtifactSpecifications() {
   return specifications;
 }
 
+export async function directionalBankArtifactSpecifications(repoRoot) {
+  const root = "quality-results/directional-bank/pres-facing-015";
+  const metadata = JSON.parse(
+    await fs.readFile(path.join(repoRoot, root, "metadata.json"), "utf8"),
+  );
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/evidence.json`],
+    ["gesture-or-command-tape", `${root}/evidence.json`],
+    ["input-aim-and-facing-timeline", `${root}/evidence.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+  ];
+  for (const profileId of metadata.profileIds ?? []) {
+    specifications.push(
+      ["sprite-bank-and-flip-records", `${root}/${profileId}/states.json`],
+      ["render-manifest-timeline", `${root}/${profileId}/states.json`],
+      ["directional-contact-sheet", `${root}/${profileId}/contact-sheet.png`],
+      [
+        "directional-contact-sheet",
+        `${root}/${profileId}/contact-sheet-order.json`,
+      ],
+    );
+    const files = await filesUnder(path.join(repoRoot, root, profileId));
+    for (const file of files) {
+      const relativePath = path.relative(repoRoot, file);
+      if (
+        relativePath.endsWith("/contact-sheet.png") ||
+        relativePath.endsWith("/contact-sheet-order.json") ||
+        relativePath.endsWith("/states.json")
+      )
+        continue;
+      if (relativePath.endsWith(".png"))
+        specifications.push(
+          ["ordered-frame-sequence", relativePath],
+          ["directional-contact-sheet", relativePath],
+        );
+      else if (relativePath.endsWith(".json"))
+        specifications.push(["semantic-snapshot-timeline", relativePath]);
+    }
+  }
+  return specifications;
+}
+
 export function cameraMotionArtifactSpecifications(
   cameraRoot = "quality-results/camera-motion/pres-camera-016",
   temporalRoot = "quality-results/sequences/camera-smooth-follow",
@@ -890,6 +933,8 @@ export async function bindPresentationRun({
   crispnessComparison = null,
   movementMetadata,
   movementComparison,
+  facingMetadata,
+  facingComparison,
   cameraMetadata,
   cameraComparison,
   spriteMetadata,
@@ -910,6 +955,7 @@ export async function bindPresentationRun({
   flickerArtifacts = null,
   crispnessArtifacts = null,
   movementArtifacts = directionalMotionArtifactSpecifications(),
+  facingArtifacts = null,
   cameraArtifacts = cameraMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
@@ -931,6 +977,9 @@ export async function bindPresentationRun({
   );
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
+  );
+  const facingCheck = contract.checks.find(
+    ({ id }) => id === "PRES-FACING-015",
   );
   const cameraCheck = contract.checks.find(
     ({ id }) => id === "PRES-CAMERA-016",
@@ -961,6 +1010,9 @@ export async function bindPresentationRun({
   );
   const movementRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOVE-003",
+  );
+  const facingRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-FACING-015",
   );
   const cameraRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-CAMERA-016",
@@ -1017,6 +1069,8 @@ export async function bindPresentationRun({
     !liveRecipe ||
     !movementCheck ||
     !movementRecipe ||
+    !facingCheck ||
+    !facingRecipe ||
     !cameraCheck ||
     !cameraRecipe ||
     !spriteCheck ||
@@ -1029,7 +1083,7 @@ export async function bindPresentationRun({
     !collisionRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/mobile/movement/camera/sprite/temporal/depth/collision contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/facing/camera/sprite/temporal/depth/collision contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -1044,6 +1098,7 @@ export async function bindPresentationRun({
     ? sourceCommit(crispnessMetadata, "PRES-CRISP-006")
     : null;
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
+  const facingSource = sourceCommit(facingMetadata, "PRES-FACING-015");
   const cameraSource = sourceCommit(cameraMetadata, "PRES-CAMERA-016");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
@@ -1055,6 +1110,7 @@ export async function bindPresentationRun({
     citySource !== mobileSource ||
     citySource !== liveSource ||
     citySource !== movementSource ||
+    citySource !== facingSource ||
     citySource !== cameraSource ||
     citySource !== spriteSource ||
     citySource !== temporalSource ||
@@ -1091,6 +1147,9 @@ export async function bindPresentationRun({
   const movementIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOVE-003",
   );
+  const facingIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-FACING-015",
+  );
   const cameraIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-CAMERA-016",
   );
@@ -1123,6 +1182,10 @@ export async function bindPresentationRun({
   const movementComparisonData = comparisonData(
     movementComparison,
     "PRES-MOVE-003",
+  );
+  const facingComparisonData = comparisonData(
+    facingComparison,
+    "PRES-FACING-015",
   );
   const cameraComparisonData = comparisonData(
     cameraComparison,
@@ -1236,6 +1299,30 @@ export async function bindPresentationRun({
     artifactSpecifications: movementArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: movementMetadata.profileIds,
+  });
+  checks[facingIndex] = await bindRow({
+    repoRoot,
+    contractCheck: facingCheck,
+    recipe: facingRecipe,
+    metadata: facingMetadata,
+    comparison: facingComparisonData,
+    artifactSpecifications:
+      facingArtifacts ??
+      (await directionalBankArtifactSpecifications(repoRoot)),
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: facingMetadata.profileIds,
+    observed: {
+      scenarioIds:
+        facingMetadata.actualScenarioIds ?? facingMetadata.scenarioIds,
+      deviceProfileIds: facingMetadata.profileIds,
+      gestureIds: [
+        "move-north",
+        "move-east",
+        "move-south",
+        "move-west",
+        "attack-each-facing",
+      ],
+    },
   });
   checks[cameraIndex] = await bindRow({
     repoRoot,
