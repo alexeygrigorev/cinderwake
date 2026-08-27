@@ -10,6 +10,7 @@ const run = promisify(execFile);
 const script = fileURLToPath(
   new URL("../../scripts/build-quality-index.mjs", import.meta.url),
 );
+const repositoryRoot = fileURLToPath(new URL("../../", import.meta.url));
 const temporaryRoots: string[] = [];
 
 async function git(root: string, ...args: string[]) {
@@ -46,8 +47,20 @@ async function writeSequences(root: string, sourceCommit: string) {
   );
 }
 
-async function buildIndex(root: string) {
-  await run(process.execPath, [script], { cwd: root });
+async function copyPresentationFixtures(root: string) {
+  for (const relativePath of [
+    "quality/presentation-checklist.v1.json",
+    "quality/presentation-recipes.v1.json",
+    "quality/presentation-run.v1.template.json",
+  ]) {
+    const destination = path.join(root, relativePath);
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.copyFile(path.join(repositoryRoot, relativePath), destination);
+  }
+}
+
+async function buildIndex(root: string, args: string[] = []) {
+  await run(process.execPath, [script, ...args], { cwd: root });
   return JSON.parse(
     await fs.readFile(
       path.join(root, "quality-results", "quality-index", "index.json"),
@@ -100,5 +113,83 @@ describe("quality-index sequence evidence binding", () => {
     expect(index.sequenceEvidence.publicationParentCommit).toBe(sourceCommit);
     expect(index.sequenceEvidence.publicationParent).toBe(1);
     expect(index.sequenceEvidence.stale).toEqual([]);
+  });
+
+  it("publishes every presentation checklist ID and its result", async () => {
+    const root = await createRepository();
+    await copyPresentationFixtures(root);
+
+    const index = await buildIndex(root);
+    const checklist = index.presentationChecklist;
+    const contract = JSON.parse(
+      await fs.readFile(
+        path.join(root, "quality/presentation-checklist.v1.json"),
+        "utf8",
+      ),
+    );
+
+    expect(checklist).toMatchObject({
+      schemaVersion: 1,
+      status: "blocked",
+      valid: true,
+      acceptanceReady: false,
+      resultCounts: {
+        PASS: 0,
+        FAIL: 0,
+        NEEDS_VISUAL_REVIEW: 0,
+        UNRUN: 28,
+      },
+    });
+    expect(checklist.checks).toHaveLength(28);
+    expect(
+      checklist.checks.map(({ checkId }: { checkId: string }) => checkId),
+    ).toEqual(contract.checks.map(({ id }: { id: string }) => id));
+    expect(
+      index.reports.find(
+        ({ id }: { id: string }) => id === "presentation-checklist",
+      ),
+    ).toMatchObject({ status: "blocked", href: "presentation-checklist.json" });
+    expect(
+      JSON.parse(
+        await fs.readFile(
+          path.join(
+            root,
+            "quality-results/quality-index/presentation-checklist.json",
+          ),
+          "utf8",
+        ),
+      ).checks,
+    ).toEqual(checklist.checks);
+  });
+
+  it("refuses to publish a run with an omitted applicable ID", async () => {
+    const root = await createRepository();
+    await copyPresentationFixtures(root);
+    const templatePath = path.join(
+      root,
+      "quality/presentation-run.v1.template.json",
+    );
+    const invalidRun = JSON.parse(await fs.readFile(templatePath, "utf8"));
+    invalidRun.checks.pop();
+    const invalidPath = path.join(
+      root,
+      "quality-results/presentation-runs/missing-row.json",
+    );
+    await fs.mkdir(path.dirname(invalidPath), { recursive: true });
+    await fs.writeFile(invalidPath, `${JSON.stringify(invalidRun)}\n`);
+
+    let error: any;
+    try {
+      await buildIndex(root, [
+        "--presentation-run",
+        "quality-results/presentation-runs/missing-row.json",
+      ]);
+    } catch (caught) {
+      error = caught;
+    }
+    expect(error?.stderr).toContain(
+      "Presentation checklist cannot be published",
+    );
+    expect(error?.stderr).toContain("run-checks-not-canonical");
   });
 });

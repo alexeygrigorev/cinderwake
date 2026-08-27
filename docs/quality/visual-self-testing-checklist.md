@@ -390,7 +390,7 @@ Unless a row narrows it, “ordered artifacts” means: `(1)` initial state/snap
 - Machine signal and threshold: candidate, contract, and review hashes match exactly; every applicable ID has one result; P0 complete; all required controls detected; mandatory reviewer verdict is `ACCEPT`. A matching `REJECT` remains failed even when mechanics pass.
 - Required negative control: alter one reviewed PNG or contract byte, omit a checklist ID, and try to publish a rejected candidate as accepted.
 - Current evidence: `docs/decisions/0017-hash-bound-screen-acceptance.md`; `docs/decisions/0009-visual-review-veto.md`; quality-index scripts and `quality/screen-review.v1.json`.
-- Missing automation/next implementation: add this checklist’s ID/result schema to the public quality index and fail publishing on absent applicable IDs.
+- Implemented automation: `npm run report:quality` publishes all 28 checklist IDs and their results in `presentation-checklist.json`, and refuses to publish a supplied run when an applicable ID is omitted or added. The checklist validator still owns row-level acceptance and visual-review policy.
 - Independent visual-agent review mandatory: **yes** by definition.
 
 ## P0 — complete journey and framework reproducibility

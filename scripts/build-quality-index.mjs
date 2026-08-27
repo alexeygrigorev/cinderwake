@@ -2,10 +2,25 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { validatePresentationChecklist } from "./validate-presentation-checklist.mjs";
 
 const run = promisify(execFile);
 const root = process.cwd();
 const output = path.join(root, "quality-results", "quality-index");
+
+function option(name, fallback) {
+  const index = process.argv.indexOf(name);
+  if (index === -1) return fallback;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith("--"))
+    throw new Error(`${name} requires a value`);
+  return value;
+}
+
+const presentationRunPath = option(
+  "--presentation-run",
+  "quality/presentation-run.v1.template.json",
+);
 
 async function readJson(relativePath) {
   try {
@@ -52,6 +67,63 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function buildPresentationChecklist(contract, recipes, presentationRun) {
+  const validation = validatePresentationChecklist(
+    contract,
+    recipes,
+    presentationRun,
+    { mode: "lint", repoRoot: root },
+  );
+  if (!validation.valid) {
+    const details = validation.issues
+      .slice(0, 4)
+      .map(({ code, location }) => `${code} at ${location}`)
+      .join(", ");
+    throw new Error(
+      `Presentation checklist cannot be published: ${details || "invalid run"}`,
+    );
+  }
+  const resultCounts = {
+    PASS: 0,
+    FAIL: 0,
+    NEEDS_VISUAL_REVIEW: 0,
+    UNRUN: 0,
+  };
+  const checks = contract.checks.map((contractCheck, index) => {
+    const entry = presentationRun.checks[index];
+    resultCounts[entry.result] += 1;
+    return {
+      checkId: entry.checkId,
+      executionRecipeId: entry.executionRecipeId,
+      priority: contractCheck.priority,
+      result: entry.result,
+      coverageAtRun: entry.coverageAtRun,
+      blockers: validation.acceptanceBlockers
+        .filter(({ checkId }) => checkId === entry.checkId)
+        .map(({ reason }) => reason),
+    };
+  });
+  const status =
+    resultCounts.FAIL > 0
+      ? "failed"
+      : validation.acceptanceBlockers.length > 0
+        ? "blocked"
+        : "passed";
+  return {
+    schemaVersion: 1,
+    contractPath: presentationRun.contractPath,
+    recipesPath: presentationRun.recipesPath,
+    runId: presentationRun.runId,
+    sourceCommit: presentationRun.environment?.commit ?? null,
+    status,
+    valid: true,
+    acceptanceReady: validation.acceptanceBlockers.length === 0,
+    acceptanceBlockers: validation.acceptanceBlockers,
+    resultCounts,
+    checks,
+  };
+}
+
 const [
   screens,
   sequences,
@@ -61,6 +133,9 @@ const [
   candidate,
   presentation,
   pose,
+  presentationContract,
+  presentationRecipes,
+  presentationRun,
 ] = await Promise.all([
   readJson("quality-results/screens/index.json"),
   readJson("quality-results/sequences/index.json"),
@@ -74,7 +149,29 @@ const [
     "quality-results/actor-presentation/ashfang-uniform-transform-v1/report.json",
   ),
   readJson("quality-results/actor-pose/ashfang-idle-master-v7/report.json"),
+  readJson("quality/presentation-checklist.v1.json"),
+  readJson("quality/presentation-recipes.v1.json"),
+  readJson(presentationRunPath),
 ]);
+
+const presentationInputs = [
+  presentationContract,
+  presentationRecipes,
+  presentationRun,
+];
+const presentationChecklist = presentationInputs.some(Boolean)
+  ? presentationInputs.every(Boolean)
+    ? buildPresentationChecklist(
+        presentationContract,
+        presentationRecipes,
+        presentationRun,
+      )
+    : (() => {
+        throw new Error(
+          "Presentation checklist cannot be published: contract, recipes, and run must all be present",
+        );
+      })()
+  : null;
 
 const sourceCommit = await gitValue(["rev-parse", "HEAD"], "unavailable");
 const sourceStatus = await gitValue(["status", "--short"], "");
@@ -217,6 +314,17 @@ const reports = [
     summary:
       "Launch, touch, keyboard, navigation, collision, liveness, and rendering tests from the same commit.",
   },
+  ...(presentationChecklist
+    ? [
+        {
+          id: "presentation-checklist",
+          title: "Presentation checklist run",
+          href: "presentation-checklist.json",
+          status: presentationChecklist.status,
+          summary: `${presentationChecklist.resultCounts.PASS}/28 PASS; ${presentationChecklist.resultCounts.FAIL} FAIL; ${presentationChecklist.resultCounts.NEEDS_VISUAL_REVIEW} NEEDS_VISUAL_REVIEW; ${presentationChecklist.resultCounts.UNRUN} UNRUN. Canonical row IDs and result records are present; acceptance is ${presentationChecklist.acceptanceReady ? "ready" : "blocked"}.`,
+        },
+      ]
+    : []),
 ];
 
 const report = {
@@ -249,6 +357,7 @@ const report = {
       sourceCommit: entryCommit ?? null,
     })),
   },
+  presentationChecklist,
   reports,
 };
 
@@ -258,6 +367,11 @@ await fs.writeFile(
   path.join(output, "index.json"),
   `${JSON.stringify(report, null, 2)}\n`,
 );
+if (presentationChecklist)
+  await fs.writeFile(
+    path.join(output, "presentation-checklist.json"),
+    `${JSON.stringify(presentationChecklist, null, 2)}\n`,
+  );
 
 const cards = reports
   .map(
