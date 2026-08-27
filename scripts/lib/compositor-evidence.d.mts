@@ -3,6 +3,24 @@ export declare const COMPOSITOR_FAILURE_IDS: readonly string[];
 export declare const LIVE_COMPOSITOR_SIGNAL_IDS: readonly string[];
 export declare const LIVE_COMPOSITOR_FAILURE_IDS: readonly string[];
 
+export interface PngResidualV1 {
+  width: number;
+  height: number;
+  differingPixels: number;
+  maxChannelDelta: number;
+  changedBounds: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+}
+
+export declare function measurePngResidual(
+  firstPng: Uint8Array,
+  secondPng: Uint8Array,
+): Promise<PngResidualV1>;
+
 export interface CompositorEvidenceInput {
   repeat?: {
     firstFrameHash?: string;

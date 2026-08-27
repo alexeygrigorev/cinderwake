@@ -1,3 +1,5 @@
+import sharp from "sharp";
+
 export const COMPOSITOR_SIGNAL_IDS = [
   "same-state-render-is-identical",
   "scene-transition-reconstructs-fresh-frame",
@@ -27,6 +29,67 @@ export const LIVE_COMPOSITOR_FAILURE_IDS = [
 
 function signal(id, pass, detail) {
   return { id, pass, detail };
+}
+
+/**
+ * Decode two captured PNGs and report the exact residual between them. A
+ * caller can use this after rendering a transition and a fresh reconstruction;
+ * hashes alone do not show how large or where a stale-pixel region is.
+ */
+export async function measurePngResidual(firstPng, secondPng) {
+  const [first, second] = await Promise.all(
+    [firstPng, secondPng].map((value) =>
+      sharp(value).ensureAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+  if (
+    first.info.width !== second.info.width ||
+    first.info.height !== second.info.height ||
+    first.info.channels !== second.info.channels
+  )
+    return {
+      width: first.info.width,
+      height: first.info.height,
+      differingPixels: Number.MAX_SAFE_INTEGER,
+      maxChannelDelta: 255,
+      changedBounds: null,
+    };
+
+  let differingPixels = 0;
+  let maxChannelDelta = 0;
+  let minX = first.info.width;
+  let minY = first.info.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < first.info.height; y += 1) {
+    for (let x = 0; x < first.info.width; x += 1) {
+      const offset = (y * first.info.width + x) * first.info.channels;
+      let pixelDiffers = false;
+      for (let channel = 0; channel < first.info.channels; channel += 1) {
+        const delta = Math.abs(
+          first.data[offset + channel] - second.data[offset + channel],
+        );
+        maxChannelDelta = Math.max(maxChannelDelta, delta);
+        if (delta !== 0) pixelDiffers = true;
+      }
+      if (!pixelDiffers) continue;
+      differingPixels += 1;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+  return {
+    width: first.info.width,
+    height: first.info.height,
+    differingPixels,
+    maxChannelDelta,
+    changedBounds:
+      maxX >= 0
+        ? { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
+        : null,
+  };
 }
 
 function equalHashes(first, second) {

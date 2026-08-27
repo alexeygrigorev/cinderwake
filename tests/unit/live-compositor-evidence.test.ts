@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import sharp from "sharp";
 import {
   evaluateLiveCompositorEvidence,
+  measurePngResidual,
   runLiveCompositorNegativeControls,
 } from "../../scripts/lib/compositor-evidence.mjs";
 
@@ -86,5 +88,55 @@ describe("live compositor evidence", () => {
       "stale-pixels-detected",
       "stale-effect-retained",
     ]);
+  });
+
+  it("locates exact pixel residuals between reconstructed PNG frames", async () => {
+    const first = await sharp({
+      create: {
+        width: 4,
+        height: 3,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .png()
+      .toBuffer();
+    const second = await sharp({
+      create: {
+        width: 4,
+        height: 3,
+        channels: 4,
+        background: { r: 0, g: 0, b: 0, alpha: 0 },
+      },
+    })
+      .composite([
+        {
+          input: {
+            create: {
+              width: 1,
+              height: 1,
+              channels: 4,
+              background: { r: 255, g: 32, b: 16, alpha: 1 },
+            },
+          },
+          left: 2,
+          top: 1,
+        },
+      ])
+      .png()
+      .toBuffer();
+
+    await expect(measurePngResidual(first, first)).resolves.toMatchObject({
+      differingPixels: 0,
+      maxChannelDelta: 0,
+      changedBounds: null,
+    });
+    await expect(measurePngResidual(first, second)).resolves.toMatchObject({
+      width: 4,
+      height: 3,
+      differingPixels: 1,
+      maxChannelDelta: 255,
+      changedBounds: { x: 2, y: 1, width: 1, height: 1 },
+    });
   });
 });
