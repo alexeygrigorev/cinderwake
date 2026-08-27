@@ -3,6 +3,10 @@ import {
   evaluateVisibleSpriteProvenanceEvidence,
   runVisibleSpriteProvenanceNegativeControls,
 } from "../../scripts/lib/visible-sprite-provenance-evidence.mjs";
+import type {
+  VisibleSpriteProfileV1,
+  VisibleSpriteStateV1,
+} from "../../scripts/lib/visible-sprite-provenance-evidence.d.mts";
 
 const scenarios = [
   "public-selection",
@@ -12,7 +16,7 @@ const scenarios = [
   "embercross-services",
 ];
 
-function stateFixture(scenarioId: string) {
+function stateFixture(scenarioId: string): VisibleSpriteStateV1 {
   return {
     scenarioId,
     stateId: `${scenarioId}:visible`,
@@ -69,6 +73,11 @@ function stateFixture(scenarioId: string) {
         ? []
         : [
             {
+              id: `${scenarioId}:hidden-scene-sprite`,
+              visible: false,
+              renderMode: "not-a-sprite",
+            },
+            {
               id: `${scenarioId}:player`,
               visible: true,
               renderMode: "sprite",
@@ -79,7 +88,12 @@ function stateFixture(scenarioId: string) {
   };
 }
 
-function evidenceFixture() {
+function evidenceFixture(): {
+  profiles: VisibleSpriteProfileV1[];
+  requiredProfiles: string[];
+  requiredScenarioIds: string[];
+  titleAllowlist: string[];
+} {
   return {
     profiles: [
       {

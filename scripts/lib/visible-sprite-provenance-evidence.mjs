@@ -132,7 +132,7 @@ function canvasOperationPass(profile, operation) {
 }
 
 function manifestDrawPass(profile, draw) {
-  return draw?.visible !== false && decodedCatalogAssetPass(profile, draw);
+  return draw?.visible === false || decodedCatalogAssetPass(profile, draw);
 }
 
 function stateInventory(profile, state, titleAllowlist) {
