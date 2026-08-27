@@ -36,6 +36,11 @@ The prose checklist remains the human explanation of what matters. The versioned
    npm run quality:presentation:bind -- --run-id <run-id>
    ```
 
+   The 26-entry capture is resumable: use `npm run capture:matrix -- --resume`
+   after an interrupted run, or `npm run capture:matrix -- --only <id,...>` to
+   recover named entries. The matrix only reuses a passing entry when its
+   retained artifacts and source metadata match the exact current source state.
+
    The binder refuses dirty or stale recorder metadata, hashes every referenced
    artifact, copies the canonical signals and detected mutations, records
    `PRES-STATE-028` as a machine `PASS`, and records `PRES-LIVE-001`,

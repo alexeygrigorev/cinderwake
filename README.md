@@ -86,6 +86,14 @@ npm run capture:sequence -- --scenario combat-loot --action attack --frames 16 -
 npm run capture:matrix
 ```
 
+The matrix writes `quality-results/sequences/index.json` after every entry, so
+an interrupted browser run can be recovered without discarding completed
+evidence. Use `npm run capture:matrix -- --resume` to retain complete passing
+entries from the exact current source state, or rerun a named subset with
+`npm run capture:matrix -- --only camera-smooth-follow,city-entry`. A selective
+run preserves the other catalog entries and still reports the full 26-entry
+catalog as incomplete until every entry passes.
+
 Each run writes exact frames, close-ups, state history, render-manifest history, metadata, and `animation-analysis.json` under `quality-results/sequences/<scenario>/`; passing runs then add a contact sheet and HTML report. A failing assessment exits nonzero while preserving its raw browser evidence and named failed checks. This root is intentionally separate from Playwright's disposable `test-results/`, so running browser tests after a capture cannot erase temporal evidence. The assessor rejects anchor jitter, position/velocity disagreement, uneven speed, frame skips, one-shot backward frame jumps, changing proportions, clipping, and idle/walk median visible-height differences above 8 logical pixels. Screenshot baselines are updated only after reviewing the changed frame sequence:
 
 ```bash
