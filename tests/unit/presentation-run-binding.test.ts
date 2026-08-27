@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   bindPresentationRun,
   cameraMotionArtifactSpecifications,
+  isBlankInitializedPresentationRun,
   visibleSpriteArtifactSpecifications,
 } from "../../scripts/lib/presentation-run-binding.mjs";
 import { validatePresentationChecklist } from "../../scripts/validate-presentation-checklist.mjs";
@@ -62,6 +63,50 @@ afterEach(async () => {
 });
 
 describe("presentation run binding", () => {
+  it("only replaces an exact same-commit blank initializer", async () => {
+    const template = await readJson(
+      "quality/presentation-run.v1.template.json",
+    );
+    const commit = "a".repeat(40);
+    const candidate = structuredClone(template);
+    candidate.runId = "same-commit-blank";
+    candidate.environment = {
+      commit,
+      reproduce: "npm run quality:presentation:bind",
+    };
+
+    expect(
+      isBlankInitializedPresentationRun(
+        candidate,
+        template,
+        candidate.runId,
+        commit,
+      ),
+    ).toBe(true);
+
+    const changedResult = structuredClone(candidate);
+    changedResult.checks[0].result = "PASS";
+    expect(
+      isBlankInitializedPresentationRun(
+        changedResult,
+        template,
+        candidate.runId,
+        commit,
+      ),
+    ).toBe(false);
+
+    const staleCommit = structuredClone(candidate);
+    staleCommit.environment.commit = "b".repeat(40);
+    expect(
+      isBlankInitializedPresentationRun(
+        staleCommit,
+        template,
+        candidate.runId,
+        commit,
+      ),
+    ).toBe(false);
+  });
+
   it("matches the camera recorder's after-frame filenames", () => {
     const framePaths = cameraMotionArtifactSpecifications()
       .filter(([requirement]) => requirement === "ordered-frame-sequence")

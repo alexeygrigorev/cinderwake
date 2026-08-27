@@ -138,6 +138,39 @@ function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function sameKeys(actual, expected) {
+  return (
+    isObject(actual) &&
+    isObject(expected) &&
+    JSON.stringify(Object.keys(actual).sort()) ===
+      JSON.stringify(Object.keys(expected).sort())
+  );
+}
+
+export function isBlankInitializedPresentationRun(
+  candidate,
+  template,
+  runId,
+  commit,
+) {
+  return (
+    isObject(candidate) &&
+    isObject(template) &&
+    candidate.schemaVersion === template.schemaVersion &&
+    candidate.kind === template.kind &&
+    candidate.contractPath === template.contractPath &&
+    candidate.recipesPath === template.recipesPath &&
+    candidate.adapterContract === template.adapterContract &&
+    candidate.runId === runId &&
+    sameKeys(candidate, template) &&
+    isObject(candidate.environment) &&
+    sameKeys(candidate.environment, template.environment) &&
+    candidate.environment.commit === commit &&
+    typeof candidate.environment.reproduce === "string" &&
+    JSON.stringify(candidate.checks) === JSON.stringify(template.checks)
+  );
+}
+
 function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }

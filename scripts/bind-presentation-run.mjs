@@ -6,6 +6,7 @@ import {
   cameraMotionArtifactSpecifications,
   directionalBankArtifactSpecifications,
   flickerArtifactSpecifications,
+  isBlankInitializedPresentationRun,
   renderResolutionArtifactSpecifications,
   visibleSpriteArtifactSpecifications,
 } from "./lib/presentation-run-binding.mjs";
@@ -274,11 +275,23 @@ async function main() {
     reproduce,
   });
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
+  let replaceInitializedRun = false;
+  try {
+    const existing = await readJson(outputPath);
+    replaceInitializedRun = isBlankInitializedPresentationRun(
+      existing,
+      template,
+      runId,
+      commit,
+    );
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+  }
   try {
     await fs.writeFile(
       outputPath,
       `${JSON.stringify(presentationRun, null, 2)}\n`,
-      { flag: "wx" },
+      { flag: replaceInitializedRun ? "w" : "wx" },
     );
   } catch (error) {
     if (error?.code === "EEXIST")
