@@ -66,17 +66,20 @@ device profile, calibrated temporal thresholds, and independent review remain
 required.
 
 The complementary `npm run test:flicker` probe evaluates ordered compositor
-segments. It derives expected owner IDs from serialized state, compares them
-with visible manifest bodies on every sampled tick, checks exact presentation
-cadence, measures decoded PNG residuals between a transition and a fresh
-reconstruction, and records the runtime projectile impact plus owned `slash`,
-`nova`, and `impact` effect lifecycles. Each retained effect must match its
-state-backed geometry and owner and disappear at the declared first-absent
-tick. Its five named mutations cover a skipped clear, offset double draw,
-omitted sample, retained despawned effect, and mismatched effect owner. This
-is deterministic compositor evidence; ordinary requestAnimationFrame timing,
-high-refresh hardware, and normal/slow visual review remain required before the
-flicker row can pass.
+segments and the ordinary production route. It derives expected owner IDs from
+serialized state, compares them with manifest owners on every sampled tick,
+checks exact deterministic cadence plus a real-clock desktop rAF profile,
+measures decoded PNG residuals between a transition and a fresh reconstruction,
+and records the runtime projectile impact plus owned `slash`, `nova`, and
+`impact` effect lifecycles. Each retained effect must match its state-backed
+geometry and owner and disappear at the declared first-absent tick. Six named
+mutations cover a skipped clear, offset double draw, omitted sample, retained
+despawned effect, mismatched effect owner, and frozen live renderer. The probe
+also retains a DPR-3 portrait rAF profile as observed-only diagnostic evidence;
+it does not infer high-refresh or physical-device performance from emulation.
+Normal/slow video review, physical high-refresh capture, calibrated temporal
+thresholds, and the retained presentation-run binding remain required before
+the flicker row can pass.
 
 Interactive rendering interpolates `previousPosition → position` and `previousCamera → camera`; this is presentation only. The manifest reports `simTick`, fractional `presentationTick`, `interpolationAlpha`, current camera, camera target, and camera mode. Capture/test mode requests alpha 1 and a deterministic snap camera by default. Smooth camera updates use a fixed per-tick rule, never elapsed wall time, and a fixed camera is available for isolated geometry tests.
 
