@@ -434,6 +434,47 @@ function liveArtifactSpecifications() {
   return specifications;
 }
 
+export async function flickerArtifactSpecifications(repoRoot) {
+  const root = "quality-results/compositor/pres-flicker-024";
+  const specifications = [
+    ["environment-metadata", `${root}/metadata.json`],
+    ["semantic-snapshot-timeline", `${root}/timeline.json`],
+    ["gesture-or-command-tape", `${root}/timeline.json`],
+    ["render-manifest-timeline", `${root}/timeline.json`],
+    ["ordered-frame-sequence", `${root}/transition.json`],
+    ["negative-control-evidence", `${root}/comparison.json`],
+    ["presentation-cadence-frames", `${root}/timeline.json`],
+    ["draw-signatures", `${root}/timeline.json`],
+  ];
+  for (const segmentId of [
+    "mid-action-state",
+    "loot-and-projectile-owners",
+    "effect-despawn",
+    "effect-kind-corpus",
+  ]) {
+    const segmentRoot = path.join(repoRoot, root, segmentId);
+    const filenames = (await fs.readdir(segmentRoot)).sort();
+    for (const filename of filenames)
+      if (filename.endsWith(".png"))
+        specifications.push([
+          "ordered-frame-sequence",
+          `${root}/${segmentId}/${filename}`,
+        ]);
+  }
+  for (const profileId of ["desktop-60hz", "phone-portrait-rAF"]) {
+    const profileRoot = path.join(repoRoot, root, "live", profileId);
+    const filenames = (await fs.readdir(profileRoot)).sort();
+    for (const filename of filenames) {
+      const relativePath = `${root}/live/${profileId}/${filename}`;
+      if (filename.endsWith(".png"))
+        specifications.push(["presentation-cadence-frames", relativePath]);
+      if (filename.endsWith(".webm"))
+        specifications.push(["normal-and-slow-video", relativePath]);
+    }
+  }
+  return specifications;
+}
+
 function directionalMotionFrameFiles() {
   const files = [];
   let index = 0;
@@ -677,6 +718,7 @@ async function bindRow({
   artifactSpecifications,
   result,
   deviceProfileIds,
+  observed,
 }) {
   const { values, negativeControlArtifact } = await rowArtifacts(
     repoRoot,
@@ -688,7 +730,7 @@ async function bindRow({
     executionRecipeId: recipe.id,
     result,
     coverageAtRun: contractCheck.coverage,
-    observed: {
+    observed: observed ?? {
       scenarioIds: [...recipe.scenarioSet.requiredIds],
       deviceProfileIds,
       gestureIds: [...recipe.gestureSet.requiredIds],
@@ -724,6 +766,8 @@ export async function bindPresentationRun({
   mobileComparison,
   liveMetadata,
   liveComparison,
+  flickerMetadata = null,
+  flickerComparison = null,
   movementMetadata,
   movementComparison,
   spriteMetadata,
@@ -741,6 +785,7 @@ export async function bindPresentationRun({
   inputArtifacts = inputArtifactSpecifications(),
   mobileArtifacts = null,
   liveArtifacts = liveArtifactSpecifications(),
+  flickerArtifacts = null,
   movementArtifacts = directionalMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
@@ -754,6 +799,9 @@ export async function bindPresentationRun({
     ({ id }) => id === "PRES-MOBILE-010",
   );
   const liveCheck = contract.checks.find(({ id }) => id === "PRES-LIVE-001");
+  const flickerCheck = contract.checks.find(
+    ({ id }) => id === "PRES-FLICKER-024",
+  );
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
   );
@@ -774,6 +822,9 @@ export async function bindPresentationRun({
   );
   const liveRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-LIVE-001",
+  );
+  const flickerRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-FLICKER-024",
   );
   const movementRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOVE-003",
@@ -797,11 +848,21 @@ export async function bindPresentationRun({
   const collisionRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-COLLIDE-008",
   );
+  const flickerConfigured =
+    flickerMetadata !== null ||
+    flickerComparison !== null ||
+    flickerArtifacts !== null;
   if (
     !cityCheck ||
     !stateCheck ||
     !inputCheck ||
     !liveCheck ||
+    (flickerConfigured &&
+      (!flickerCheck ||
+        !flickerRecipe ||
+        !flickerMetadata ||
+        !flickerComparison ||
+        !flickerArtifacts)) ||
     !mobileCheck ||
     !cityRecipe ||
     !stateRecipe ||
@@ -828,6 +889,9 @@ export async function bindPresentationRun({
   const inputSource = sourceCommit(inputMetadata, "PRES-INPUT-002");
   const mobileSource = sourceCommit(mobileMetadata, "PRES-MOBILE-010");
   const liveSource = sourceCommit(liveMetadata, "PRES-LIVE-001");
+  const flickerSource = flickerMetadata
+    ? sourceCommit(flickerMetadata, "PRES-FLICKER-024")
+    : null;
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
@@ -843,6 +907,7 @@ export async function bindPresentationRun({
     citySource !== temporalSource ||
     citySource !== depthSource ||
     citySource !== collisionSource ||
+    (flickerSource && citySource !== flickerSource) ||
     citySource !== commit
   )
     throw new Error("P0 evidence bundles do not bind to the current commit");
@@ -862,6 +927,9 @@ export async function bindPresentationRun({
   );
   const liveIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-LIVE-001",
+  );
+  const flickerIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-FLICKER-024",
   );
   const movementIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOVE-003",
@@ -886,6 +954,9 @@ export async function bindPresentationRun({
     "PRES-MOBILE-010",
   );
   const liveComparisonData = comparisonData(liveComparison, "PRES-LIVE-001");
+  const flickerComparisonData = flickerComparison
+    ? comparisonData(flickerComparison, "PRES-FLICKER-024")
+    : null;
   const movementComparisonData = comparisonData(
     movementComparison,
     "PRES-MOVE-003",
@@ -913,6 +984,23 @@ export async function bindPresentationRun({
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: liveMetadata.profileIds,
   });
+  if (flickerConfigured) {
+    checks[flickerIndex] = await bindRow({
+      repoRoot,
+      contractCheck: flickerCheck,
+      recipe: flickerRecipe,
+      metadata: flickerMetadata,
+      comparison: flickerComparisonData,
+      artifactSpecifications: flickerArtifacts,
+      result: "NEEDS_VISUAL_REVIEW",
+      deviceProfileIds: flickerMetadata.deviceProfileIds,
+      observed: {
+        scenarioIds: flickerMetadata.scenarioIds,
+        deviceProfileIds: flickerMetadata.deviceProfileIds,
+        gestureIds: flickerMetadata.gestureIds,
+      },
+    });
+  }
   checks[cityIndex] = await bindRow({
     repoRoot,
     contractCheck: cityCheck,

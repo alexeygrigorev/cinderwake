@@ -1235,6 +1235,12 @@
           "status": "UNRUN",
           "signal": "",
           "artifacts": []
+        },
+        {
+          "id": "live-renderer-frozen",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
         }
       ],
       "visualReview": {

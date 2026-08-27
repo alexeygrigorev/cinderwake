@@ -1122,11 +1122,11 @@
         ]
       },
       "deviceProfileSet": {
-        "coverage": "missing",
+        "coverage": "partial",
         "requiredIds": ["desktop-60hz", "high-refresh-phone"]
       },
       "gestureSet": {
-        "coverage": "missing",
+        "coverage": "implemented",
         "requiredIds": ["sustained-movement", "repeated-attacks"]
       },
       "evaluator": {
@@ -1138,7 +1138,8 @@
           "no-stale-pixels",
           "presentation-cadence-complete",
           "effect-ownership-complete",
-          "effect-despawn-clean"
+          "effect-despawn-clean",
+          "real-clock-cadence-complete"
         ]
       },
       "reproduce": "npm run test:flicker && npx vitest run tests/unit/live-compositor-evidence.test.ts",
@@ -1162,6 +1163,10 @@
         {
           "id": "effect-owner-mismatched",
           "expectedSignal": "effect-owner-mismatch"
+        },
+        {
+          "id": "live-renderer-frozen",
+          "expectedSignal": "presentation-cadence-stalled"
         }
       ]
     },

@@ -79,6 +79,9 @@ describe("presentation run binding", () => {
     const liveRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
     );
+    const flickerRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-FLICKER-024",
+    );
     const movementRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     );
@@ -124,6 +127,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-LIVE-001",
       ).evidenceRequirements,
     ];
+    const flickerRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-FLICKER-024",
+      ).evidenceRequirements,
+    ];
     const movementRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -159,6 +168,7 @@ describe("presentation run binding", () => {
     const inputArtifacts = await artifactFixture(inputRequirements);
     const mobileArtifacts = await artifactFixture(mobileRequirements);
     const liveArtifacts = await artifactFixture(liveRequirements);
+    const flickerArtifacts = await artifactFixture(flickerRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
     const temporalArtifacts = await artifactFixture(temporalRequirements);
@@ -180,6 +190,17 @@ describe("presentation run binding", () => {
     const liveMetadata = {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
+    };
+    const flickerMetadata = {
+      source: { commit, dirty: false },
+      scenarioIds: [
+        "ordinary-live-idle-move-turn-attack",
+        "effect-despawn",
+        "effect-kind-corpus",
+        "asset-state-transition",
+      ],
+      deviceProfileIds: ["desktop-60hz", "phone-portrait-rAF"],
+      gestureIds: ["sustained-movement", "repeated-attacks"],
     };
     const movementMetadata = {
       source: { commit, dirty: false },
@@ -217,6 +238,8 @@ describe("presentation run binding", () => {
       mobileComparison: comparison(mobileRecipe),
       liveMetadata,
       liveComparison: comparison(liveRecipe),
+      flickerMetadata,
+      flickerComparison: comparison(flickerRecipe),
       movementMetadata,
       movementComparison: comparison(movementRecipe),
       spriteMetadata,
@@ -235,6 +258,7 @@ describe("presentation run binding", () => {
       inputArtifacts,
       mobileArtifacts,
       liveArtifacts,
+      flickerArtifacts,
       movementArtifacts,
       spriteArtifacts,
       temporalArtifacts,
@@ -259,6 +283,9 @@ describe("presentation run binding", () => {
     )!;
     const live = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-LIVE-001",
+    )!;
+    const flicker = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-FLICKER-024",
     )!;
     const movement = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
@@ -320,6 +347,18 @@ describe("presentation run binding", () => {
     );
     expect(
       live.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(flicker.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(flicker.observed).toEqual({
+      scenarioIds: flickerMetadata.scenarioIds,
+      deviceProfileIds: flickerMetadata.deviceProfileIds,
+      gestureIds: flickerMetadata.gestureIds,
+    });
+    expect(flicker.signals).toHaveLength(
+      flickerRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      flicker.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
     expect(movement.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(movement.observed.deviceProfileIds).toEqual([

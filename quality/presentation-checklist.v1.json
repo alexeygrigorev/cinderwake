@@ -472,7 +472,8 @@
         "offset-double-draw",
         "presentation-frame-omitted",
         "despawned-effect-retained",
-        "effect-owner-mismatched"
+        "effect-owner-mismatched",
+        "live-renderer-frozen"
       ]
     },
     {
