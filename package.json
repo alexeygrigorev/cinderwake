@@ -18,6 +18,7 @@
     "test:visual:update": "playwright test tests/visual --update-snapshots",
     "test:state-replay": "node scripts/test-state-replay.mjs",
     "test:compositor": "node scripts/test-compositor-integrity.mjs",
+    "test:flicker": "node scripts/test-flicker-integrity.mjs",
     "test:city-journey": "node scripts/test-city-journey.mjs",
     "test:input-intents": "node scripts/test-input-intents.mjs",
     "test:directional-motion": "node scripts/test-directional-motion.mjs",
