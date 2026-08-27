@@ -88,6 +88,9 @@ describe("presentation run binding", () => {
     const movementRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
     );
+    const cameraRecipe = recipes.recipes.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-CAMERA-016",
+    );
     const spriteRecipe = recipes.recipes.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
     );
@@ -148,6 +151,12 @@ describe("presentation run binding", () => {
         ({ id }: { id: string }) => id === "PRES-MOVE-003",
       ).evidenceRequirements,
     ];
+    const cameraRequirements = [
+      ...contract.artifactRequirements,
+      ...contract.checks.find(
+        ({ id }: { id: string }) => id === "PRES-CAMERA-016",
+      ).evidenceRequirements,
+    ];
     const spriteRequirements = [
       ...contract.artifactRequirements,
       ...contract.checks.find(
@@ -180,6 +189,7 @@ describe("presentation run binding", () => {
     const flickerArtifacts = await artifactFixture(flickerRequirements);
     const crispnessArtifacts = await artifactFixture(crispnessRequirements);
     const movementArtifacts = await artifactFixture(movementRequirements);
+    const cameraArtifacts = await artifactFixture(cameraRequirements);
     const spriteArtifacts = await artifactFixture(spriteRequirements);
     const temporalArtifacts = await artifactFixture(temporalRequirements);
     const depthArtifacts = await artifactFixture(depthRequirements);
@@ -226,6 +236,12 @@ describe("presentation run binding", () => {
       source: { commit, dirty: false },
       profileIds: ["desktop", "phone-portrait"],
     };
+    const cameraMetadata = {
+      source: { commit, dirty: false },
+      scenarioIds: ["map-edge-reversal"],
+      profileIds: ["desktop", "phone-portrait"],
+      gestureIds: ["approach-map-edge", "reverse-west", "reverse-east"],
+    };
     const spriteMetadata = {
       source: { commit, dirty: false },
       profileIds: ["runtime-atlas-native-resolution"],
@@ -264,6 +280,8 @@ describe("presentation run binding", () => {
       crispnessComparison: comparison(crispnessRecipe),
       movementMetadata,
       movementComparison: comparison(movementRecipe),
+      cameraMetadata,
+      cameraComparison: comparison(cameraRecipe),
       spriteMetadata,
       spriteComparison: comparison(spriteRecipe),
       temporalMetadata,
@@ -283,6 +301,7 @@ describe("presentation run binding", () => {
       flickerArtifacts,
       crispnessArtifacts,
       movementArtifacts,
+      cameraArtifacts,
       spriteArtifacts,
       temporalArtifacts,
       depthArtifacts,
@@ -315,6 +334,9 @@ describe("presentation run binding", () => {
     )!;
     const movement = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-MOVE-003",
+    )!;
+    const camera = run.checks.find(
+      ({ checkId }: { checkId: string }) => checkId === "PRES-CAMERA-016",
     )!;
     const sprite = run.checks.find(
       ({ checkId }: { checkId: string }) => checkId === "PRES-SPRITE-004",
@@ -408,6 +430,18 @@ describe("presentation run binding", () => {
     );
     expect(
       movement.negativeControls.every(({ status }) => status === "DETECTED"),
+    ).toBe(true);
+    expect(camera.result).toBe("NEEDS_VISUAL_REVIEW");
+    expect(camera.observed).toEqual({
+      scenarioIds: cameraMetadata.scenarioIds,
+      deviceProfileIds: cameraMetadata.profileIds,
+      gestureIds: cameraMetadata.gestureIds,
+    });
+    expect(camera.signals).toHaveLength(
+      cameraRecipe.evaluator.requiredSignalIds.length,
+    );
+    expect(
+      camera.negativeControls.every(({ status }) => status === "DETECTED"),
     ).toBe(true);
     expect(sprite.result).toBe("NEEDS_VISUAL_REVIEW");
     expect(sprite.observed.deviceProfileIds).toEqual([

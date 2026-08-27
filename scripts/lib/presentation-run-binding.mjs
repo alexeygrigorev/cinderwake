@@ -12,6 +12,7 @@ const CITY_PROFILE_IDS = ["desktop", "phone-portrait", "phone-landscape"];
 const INPUT_PROFILE_IDS = ["phone-portrait", "phone-landscape"];
 const LIVE_PROFILE_IDS = ["desktop", "phone-portrait"];
 const MOTION_PROFILE_IDS = ["desktop", "phone-portrait"];
+const CAMERA_PROFILE_IDS = ["desktop", "phone-portrait"];
 const MOTION_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
 const MOTION_CAMERA_MODES = ["fixed", "follow"];
 const MOTION_DIRECTION_IDS = [
@@ -70,6 +71,15 @@ const INPUT_FRAME_FILES = [
   "frame-0010-joystick-west-after.png",
   "frame-0011-tap-strike-before.png",
   "frame-0012-tap-strike-after.png",
+];
+const CAMERA_FRAME_FILES = [
+  "frame-0000-initial.png",
+  "frame-0001-approach-map-edge-before.png",
+  "frame-0002-approach-map-edge-after.png",
+  "frame-0003-reverse-west-before.png",
+  "frame-0004-reverse-west-after.png",
+  "frame-0005-reverse-east-before.png",
+  "frame-0006-reverse-east-after.png",
 ];
 const LIVE_FRAME_FILES = {
   desktop: [
@@ -563,6 +573,50 @@ function directionalMotionArtifactSpecifications() {
   return specifications;
 }
 
+export function cameraMotionArtifactSpecifications(
+  cameraRoot = "quality-results/camera-motion/pres-camera-016",
+  temporalRoot = "quality-results/sequences/camera-smooth-follow",
+) {
+  const specifications = [
+    ["environment-metadata", `${cameraRoot}/metadata.json`],
+    ["semantic-snapshot-timeline", `${cameraRoot}/camera.json`],
+    ["gesture-or-command-tape", `${cameraRoot}/camera.json`],
+    ["render-manifest-timeline", `${cameraRoot}/camera.json`],
+    ["negative-control-evidence", `${cameraRoot}/comparison.json`],
+    ["camera-target-timeline", `${cameraRoot}/camera.json`],
+    ["camera-target-timeline", `${temporalRoot}/render-manifest-timeline.json`],
+    ["scene-anchor-frames", `${temporalRoot}/contact-sheet.png`],
+  ];
+  for (const profileId of CAMERA_PROFILE_IDS) {
+    specifications.push(
+      ["semantic-snapshot-timeline", `${cameraRoot}/${profileId}/states.json`],
+      [
+        "gesture-or-command-tape",
+        `${cameraRoot}/${profileId}/gesture-log.json`,
+      ],
+      [
+        "render-manifest-timeline",
+        `${cameraRoot}/${profileId}/render-manifest-timeline.json`,
+      ],
+      [
+        "camera-target-timeline",
+        `${cameraRoot}/${profileId}/render-manifest-timeline.json`,
+      ],
+      ["scene-anchor-frames", `${cameraRoot}/${profileId}/contact-sheet.png`],
+      [
+        "edge-and-reversal-video",
+        `${cameraRoot}/${profileId}/camera-motion.webm`,
+      ],
+    );
+    for (const filename of CAMERA_FRAME_FILES)
+      specifications.push([
+        "ordered-frame-sequence",
+        `${cameraRoot}/${profileId}/${filename}`,
+      ]);
+  }
+  return specifications;
+}
+
 function actorAtlasArtifactSpecifications() {
   const root = "quality-results/actor-atlas-audit";
   const specifications = [
@@ -826,6 +880,8 @@ export async function bindPresentationRun({
   crispnessComparison = null,
   movementMetadata,
   movementComparison,
+  cameraMetadata,
+  cameraComparison,
   spriteMetadata,
   spriteComparison,
   temporalMetadata,
@@ -844,6 +900,7 @@ export async function bindPresentationRun({
   flickerArtifacts = null,
   crispnessArtifacts = null,
   movementArtifacts = directionalMotionArtifactSpecifications(),
+  cameraArtifacts = cameraMotionArtifactSpecifications(),
   spriteArtifacts = actorAtlasArtifactSpecifications(),
   temporalArtifacts = temporalSequenceArtifactSpecifications(),
   depthArtifacts = depthTransitionArtifactSpecifications(),
@@ -864,6 +921,9 @@ export async function bindPresentationRun({
   );
   const movementCheck = contract.checks.find(
     ({ id }) => id === "PRES-MOVE-003",
+  );
+  const cameraCheck = contract.checks.find(
+    ({ id }) => id === "PRES-CAMERA-016",
   );
   const spriteCheck = contract.checks.find(
     ({ id }) => id === "PRES-SPRITE-004",
@@ -891,6 +951,9 @@ export async function bindPresentationRun({
   );
   const movementRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-MOVE-003",
+  );
+  const cameraRecipe = recipes.recipes.find(
+    ({ checkId }) => checkId === "PRES-CAMERA-016",
   );
   const spriteRecipe = recipes.recipes.find(
     ({ checkId }) => checkId === "PRES-SPRITE-004",
@@ -944,6 +1007,8 @@ export async function bindPresentationRun({
     !liveRecipe ||
     !movementCheck ||
     !movementRecipe ||
+    !cameraCheck ||
+    !cameraRecipe ||
     !spriteCheck ||
     !spriteRecipe ||
     !temporalCheck ||
@@ -954,7 +1019,7 @@ export async function bindPresentationRun({
     !collisionRecipe
   )
     throw new Error(
-      "P0 live/city/state/input/mobile/movement/sprite/temporal/depth/collision contract recipes are incomplete",
+      "P0 live/city/state/input/mobile/movement/camera/sprite/temporal/depth/collision contract recipes are incomplete",
     );
 
   const citySource = sourceCommit(cityMetadata, "PRES-CITY-027");
@@ -969,6 +1034,7 @@ export async function bindPresentationRun({
     ? sourceCommit(crispnessMetadata, "PRES-CRISP-006")
     : null;
   const movementSource = sourceCommit(movementMetadata, "PRES-MOVE-003");
+  const cameraSource = sourceCommit(cameraMetadata, "PRES-CAMERA-016");
   const spriteSource = sourceCommit(spriteMetadata, "PRES-SPRITE-004");
   const temporalSource = sourceCommit(temporalMetadata, "PRES-MOTION-005");
   const depthSource = sourceCommit(depthMetadata, "PRES-DEPTH-019");
@@ -979,6 +1045,7 @@ export async function bindPresentationRun({
     citySource !== mobileSource ||
     citySource !== liveSource ||
     citySource !== movementSource ||
+    citySource !== cameraSource ||
     citySource !== spriteSource ||
     citySource !== temporalSource ||
     citySource !== depthSource ||
@@ -1014,6 +1081,9 @@ export async function bindPresentationRun({
   const movementIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-MOVE-003",
   );
+  const cameraIndex = contract.checks.findIndex(
+    ({ id }) => id === "PRES-CAMERA-016",
+  );
   const spriteIndex = contract.checks.findIndex(
     ({ id }) => id === "PRES-SPRITE-004",
   );
@@ -1043,6 +1113,10 @@ export async function bindPresentationRun({
   const movementComparisonData = comparisonData(
     movementComparison,
     "PRES-MOVE-003",
+  );
+  const cameraComparisonData = comparisonData(
+    cameraComparison,
+    "PRES-CAMERA-016",
   );
   const spriteComparisonData = comparisonData(
     spriteComparison,
@@ -1152,6 +1226,21 @@ export async function bindPresentationRun({
     artifactSpecifications: movementArtifacts,
     result: "NEEDS_VISUAL_REVIEW",
     deviceProfileIds: movementMetadata.profileIds,
+  });
+  checks[cameraIndex] = await bindRow({
+    repoRoot,
+    contractCheck: cameraCheck,
+    recipe: cameraRecipe,
+    metadata: cameraMetadata,
+    comparison: cameraComparisonData,
+    artifactSpecifications: cameraArtifacts,
+    result: "NEEDS_VISUAL_REVIEW",
+    deviceProfileIds: cameraMetadata.profileIds,
+    observed: {
+      scenarioIds: cameraMetadata.scenarioIds,
+      deviceProfileIds: cameraMetadata.profileIds,
+      gestureIds: cameraMetadata.gestureIds,
+    },
   });
   checks[spriteIndex] = await bindRow({
     repoRoot,
