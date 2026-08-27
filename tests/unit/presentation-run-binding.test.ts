@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   bindPresentationRun,
+  cameraMotionArtifactSpecifications,
   visibleSpriteArtifactSpecifications,
 } from "../../scripts/lib/presentation-run-binding.mjs";
 import { validatePresentationChecklist } from "../../scripts/validate-presentation-checklist.mjs";
@@ -61,6 +62,20 @@ afterEach(async () => {
 });
 
 describe("presentation run binding", () => {
+  it("matches the camera recorder's after-frame filenames", () => {
+    const framePaths = cameraMotionArtifactSpecifications()
+      .filter(([requirement]) => requirement === "ordered-frame-sequence")
+      .map(([, framePath]) => framePath);
+
+    expect(framePaths).toHaveLength(52);
+    expect(framePaths).toContain(
+      "quality-results/camera-motion/pres-camera-016/desktop/frame-0004-reverse-west-after.png",
+    );
+    expect(framePaths).not.toContain(
+      "quality-results/camera-motion/pres-camera-016/desktop/frame-0004-edge-reverse-west-after.png",
+    );
+  });
+
   it("enumerates visible sprite artifacts under a configured root", async () => {
     const directory = await fs.mkdtemp(
       path.join(root, "quality-results/.presentation-binding-test-"),

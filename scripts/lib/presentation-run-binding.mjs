@@ -83,7 +83,7 @@ function cameraMotionFrameFiles() {
     for (const gestureId of gestureIds) {
       files.push(
         `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-${gestureId}-before.png`,
-        `frame-${String(index++).padStart(4, "0")}-${artifactPrefix}-${gestureId}-after.png`,
+        `frame-${String(index++).padStart(4, "0")}-${gestureId}-after.png`,
       );
     }
   }
