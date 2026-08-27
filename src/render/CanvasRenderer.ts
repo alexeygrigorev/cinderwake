@@ -564,14 +564,10 @@ export class CanvasRenderer {
       const fillHeight = Math.max(
         1,
         Math.round(
-          (innerWidth * fillBase.sourceRect.height) /
-            fillBase.sourceRect.width,
+          (innerWidth * fillBase.sourceRect.height) / fillBase.sourceRect.width,
         ),
       );
-      const fillWidth = Math.max(
-        1,
-        Math.round(innerWidth * healthRatio),
-      );
+      const fillWidth = Math.max(1, Math.round(innerWidth * healthRatio));
       return [
         {
           id: `health:${monster.id}`,
