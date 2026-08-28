@@ -277,6 +277,14 @@
     "west": "primary-bank-horizontal-flip",
     "north": "authored-north-bank",
     "south": "authored-south-bank",
+    "sourceFacingByActor": {
+      "vanguard": "west",
+      "ranger": "east",
+      "arcanist": "east",
+      "ashfang": "east",
+      "hexer": "east",
+      "stonekin": "east"
+    },
     "actionFallback": "none-all-cardinal-banks-authored"
   }
 }

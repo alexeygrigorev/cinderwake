@@ -673,6 +673,14 @@ describe("sprite atlas quality contract", () => {
       south: { vector: { x: 0, y: 1024 }, suffix: ":south", flipX: false },
       west: { vector: { x: -1024, y: 0 }, suffix: "", flipX: false },
     } as const;
+    const sourceFacingByActor = {
+      vanguard: "west",
+      ranger: "east",
+      arcanist: "east",
+      ashfang: "east",
+      hexer: "east",
+      stonekin: "east",
+    } as const;
 
     for (const [geometryId, [scenarioId, entityId]] of Object.entries(
       actorScenarios,
@@ -691,6 +699,10 @@ describe("sprite atlas quality contract", () => {
         };
         for (const [bucket, expected] of Object.entries(facings)) {
           actor.facing = { ...expected.vector };
+          const sourceFacing =
+            sourceFacingByActor[
+              geometryId.split(":")[1] as keyof typeof sourceFacingByActor
+            ];
           const manifest = buildRenderManifest(state, CAMERA);
           const call = manifest.drawCalls.find(
             ({ entityId: candidate }) => candidate === entityId,
@@ -700,7 +712,10 @@ describe("sprite atlas quality contract", () => {
             clip,
             facingBucket: bucket,
             spriteId: `${geometryId}${expected.suffix}`,
-            flipX: expected.flipX,
+            flipX:
+              bucket === "east" || bucket === "west"
+                ? sourceFacing !== bucket
+                : false,
           });
           validateManifestSpriteContract(manifest, catalog);
         }

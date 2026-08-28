@@ -20,6 +20,7 @@ import type { AnimationClip, GameState, Vec2 } from "../game/types";
 import {
   SPRITE_CATALOG,
   SPRITE_CATALOG_REVISION,
+  horizontalFlipForGeometry,
   spriteFrame,
   type SourceRectV1,
 } from "./sprites";
@@ -1019,10 +1020,7 @@ export function buildRenderManifest(
       bounds: { ...destinationRect },
       footAnchor: { ...screenAnchor },
       facingBucket: bucket,
-      // The accepted side-facing source cells point toward screen-left. Mirror
-      // them for world east so the character, weapon, and movement agree; the
-      // raw side bank is the west-facing presentation.
-      flipX: bucket === "east",
+      flipX: horizontalFlipForGeometry(semantic.geometryId, bucket),
       visible: intersectsViewport(destinationRect),
       zOrder: 0,
     });

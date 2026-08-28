@@ -23,8 +23,14 @@ export declare const DIRECTIONAL_BANK_FAILURE_IDS: readonly [
   "target-aim-not-mirrored",
   "attack-origin-not-mirrored",
   "ability-recovery-mismatch",
+  "raster-facing-mismatch",
   "directional-bank-evidence-desynchronized",
 ];
+
+export declare function expectedHorizontalFlip(
+  actorId: string,
+  expectedFacing: string,
+): boolean;
 
 export interface DirectionalBankEvidenceInput {
   profiles: unknown[];

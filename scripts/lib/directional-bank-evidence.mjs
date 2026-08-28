@@ -1,3 +1,12 @@
+import fs from "node:fs";
+
+const ACTOR_HORIZONTAL_SOURCE_FACING = JSON.parse(
+  fs.readFileSync(
+    new URL("../../art/actor-atlas-v1.json", import.meta.url),
+    "utf8",
+  ),
+).facing.sourceFacingByActor;
+
 export const DIRECTIONAL_BANK_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
 
 export const DIRECTIONAL_BANK_DIRECTION_IDS = [
@@ -22,6 +31,7 @@ export const DIRECTIONAL_BANK_FAILURE_IDS = [
   "target-aim-not-mirrored",
   "attack-origin-not-mirrored",
   "ability-recovery-mismatch",
+  "raster-facing-mismatch",
   "directional-bank-evidence-desynchronized",
 ];
 
@@ -132,6 +142,12 @@ function direction(id) {
   return DIRECTIONS.find((entry) => entry.id === id) ?? null;
 }
 
+export function expectedHorizontalFlip(actorId, expectedFacing) {
+  if (expectedFacing !== "east" && expectedFacing !== "west") return false;
+  const sourceFacing = ACTOR_HORIZONTAL_SOURCE_FACING[actorId] ?? "east";
+  return sourceFacing !== expectedFacing;
+}
+
 function delta(before, after) {
   const first = playerState(before)?.position;
   const second = playerState(after)?.position;
@@ -139,20 +155,42 @@ function delta(before, after) {
   return { x: second.x - first.x, y: second.y - first.y };
 }
 
-function expectedSprite(call, expectedFacing) {
+function expectedSprite(call, expectedFacing, actorId) {
   if (!call || !expectedFacing) return null;
   return {
     spriteId:
       expectedFacing === "north" || expectedFacing === "south"
         ? `${call.geometryId}:${expectedFacing}`
         : call.geometryId,
-    flipX: expectedFacing === "east",
+    flipX: expectedHorizontalFlip(actorId, expectedFacing),
   };
 }
 
-function bankObservation(capture, expectedFacing) {
+function rasterObservation(capture, expectedFacing, actorId) {
+  if (expectedFacing !== "east" && expectedFacing !== "west")
+    return { required: false, matches: true };
+  const visual = capture?.visualFacing;
+  const expectedFlipX = expectedHorizontalFlip(actorId, expectedFacing);
+  return {
+    required: true,
+    expectedFacing,
+    expectedFlipX,
+    actualFlipX: visual?.actualFlipX ?? null,
+    actualPixelHash: visual?.actualPixelHash ?? null,
+    expectedPixelHash: visual?.expectedPixelHash ?? null,
+    matches: Boolean(
+      visual &&
+      visual.expectedFacing === expectedFacing &&
+      visual.expectedFlipX === expectedFlipX &&
+      visual.actualPixelHash === visual.expectedPixelHash,
+    ),
+  };
+}
+
+function bankObservation(capture, expectedFacing, actorId) {
   const call = playerCall(capture);
-  const expected = expectedSprite(call, expectedFacing);
+  const expected = expectedSprite(call, expectedFacing, actorId);
+  const raster = rasterObservation(capture, expectedFacing, actorId);
   return {
     actual: call
       ? {
@@ -168,12 +206,14 @@ function bankObservation(capture, expectedFacing) {
           flipX: expected.flipX,
         }
       : null,
+    raster,
     matches: Boolean(
       call &&
       expected &&
       call.spriteId === expected.spriteId &&
       call.facingBucket === expectedFacing &&
-      call.flipX === expected.flipX,
+      call.flipX === expected.flipX &&
+      raster.matches,
     ),
     spriteMatches: Boolean(
       call && expected && call.spriteId === expected.spriteId,
@@ -237,10 +277,14 @@ function targetAimPass(action, expectedFacing) {
   );
 }
 
-function recoveryPass(action, expectedFacing) {
+function recoveryPass(action, expectedFacing, actorId) {
   const afterPlayer = playerState(action?.after);
   const recoveryPlayer = playerState(action?.recovery);
-  const recoveryBank = bankObservation(action?.recovery, expectedFacing);
+  const recoveryBank = bankObservation(
+    action?.recovery,
+    expectedFacing,
+    actorId,
+  );
   const recoveryClip = recoveryPlayer?.animation?.clip;
   const expectedActionClip = action?.kind === "ability" ? "ability" : "attack";
   const lockedUntilTick = afterPlayer?.animation?.lockedUntilTick;
@@ -276,8 +320,8 @@ function actionObservation(actorId, action, expectedFacing) {
   const aimPass = targetAimPass(action, expectedFacing);
   const recovery = {
     clip: playerState(action?.recovery)?.animation?.clip ?? null,
-    bank: bankObservation(action?.recovery, expectedFacing),
-    pass: recoveryPass(action, expectedFacing),
+    bank: bankObservation(action?.recovery, expectedFacing, actorId),
+    pass: recoveryPass(action, expectedFacing, actorId),
   };
   return {
     kind: action?.kind ?? null,
@@ -320,12 +364,36 @@ function directionObservation(runDirection, expected, actorId) {
   const afterFacing = facingBucket(afterPlayer?.facing);
   const turnFacing = facingBucket(turnPlayer?.facing);
   const actionBeforeFacing = facingBucket(actionBeforePlayer?.facing);
-  const movementBank = bankObservation(movement?.after, expected?.facing);
-  const turnBank = bankObservation(movement?.turn, turnExpected?.facing);
-  const actionBeforeBank = bankObservation(action?.before, expected?.facing);
-  const actionAfterBank = bankObservation(action?.after, expected?.facing);
-  const abilityBeforeBank = bankObservation(ability?.before, expected?.facing);
-  const abilityAfterBank = bankObservation(ability?.after, expected?.facing);
+  const movementBank = bankObservation(
+    movement?.after,
+    expected?.facing,
+    actorId,
+  );
+  const turnBank = bankObservation(
+    movement?.turn,
+    turnExpected?.facing,
+    actorId,
+  );
+  const actionBeforeBank = bankObservation(
+    action?.before,
+    expected?.facing,
+    actorId,
+  );
+  const actionAfterBank = bankObservation(
+    action?.after,
+    expected?.facing,
+    actorId,
+  );
+  const abilityBeforeBank = bankObservation(
+    ability?.before,
+    expected?.facing,
+    actorId,
+  );
+  const abilityAfterBank = bankObservation(
+    ability?.after,
+    expected?.facing,
+    actorId,
+  );
   const actionObservationValue = actionObservation(
     actorId,
     action,
@@ -580,6 +648,19 @@ export function evaluateDirectionalBankEvidence({
       )
     )
       failures.push("sprite-bank-mismatch");
+    if (
+      directions.some(({ banks }) =>
+        [
+          banks.movement,
+          banks.turn,
+          banks.actionBefore,
+          banks.actionAfter,
+          banks.abilityBefore,
+          banks.abilityAfter,
+        ].some(({ raster }) => raster.required && !raster.matches),
+      )
+    )
+      failures.push("raster-facing-mismatch");
   }
   if (!aimPass) failures.push("target-aim-not-mirrored");
   if (!actionPass) failures.push("attack-origin-not-mirrored");

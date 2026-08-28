@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DIRECTIONAL_BANK_ACTOR_IDS,
   DIRECTIONAL_BANK_DIRECTION_IDS,
+  expectedHorizontalFlip,
   evaluateDirectionalBankEvidence,
 } from "../../scripts/lib/directional-bank-evidence.mjs";
 
@@ -67,7 +68,7 @@ function playerCall(actorId: string, facing: Facing, clip: string) {
     spriteId: spriteId(actorId, facing),
     facing: facingVector,
     facingBucket: facing,
-    flipX: facing === "east",
+    flipX: expectedHorizontalFlip(actorId, facing),
     clip,
   };
 }
@@ -111,6 +112,16 @@ function capture(
       tick,
       drawCalls: [playerCall(actorId, facing, clip)],
     },
+    visualFacing:
+      facing === "east" || facing === "west"
+        ? {
+            expectedFacing: facing,
+            expectedFlipX: expectedHorizontalFlip(actorId, facing),
+            actualFlipX: expectedHorizontalFlip(actorId, facing),
+            actualPixelHash: `raster-${actorId}-${facing}`,
+            expectedPixelHash: `raster-${actorId}-${facing}`,
+          }
+        : null,
   };
 }
 
@@ -280,6 +291,16 @@ describe("PRES-FACING-015 evidence oracle", () => {
           ({ directionId }) => directionId === "move-east",
         )!;
         direction.movement.after.manifest.drawCalls[0]!.flipX = false;
+      },
+    ],
+    [
+      "horizontal raster faces the wrong way",
+      "raster-facing-mismatch",
+      (value: ReturnType<typeof evidence>) => {
+        const direction = value.profiles[0]!.runs[1]!.directions.find(
+          ({ directionId }) => directionId === "move-east",
+        )!;
+        direction.movement.after.visualFacing!.actualPixelHash = "wrong";
       },
     ],
     [

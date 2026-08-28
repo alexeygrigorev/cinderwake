@@ -56,6 +56,9 @@ interface ActorAtlasSpec {
   };
   clips: Record<AnimationClip, { atlasRow: number }>;
   directionalClips: Record<DirectionalClipKey, { atlasRow: number }>;
+  facing: {
+    sourceFacingByActor: Record<string, "east" | "west">;
+  };
 }
 
 interface AuthoredAtlasSpec {
@@ -105,6 +108,30 @@ export const SPRITE_CATALOG_REVISION =
   "cinder-node-v2-embercross-residents-2026-08-24";
 const ACTOR_CELL = ACTOR_ATLAS_SPEC.atlas.cellWidth;
 const GRID_CELL = 256;
+
+export type HorizontalFacing = "east" | "west";
+
+/**
+ * Accepted horizontal source cells are not uniformly oriented. Keep this
+ * art-side fact in the atlas contract so the renderer and evidence oracle use
+ * the same source-facing declaration instead of guessing from a generic flip.
+ */
+export const ACTOR_HORIZONTAL_SOURCE_FACING =
+  ACTOR_ATLAS_SPEC.facing.sourceFacingByActor;
+
+export function horizontalFlipForGeometry(
+  geometryId: string,
+  facing: "north" | "east" | "south" | "west" | "none",
+): boolean {
+  if (facing !== "east" && facing !== "west") return false;
+  const actorId = /^(?:hero|monster):(.+)$/.exec(geometryId)?.[1];
+  const sourceFacing = actorId
+    ? ACTOR_HORIZONTAL_SOURCE_FACING[actorId]
+    : undefined;
+  // Non-actor directional assets retain the legacy east-reflection behavior.
+  if (!sourceFacing) return facing === "east";
+  return sourceFacing !== facing;
+}
 
 function asset(
   id: string,

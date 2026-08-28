@@ -338,8 +338,8 @@ test("measures actual transparent entity ink instead of declared bounds", async 
       flipX: call?.flipX,
     })),
   ).toEqual([
-    { spriteId: "hero:ranger", facingBucket: "east", flipX: true },
-    { spriteId: "hero:ranger", facingBucket: "west", flipX: false },
+    { spriteId: "hero:ranger", facingBucket: "east", flipX: false },
+    { spriteId: "hero:ranger", facingBucket: "west", flipX: true },
     {
       spriteId: "hero:ranger:north",
       facingBucket: "north",

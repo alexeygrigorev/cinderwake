@@ -7,6 +7,7 @@ import sharp from "sharp";
 import {
   DIRECTIONAL_BANK_ACTOR_IDS,
   DIRECTIONAL_BANK_DIRECTION_IDS,
+  expectedHorizontalFlip,
   evaluateDirectionalBankEvidence,
 } from "./lib/directional-bank-evidence.mjs";
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
@@ -161,15 +162,87 @@ async function loadFacing(page, scenarioId, facing) {
   );
 }
 
-async function capture(page, label, retainFrame) {
+async function capture(page, label, retainFrame, actorId, expectedFacing) {
   return page.evaluate(
-    ({ captureLabel, shouldRetainFrame }) => {
+    async ({
+      captureLabel,
+      shouldRetainFrame,
+      currentActorId,
+      currentFacing,
+      expectedFlipX,
+    }) => {
       const bridge = window.__GAME_TEST__;
       if (!bridge)
         throw new Error("Directional-bank test bridge is unavailable");
       bridge.render({ interpolationAlpha: 1 });
       const snapshot = bridge.snapshot();
       const manifest = bridge.renderManifest();
+      const call = manifest.drawCalls.find(
+        ({ entityId }) => entityId === "player",
+      );
+      let visualFacing = null;
+      if (call && (currentFacing === "east" || currentFacing === "west")) {
+        const actualMask = bridge.captureEntityMask("player");
+        const image = new Image();
+        image.src = new URL(
+          `assets/sprites/actor-${currentActorId}.png`,
+          document.baseURI,
+        ).href;
+        await image.decode();
+        const canvas = document.createElement("canvas");
+        canvas.width = actualMask.width;
+        canvas.height = actualMask.height;
+        const context = canvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+        if (!context) throw new Error("Raster facing canvas is unavailable");
+        const anchor = {
+          x: canvas.width / 2,
+          y: canvas.height - 28,
+        };
+        const destination = {
+          x: Math.round(anchor.x - call.destinationRect.width / 2),
+          y: Math.round(anchor.y - (232 / 256) * call.destinationRect.height),
+          width: call.destinationRect.width,
+          height: call.destinationRect.height,
+        };
+        const centerX = destination.x + destination.width / 2;
+        const centerY = destination.y + destination.height / 2;
+        context.save();
+        context.globalAlpha = Math.max(0, Math.min(1, call.opacity));
+        context.translate(centerX, centerY);
+        if (expectedFlipX) context.scale(-1, 1);
+        context.drawImage(
+          image,
+          call.sourceRect.x,
+          call.sourceRect.y,
+          call.sourceRect.width,
+          call.sourceRect.height,
+          -destination.width / 2,
+          -destination.height / 2,
+          destination.width,
+          destination.height,
+        );
+        context.restore();
+        const pixels = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        ).data;
+        let hash = 0x811c9dc5;
+        for (const pixel of pixels) {
+          hash ^= pixel;
+          hash = Math.imul(hash, 0x01000193);
+        }
+        visualFacing = {
+          expectedFacing: currentFacing,
+          expectedFlipX,
+          actualFlipX: call.flipX,
+          actualPixelHash: actualMask.pixelHash,
+          expectedPixelHash: (hash >>> 0).toString(16).padStart(8, "0"),
+        };
+      }
       return {
         label: captureLabel,
         tick: Number(snapshot.tick),
@@ -178,10 +251,20 @@ async function capture(page, label, retainFrame) {
         stateHash: bridge.stateHash(),
         snapshot,
         manifest,
+        visualFacing,
         frame: shouldRetainFrame ? bridge.captureFrame() : null,
       };
     },
-    { captureLabel: label, shouldRetainFrame: retainFrame },
+    {
+      captureLabel: label,
+      shouldRetainFrame: retainFrame,
+      currentActorId: actorId,
+      currentFacing: expectedFacing,
+      expectedFlipX:
+        actorId && expectedFacing
+          ? expectedHorizontalFlip(actorId, expectedFacing)
+          : false,
+    },
   );
 }
 
@@ -191,6 +274,8 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     page,
     `${actorId}-${direction.id}-${kind}-before`,
     false,
+    actorId,
+    direction.facing,
   );
   const aim = {
     x: actionBefore.snapshot.player.position.x + direction.x * 1_024,
@@ -213,6 +298,8 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     page,
     `${actorId}-${direction.id}-${kind}-after`,
     true,
+    actorId,
+    direction.facing,
   );
   const pendingAttack = actionAfter.snapshot.pendingAttacks.find(
     ({ ownerId, kind: attackKind }) =>
@@ -229,6 +316,8 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     page,
     `${actorId}-${direction.id}-${kind}-impact`,
     true,
+    actorId,
+    direction.facing,
   );
   const recoveryTicks =
     actionAfter.snapshot.player.animation.lockedUntilTick -
@@ -242,6 +331,8 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     page,
     `${actorId}-${direction.id}-${kind}-recovery`,
     true,
+    actorId,
+    direction.facing,
   );
   return {
     kind,
@@ -286,6 +377,8 @@ async function runActor(page, actorId) {
       page,
       `${actorId}-${direction.id}-movement-before`,
       false,
+      actorId,
+      direction.facing,
     );
     await page.evaluate(({ x, y }) => {
       const bridge = window.__GAME_TEST__;
@@ -296,6 +389,8 @@ async function runActor(page, actorId) {
       page,
       `${actorId}-${direction.id}-movement-after`,
       true,
+      actorId,
+      direction.facing,
     );
     const opposite = DIRECTIONS.find(({ id }) => id === direction.opposite);
     await page.evaluate(({ x, y }) => {
@@ -308,6 +403,8 @@ async function runActor(page, actorId) {
       page,
       `${actorId}-${direction.id}-movement-turn`,
       true,
+      actorId,
+      opposite.facing,
     );
     directions.push({
       directionId: direction.id,
@@ -437,6 +534,7 @@ function normalizeCapture(raw, directory, index) {
     frameFile,
     snapshot: directionalSnapshot(raw.snapshot),
     manifest: directionalManifest(raw.manifest),
+    visualFacing: raw.visualFacing,
     label: raw.label,
     frame,
     directory,
@@ -454,6 +552,7 @@ function publicCapture(capture) {
     frameFile: capture.frameFile,
     snapshot: capture.snapshot,
     manifest: capture.manifest,
+    visualFacing: capture.visualFacing,
     label: capture.label,
   };
 }
@@ -672,6 +771,19 @@ function negativeControls(evidence) {
         direction.ability.recovery.manifest.drawCalls[0].flipX = false;
       },
     },
+    {
+      id: "horizontal-raster-opposite",
+      expectedSignal: "raster-facing-mismatch",
+      mutate(value) {
+        const run = value.profiles[0].runs.find(
+          ({ actorId }) => actorId === "ranger",
+        );
+        const direction = run.directions.find(
+          ({ directionId }) => directionId === "move-east",
+        );
+        direction.movement.after.visualFacing.actualPixelHash = "opposite";
+      },
+    },
   ];
   return controls.map(({ id, expectedSignal, mutate }) => {
     const mutated = structuredClone(evidence);
@@ -809,7 +921,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${DIRECTIONAL_BANK_ACTOR_IDS.length} actors, four directions, target-directed primary/ability recovery, and six negative controls detected`,
+      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${DIRECTIONAL_BANK_ACTOR_IDS.length} actors, four directions, target-directed primary/ability recovery, and seven negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {

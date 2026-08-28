@@ -713,6 +713,10 @@
         {
           "id": "ability-recovery-stale-bank",
           "expectedSignal": "ability-recovery-mismatch"
+        },
+        {
+          "id": "horizontal-raster-opposite",
+          "expectedSignal": "raster-facing-mismatch"
         }
       ]
     },
