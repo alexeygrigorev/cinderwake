@@ -3,7 +3,7 @@
   "pipeline": "ActorAtlasV2",
   "actorSpec": {
     "source": "art/actor-atlas-v1.json",
-    "sha256": "4eec8db9ed46ca7f7e776a1991963d8ab5986029acc75e7e9d706372ba2f0ae8"
+    "sha256": "c955d90263bef72aa64f5e2da34bb34b24fd65ff1f3942db1092809b6dab9232"
   },
   "environmentKitSpec": {
     "source": "art/environment-kit-v2.json",
