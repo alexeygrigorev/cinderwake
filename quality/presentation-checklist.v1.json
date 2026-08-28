@@ -302,7 +302,8 @@
         "stale-bank-after-turn",
         "unmirrored-attack-origin",
         "target-aim-points-to-wrong-quadrant",
-        "ability-recovery-stale-bank"
+        "ability-recovery-stale-bank",
+        "horizontal-raster-opposite"
       ]
     },
     {
