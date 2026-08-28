@@ -45,12 +45,15 @@ manifest boundary to exercise every playable actor in all four cardinal
 directions. Each direction records open-floor movement, a one-tick opposite turn,
 target-directed primary and ability actions through impact, and lock-release
 recovery. The pure `directional-bank-selection-v1` evaluator joins the
-authoritative facing vector to the expected north/south bank or east/west
-reflection, checks the aim point and selected action clips, then joins each
-pending action origin and direction to the produced Vanguard/Arcanist effect or
-Ranger projectile spawn. Semantic evidence covers every run; only representative
-PNG stages are retained for the contact sheet so the browser artifact remains
-bounded.
+authoritative facing vector to the expected north/south bank or calibrated
+per-actor horizontal reflection, checks the aim point and selected action
+clips, then joins each pending action origin and direction to the produced
+Vanguard/Arcanist effect or Ranger projectile spawn. For east/west captures,
+the browser independently renders the actor's source cell with the expected
+reflection and compares its RGBA hash with the real isolated canvas draw; a
+correct `facingBucket` or `flipX` field cannot hide a visually reversed actor.
+Semantic and raster evidence covers every run; only representative PNG stages
+are retained for the contact sheet so the browser artifact remains bounded.
 
 The `PRES-SPRITE-009` recorder (`npm run test:sprite-provenance`) audits the
 production presentation boundary rather than trusting a curated selector list.
