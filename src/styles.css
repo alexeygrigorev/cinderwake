@@ -379,7 +379,14 @@ button {
     left: 12px;
     transform: none;
     width: auto;
-    max-width: 210px;
+    max-width: min(300px, calc(50vw - 24px));
+  }
+  .campaign-tools [data-journal] {
+    flex: 0 0 auto;
+  }
+  .campaign-tools kbd,
+  .campaign-tools [data-checkpoint-indicator] {
+    display: none;
   }
 }
 
