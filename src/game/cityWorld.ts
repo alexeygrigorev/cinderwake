@@ -52,7 +52,7 @@ export function isEmbercrossMap(map: DungeonMap): boolean {
   );
 }
 
-function shortestFloorRoute(map: DungeonMap): Vec2[] {
+export function shortestFloorRoute(map: DungeonMap): Vec2[] {
   const start = map.spawn;
   const goal = map.exit;
   const key = (point: Vec2) => `${point.x},${point.y}`;
@@ -99,7 +99,42 @@ export function wildernessCityLandmarkTile(map: DungeonMap): Vec2 {
 }
 
 export function wildernessCityLandmarkAnchor(map: DungeonMap): Vec2 {
-  return tileCenter(wildernessCityLandmarkTile(map));
+  const route = shortestFloorRoute(map);
+  const index = Math.max(0, route.length - 3);
+  const tile = route[index]!;
+  const neighbors = [route[index - 1], route[index + 1]].filter(
+    (point): point is Vec2 => Boolean(point),
+  );
+  // Plant the solid post beside the road. A post at the center of a one-tile
+  // corridor disconnects the city gate even when its discovery cue is reached.
+  const center = tileCenter(tile);
+  const exit = tileCenter(map.exit);
+  const side = [
+    { x: -1, y: 0 },
+    { x: 0, y: -1 },
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+  ]
+    .filter(
+      (direction) =>
+        !neighbors.some(
+          (point) =>
+            point.x === tile.x + direction.x &&
+            point.y === tile.y + direction.y,
+        ),
+    )
+    .sort(
+      (a, b) =>
+        Math.hypot(
+          center.x + b.x * 640 - exit.x,
+          center.y + b.y * 640 - exit.y,
+        ) -
+        Math.hypot(
+          center.x + a.x * 640 - exit.x,
+          center.y + a.y * 640 - exit.y,
+        ),
+    )[0]!;
+  return { x: center.x + side.x * 640, y: center.y + side.y * 640 };
 }
 
 export interface CityWorldPlacement {

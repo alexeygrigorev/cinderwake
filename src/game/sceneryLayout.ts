@@ -1,12 +1,14 @@
-import { UNITS_PER_TILE } from "./constants";
+import { PLAYER_RADIUS, UNITS_PER_TILE } from "./constants";
 import {
   CITY_DISCOVERY_LANDMARK_ID,
   buildEmbercrossScenery,
   isEmbercrossMap,
+  shortestFloorRoute,
   wildernessCityLandmarkAnchor,
   wildernessCityLandmarkTile,
 } from "./cityWorld";
 import { isFloor, tileCenter } from "./dungeon";
+import { findNavigationRoute, navigationSegmentWalkable } from "./navigation";
 import type { DungeonMap, Vec2 } from "./types";
 
 export type SceneryPlacementKind = "structure" | "prop" | "decal";
@@ -28,6 +30,75 @@ export interface SceneryPlacement {
   collision: SceneryCollisionFootprint | null;
   /** Additional visible-mass footprints for open arches and split bases. */
   collisionParts?: SceneryCollisionFootprint[];
+}
+
+const routeObstructionCache = new WeakMap<
+  DungeonMap,
+  { signature: string; excluded: Set<string> }
+>();
+
+function preserveGateRoute(
+  map: DungeonMap,
+  placements: SceneryPlacement[],
+): SceneryPlacement[] {
+  if (map.rooms.length === 0) return placements;
+  const signature = JSON.stringify([
+    map.digest,
+    map.tiles,
+    map.rooms,
+    map.spawn,
+    map.exit,
+  ]);
+  const cached = routeObstructionCache.get(map);
+  if (cached?.signature === signature)
+    return placements.filter(({ id }) => !cached.excluded.has(id));
+  const spawn = tileCenter(map.spawn);
+  const exit = tileCenter(map.exit);
+  const footprints = (placement: SceneryPlacement) => [
+    ...(placement.collision ? [placement.collision] : []),
+    ...(placement.collisionParts ?? []),
+  ];
+  const reachesGate = (excluded: Set<string>): boolean => {
+    const route = findNavigationRoute(
+      map,
+      placements.filter(({ id }) => !excluded.has(id)).flatMap(footprints),
+      spawn,
+      exit,
+      PLAYER_RADIUS,
+    );
+    const last = route.at(-1);
+    return last?.x === exit.x && last.y === exit.y;
+  };
+  const excluded = new Set<string>();
+  if (!reachesGate(excluded)) {
+    const road = shortestFloorRoute(map).map(tileCenter);
+    for (const placement of placements) {
+      const collisions = footprints(placement);
+      if (
+        collisions.length &&
+        road.some(
+          (point, index) =>
+            index > 0 &&
+            !navigationSegmentWalkable(
+              map,
+              collisions,
+              road[index - 1]!,
+              point,
+              PLAYER_RADIUS,
+            ),
+        )
+      )
+        excluded.add(placement.id);
+    }
+    // Keep every structure that can be restored without sealing the route.
+    // The same solid footprint governs both placement and actual movement.
+    for (const id of [...excluded]) {
+      excluded.delete(id);
+      if (!reachesGate(excluded)) excluded.add(id);
+    }
+  }
+  routeObstructionCache.set(map, { signature, excluded });
+  return placements.filter(({ id }) => !excluded.has(id));
 }
 
 export type OpeningSide = "south" | "east" | "west" | "north";
@@ -747,12 +818,15 @@ export function buildSceneryLayout(map: DungeonMap): SceneryPlacement[] {
   }
 
   const protectedCenters = [tileCenter(map.spawn), tileCenter(map.exit)];
-  return placements.filter(
-    ({ collision }) =>
-      !collision ||
-      protectedCenters.every(
-        (point) => !overlapsScenery(point, 300, collision),
-      ),
+  return preserveGateRoute(
+    map,
+    placements.filter(
+      ({ collision }) =>
+        !collision ||
+        protectedCenters.every(
+          (point) => !overlapsScenery(point, 300, collision),
+        ),
+    ),
   );
 }
 
