@@ -284,7 +284,20 @@ export function findNavigationRoute(
       first.x - second.x
     );
   })[0]!;
-  return reconstructRoute(chosen, parents);
+  const route = reconstructRoute(chosen, parents);
+  const center = tileCenter(chosen);
+  // The best cell can be the actor's current cell without its center having
+  // been reached. Returning [] here stranded routed actors short of signs
+  // whenever a replan happened a few movement steps before the safe endpoint.
+  if (
+    route.length === 0 &&
+    squaredDistance(from, center) > 1 &&
+    squaredDistance(center, requestedTarget) <
+      squaredDistance(from, requestedTarget) &&
+    navigationSegmentWalkable(map, scenery, from, center, radius)
+  )
+    route.push(center);
+  return route;
 }
 
 export function findStateNavigationRoute(
