@@ -92,6 +92,13 @@ async function sourceIdentity() {
 }
 let browser;
 let server;
+let interrupted = null;
+for (const signal of ["SIGINT", "SIGTERM"])
+  process.once(signal, () => {
+    interrupted = signal;
+    server?.kill();
+    void browser?.close().catch(() => {});
+  });
 const results = [];
 const replayPlan = structuredClone(plan);
 const metadata = {
@@ -437,9 +444,11 @@ try {
       await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
+  if (interrupted) throw new Error(`Interrupted by ${interrupted}`);
   browser = await chromium.launch({ headless: true });
   metadata.browser = browser.version();
   for (const entry of plan.cases) {
+    if (interrupted) throw new Error(`Interrupted by ${interrupted}`);
     const directory = path.join(output, entry.id);
     await fs.mkdir(directory);
     const phone = entry.live?.profile === "phone";
@@ -554,7 +563,13 @@ try {
   });
 } finally {
   metadata.completedAt = new Date().toISOString();
-  await browser?.close();
+  await browser?.close().catch(() => {});
   if (server && server.exitCode === null) server.kill();
-  await writeReports(true);
+  await writeReports(!interrupted);
+  if (interrupted) {
+    console.error(
+      `INCOMPLETE: ${interrupted}. Partial evidence: ${path.join(output, "feedback.json")}`,
+    );
+    process.exitCode = interrupted === "SIGINT" ? 130 : 143;
+  }
 }
