@@ -119,6 +119,7 @@ test("exported files restore a checkpoint and menu closure releases movement", a
   page,
 }) => {
   await begin(page);
+  await page.evaluate(() => window.__GAME_TEST__!.step(21));
   await page.keyboard.down("d");
   await page
     .getByRole("button", { name: "Journal and save", exact: true })
@@ -144,6 +145,49 @@ test("exported files restore a checkpoint and menu closure releases movement", a
   expect(await page.evaluate(() => window.__GAME_TEST__!.snapshot())).toEqual(
     checkpoint,
   );
+  expect(
+    await page.evaluate(
+      () =>
+        JSON.parse(localStorage.getItem("cinderwake.autosave.v1")!).state.tick,
+    ),
+  ).toBe(checkpoint.tick);
+  await page.reload();
+  await page
+    .getByRole("button", { name: "Continue journey", exact: true })
+    .click();
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  expect(await page.evaluate(() => window.__GAME_TEST__!.snapshot())).toEqual(
+    checkpoint,
+  );
+});
+
+test("denied browser storage still permits exporting and leaving", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    Storage.prototype.setItem = () => {
+      throw new Error("Storage denied");
+    };
+  });
+  await begin(page);
+  await page
+    .getByRole("button", { name: "Journal and save", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Save checkpoint", exact: true })
+    .click();
+  await expect(page.locator("[data-save-status]")).toContainText(
+    "storage unavailable",
+  );
+  const downloading = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Export save", exact: true }).click();
+  expect((await downloading).suggestedFilename()).toMatch(/\.json$/);
+  await page
+    .getByRole("button", { name: "Leave without saving", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Enter the wake", exact: true }),
+  ).toBeVisible();
 });
 
 test("journal pauses the real game, clears held movement, and fits a phone", async ({
