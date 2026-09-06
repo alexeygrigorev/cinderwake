@@ -40,6 +40,25 @@ export interface MissionJournal {
   ending: string | null;
 }
 
+export type MissionReading = Pick<
+  MissionCue,
+  "id" | "title" | "text" | "voiceId"
+>;
+
+const ARRIVAL_LETTER: MissionReading = {
+  id: "scroll:ileya:warning",
+  title: "Ileya's sealed letter",
+  text: "To whoever still walks this road: the bell keeper has called the dead. Break the ambush, silence the Bell Keeper and his followers, then carry this warning to Embercross. Click clear ground to travel. Follow the direction marker through the ruin to the old road sign.",
+  voiceId: "quest:arrival",
+};
+
+const ROAD_SIGN_READING: MissionReading = {
+  id: CITY_DISCOVERY_LANDMARK_ID,
+  title: "Embercross road sign",
+  text: "EMBERCROSS — shelter beyond the old gate. Follow the marker to this sign, then continue to the gate. The dead must be cleared before the road opens.",
+  voiceId: "quest:road",
+};
+
 /** Stable IDs shared by the journal and the generated voice asset manifest. */
 export const MISSION_VOICE_LINES = {
   "quest:arrival":
@@ -75,12 +94,9 @@ function nearestThreat(state: GameState): MonsterState | undefined {
 
 function roadSign(state: GameState): MissionCue {
   return {
-    id: CITY_DISCOVERY_LANDMARK_ID,
+    ...ROAD_SIGN_READING,
     kind: "sign",
-    title: "Embercross road sign",
-    text: "EMBERCROSS — shelter beyond the old gate. Follow the marker to this sign, then continue to the gate. The dead must be cleared before the road opens.",
     position: wildernessCityLandmarkAnchor(state.map),
-    voiceId: "quest:road",
   };
 }
 
@@ -136,15 +152,35 @@ export function missionLandmarks(state: GameState): MissionCue[] {
   }
   return [
     {
-      id: "scroll:ileya:warning",
+      ...ARRIVAL_LETTER,
       kind: "scroll",
-      title: "Ileya's sealed letter",
-      text: "To whoever still walks this road: the bell keeper has called the dead. Break the ambush, silence the Bell Keeper and his followers, then carry this warning to Embercross. Click clear ground to travel. Follow the direction marker through the ruin to the old road sign.",
       position: tileCenter(state.map.spawn),
-      voiceId: "quest:arrival",
     },
     roadSign(state),
   ];
+}
+
+/** Read entries survive map changes without inventing off-map world positions. */
+export function missionArchive(
+  state: GameState,
+  discoveredIds: Iterable<string>,
+): MissionReading[] {
+  const residents: CityNpcId[] = [
+    "npc:embercross:mara",
+    "npc:embercross:oren",
+    "npc:embercross:tess",
+    "npc:embercross:ileya",
+  ];
+  return [...new Set(discoveredIds)].flatMap((id): MissionReading[] => {
+    if (id === ARRIVAL_LETTER.id) return [{ ...ARRIVAL_LETTER }];
+    if (id === ROAD_SIGN_READING.id) return [{ ...ROAD_SIGN_READING }];
+    const npcId = residents.find((resident) => resident === id);
+    if (!npcId) return [];
+    const cue = missionNpcDialogue(npcId, state);
+    return [
+      { id: cue.id, title: cue.title, text: cue.text, voiceId: cue.voiceId },
+    ];
+  });
 }
 
 /**
