@@ -69,7 +69,7 @@ for (const file of execFileSync(
   source.untracked[file] = sha256(await fs.readFile(file));
 await writeJson("source.json", source);
 const server = await createServer({
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false },
   appType: "custom",
   logLevel: "error",
 });
@@ -468,6 +468,37 @@ try {
           validationErrors.push(`Final snapshot rejected: ${error.message}`);
         }
         if (validationErrors.length) blocker = validationErrors.join("; ");
+        const stalled = blocker?.startsWith("stalled:") ?? false;
+        const inspectedRoute = stalled
+          ? navigation.findNavigationRoute(
+              state.map,
+              sceneryApi.sceneryCollisions(state.map),
+              state.player.position,
+              pilot.targetPosition,
+              state.player.radius,
+            )
+          : [];
+        const diagnostic = {
+          code: validationErrors.length
+            ? "INVALID_SNAPSHOT"
+            : stalled
+              ? inspectedRoute.length
+                ? "PILOT_STUCK"
+                : "NO_NAVIGATION_ROUTE"
+              : state.phase === "lost"
+                ? "PILOT_DEFEATED"
+                : state.phase === "won"
+                  ? "COMPLETED"
+                  : "TIME_BUDGET",
+          inspectionRequired:
+            state.phase !== "won" || validationErrors.length > 0,
+          explanation: stalled
+            ? inspectedRoute.length
+              ? "A navigation route remains, but this input policy stopped making progress. Inspect pilot steering before changing gameplay."
+              : "The navigation API returned no waypoints from the stopped state. Inspect target proximity and collision evidence; this alone does not prove the world is impossible."
+            : "Outcome observed from the declared semantic input policy.",
+          recomputedWaypoints: inspectedRoute,
+        };
         const result = {
           id,
           seed,
@@ -479,6 +510,7 @@ try {
             saveResumeMatched,
           phase: state.phase,
           blocker,
+          diagnostic,
           ticks: state.tick,
           simulationSeconds: state.tick / 60,
           remaining: state.monsters.filter((monster) => monster.health > 0)
