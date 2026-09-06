@@ -643,10 +643,16 @@ function updateHud(state: GameState): void {
     `${objectiveHeading}. ${objectiveCopy}. Direction marker points toward ${target.id}.`,
   );
   const events = state.eventLog
-    .filter(
-      (event) =>
-        event.type !== "movement_blocked" && event.type !== "attack_started",
-    )
+    .filter((event) => event.type !== "attack_started")
+    .filter((event, index, entries) => {
+      const previous = entries[index - 1];
+      return !(
+        event.type === "movement_blocked" &&
+        previous?.type === event.type &&
+        previous.targetId === event.targetId &&
+        previous.detail === event.detail
+      );
+    })
     .slice(-2);
   setSpriteLabel(
     log!,
@@ -654,17 +660,19 @@ function updateHud(state: GameState): void {
       ? events
           .map(
             (event) =>
-              (event.type === "monster_died"
-                ? "Foe slain"
-                : event.type === "loot_picked"
-                  ? "Spoils gathered"
-                  : event.type === "exit_unlocked"
-                    ? "Road opened"
-                    : event.type === "player_damaged"
-                      ? "Wounded"
-                      : event.type === "damage"
-                        ? "Hit"
-                        : event.type.replaceAll("_", " ")) +
+              (event.type === "movement_blocked"
+                ? `Blocked: ${event.detail ?? event.targetId ?? "obstacle"}`
+                : event.type === "monster_died"
+                  ? "Foe slain"
+                  : event.type === "loot_picked"
+                    ? "Spoils gathered"
+                    : event.type === "exit_unlocked"
+                      ? "Road opened"
+                      : event.type === "player_damaged"
+                        ? "Wounded"
+                        : event.type === "damage"
+                          ? "Hit"
+                          : event.type.replaceAll("_", " ")) +
               (event.amount
                 ? ` ${event.type === "player_damaged" ? "-" : "+"}${event.amount}`
                 : ""),
