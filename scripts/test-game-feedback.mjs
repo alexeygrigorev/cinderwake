@@ -5,7 +5,8 @@ import {
   gameFeedbackVerdict,
 } from "./lib/game-feedback.mjs";
 test("aggregate rejects missing, interrupted and source-mixed evidence", () => {
-  const passing = Array.from({ length: 3 }, () => ({
+  const passing = ["rules", "controls", "campaign", "browser"].map((id) => ({
+    id,
     exitCode: 0,
     reportValid: true,
   }));
@@ -15,7 +16,10 @@ test("aggregate rejects missing, interrupted and source-mixed evidence", () => {
   assert.equal(gameFeedbackVerdict(passing, true, false), "FAIL");
   assert.equal(
     gameFeedbackVerdict(
-      [passing[0], passing[1], { exitCode: 0, reportValid: false }],
+      [
+        ...passing.slice(0, 3),
+        { id: "browser", exitCode: 0, reportValid: false },
+      ],
       true,
       true,
     ),
@@ -23,7 +27,10 @@ test("aggregate rejects missing, interrupted and source-mixed evidence", () => {
   );
   assert.equal(
     gameFeedbackVerdict(
-      [passing[0], passing[1], { exitCode: null, reportValid: true }],
+      [
+        ...passing.slice(0, 3),
+        { id: "browser", exitCode: null, reportValid: true },
+      ],
       true,
       true,
     ),
@@ -38,20 +45,41 @@ test("zero exit without full declared evidence cannot pass", () => {
   assert.equal(componentReportValid("campaign", { results: [] }), false);
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 12, skipped: 0, unexpected: 0 },
+      stats: { expected: 15, skipped: 0, unexpected: 0 },
     }),
     false,
   );
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 13, skipped: 0, unexpected: 0 },
+      stats: { expected: 16, skipped: 0, unexpected: 0 },
     }),
     true,
   );
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 13, skipped: 1, unexpected: 0 },
+      stats: { expected: 16, skipped: 1, unexpected: 0 },
     }),
     false,
+  );
+  assert.equal(
+    componentReportValid("rules", {
+      success: true,
+      numTotalTests: 0,
+      numFailedTests: 0,
+      numPendingTests: 0,
+    }),
+    false,
+  );
+  assert.equal(
+    gameFeedbackVerdict(
+      Array.from({ length: 4 }, () => ({
+        id: "rules",
+        exitCode: 0,
+        reportValid: true,
+      })),
+      true,
+      true,
+    ),
+    "INCOMPLETE",
   );
 });
