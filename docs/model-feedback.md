@@ -82,7 +82,7 @@ case.
 Expectations read a dot-separated snapshot `path` and compare it with `value`.
 Supported operators are `eq`, `gte`, `lte`, `deltaGte` (change from the first
 capture, or an earlier captured `from` tick), and `eventCountGte` (requires `event`, optionally `sourceId`, and counts
-events after the initial tick). Missing paths fail. An optional `at` selects a
+new retained events from the initial tick, excluding initial history). Missing paths fail. An optional `at` selects a
 captured tick; otherwise the check uses the final capture. A `hint` tells the next
 model where to investigate. Use a damage, pickup, outcome, or displacement check
 to establish the result of an action, rather than just checking that it started.
