@@ -9,12 +9,14 @@ import {
   safeToAutosave,
 } from "../../src/app/saveGame";
 import {
-  worldFromScenario,
   createRunScenario,
+  type ScenarioV1,
+  worldFromScenario,
 } from "../../src/testkit/scenarios";
 import { stepGame } from "../../src/game/simulation";
-import { EMPTY_INPUT } from "../../src/game/types";
+import { EMPTY_INPUT, type GameState } from "../../src/game/types";
 import { stateHash } from "../../src/testkit/canonical";
+import historicalSave from "../fixtures/saves/pre-bell-keeper-profile.v1.json";
 
 const state = () =>
   worldFromScenario(createRunScenario("cinder-041", "vanguard"));
@@ -27,7 +29,97 @@ function storage() {
     },
   };
 }
+
+function bellKeeperScenario(): ScenarioV1 {
+  return {
+    schemaVersion: 1,
+    id: "bell-keeper-save-replay",
+    seed: "bell-keeper-save-replay",
+    classId: "vanguard",
+    map: {
+      mode: "explicit",
+      rows: [
+        "####################",
+        "#..................#",
+        "#..................#",
+        "#...P.............E#",
+        "#..................#",
+        "####################",
+      ],
+    },
+    player: { tile: [4, 3], health: 1_000, maxHealth: 1_000, armor: 0 },
+    monsters: [
+      {
+        id: "monster:bell-keeper",
+        kind: "stonekin",
+        tile: [6, 3],
+        health: 1_000,
+        maxHealth: 1_000,
+        armor: 0,
+        attackDamage: 20,
+        attackReadyTick: 0,
+        elite: true,
+      },
+    ],
+    settings: { ai: true, autoPickup: false, cameraFollow: false },
+  };
+}
+
+function bellKeeperState(): GameState {
+  const state = worldFromScenario(bellKeeperScenario());
+  stepGame(state, EMPTY_INPUT);
+  return state;
+}
+
+function advanceToTick(state: GameState, tick: number): void {
+  while (state.tick < tick) stepGame(state, EMPTY_INPUT);
+}
+
 describe("portable campaign checkpoints", () => {
+  it("loads the baseline v1 save and preserves its elite primary attack", () => {
+    const loaded = decodeSave(JSON.stringify(historicalSave));
+
+    expect(loaded.version).toBe(1);
+    expect(loaded.state.schemaVersion).toBe(2);
+    expect(loaded.discoveries).toEqual(["scroll:ileya:warning"]);
+    expect(loaded.state.player.id).toBe("player");
+    expect(loaded.state.pendingAttacks[0]).toMatchObject({
+      ownerId: "monster:bell-keeper",
+      kind: "primary",
+      impactTick: 10,
+    });
+    expect(loaded.state.monsters[0]?.elite).toBe(true);
+
+    const healthBeforeImpact = loaded.state.player.health;
+    advanceToTick(loaded.state, 10);
+    expect(loaded.state.player.health).toBe(healthBeforeImpact);
+    stepGame(loaded.state, EMPTY_INPUT);
+    expect(loaded.state.player.health).toBe(healthBeforeImpact - 12);
+    expect(loaded.state.pendingAttacks).toEqual([]);
+    expect(loaded.state.monsters[0]?.animation.clip).toBe("attack");
+  });
+
+  it.each([20, 48, 60])(
+    "continues an exact same-version save at tick %i",
+    (checkpointTick) => {
+      const original = bellKeeperState();
+      advanceToTick(original, checkpointTick);
+      const restored = decodeSave(
+        encodeSave(original, ["scroll:ileya:warning"], checkpointTick),
+      );
+
+      expect(restored.version).toBe(1);
+      expect(restored.state.schemaVersion).toBe(2);
+      expect(restored.state.tick).toBe(checkpointTick);
+      expect(stateHash(restored.state)).toBe(stateHash(original));
+      for (let tick = 0; tick < 90; tick += 1) {
+        stepGame(original, EMPTY_INPUT);
+        stepGame(restored.state, EMPTY_INPUT);
+      }
+      expect(stateHash(restored.state)).toBe(stateHash(original));
+    },
+  );
+
   it("restores exact simulation and discoveries, then produces the same future", () => {
     const original = state();
     for (let tick = 0; tick < 40; tick++)

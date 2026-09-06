@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "savedAt": 4242,
+  "discoveries": ["scroll:ileya:warning"],
+  "state": {
+    "schemaVersion": 2,
+    "scenarioId": "pre-bell-keeper-profile",
+    "seed": "baseline-pre-bell-keeper-profile",
+    "tick": 1,
+    "tickRate": 60,
+    "phase": "playing",
+    "nextEntityId": 3,
+    "rng": {
+      "map": { "state": 1071341465, "draws": 0 },
+      "combat": { "state": 851663145, "draws": 0 },
+      "loot": { "state": 2230443791, "draws": 0 },
+      "ai": { "state": 3985749015, "draws": 0 },
+      "cosmetic": { "state": 3145102334, "draws": 0 }
+    },
+    "map": {
+      "width": 15,
+      "height": 6,
+      "tiles": [
+        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+      ],
+      "spawn": { "x": 4, "y": 3 },
+      "exit": { "x": 6, "y": 3 },
+      "rooms": [],
+      "digest": "51d851d3"
+    },
+    "player": {
+      "id": "player",
+      "classId": "vanguard",
+      "position": { "x": 4608, "y": 3584 },
+      "previousPosition": { "x": 4608, "y": 3584 },
+      "velocity": { "x": 0, "y": 0 },
+      "facing": { "x": 1024, "y": 0 },
+      "radius": 320,
+      "health": 160,
+      "maxHealth": 160,
+      "armor": 0,
+      "moveSpeed": 64,
+      "attackDamage": 18,
+      "abilityDamage": 32,
+      "attackReadyTick": 0,
+      "abilityReadyTick": 0,
+      "invulnerableUntilTick": 0,
+      "level": 1,
+      "xp": 0,
+      "gold": 0,
+      "tonics": 2,
+      "power": 0,
+      "animation": { "clip": "idle", "startedAtTick": 0, "lockedUntilTick": 0 }
+    },
+    "monsters": [
+      {
+        "id": "monster:bell-keeper",
+        "kind": "stonekin",
+        "position": { "x": 5604, "y": 3584 },
+        "previousPosition": { "x": 5632, "y": 3584 },
+        "velocity": { "x": -28, "y": 0 },
+        "facing": { "x": -1024, "y": 0 },
+        "radius": 420,
+        "health": 160,
+        "maxHealth": 160,
+        "armor": 0,
+        "moveSpeed": 28,
+        "attackDamage": 12,
+        "attackRange": 1050,
+        "attackReadyTick": 110,
+        "elite": true,
+        "guaranteedLoot": true,
+        "deathTick": null,
+        "removeAtTick": null,
+        "animation": {
+          "clip": "attack",
+          "startedAtTick": 0,
+          "lockedUntilTick": 26
+        }
+      }
+    ],
+    "pendingAttacks": [
+      {
+        "id": "attack:2",
+        "ownerId": "monster:bell-keeper",
+        "kind": "primary",
+        "impactTick": 10,
+        "origin": { "x": 5604, "y": 3584 },
+        "direction": { "x": -1024, "y": 0 },
+        "range": 1050,
+        "damage": 12
+      }
+    ],
+    "projectiles": [],
+    "loot": [],
+    "effects": [],
+    "exitUnlocked": false,
+    "events": [
+      {
+        "tick": 0,
+        "type": "attack_started",
+        "sourceId": "monster:bell-keeper",
+        "targetId": "player",
+        "detail": "stonekin"
+      }
+    ],
+    "eventLog": [
+      {
+        "tick": 0,
+        "type": "attack_started",
+        "sourceId": "monster:bell-keeper",
+        "targetId": "player",
+        "detail": "stonekin"
+      }
+    ],
+    "metrics": {
+      "kills": 0,
+      "damageDealt": 0,
+      "damageTaken": 0,
+      "lootCollected": 0,
+      "distanceUnits": 0
+    },
+    "settings": { "ai": true, "autoPickup": false, "cameraFollow": false },
+    "city": {
+      "schemaVersion": 1,
+      "cityId": "city:embercross",
+      "tick": 0,
+      "worldMinute": 1080,
+      "locationPhase": "undiscovered",
+      "discoveredAtTick": null,
+      "arrivedAtGateTick": null,
+      "enteredAtTick": null,
+      "nearbyNpcId": null,
+      "threatened": false,
+      "nextEventNumber": 1,
+      "nextReceiptNumber": 1,
+      "traveler": {
+        "gold": 40,
+        "health": 70,
+        "maxHealth": 100,
+        "tonics": 0,
+        "hunger": 60,
+        "fatigue": 55,
+        "inventory": []
+      },
+      "merchant": { "gold": 200, "tonicStock": 8 },
+      "serviceVisits": {
+        "merchant:buy-tonic": 0,
+        "merchant:sell-ashfang-pelt": 0,
+        "tavern:eat-stew": 0,
+        "inn:sleep-until-dawn": 0,
+        "healer:restore-health": 0
+      },
+      "events": [],
+      "receipts": []
+    }
+  },
+  "checksum": "571a5b3a"
+}
