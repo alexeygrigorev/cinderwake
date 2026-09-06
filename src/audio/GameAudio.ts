@@ -1,4 +1,5 @@
 import type { GameEvent, GameState } from "../game/types";
+import { monsterAttackProfile } from "../game/monsterAttackProfile";
 
 export const VOICE_CUES = [
   "quest:arrival",
@@ -37,6 +38,19 @@ const LEVELS: Record<SoundCue, number> = {
   danger: 0.55,
   ability: 0.48,
 };
+
+function isBellKeeperWarning(state: GameState, attackId: string): boolean {
+  const attack = state.pendingAttacks.find(({ id }) => id === attackId);
+  if (!attack || attack.kind !== "ability") return false;
+  const owner = state.monsters.find(({ id }) => id === attack.ownerId);
+  if (!owner) return false;
+  return (
+    owner.health > 0 &&
+    owner.elite &&
+    owner.kind === "stonekin" &&
+    monsterAttackProfile(owner).pattern === "radial-slam"
+  );
+}
 
 export interface AudioSnapshot {
   activated: boolean;
@@ -86,6 +100,8 @@ export class GameAudio {
   private lastSounds = new Map<Cue, number>();
   private lastTick?: number;
   private world = "";
+  private observedState?: GameState;
+  private observedWarningAttacks = new Set<string>();
   private muted = false;
   private volume = 0.65;
   private played = 0;
@@ -158,11 +174,18 @@ export class GameAudio {
     if (
       this.lastTick === undefined ||
       world !== this.world ||
-      state.tick < this.lastTick
+      state.tick < this.lastTick ||
+      (this.observedState !== undefined && this.observedState !== state)
     ) {
       this.stop();
       this.world = world;
       this.lastTick = state.tick;
+      this.observedState = state;
+      this.observedWarningAttacks = new Set(
+        state.pendingAttacks
+          .filter(({ id }) => isBellKeeperWarning(state, id))
+          .map(({ id }) => id),
+      );
       return;
     }
     if (state.tick === this.lastTick) return;
@@ -172,6 +195,18 @@ export class GameAudio {
       const cue = soundForEvent(event);
       if (cue) this.play(cue);
     }
+    for (const attack of state.pendingAttacks) {
+      if (
+        !isBellKeeperWarning(state, attack.id) ||
+        this.observedWarningAttacks.has(attack.id)
+      )
+        continue;
+      this.observedWarningAttacks.add(attack.id);
+      // danger is the existing low warning impact selected for this readable
+      // radial threat; this remains presentation-only and never gates combat.
+      this.play("danger");
+    }
+    this.observedState = state;
     this.lastTick = state.tick;
   }
 
