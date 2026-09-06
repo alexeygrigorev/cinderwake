@@ -20,6 +20,7 @@ import {
   UNITS_PER_TILE,
 } from "./constants";
 import { isFloor, tileCenter } from "./dungeon";
+import { monsterAttackProfile } from "./monsterAttackProfile";
 import { navigationDirection, navigationSegmentWalkable } from "./navigation";
 import { createRng, randomFloat } from "./rng";
 import {
@@ -445,12 +446,16 @@ function applyDamageToMonster(
   );
   monster.health -= damage;
   state.metrics.damageDealt += damage;
-  setAnimation(
-    monster,
-    monster.health <= 0 ? "death" : "hurt",
-    state.tick,
-    monster.health <= 0 ? CLIP_DURATIONS.death : CLIP_DURATIONS.hurt,
-  );
+  const retainsCommittedAbility =
+    state.pendingAttacks.some(
+      (attack) => attack.ownerId === monster.id && attack.kind === "ability",
+    ) ||
+    (monster.animation.clip === "ability" &&
+      state.tick < monster.animation.lockedUntilTick);
+  if (monster.health <= 0)
+    setAnimation(monster, "death", state.tick, CLIP_DURATIONS.death);
+  else if (!retainsCommittedAbility)
+    setAnimation(monster, "hurt", state.tick, CLIP_DURATIONS.hurt);
   state.effects.push({
     id: `effect:${state.nextEntityId}`,
     ownerId: monster.id,
@@ -671,7 +676,22 @@ function resolvePendingAttacks(
         (entry) => entry.id === attack.ownerId && entry.health > 0,
       );
       if (!monster) continue;
-      if (monster.kind === "hexer") {
+      if (attack.kind === "ability") {
+        const inRange =
+          distanceSquared(attack.origin, state.player.position) <=
+          attack.range * attack.range;
+        if (
+          inRange &&
+          actorPathWalkable(
+            state,
+            scenery,
+            attack.origin,
+            state.player.position,
+            0,
+          )
+        )
+          damagePlayer(state, attack.damage, attack.ownerId);
+      } else if (monster.kind === "hexer") {
         state.projectiles.push({
           id: `projectile:${state.nextEntityId}`,
           owner: monster.id,
@@ -976,14 +996,14 @@ function updateMonsters(
       continue;
     }
     if (!state.settings.ai) continue;
+    const attackProfile = monsterAttackProfile(monster);
     if (
-      ["attack", "hurt"].includes(monster.animation.clip) &&
+      ["attack", "ability", "hurt"].includes(monster.animation.clip) &&
       state.tick < monster.animation.lockedUntilTick
     ) {
       monster.velocity = { x: 0, y: 0 };
       continue;
     }
-    const definition = MONSTERS[monster.kind];
     const distance = Math.sqrt(
       distanceSquared(monster.position, state.player.position),
     );
@@ -1010,7 +1030,7 @@ function updateMonsters(
         };
       }
     } else if (
-      distance > monster.attackRange * 0.85 &&
+      distance > attackProfile.range * 0.85 &&
       distance < 9 * UNITS_PER_TILE
     ) {
       const pursuit = navigationDirection(
@@ -1040,7 +1060,7 @@ function updateMonsters(
       y: monster.position.y - monster.previousPosition.y,
     };
     if (
-      distance <= monster.attackRange &&
+      distance <= attackProfile.range &&
       state.tick >= monster.attackReadyTick
     ) {
       // A close Hexer may retreat during this tick before firing. Recompute
@@ -1052,19 +1072,23 @@ function updateMonsters(
         state.player.position,
       );
       monster.facing = attackDirection;
-      monster.attackReadyTick = state.tick + definition.attackCooldown;
-      setAnimation(monster, "attack", state.tick, CLIP_DURATIONS.attack);
-      const impactDelay =
-        monster.kind === "ashfang" ? 7 : monster.kind === "stonekin" ? 10 : 12;
+      monster.attackReadyTick = state.tick + attackProfile.cooldownTicks;
+      const ability = attackProfile.pattern === "radial-slam";
+      setAnimation(
+        monster,
+        ability ? "ability" : "attack",
+        state.tick,
+        attackProfile.windupTicks + attackProfile.recoveryTicks,
+      );
       state.pendingAttacks.push({
         id: `attack:${state.nextEntityId}`,
         ownerId: monster.id,
-        kind: "primary",
-        impactTick: state.tick + impactDelay,
+        kind: ability ? "ability" : "primary",
+        impactTick: state.tick + attackProfile.windupTicks,
         origin: { ...monster.position },
         direction: attackDirection,
-        range: monster.attackRange,
-        damage: monster.attackDamage,
+        range: attackProfile.range,
+        damage: attackProfile.damage,
       });
       state.nextEntityId += 1;
       emit(state, {
