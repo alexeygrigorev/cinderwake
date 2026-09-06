@@ -559,7 +559,10 @@ async function mobileHudClusterDistance(page: Page): Promise<number> {
   });
 }
 
-async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
+async function hudWorldOverlapEvidence(page: Page): Promise<{
+  violations: string[];
+  backgroundOverlaps: Array<{ id: string; objectiveAreaRatio: number }>;
+}> {
   return page.evaluate(() => {
     const manifest = window.__GAME_OBSERVE__!.renderManifest();
     const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
@@ -569,22 +572,31 @@ async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
     const objectiveArea = objectiveRect.width * objectiveRect.height;
     const candidates = [
       ...manifest.sceneSprites
-        .filter(({ layer, visible }) => layer === "structures" && visible)
-        .map(({ objectId, destinationRect }) => ({
+        .filter(
+          ({ layer, kind, visible }) =>
+            visible && (layer === "structures" || kind === "exit"),
+        )
+        .map(({ objectId, destinationRect, kind }) => ({
           id: objectId,
           destinationRect,
+          protectedTarget: kind === "exit",
         })),
       ...manifest.drawCalls
         .filter(
           ({ type, visible }) =>
-            visible && (type === "player" || type === "monster"),
+            visible && ["player", "monster", "npc", "loot"].includes(type),
         )
         .map(({ entityId, destinationRect }) => ({
           id: entityId,
           destinationRect,
+          protectedTarget: true,
         })),
     ];
-    return candidates.flatMap(({ id, destinationRect }) => {
+    const evidence: {
+      violations: string[];
+      backgroundOverlaps: Array<{ id: string; objectiveAreaRatio: number }>;
+    } = { violations: [], backgroundOverlaps: [] };
+    for (const { id, destinationRect, protectedTarget } of candidates) {
       const worldRect = {
         left:
           canvasRect.left +
@@ -613,11 +625,28 @@ async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
         Math.min(objectiveRect.bottom, worldRect.bottom) -
           Math.max(objectiveRect.top, worldRect.top),
       );
-      return objectiveArea > 0 && (width * height) / objectiveArea > 0.05
-        ? [`objective:occludes-${id}`]
-        : [];
-    });
+      const overlapArea = width * height;
+      const objectiveAreaRatio =
+        objectiveArea > 0 ? overlapArea / objectiveArea : 0;
+      if (!protectedTarget) {
+        if (overlapArea > 0)
+          evidence.backgroundOverlaps.push({ id, objectiveAreaRatio });
+        continue;
+      }
+      // A roof is background; actors, pickups and exits are gameplay targets.
+      // Normalize against the smaller surface so small pickups remain protected.
+      const targetArea =
+        (worldRect.right - worldRect.left) * (worldRect.bottom - worldRect.top);
+      const protectedArea = Math.min(objectiveArea, targetArea);
+      if (protectedArea > 0 && overlapArea / protectedArea > 0.05)
+        evidence.violations.push(`objective:occludes-${id}`);
+    }
+    return evidence;
   });
+}
+
+async function hudWorldOverlapViolations(page: Page): Promise<string[]> {
+  return (await hudWorldOverlapEvidence(page)).violations;
 }
 
 for (const profile of contract.profiles) {
@@ -658,7 +687,7 @@ for (const profile of contract.profiles) {
 
   test(`${profile.id} public launch obeys the screen contract`, async ({
     browser,
-  }) => {
+  }, testInfo) => {
     const { context, page, errors } = await contractPage(browser, profile);
     try {
       await page.goto(contract.screens.game.route);
@@ -671,7 +700,12 @@ for (const profile of contract.profiles) {
       for (const selector of contract.screens.game.publicForbidden)
         await expect(page.locator(selector)).toHaveCount(0);
       await gameGeometry(page, profile);
-      expect(await hudWorldOverlapViolations(page)).toEqual([]);
+      const hudEvidence = await hudWorldOverlapEvidence(page);
+      await testInfo.attach("hud-obstruction-evidence.json", {
+        body: Buffer.from(JSON.stringify(hudEvidence, null, 2)),
+        contentType: "application/json",
+      });
+      expect(hudEvidence.violations).toEqual([]);
       const openingComposition = await page.evaluate(() =>
         window.__GAME_OBSERVE__!.renderManifest(),
       );
@@ -723,14 +757,51 @@ test("game HUD assessor rejects an objective ribbon across the encounter", async
     await page.locator("#begin").click();
     await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
     expect(await hudWorldOverlapViolations(page)).toEqual([]);
-    await page.locator("#objective").evaluate((element) => {
-      Object.assign((element as HTMLElement).style, {
-        left: "50%",
+    await page.evaluate(() => {
+      const manifest = window.__GAME_OBSERVE__!.renderManifest();
+      const player = manifest.drawCalls.find(({ type }) => type === "player")!;
+      const canvas = document.querySelector("canvas")!.getBoundingClientRect();
+      const actor = player.destinationRect;
+      const centerX =
+        canvas.left +
+        ((actor.x + actor.width / 2) / manifest.viewport.width) * canvas.width;
+      const centerY =
+        canvas.top +
+        ((actor.y + actor.height / 2) / manifest.viewport.height) *
+          canvas.height;
+      Object.assign(document.querySelector<HTMLElement>("#objective")!.style, {
+        position: "fixed",
+        left: `${centerX}px`,
+        top: `${centerY}px`,
         right: "auto",
-        transform: "translateX(-50%)",
+        transform: "translate(-50%, -50%)",
       });
     });
-    expect(await hudWorldOverlapViolations(page)).not.toEqual([]);
+    expect(await hudWorldOverlapViolations(page)).toContain(
+      "objective:occludes-player",
+    );
+    expect(errors).toEqual([]);
+  } finally {
+    await context.close();
+  }
+});
+
+test("HUD reports background architecture overlap without rejecting readable guidance", async ({
+  browser,
+}) => {
+  const profile = contract.profiles.find(({ id }) => id === "phone-portrait")!;
+  const { context, page, errors } = await contractPage(browser, profile);
+  try {
+    await page.goto(contract.screens.game.route);
+    await page.locator("#begin").click();
+    await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
+    const evidence = await hudWorldOverlapEvidence(page);
+    expect(evidence.violations).toEqual([]);
+    expect(evidence.backgroundOverlaps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: "architecture:opening:north-wall" }),
+      ]),
+    );
     expect(errors).toEqual([]);
   } finally {
     await context.close();
