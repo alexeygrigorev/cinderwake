@@ -326,6 +326,7 @@ describe("presentation checklist contract", () => {
         controls: [
           "role-replaced-with-css-or-text",
           "non-title-marked-as-title",
+          "forged-campaign-copy-marker",
           "css-decoration-added-beside-sprite",
         ],
       },

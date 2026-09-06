@@ -1,5 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { SPRITE_CATALOG } from "../../src/render/sprites";
+import {
+  collectCampaignCopyFacts,
+  nativeCampaignCopyPass,
+} from "../../scripts/lib/visible-sprite-provenance-evidence.mjs";
+import type { CampaignCopyFacts } from "../../scripts/lib/visible-sprite-provenance-evidence.d.mts";
 
 const SPRITE_ASSET_COUNT = Object.keys(SPRITE_CATALOG.assets).length;
 
@@ -18,8 +23,10 @@ const ALLOWED_TITLES = new Set([
 async function inspectVisibleText(page: Page): Promise<{
   offenders: string[];
   titles: string[];
+  nativeCopyCount: number;
 }> {
-  return page.evaluate(() => {
+  const facts = await page.evaluate(collectCampaignCopyFacts);
+  const audit = await page.evaluate((facts) => {
     const visible = (element: Element): boolean => {
       let current: Element | null = element;
       while (current) {
@@ -34,10 +41,12 @@ async function inspectVisibleText(page: Page): Promise<{
       }
       return element.getClientRects().length > 0;
     };
-    const offenders: string[] = [],
+    const offenders: Array<{ label: string; nativeCopy?: CampaignCopyFacts }> =
+        [],
       titles: string[] = [],
       walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     let textNode = walker.nextNode();
+    let index = 0;
     while (textNode) {
       const value = textNode.textContent?.trim() ?? "";
       const parent = textNode.parentElement;
@@ -45,17 +54,28 @@ async function inspectVisibleText(page: Page): Promise<{
         const title = parent.closest<HTMLElement>("[data-ui-title]");
         if (title) titles.push(value);
         else
-          offenders.push(
-            `${parent.tagName.toLowerCase()}${parent.id ? `#${parent.id}` : ""}${parent.className ? `.${String(parent.className).replaceAll(" ", ".")}` : ""}: ${value}`,
-          );
+          offenders.push({
+            label: `${parent.tagName.toLowerCase()}${parent.id ? `#${parent.id}` : ""}${parent.className ? `.${String(parent.className).replaceAll(" ", ".")}` : ""}: ${value}`,
+            nativeCopy: facts[index],
+          });
       }
       textNode = walker.nextNode();
+      index++;
     }
     return { offenders, titles };
-  });
+  }, facts);
+  return {
+    titles: audit.titles,
+    offenders: audit.offenders
+      .filter(({ nativeCopy }) => !nativeCampaignCopyPass(nativeCopy))
+      .map(({ label }) => label),
+    nativeCopyCount: audit.offenders.filter(({ nativeCopy }) =>
+      nativeCampaignCopyPass(nativeCopy),
+    ).length,
+  };
 }
 
-async function expectTitleOnlyText(page: Page): Promise<void> {
+async function expectApprovedText(page: Page): Promise<void> {
   const audit = await inspectVisibleText(page);
   expect(audit.offenders).toEqual([]);
   expect(audit.titles.every((title) => ALLOWED_TITLES.has(title))).toBe(true);
@@ -76,13 +96,49 @@ async function expectSpriteBacked(
   expect(missing).toEqual([]);
 }
 
+test("campaign narrative is readable native copy only inside its semantic modal", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.locator("#begin").click();
+  await page.locator("[data-journal]").click();
+  await expect(page.locator("dialog.campaign-dialog")).toBeVisible();
+  await expectApprovedText(page);
+  expect((await inspectVisibleText(page)).nativeCopyCount).toBeGreaterThan(10);
+
+  await page.locator(".journal-summary").evaluate((element) => {
+    (element as HTMLElement).style.fontSize = "9px";
+  });
+  expect(
+    (await inspectVisibleText(page)).offenders.some((value) =>
+      value.includes("journal-summary"),
+    ),
+  ).toBe(true);
+  await page.locator(".journal-summary").evaluate((element) => {
+    (element as HTMLElement).style.removeProperty("font-size");
+  });
+  await page.locator("[data-close]").click();
+  await page.evaluate(() => {
+    const forged = document.createElement("div");
+    forged.dataset.uiCopy = "campaign-narrative";
+    forged.textContent = "Forged native HUD label";
+    document.querySelector(".game")!.append(forged);
+  });
+  expect(
+    (await inspectVisibleText(page)).offenders.some((value) =>
+      value.includes("Forged native HUD label"),
+    ),
+  ).toBe(true);
+});
+
 test("selection exposes only approved title text and renders the editable seed with glyph sprites", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?testMode=1&selection=1");
   await expect(page.locator(".selection")).toBeVisible();
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
   await expectSpriteBacked(page, [
     ".class-portrait",
     ".seed-control",
@@ -151,7 +207,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
     waitUntil: "domcontentloaded",
   });
   await expect(page.locator(".loading")).toBeVisible();
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
   await expect(page.locator(".loading-status")).toHaveAttribute(
     "aria-label",
     new RegExp(`Waking the atlas \\d+ / ${SPRITE_ASSET_COUNT}`),
@@ -159,7 +215,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
 
   releaseEffects!();
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
   await expectSpriteBacked(page, [
     ".health b",
     ".skills [data-action='attack']",
@@ -171,7 +227,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
 
   await page.locator(".game > .lab-toggle").click();
   await expect(page.locator(".lab")).toBeVisible();
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
   await expectSpriteBacked(page, [
     ".lab",
     ".scenario-value",
@@ -192,7 +248,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   await expect(pause).toHaveAttribute("aria-label", "Resume");
   await pause.click();
   await expect(pause).toHaveAttribute("aria-label", "Pause");
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
 
   await page.locator(".lab .close").click();
   await page.evaluate(() => {
@@ -201,7 +257,7 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   });
   await expect(page.locator("#outcome")).toBeVisible();
   await expect(page.locator("#outcome h2")).toHaveText("Run ended.");
-  await expectTitleOnlyText(page);
+  await expectApprovedText(page);
   await expect(page.locator("#outcome button .sprite-glyph")).toHaveCount(8);
 });
 

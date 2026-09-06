@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 import {
   evaluateVisibleSpriteProvenanceEvidence,
   runVisibleSpriteProvenanceNegativeControls,
+  nativeCampaignCopyPass,
 } from "../../scripts/lib/visible-sprite-provenance-evidence.mjs";
 import type {
   VisibleSpriteProfileV1,
   VisibleSpriteStateV1,
+  CampaignCopyFacts,
 } from "../../scripts/lib/visible-sprite-provenance-evidence.d.mts";
 
 const scenarios = [
   "public-selection",
   "ordinary-production-launch",
+  "campaign-journal",
   "outcome-win",
   "outcome-loss",
   "embercross-services",
@@ -157,13 +160,53 @@ describe("visible sprite provenance evidence", () => {
     const controls =
       runVisibleSpriteProvenanceNegativeControls(evidenceFixture());
 
-    expect(controls).toHaveLength(3);
+    expect(controls).toHaveLength(4);
     expect(controls.every(({ status }) => status === "DETECTED")).toBe(true);
     expect(controls.map(({ signal }) => signal)).toEqual([
       "non-sprite-visible-role",
       "title-role-not-allowlisted",
+      "visible-text-offender",
       "visible-draw-without-sprite-provenance",
     ]);
+  });
+
+  it("accepts semantic journal prose and rejects forged or unreadable exemptions", () => {
+    const copy: CampaignCopyFacts = {
+      scope: "campaign-narrative",
+      rootTag: "DIALOG",
+      rootClass: "campaign-dialog",
+      rootLabel: "The Last Bell journal",
+      gameChild: true,
+      unique: true,
+      modal: true,
+      tag: "P",
+      fontSize: 16,
+    };
+    expect(nativeCampaignCopyPass(copy)).toBe(true);
+    for (const mutation of [
+      { rootTag: "DIV" },
+      { modal: false },
+      { gameChild: false },
+      { unique: false },
+      { fontSize: 15 },
+      { rootLabel: "Forged" },
+      { tag: "SMALL", fontSize: 12 },
+      { scope: "anything" },
+    ])
+      expect(nativeCampaignCopyPass({ ...copy, ...mutation })).toBe(false);
+    const evidence = evidenceFixture();
+    evidence.profiles[0].states[0].textNodes.push({
+      id: "journal-prose",
+      value: "Follow the signs to Embercross.",
+      visible: true,
+      titleRole: false,
+      nativeCopy: copy,
+    });
+    expect(evaluateVisibleSpriteProvenanceEvidence(evidence).pass).toBe(true);
+    copy.fontSize = 9;
+    expect(
+      evaluateVisibleSpriteProvenanceEvidence(evidence).failures,
+    ).toContain("visible-text-offender");
   });
 
   it("rejects missing required states and decoded assets", () => {
