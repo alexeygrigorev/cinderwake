@@ -225,17 +225,51 @@ try {
     }
     while (
       pilot.route.length &&
-      distance(player.position, pilot.route[0]) <= 160
+      distance(player.position, pilot.route[0]) <= 160 &&
+      (!pilot.route[1] ||
+        navigation.navigationSegmentWalkable(
+          state.map,
+          scenery,
+          player.position,
+          pilot.route[1],
+          player.radius,
+        ))
     )
       pilot.route.shift();
     let moveX = 0;
     let moveY = 0;
     if (needsMovement && pilot.route.length) {
       const waypoint = pilot.route[0];
-      const dx = waypoint.x - player.position.x;
-      const dy = waypoint.y - player.position.y;
-      moveX = Math.abs(dx) >= player.moveSpeed * 0.5 ? Math.sign(dx) : 0;
-      moveY = Math.abs(dy) >= player.moveSpeed * 0.5 ? Math.sign(dy) : 0;
+      const choices = [];
+      for (const x of [-1, 0, 1])
+        for (const y of [-1, 0, 1]) {
+          if (x === 0 && y === 0) continue;
+          const speed =
+            x !== 0 && y !== 0
+              ? Math.round((player.moveSpeed * 724) / 1024)
+              : player.moveSpeed;
+          const position = {
+            x: player.position.x + x * speed,
+            y: player.position.y + y * speed,
+          };
+          if (
+            navigation.navigationSegmentWalkable(
+              state.map,
+              scenery,
+              player.position,
+              position,
+              player.radius,
+            )
+          )
+            choices.push({ x, y, remaining: distance(position, waypoint) });
+        }
+      const best = choices.sort(
+        (a, b) => a.remaining - b.remaining || a.x - b.x || a.y - b.y,
+      )[0];
+      if (best && best.remaining < distance(player.position, waypoint)) {
+        moveX = best.x;
+        moveY = best.y;
+      }
     }
     const abilityRange = melee
       ? 2200
