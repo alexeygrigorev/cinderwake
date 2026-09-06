@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "provider": "ElevenLabs",
+  "credentialMethod": "ELEVENLABS_API_KEY loaded by Node --env-file; never stored in assets",
+  "documentation": [
+    "https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert",
+    "https://elevenlabs.io/docs/api-reference/text-to-speech/convert"
+  ],
+  "assets": [
+    {
+      "cue": "strike",
+      "kind": "sfx",
+      "duration": 0.5,
+      "text": "One fast heavy sword swing, close dry metallic air whoosh, immediate onset, dark fantasy game combat, no voice, no music.",
+      "file": "strike.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:39.674Z",
+      "bytes": 8822,
+      "sha256": "0b86647d4312736520f414dc36c9c1d804b4dade2895e29b1cb62e2296329ac3",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": 0,
+        "gainDb": -3,
+        "sourceSha256": "6bb9b41f983f716522f0199904dd554576335ac3f27019d5c5a36d5fee7f252a"
+      }
+    },
+    {
+      "cue": "hit",
+      "kind": "sfx",
+      "duration": 0.5,
+      "text": "One powerful sword impact against old leather armor, sharp metal bite then low body thud, immediate onset, dry close combat game effect, no voice, no music.",
+      "file": "hit.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:41.185Z",
+      "bytes": 8822,
+      "sha256": "5ef5c65200d8df202c192b66e1797debcd7498123bfd927dff78cb46387dc692",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": 0,
+        "gainDb": -3,
+        "sourceSha256": "943a5b6a6f1f02cc46d18a6a525c0335e63ee6f48fb807a1fef33f6abe7bf0eb"
+      }
+    },
+    {
+      "cue": "loot",
+      "kind": "sfx",
+      "duration": 0.7,
+      "text": "Small handful of gold coins dropping into a leather pouch, crisp delicate bright metal clink, satisfying short treasure pickup, immediate onset, no music.",
+      "file": "loot.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:42.620Z",
+      "bytes": 12165,
+      "sha256": "19053c2524d5bac507ede99f1df928f32f5c8872b9906d820581901ecaa84e9f",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -5.3,
+        "gainDb": 2.3,
+        "sourceSha256": "27d0168e75e56874c829a2638896b91a04238cc5fe0325df4cc55f9ae654644e"
+      }
+    },
+    {
+      "cue": "quest",
+      "kind": "sfx",
+      "duration": 1.5,
+      "text": "A single warm ancient bronze bell chime with subtle shimmering overtones and a short fading tail, dark fantasy quest completion, hopeful and restrained, no voice.",
+      "file": "quest.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:44.134Z",
+      "bytes": 24704,
+      "sha256": "54f8b69d422ff71db28735aa39438671c6716b20b8e30ffb19538a58ee11c924",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -36.8,
+        "gainDb": 33.8,
+        "sourceSha256": "9ad5259446c98ab77d17ad8aaab2034e31a3d3bbb647d0852ce0dc0d0d81187e"
+      }
+    },
+    {
+      "cue": "danger",
+      "kind": "sfx",
+      "duration": 0.6,
+      "text": "One low heavy shield impact with a brief gravel crunch, tense blunt damage warning for a dark fantasy game, immediate onset, no voice, no music.",
+      "file": "danger.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:45.658Z",
+      "bytes": 10494,
+      "sha256": "29d7db032585219362b7e5329710a62e23f24d55a048306e40fa742d3f84b5f8",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": 0,
+        "gainDb": -3,
+        "sourceSha256": "5822841cd77da72fbe5035a3d72adb2cc7067a97c51ece45035a9304328badb9"
+      }
+    },
+    {
+      "cue": "ability",
+      "kind": "sfx",
+      "duration": 1,
+      "text": "One fiery magical shockwave bursting outward, deep punchy ignition then short rushing embers, immediate onset, dark fantasy action game, no voice, no music.",
+      "file": "ability.mp3",
+      "model": "eleven_text_to_sound_v2",
+      "generatedAt": "2026-09-06T09:21:47.202Z",
+      "bytes": 17181,
+      "sha256": "71417acbebf517a1099b6d3e9537e10a22d19a0b052e132569bd2d08cf64b3df",
+      "requestId": null,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": 0,
+        "gainDb": -3,
+        "sourceSha256": "2f9003968b01157c2bab2b376ace456214dae0b38993fbe72d66593ca0c8c984"
+      }
+    },
+    {
+      "cue": "quest:arrival",
+      "kind": "voice",
+      "character": "ileya",
+      "text": "The dead have taken the road. Break their ranks, then find what calls them.",
+      "file": "quest-arrival.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "pFZP5JQG7iQjIQuC4Bku",
+        "name": "Lily - Velvety Actress",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:49.731Z",
+      "bytes": 73187,
+      "sha256": "419fff3baaeb14bc2ec893db61502b83180694f88ac26570ef89b8635efa828e",
+      "requestId": "yGicNmUud7QUaKJNcEKw",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -6.3,
+        "gainDb": 3.3,
+        "sourceSha256": "109e45b152b2b78bed82b6508e58d495c0730265e131277e09b0ed4eced4e779"
+      }
+    },
+    {
+      "cue": "quest:keeper",
+      "kind": "voice",
+      "character": "ileya",
+      "text": "That stone giant was our bell keeper. Silence him. Let the road remember peace.",
+      "file": "quest-keeper.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "pFZP5JQG7iQjIQuC4Bku",
+        "name": "Lily - Velvety Actress",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:50.865Z",
+      "bytes": 94085,
+      "sha256": "50f7483a61e015e7a76daeead82bfa6379e2df62a9f7a82c42379462b865fbc7",
+      "requestId": "P6uHCkK1NDDzQdCrMQK5",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -6.4,
+        "gainDb": 3.4,
+        "sourceSha256": "e9ff84414e57597b2d855a32ada0575bcb67dac0f8bdbada04471762b2ad12fe"
+      }
+    },
+    {
+      "cue": "quest:road",
+      "kind": "voice",
+      "character": "ileya",
+      "text": "The bell is silent. Follow the old road sign. Embercross still holds.",
+      "file": "quest-road.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "pFZP5JQG7iQjIQuC4Bku",
+        "name": "Lily - Velvety Actress",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:52.018Z",
+      "bytes": 80711,
+      "sha256": "107e0c74c8b3591fe0369b1e204f412989f430f23362237a67723b9b37160288",
+      "requestId": "hSYSj3cFpI0dJjrbOQD2",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -4.5,
+        "gainDb": 1.5,
+        "sourceSha256": "2e5649fa8e6386a5386069743cc7a8c64636097376b71fe46256ae290c9a903f"
+      }
+    },
+    {
+      "cue": "npc:ileya",
+      "kind": "voice",
+      "character": "ileya",
+      "text": "You brought the warning home. Return to the south gate and seal the rift.",
+      "file": "npc-ileya.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "pFZP5JQG7iQjIQuC4Bku",
+        "name": "Lily - Velvety Actress",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:53.042Z",
+      "bytes": 67336,
+      "sha256": "e72853a1eb8a9077e756a560356611ba9aa8793ea36a41f39668491037da4501",
+      "requestId": "L4UUUsPBtiGdYw8yra4R",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -8,
+        "gainDb": 5,
+        "sourceSha256": "03688d635b44514b1cc2a7b33dddc70cc820ba5da33658944eacee8818afeddc"
+      }
+    },
+    {
+      "cue": "npc:tess",
+      "kind": "voice",
+      "character": "tess",
+      "text": "Your room is ready. Rest here. We will keep a light for your return.",
+      "file": "npc-tess.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "EXAVITQu4vr4xnSDxMaL",
+        "name": "Sarah - Mature, Reassuring, Confident",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:53.825Z",
+      "bytes": 58141,
+      "sha256": "e69d93eecf591ff00b647798fd9aa78d8ba4080dfb627637384608f7e21c1675",
+      "requestId": "rfL1KOQ3rSoYs8NgnqLR",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -1.2,
+        "gainDb": -1.8,
+        "sourceSha256": "ac5d6412efa0df0b9665279a3ad26eebc52bb2dbea93291ae2ad98ce003084d7"
+      }
+    },
+    {
+      "cue": "quest:complete",
+      "kind": "voice",
+      "character": "ileya",
+      "text": "For one more dawn, the dead are silent. Embercross remembers your name.",
+      "file": "quest-complete.mp3",
+      "model": "eleven_multilingual_v2",
+      "voice": {
+        "id": "pFZP5JQG7iQjIQuC4Bku",
+        "name": "Lily - Velvety Actress",
+        "category": "premade"
+      },
+      "generatedAt": "2026-09-06T09:21:54.919Z",
+      "bytes": 69426,
+      "sha256": "99cc97996879a33c5cb4237a55ae02415d301ea48f72a05f58cfe1f7f05a4f43",
+      "requestId": "EbVgPYOgILqTSRpSKxSX",
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -6.4,
+        "gainDb": 3.4,
+        "sourceSha256": "e759eb0564e8038845974a839d4e21c68e9924b7daffe8abddd11afc540d3b28"
+      }
+    }
+  ]
+}
