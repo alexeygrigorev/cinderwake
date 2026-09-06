@@ -1,6 +1,6 @@
 # Next steps: an executable plan for bounded implementation agents
 
-Status: planned, not implemented. Baseline: `a44734b` (2026-09-06).
+Status: T12 implemented; automated milestone gate pending. T13 play review remains. Baseline: `a44734b` (2026-09-06).
 Audience: a coordinator and agents such as Luna Max. Give an agent **one task card**, not this entire backlog as an implementation assignment.
 
 ## Outcome and scope
@@ -39,6 +39,10 @@ Inference: improve the oracle before adding a more demanding encounter, so agent
 5. Merge/commit a coherent change, then dispatch the next card. Do not hand off a half-integrated behavior behind unexplained test failures.
 6. Run milestone gates after T03, T09, and T12. T13 is a separate acceptance decision.
 7. Mark cards with `NOT_STARTED / IN_PROGRESS / REVIEW / ACCEPTED / BLOCKED` in a coordinator-owned work log. Record commit IDs and evidence paths, not just “done.”
+
+## Coordinator work log
+
+- T12 — `REVIEW` / `PLAY_REVIEW_PENDING`: implemented in `9e45c34`, hardened in `7af0c71`, and integrated into the aggregate evidence contract in `16e81b4`. Focused desktop and portrait-phone production journeys pass with real browser input, observe-only state access, save/reload, and victory assertions. Final milestone evidence is retained at `quality-results/game-feedback/t12-final/`; independent human play review remains T13.
 
 A task is too large if it needs a new persistent schema, changes an unlisted subsystem, or cannot reach its stated gate without redesign. Stop and return a split proposal; do not improvise the architecture.
 
