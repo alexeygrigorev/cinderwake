@@ -906,13 +906,12 @@ export class CampaignBrowserDriver {
       .filter((attack) => {
         const owner = state.monsters.find(({ id }) => id === attack.ownerId);
         return (
-          owner &&
+          owner?.kind === "hexer" &&
           owner.health > 0 &&
           !bellKeeperSlam(state, attack) &&
           attack.kind === "primary" &&
           attack.impactTick >= state.tick &&
-          attack.impactTick - state.tick <= 30 &&
-          distance(state.player.position, attack.origin) <= attack.range + 512
+          attack.impactTick - state.tick <= 45
         );
       })
       .sort((first, second) => first.impactTick - second.impactTick)[0];
