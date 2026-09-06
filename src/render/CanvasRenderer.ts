@@ -31,6 +31,40 @@ interface ImageBackedReference {
 export const DEFAULT_CAMERA_ZOOM = 0.9;
 const CAMERA_DEAD_ZONE_PIXELS = 56;
 
+/** Cover-fitted portrait canvases expose only their middle strip. */
+export function portraitCameraFrame(
+  canvas: { width: number; height: number },
+  viewport: { width: number; height: number },
+): { zoom: number; width: number; height: number } {
+  const portrait =
+    viewport.width > 0 &&
+    viewport.width <= 760 &&
+    viewport.height > viewport.width &&
+    canvas.width > viewport.width &&
+    canvas.height > 0;
+  if (!portrait)
+    return {
+      zoom: DEFAULT_CAMERA_ZOOM,
+      width: VIEW_WIDTH,
+      height: VIEW_HEIGHT,
+    };
+  const width = Math.min(
+    VIEW_WIDTH,
+    (viewport.width / canvas.width) * VIEW_WIDTH,
+  );
+  const height = Math.min(
+    VIEW_HEIGHT,
+    (viewport.height / canvas.height) * VIEW_HEIGHT,
+  );
+  // Nine tiles keep nearby packs and retreat space visible; the same zoom on
+  // both axes preserves actor anatomy and the existing world geometry.
+  return {
+    zoom: Math.min(DEFAULT_CAMERA_ZOOM, width / (9 * TILE_PIXELS)),
+    width,
+    height,
+  };
+}
+
 export class CanvasRenderer {
   readonly canvas: HTMLCanvasElement;
   readonly context: CanvasRenderingContext2D;
@@ -84,7 +118,11 @@ export class CanvasRenderer {
   }
 
   cameraTarget(state: GameState): CameraV1 {
-    const zoom = DEFAULT_CAMERA_ZOOM;
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const viewportRect =
+      this.canvas.parentElement?.getBoundingClientRect() ?? canvasRect;
+    const frame = portraitCameraFrame(canvasRect, viewportRect);
+    const zoom = frame.zoom;
     const targetX = (state.player.position.x / UNITS_PER_TILE) * TILE_PIXELS;
     const targetY = (state.player.position.y / UNITS_PER_TILE) * TILE_PIXELS;
     const threshold = openingRoomThreshold(state.map);
@@ -115,10 +153,10 @@ export class CanvasRenderer {
     const openingVerticalBias = -20 * openingBiasStrength;
     const mapWidth = state.map.width * TILE_PIXELS;
     const mapHeight = state.map.height * TILE_PIXELS;
-    const visibleHalfWidth = VIEW_WIDTH / (2 * zoom);
-    const visibleHalfHeight = VIEW_HEIGHT / (2 * zoom);
+    const visibleHalfWidth = frame.width / (2 * zoom);
+    const visibleHalfHeight = frame.height / (2 * zoom);
     const clampedX =
-      mapWidth <= VIEW_WIDTH / zoom
+      mapWidth <= frame.width / zoom
         ? mapWidth / 2
         : Math.max(
             visibleHalfWidth,
@@ -128,7 +166,7 @@ export class CanvasRenderer {
             ),
           );
     const clampedY =
-      mapHeight <= VIEW_HEIGHT / zoom
+      mapHeight <= frame.height / zoom
         ? mapHeight / 2
         : Math.max(
             visibleHalfHeight,
@@ -160,7 +198,11 @@ export class CanvasRenderer {
       this.camera = target;
       return;
     }
-    const deadZone = CAMERA_DEAD_ZONE_PIXELS / target.zoom;
+    // A desktop-sized dead zone occupies nearly half a phone's visible width.
+    const deadZone =
+      target.zoom < DEFAULT_CAMERA_ZOOM
+        ? TILE_PIXELS / 2
+        : CAMERA_DEAD_ZONE_PIXELS / target.zoom;
     const desiredAxis = (current: number, next: number): number => {
       const delta = next - current;
       if (Math.abs(delta) <= deadZone) return current;
