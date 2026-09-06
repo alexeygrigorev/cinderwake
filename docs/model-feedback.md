@@ -2,13 +2,15 @@
 
 Run `npm run feedback:game` before and after a gameplay change. Open the printed
 `report.html` and read `feedback.json` under `quality-results/game-feedback/`.
-The command runs three checks in sequence so browser captures don't compete:
+The command runs four checks in sequence so browser captures don't compete:
 
-1. Live desktop/phone controls and isolated combat for all three heroes.
-2. Nine generated campaigns: three seeds for each hero, real movement and combat,
+1. Unit regressions, including moving attack origins, attacks through walls,
+   XP progression, route reachability, and corrupted saves.
+2. Live desktop/phone controls and isolated combat for all three heroes.
+3. Nine generated campaigns: three seeds for each hero, real movement and combat,
    road-sign discovery, city entry, and the ending. Each campaign must reproduce
    from its exact input tape and from a saved checkpoint.
-3. Browser tests for contextual attacks, the journal, save/reload, export/import,
+4. Browser tests for contextual attacks, the journal, save/reload, export/import,
    audio playback, persistent mute, and pause behavior on a phone.
 
 Missing reports, interrupted runs, changed source files, skipped browser tests,
