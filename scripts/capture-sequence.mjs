@@ -611,8 +611,6 @@ try {
   const assessmentCode = await new Promise((resolve) =>
     assessment.on("exit", resolve),
   );
-  if (assessmentCode !== 0 && !allowAssessmentFailure)
-    throw new Error(`Sequence assessment failed with code ${assessmentCode}`);
   const analysis = await fs
     .readFile(path.join(output, "animation-analysis.json"), "utf8")
     .then(JSON.parse)
@@ -661,6 +659,10 @@ try {
     fullPage: true,
   });
   console.log(`Captured ${timeline.length} reproducible frames in ${output}`);
+  // Failed assessments need the same visual evidence as passing captures.
+  // Preserve the nonzero exit, but only after the report has been retained.
+  if (assessmentCode !== 0 && !allowAssessmentFailure)
+    throw new Error(`Sequence assessment failed with code ${assessmentCode}`);
 } finally {
   if (browser) await browser.close();
   if (server && server.exitCode === null) {
