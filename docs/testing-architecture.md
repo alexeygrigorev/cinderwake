@@ -58,16 +58,27 @@ are retained for the contact sheet so the browser artifact remains bounded.
 The `PRES-SPRITE-009` recorder (`npm run test:sprite-provenance`) audits the
 production presentation boundary rather than trusting a curated selector list.
 It captures public selection, ordinary production launch, Test Lab, win/loss,
-and Embercross service states on desktop and phone portrait. For every visible
+the open campaign journal, and Embercross service states on desktop and phone portrait. For every visible
 state it inventories sprite/layout/title roles, text, pseudo-elements,
 CSS-decorations, canvas operations, and manifest draws, then joins each local
 raster reference to a decoded asset with dimensions. The pure
-`visible-dom-sprite-provenance-v1` evaluator requires the exact title allowlist,
-rejects visible non-title text and unproven draws, and runs three mutations that
-replace a role, mislabel ordinary copy, or add an undeclared decoration. The
+`visible-dom-sprite-provenance-v2` evaluator requires the exact title allowlist,
+rejects unapproved text and unproven draws, and runs four mutations that
+replace a role, mislabel ordinary copy, forge a campaign text marker, or add an undeclared decoration. The
 recorder retains state timelines and original-resolution frames; the
 presentation binder hashes the full tree into `PRES-SPRITE-009` while leaving
 the row partial and `NEEDS_VISUAL_REVIEW`.
+
+Native campaign text has a separate, measured contract. It must belong to the
+unique `nav.campaign-tools` labelled “Journey controls” or the open modal
+`dialog.campaign-dialog` labelled “The Last Bell journal”, directly inside
+`main.game`, with the matching `data-ui-copy` role. Narrative paragraphs and
+summaries require at least 16 CSS px; controls require 14 px. Journal eyebrow
+metadata and the checkpoint status may use 12 px. A marker on another element,
+a duplicate root, a nonmodal journal, or undersized prose fails the text audit.
+These native controls and the journal use CSS surfaces; they are not reported
+as raster assets. Selection, combat HUD, actors, scenery, and other existing
+sprite roles retain their decoded-asset and decoration checks.
 
 Manifest visibility is necessary but not sufficient on responsive devices. A portrait viewport cover-fits and horizontally crops the 16:9 canvas. Screen-contract tests therefore project logical destination rectangles through the canvas's actual CSS bounding box, subtract the physical mobile-control region, and require the opening encounter to remain wholly inside that device-space safe area. This prevents an offscreen enemy from passing merely because its logical 960 × 540 rectangle was marked visible.
 

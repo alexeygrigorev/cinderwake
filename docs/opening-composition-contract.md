@@ -35,16 +35,16 @@ or room proportions on both.
 
 ## Risk detectors and paired controls
 
-| Signal                   | Automated risk detector                                                                                           | Required negative control                                               |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Scene topology           | Required boundaries or outdoor-arena landmarks are visible and provide declared structural coverage.              | Move every boundary/landmark outside the opening camera.                |
-| Entrance and route       | A minimum-width authoritative route connects the visible entrance, first decision, and objective.                 | Block the route or move its entrance marker off-screen.                 |
-| Scenery composition      | Required semantic classes and prop clusters are present without excessive empty area or uniformly random scatter. | Remove the structure and clusters while leaving only floor decals.      |
-| Edge-crop policy         | Only `edgeContinuation` art crosses a safe edge; focal actors, buildings, and interactables retain their minimum. | Shift one critical structure beyond its permitted visible fraction.     |
-| Focal hierarchy          | The focal subject has the declared occupancy, remains unobstructed, clears HUD, and outranks incidental saliency. | Hide it beneath HUD or make a minor prop dominate the saliency map.     |
-| Actor/scenery separation | Actors clear solid footprints, deep stacking, flattening, detached health markers, and invalid scale ratios.      | Co-locate actors, place one inside a solid, and flatten one silhouette. |
-| Mobile-safe composition  | Critical actors and landmarks survive the real portrait/landscape crop above controls at readable size.           | Reuse the desktop crop or move the focal cluster underneath controls.   |
-| Sprite-only provenance   | Every visible non-title draw resolves to an approved raster source.                                               | Replace one HUD sprite with CSS geometry and inject non-title DOM text. |
+| Signal                   | Automated risk detector                                                                                                  | Required negative control                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| Scene topology           | Required boundaries or outdoor-arena landmarks are visible and provide declared structural coverage.                     | Move every boundary/landmark outside the opening camera.                |
+| Entrance and route       | A minimum-width authoritative route connects the visible entrance, first decision, and objective.                        | Block the route or move its entrance marker off-screen.                 |
+| Scenery composition      | Required semantic classes and prop clusters are present without excessive empty area or uniformly random scatter.        | Remove the structure and clusters while leaving only floor decals.      |
+| Edge-crop policy         | Only `edgeContinuation` art crosses a safe edge; focal actors, buildings, and interactables retain their minimum.        | Shift one critical structure beyond its permitted visible fraction.     |
+| Focal hierarchy          | The focal subject has the declared occupancy, remains unobstructed, clears HUD, and outranks incidental saliency.        | Hide it beneath HUD or make a minor prop dominate the saliency map.     |
+| Actor/scenery separation | Actors clear solid footprints, deep stacking, flattening, detached health markers, and invalid scale ratios.             | Co-locate actors, place one inside a solid, and flatten one silhouette. |
+| Mobile-safe composition  | Critical actors and landmarks survive the real portrait/landscape crop above controls at readable size.                  | Reuse the desktop crop or move the focal cluster underneath controls.   |
+| Presentation provenance  | Sprite roles resolve to approved raster sources; native text is limited to allowlisted titles and validated campaign UI. | Replace one HUD sprite with CSS geometry or forge a campaign text role. |
 
 A signal earns authority only after its normal fixture passes and its paired
 mutation fails for the intended reason. The evidence overlay must show the

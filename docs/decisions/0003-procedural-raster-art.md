@@ -8,6 +8,10 @@ The project needs an original dark-fantasy presentation that remains inspectable
 
 Use local original raster atlases for all visible game/UI presentation; only titles may be text. Every asset has provenance and a versioned atlas manifest declaring source rectangles, anchors, clips, palette/tint policy, and layer. Generation happens before review and commit, never at runtime. Runtime loading, sprite selection, and render manifests are deterministic and identify the exact atlas frame/destination geometry.
 
+### Campaign readability amendment — 2026-09-06
+
+Campaign prose and journey controls use native text and CSS surfaces so players can read missions, save instructions, and conversations in a paused, scrollable journal. This replaces the title-only restriction for the two semantic campaign roots defined in [the testing contract](../testing-architecture.md). The provenance evaluator records their roles and font sizes separately, requires 16 CSS px for prose and 14 px for controls, and rejects forged markers. All existing sprite roles retain raster provenance requirements.
+
 ## Alternatives considered
 
 - Runtime generative art: introduces nondeterminism and makes visual baselines opaque.
