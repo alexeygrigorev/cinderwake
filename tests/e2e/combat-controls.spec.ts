@@ -182,6 +182,70 @@ test("stationary mouse aim follows the screen point as the camera moves", async 
   expect(walked.player.facing.x).toBeGreaterThan(0);
 });
 
+for (const classId of ["ranger", "arcanist"] as const) {
+  test(`${classId} attacks a selected foe from range without walking into melee`, async ({
+    page,
+  }) => {
+    await openArena(page);
+    const before = await page.evaluate((classId) => {
+      const bridge = window.__GAME_TEST__!;
+      bridge.loadScenario({
+        schemaVersion: 1,
+        id: `ranged-click-${classId}`,
+        seed: "ranged-click",
+        classId,
+        map: {
+          mode: "explicit",
+          rows: [
+            "#####################",
+            "#...................#",
+            "#...................#",
+            "#........P........E.#",
+            "#...................#",
+            "#...................#",
+            "#####################",
+          ],
+        },
+        monsters: [
+          {
+            id: "ranged-target",
+            kind: "ashfang",
+            tile: [13, 3],
+            health: 1000,
+            maxHealth: 1000,
+          },
+        ],
+        settings: { ai: false, autoPickup: false, cameraFollow: true },
+      });
+      return {
+        state: bridge.snapshot(),
+        target: bridge
+          .renderManifest()
+          .drawCalls.find(({ entityId }) => entityId === "ranged-target")!,
+      };
+    }, classId);
+    const canvas = (await page.locator("canvas").boundingBox())!;
+    await page.mouse.click(
+      canvas.x +
+        ((before.target.destinationRect.x +
+          before.target.destinationRect.width / 2) *
+          canvas.width) /
+          960,
+      canvas.y +
+        ((before.target.destinationRect.y +
+          before.target.destinationRect.height * 0.7) *
+          canvas.height) /
+          540,
+    );
+    const hit = await advance(page, 60);
+    expect(hit.player.position).toEqual(before.state.player.position);
+    expect(hit.metrics.damageDealt).toBeGreaterThan(0);
+    expect(
+      hit.eventLog.find(({ type }) => type === "attack_started")?.tick,
+    ).toBe(0);
+  });
+}
+
 test("Space holds strike and E takes priority when both actions are ready", async ({
   page,
 }) => {
