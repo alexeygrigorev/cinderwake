@@ -504,6 +504,10 @@ export class CanvasRenderer {
       );
       return;
     }
+    if (item.kind === "combat-telegraph") {
+      this.drawCombatTelegraph(context, item.telegraph);
+      return;
+    }
     if (item.kind === "entity-body") {
       this.drawImageReference(
         context,
@@ -528,9 +532,45 @@ export class CanvasRenderer {
       case "health-frame":
       case "health-fill":
         return item.worldUi.visible;
+      case "combat-telegraph":
+        return item.telegraph.visible;
       default:
         return item.call.visible;
     }
+  }
+
+  private drawCombatTelegraph(
+    context: CanvasRenderingContext2D,
+    telegraph: NonNullable<RenderManifestV1["combatTelegraphs"]>[number],
+  ): void {
+    const { projectedCenter: center, projectedRadius: radius } = telegraph;
+    const progress = 1 - telegraph.countdownRatio;
+    const countdownRadius = radius * (0.3 + 0.7 * telegraph.countdownRatio);
+    context.save();
+    // Shape, dashing, and the shrinking countdown ring carry the warning even
+    // when color is unavailable or visually ambiguous.
+    context.globalAlpha = 0.78;
+    context.strokeStyle = "#e5d4a1";
+    context.lineWidth = 2;
+    context.setLineDash([8, 6]);
+    context.beginPath();
+    context.arc(center.x, center.y, radius, 0, Math.PI * 2);
+    context.stroke();
+
+    context.globalAlpha = 0.94;
+    context.strokeStyle = "#f1b765";
+    context.lineWidth = 3;
+    context.setLineDash([]);
+    context.beginPath();
+    context.arc(
+      center.x,
+      center.y,
+      countdownRadius,
+      -Math.PI / 2,
+      -Math.PI / 2 + Math.PI * 2 * progress,
+    );
+    context.stroke();
+    context.restore();
   }
 
   private alphaBounds(reference: ImageBackedReference): {

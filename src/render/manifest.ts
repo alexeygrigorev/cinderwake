@@ -18,6 +18,10 @@ import {
 } from "../game/cityWorld";
 import type { AnimationClip, GameState, Vec2 } from "../game/types";
 import {
+  buildCombatTelegraphs,
+  type CombatTelegraphV1,
+} from "./combatTelegraphs";
+import {
   SPRITE_CATALOG,
   SPRITE_CATALOG_REVISION,
   horizontalFlipForGeometry,
@@ -156,6 +160,12 @@ export type PaintQueueItemV1 =
       zOrder: number;
       ownerId: string;
       worldUi: WorldUiCallV1;
+    }
+  | {
+      paintId: string;
+      kind: "combat-telegraph";
+      zOrder: number;
+      telegraph: CombatTelegraphV1;
     };
 
 export interface RenderManifestV1 {
@@ -172,6 +182,8 @@ export interface RenderManifestV1 {
   sceneSprites: SceneSpriteV2[];
   drawCalls: DrawCallV1[];
   worldUi: WorldUiCallV1[];
+  /** Ground warnings projected from live pending combat attacks. */
+  combatTelegraphs?: CombatTelegraphV1[];
   /** Exact ordered canvas paints, including scenery and actor attachments. */
   paintQueue: PaintQueueItemV1[];
 }
@@ -273,7 +285,10 @@ export function compareEntityPaintOrder(
  * than a parallel approximation of depth ordering.
  */
 export function buildPaintQueue(
-  manifest: Pick<RenderManifestV1, "sceneSprites" | "drawCalls" | "worldUi">,
+  manifest: Pick<
+    RenderManifestV1,
+    "sceneSprites" | "drawCalls" | "worldUi" | "combatTelegraphs"
+  >,
 ): PaintQueueItemV1[] {
   const queue: PaintQueueItemV1[] = [];
   const add = (item: PaintQueueItemV1): void => {
@@ -289,6 +304,15 @@ export function buildPaintQueue(
         scene,
       });
   }
+  for (const telegraph of [...(manifest.combatTelegraphs ?? [])].sort(
+    (first, second) => first.paintId.localeCompare(second.paintId),
+  ))
+    add({
+      paintId: telegraph.paintId,
+      kind: "combat-telegraph",
+      zOrder: 0,
+      telegraph,
+    });
   const raised = [
     ...manifest.sceneSprites
       .filter(({ layer }) => layer !== "terrain")
@@ -1258,6 +1282,7 @@ export function buildRenderManifest(
     sceneSprites: buildSceneSprites(state, camera),
     drawCalls: calls,
     worldUi: [],
+    combatTelegraphs: buildCombatTelegraphs(state, camera, presentationTick),
     paintQueue: [],
   };
   // Pure manifest callers (unit contracts, capture tools, and arbitrary-state
