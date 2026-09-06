@@ -1324,6 +1324,7 @@ function enterEmbercross(state: GameState): void {
   state.player.previousPosition = { ...spawn };
   state.player.velocity = { x: 0, y: 0 };
   state.monsters = [];
+  state.loot = [];
   state.pendingAttacks = [];
   state.projectiles = [];
   state.effects = [];
