@@ -164,6 +164,224 @@ button {
   place-items: center;
   background: #070a0c;
 }
+
+/* Narrative is readable DOM copy in a paused sheet; combat remains atlas-rendered. */
+.campaign-tools {
+  position: fixed;
+  z-index: 15;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+  color: #e8d6b6;
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+}
+.campaign-tools button,
+.campaign-dialog button,
+.campaign-dialog .import-save {
+  border: 1px solid #796345;
+  border-radius: 5px;
+  background: #202224;
+  color: #f6e6c8;
+  font: inherit;
+  padding: 10px 14px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.campaign-tools button:hover,
+.campaign-dialog button:hover {
+  background: #3a3026;
+  border-color: #d6ad72;
+}
+.campaign-tools button:focus-visible,
+.campaign-dialog :focus-visible {
+  outline: 2px solid #ffe0a4;
+  outline-offset: 3px;
+}
+.campaign-tools kbd,
+.campaign-dialog kbd {
+  opacity: 0.65;
+  margin-left: 8px;
+  font: inherit;
+}
+.campaign-tools [data-interact] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.campaign-tools [hidden] {
+  display: none;
+}
+.campaign-dialog {
+  width: min(680px, calc(100vw - 28px));
+  max-height: calc(100svh - 28px);
+  margin: auto;
+  padding: 26px;
+  border: 1px solid #9c794d;
+  border-radius: 8px;
+  background: #151a1c;
+  color: #e8dfd0;
+  box-shadow: 0 18px 80px #000c;
+  font:
+    16px/1.6 system-ui,
+    sans-serif;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.campaign-dialog::backdrop {
+  background: #050909cc;
+}
+.campaign-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.campaign-dialog h2 {
+  color: #f3ca87;
+  font:
+    32px/1.2 Georgia,
+    serif;
+  margin: 5px 0 16px;
+}
+.campaign-dialog h3 {
+  font-size: 17px;
+  margin: 0 0 5px;
+  color: #f1d1a0;
+}
+.campaign-dialog p {
+  margin: 0 0 16px;
+}
+.campaign-dialog small {
+  font-size: 12px;
+  letter-spacing: 0.07em;
+  color: #b8a382;
+}
+.campaign-dialog button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.campaign-dialog details {
+  border-top: 1px solid #574b3b;
+  padding-top: 14px;
+  margin-top: 18px;
+}
+.campaign-dialog summary {
+  cursor: pointer;
+  margin-bottom: 12px;
+  color: #e8c99e;
+}
+.mission-list {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0;
+}
+.mission-list li {
+  display: flex;
+  gap: 14px;
+  padding: 12px 0;
+  border-top: 1px solid #3c3c33;
+}
+.mission-list li > span {
+  flex: 0 0 44px;
+  color: #b4a58d;
+  font-size: 14px;
+}
+.mission-list li p {
+  margin: 0;
+  color: #b6b8b0;
+}
+.mission-list [aria-current] {
+  border-left: 3px solid #dfae6f;
+  padding-left: 12px;
+}
+.mission-list [data-complete="true"] h3 {
+  color: #99b69e;
+}
+.discovery {
+  padding: 18px;
+  margin: 12px 0;
+  border: 1px solid #705a3e;
+  background: #29271f;
+}
+.journal-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.import-save,
+.selection-import {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+}
+.import-save input,
+.selection-import input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.selection-import {
+  min-height: 44px;
+  cursor: pointer;
+  justify-content: center;
+  padding: 8px;
+}
+.continue-journey {
+  grid-column: 1 / -1;
+}
+[data-checkpoint-indicator] {
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .game:has(.campaign-tools) .campaign-tools {
+    bottom: 118px;
+    width: calc(100vw - 20px);
+    gap: 5px;
+  }
+  .campaign-tools button {
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+  .campaign-tools [data-journal] {
+    flex: 0 0 auto;
+  }
+  .campaign-tools kbd,
+  [data-checkpoint-indicator] {
+    display: none;
+  }
+  .campaign-dialog {
+    padding: 18px;
+  }
+  .campaign-dialog header {
+    gap: 8px;
+  }
+  .campaign-dialog header button {
+    max-width: 100px;
+    font-size: 14px;
+  }
+  .campaign-dialog h2 {
+    font-size: 28px;
+  }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+  .game:has(.campaign-tools) .campaign-tools {
+    bottom: 110px;
+    left: 12px;
+    transform: none;
+    width: auto;
+    max-width: 50vw;
+  }
+}
 .stage {
   position: relative;
   width: min(960px, 100vw, 177.778svh);

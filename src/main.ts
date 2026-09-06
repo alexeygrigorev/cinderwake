@@ -20,6 +20,9 @@ import {
   type ScenarioV1,
 } from "./testkit/scenarios";
 import { GameHost } from "./app/GameHost";
+import { CampaignUI, browserSave } from "./app/CampaignUI";
+import { decodeSave, type CampaignSave } from "./app/saveGame";
+import { missionJournal } from "./game/missions";
 import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
 import { installPlayerObserver } from "./testkit/playerObserver";
@@ -36,6 +39,7 @@ let selected: CharacterClass = "vanguard",
 let cityServiceFeedback = "";
 let cityServiceFeedbackVisible = "";
 let cityServiceNpcId: string | null = null;
+let campaign: CampaignUI | undefined;
 
 const CITY_ACTION_LABELS: Record<CityServiceActionId, string> = {
   "merchant:buy-tonic": "Buy tonic",
@@ -244,6 +248,10 @@ function selectionScene(classId: CharacterClass): string {
 }
 
 function screen(): void {
+  host?.stop();
+  input?.destroy();
+  campaign?.destroy();
+  campaign = undefined;
   const archetype = ARCHETYPES[selected];
   app.innerHTML = `<main class="selection selection-v2${testMode ? " test-mode" : ""}" data-selected-class="${selected}" data-provenance-decoration="legibility-mask" data-sprite-role="selection-screen" style="--selection-art:url('${selectionScene(selected)}');--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><div class="selection-art" data-sprite-role="selection-art" role="img" aria-label="${escapeAttribute(`${archetype.name} standing before the ruined settlement`)}"></div><header class="selection-header"><p class="eyebrow">${spriteText("Choose your ember", "sprite-eyebrow")}</p><h1 data-ui-title>Cinderwake</h1></header><section class="choose" aria-label="Character selection"><div class="selected-class"><h2 data-ui-title>${archetype.name}</h2>${spriteText(archetype.role, "sprite-role")}${spriteText(`HP ${archetype.health} / ARM ${archetype.armor}`, "sprite-stats")}</div><div class="cards" role="group" aria-label="Playable characters">${Object.values(
     ARCHETYPES,
@@ -256,6 +264,38 @@ function screen(): void {
       "",
     )}</div><form class="run-controls"><label class="seed-label">${spriteText("Run seed", "sprite-seed-label")}<span class="seed-control" data-sprite-role="ui-field"><input id="seed" value="${escapeAttribute(seed)}" maxlength="48" aria-label="Run seed" autocomplete="off" spellcheck="false" /><span class="seed-display sprite-text" aria-hidden="true">${spriteGlyphs(seed)}</span></span></label><button id="begin" class="begin" data-sprite-role="ui-button" type="submit" aria-label="Enter the wake">${spriteText("Enter the wake >", "sprite-button-label")}</button></form></section>${testMode ? `<button class="lab-toggle selection-lab-toggle" data-sprite-role="ui-button" aria-label="Open Test lab">${spriteText("Lab", "sprite-button-label")}</button>` : ""}</main>`;
   annotateSpriteRoles(app);
+  const saved = browserSave();
+  const controls = app.querySelector<HTMLFormElement>(".run-controls")!;
+  if (saved) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "begin continue-journey";
+    button.setAttribute("aria-label", "Continue journey");
+    button.dataset.spriteRole = "ui-button";
+    button.innerHTML = spriteText("Continue journey", "sprite-button-label");
+    button.onclick = () => void resumeCampaign(saved);
+    controls.prepend(button);
+  }
+  const importLabel = document.createElement("label");
+  importLabel.className = "selection-import";
+  importLabel.innerHTML = `${spriteText("Import save", "sprite-button-label")}<input type="file" accept=".json,application/json" aria-label="Import save" />`;
+  controls.append(importLabel);
+  importLabel.querySelector<HTMLInputElement>("input")!.onchange = async (
+    event,
+  ) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > 4_194_304) throw new Error("File exceeds 4 MB");
+      await resumeCampaign(decodeSave(await file.text()));
+    } catch {
+      importLabel
+        .querySelector(".sprite-text")!
+        .setAttribute("aria-label", "Invalid save file");
+      importLabel.querySelector(".sprite-text")!.innerHTML =
+        spriteGlyphs("Invalid save file");
+    }
+  };
   app.querySelectorAll<HTMLButtonElement>("[data-class]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -275,7 +315,16 @@ function screen(): void {
   const selectionLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
   if (selectionLab) selectionLab.onclick = () => lab();
 }
-async function boot(scenario: ScenarioV1): Promise<void> {
+async function resumeCampaign(save: CampaignSave): Promise<void> {
+  selected = save.state.player.classId;
+  seed = save.state.seed;
+  await boot(createRunScenario(seed, selected), save);
+}
+async function boot(scenario: ScenarioV1, saved?: CampaignSave): Promise<void> {
+  host?.stop();
+  input?.destroy();
+  campaign?.destroy();
+  campaign = undefined;
   activeScenario = scenario;
   app.innerHTML = `<main class="loading" aria-busy="true" style="--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Cinderwake</h1><p class="loading-status" aria-live="polite">${spriteText(`Waking the atlas 0 / ${spriteAssetCount}`, "sprite-loading")}</p></main>`;
   try {
@@ -297,7 +346,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     app.innerHTML = `<main class="loading loading-failed" style="--ui-atlas:url('${assetBase}assets/sprites/ui.png');--glyph-atlas:url('${assetBase}assets/sprites/glyphs.png')"><h1 data-ui-title>Atlas failed.</h1><p>${spriteText(message, "sprite-loading-error")}</p><div><button data-loading="retry" data-sprite-role="ui-button" aria-label="Retry loading">${spriteText("Retry", "sprite-button-label")}</button><button data-loading="back" data-sprite-role="ui-button" aria-label="Back to character selection">${spriteText("Back", "sprite-button-label")}</button></div></main>`;
     annotateSpriteRoles(app);
     app.querySelector<HTMLButtonElement>("[data-loading='retry']")!.onclick =
-      () => void boot(scenario);
+      () => void boot(scenario, saved);
     app.querySelector<HTMLButtonElement>("[data-loading='back']")!.onclick =
       () => screen();
     return;
@@ -358,12 +407,28 @@ async function boot(scenario: ScenarioV1): Promise<void> {
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
   host.onMapChange = () => input?.cancelNavigation();
+  if (
+    saved ||
+    scenario.id.startsWith("run:") ||
+    scenario.id === "generated-run"
+  ) {
+    campaign = new CampaignUI(
+      host,
+      input,
+      (save) => void resumeCampaign(save),
+      () => screen(),
+      saved?.discoveries,
+    );
+  }
   const playerObserver = installPlayerObserver(host);
   host.onRender = (state, manifest) => {
     updateHud(state);
+    campaign?.update(state);
     playerObserver.record(manifest);
   };
-  host.startScenario(scenario);
+  if (saved) host.startState(saved.state);
+  else host.startScenario(scenario);
+  if (!saved) campaign?.checkpoint();
   host.start();
   if (testMode) installGameTestBridge(host);
   app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
@@ -393,6 +458,7 @@ async function boot(scenario: ScenarioV1): Promise<void> {
       ? cityServiceFeedback
       : (CITY_REJECTION_COPY[result.code] ?? result.code);
     updateHud(host!.getState());
+    campaign?.update(host!.getState());
   };
   const gameLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
   if (gameLab) gameLab.onclick = () => lab();
@@ -478,8 +544,9 @@ function updateHud(state: GameState): void {
                 y: (state.map.exit.y + 0.5) * 1024,
               },
             };
-  const objectiveHeading =
-    state.phase === "won"
+  const objectiveHeading = campaign
+    ? missionJournal(state).title
+    : state.phase === "won"
       ? "Rift sealed"
       : livingMonsters.length
         ? "Hunt the cinders"
@@ -488,8 +555,17 @@ function updateHud(state: GameState): void {
           : state.city.locationPhase === "undiscovered"
             ? "Find Embercross"
             : "The city gate";
-  const objectiveCopy =
-    state.phase === "won"
+  const objectiveCopy = campaign
+    ? state.phase === "won"
+      ? "Embercross is safe"
+      : livingMonsters.length
+        ? `${livingMonsters.length} remain / J journal`
+        : insideCity
+          ? "Return to south gate"
+          : state.city.locationPhase === "undiscovered"
+            ? "Follow the road sign"
+            : "Enter Embercross"
+    : state.phase === "won"
       ? "Embercross is safe"
       : livingMonsters.length
         ? `${livingMonsters.length} remain`
@@ -552,6 +628,8 @@ function updateHud(state: GameState): void {
     state.tick < state.player.animation.lockedUntilTick;
   if (state.phase !== "playing" && !deathStillPlaying) {
     out.classList.remove("hidden");
+    if (out.dataset.phase === state.phase) return;
+    out.dataset.phase = state.phase;
     const outcomeLabel =
         state.phase === "won" ? "Rift sealed" : "The wake consumes you",
       outcomeTitle = state.phase === "won" ? "Cinders quieted." : "Run ended.";
@@ -559,7 +637,19 @@ function updateHud(state: GameState): void {
     out.querySelector("button")!.addEventListener("click", () => {
       void boot(activeScenario!);
     });
+    if (campaign) {
+      const resume = document.createElement("button");
+      resume.dataset.spriteRole = "ui-button";
+      resume.setAttribute("aria-label", "Journal and checkpoints");
+      resume.innerHTML = spriteText(
+        "Journal / load save",
+        "sprite-button-label",
+      );
+      resume.onclick = () => campaign?.open();
+      out.append(resume);
+    }
   } else {
+    delete out.dataset.phase;
     out.classList.add("hidden");
     out.replaceChildren();
   }
