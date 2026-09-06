@@ -16,7 +16,7 @@
     "feedback": "node scripts/feedback.mjs",
     "feedback:game": "node scripts/game-feedback.mjs",
     "feedback:campaign": "node scripts/test-campaign-journey.mjs",
-    "test:feedback": "node --test scripts/test-feedback.mjs scripts/test-game-feedback.mjs",
+    "test:feedback": "node --test scripts/test-feedback.mjs scripts/test-game-feedback.mjs scripts/test-game-feedback-integration.mjs",
     "test:e2e": "playwright test",
     "test:visual": "playwright test tests/visual",
     "test:visual:update": "playwright test tests/visual --update-snapshots",
