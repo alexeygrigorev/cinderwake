@@ -2395,7 +2395,21 @@ button {
     right: calc(248px + max(10px, var(--safe-area-inset-right)));
     width: min(390px, calc(100vw - 370px));
     max-height: calc(100svh - max(90px, var(--safe-area-inset-top)) - 8px);
+    gap: 4px;
+    padding: 0 9px;
     overflow-y: auto;
+  }
+
+  .game .city-service-heading {
+    gap: 2px;
+  }
+
+  .game .city-service-actions button {
+    padding: 4px 7px;
+  }
+
+  .game .city-service-button-copy {
+    padding: 4px 3px;
   }
 
   .game .hud.bottom {
