@@ -90,6 +90,20 @@ test("causal checks detect frozen movement, ineffective attacks and missing evid
     )[0].pass,
     false,
   );
+  const firstTick = [
+    { tick: 0, snapshot: { eventLog: [] } },
+    {
+      tick: 1,
+      snapshot: {
+        eventLog: [{ tick: 0, type: "attack_started", sourceId: "player" }],
+      },
+    },
+  ];
+  assert.equal(assessExpectations([expectations[2]], firstTick)[0].actual, 1);
+  firstTick[0].snapshot.eventLog = structuredClone(
+    firstTick[1].snapshot.eventLog,
+  );
+  assert.equal(assessExpectations([expectations[2]], firstTick)[0].actual, 0);
 });
 
 test("plans reject ignored live expectations, bad ticks and invalid comparisons", () => {
