@@ -45,19 +45,19 @@ test("zero exit without full declared evidence cannot pass", () => {
   assert.equal(componentReportValid("campaign", { results: [] }), false);
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 15, skipped: 0, unexpected: 0 },
+      stats: { expected: 21, skipped: 0, unexpected: 0 },
     }),
     false,
   );
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 16, skipped: 0, unexpected: 0 },
+      stats: { expected: 22, skipped: 0, unexpected: 0 },
     }),
     true,
   );
   assert.equal(
     componentReportValid("browser", {
-      stats: { expected: 16, skipped: 1, unexpected: 0 },
+      stats: { expected: 22, skipped: 1, unexpected: 0 },
     }),
     false,
   );
