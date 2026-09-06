@@ -26,7 +26,16 @@ export interface LivePresentationSampleV1 {
     objectId: string;
     screenAnchor: { x: number; y: number };
   } | null;
+  /** Bodies intersecting the logical render canvas, including CSS-cropped ones. */
   visibleMonsterIds: string[];
+  /** Bodies intersecting the physical page viewport; HUD occlusion is separate. */
+  deviceVisibleMonsterIds: string[] | null;
+  /** Sampled CSS geometry used for device visibility; null outside a browser. */
+  deviceViewport: {
+    width: number;
+    height: number;
+    canvas: { x: number; y: number; width: number; height: number };
+  } | null;
   /** Every state entity expected to have a render-manifest owner. */
   expectedOwnerIds: string[];
   /** Every dynamic draw-call owner, including off-screen calls. */
@@ -131,6 +140,56 @@ export function installPlayerObserver(
   };
   const record = (manifest: RenderManifestV1): void => {
     const state = host.getState();
+    const canvasRect = host.getCanvas().getBoundingClientRect?.();
+    const deviceViewport =
+      canvasRect &&
+      canvasRect.width > 0 &&
+      canvasRect.height > 0 &&
+      target.innerWidth > 0 &&
+      target.innerHeight > 0 &&
+      manifest.viewport
+        ? {
+            width: target.innerWidth,
+            height: target.innerHeight,
+            canvas: {
+              x: canvasRect.left,
+              y: canvasRect.top,
+              width: canvasRect.width,
+              height: canvasRect.height,
+            },
+          }
+        : null;
+    const visibleMonsters = manifest.drawCalls.filter(
+      ({ type, visible }) => type === "monster" && visible,
+    );
+    const deviceVisibleMonsterIds = deviceViewport
+      ? visibleMonsters
+          .filter(({ destinationRect: rect }) => {
+            const left =
+              deviceViewport.canvas.x +
+              (rect.x / manifest.viewport.width) * deviceViewport.canvas.width;
+            const top =
+              deviceViewport.canvas.y +
+              (rect.y / manifest.viewport.height) *
+                deviceViewport.canvas.height;
+            const right =
+              left +
+              (rect.width / manifest.viewport.width) *
+                deviceViewport.canvas.width;
+            const bottom =
+              top +
+              (rect.height / manifest.viewport.height) *
+                deviceViewport.canvas.height;
+            return (
+              right > 0 &&
+              bottom > 0 &&
+              left < deviceViewport.width &&
+              top < deviceViewport.height
+            );
+          })
+          .map(({ entityId }) => entityId)
+          .sort()
+      : null;
     const player = manifest.drawCalls.find(
       ({ entityId }) => entityId === "player",
     );
@@ -188,6 +247,8 @@ export function installPlayerObserver(
         .filter(({ type, visible }) => type === "monster" && visible)
         .map(({ entityId }) => entityId)
         .sort(),
+      deviceVisibleMonsterIds,
+      deviceViewport,
       expectedOwnerIds,
       observedOwnerIds,
       ownerPaints: [...ownerPaintCounts]
