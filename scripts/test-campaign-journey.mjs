@@ -3,6 +3,10 @@ import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createServer } from "vite";
+import {
+  chooseSlamEscape,
+  liveSlamThreats,
+} from "./lib/campaign-hazard-policy.mjs";
 
 const args = process.argv.slice(2);
 if (args.includes("--help")) {
@@ -126,6 +130,22 @@ try {
   function nextInput(state, pilot) {
     const player = state.player;
     const scenery = sceneryApi.sceneryCollisions(state.map);
+    const slamThreats = liveSlamThreats(state);
+    for (const attack of slamThreats) {
+      if (pilot.hazards.has(attack.id)) continue;
+      pilot.hazards.set(attack.id, {
+        attackId: attack.id,
+        ownerId: attack.ownerId,
+        impactTick: attack.impactTick,
+        origin: { ...attack.origin },
+        range: attack.range,
+        hit: false,
+        resolved: false,
+      });
+      pilot.hazardOpportunities += 1;
+    }
+    const hazard = chooseSlamEscape(state, navigation, scenery);
+    if (slamThreats.length > 0 && !hazard) pilot.noLegalEscapeCount += 1;
     const threats = state.monsters
       .filter((monster) => monster.health > 0)
       .sort(
@@ -160,47 +180,55 @@ try {
     const melee = player.classId === "vanguard";
     const desiredRange = melee ? 1250 : 4000;
     const attackRange = content.ARCHETYPES[player.classId].attackRange;
-    let target = threat
-      ? { id: threat.id, position: threat.position }
-      : missions.missionJournal(state).cue;
+    let target = hazard
+      ? {
+          id: `hazard:${hazard.attackId}:${hazard.direction}`,
+          position: hazard.target,
+        }
+      : threat
+        ? { id: threat.id, position: threat.position }
+        : missions.missionJournal(state).cue;
     let needsMovement = true;
-    if (threat && clearShot && threatDistance <= desiredRange)
-      needsMovement = false;
-    if (threat && !melee && threatDistance < 1800) {
-      const dx = player.position.x - threat.position.x;
-      const dy = player.position.y - threat.position.y;
-      target = {
-        id: `retreat:${threat.id}`,
-        position: {
-          x: Math.round(player.position.x + dx * 2),
-          y: Math.round(player.position.y + dy * 2),
-        },
-      };
-      needsMovement = true;
-    } else if (threatDistance > 2400) {
-      const retainedLoot = state.loot.find(
-        (item) => item.id === pilot.lootTarget,
-      );
-      const loot =
-        retainedLoot && distance(retainedLoot.position, player.position) < 4500
-          ? retainedLoot
-          : state.loot
-              .filter((item) => item.kind !== "tonic" || player.tonics < 5)
-              .sort(
-                (a, b) =>
-                  distance(a.position, player.position) -
-                    distance(b.position, player.position) ||
-                  a.id.localeCompare(b.id),
-              )[0];
-      if (
-        loot &&
-        distance(loot.position, player.position) <
-          Math.min(retainedLoot === loot ? 4500 : 3000, threatDistance)
-      ) {
-        target = { id: loot.id, position: loot.position };
-        pilot.lootTarget = loot.id;
+    if (!hazard) {
+      if (threat && clearShot && threatDistance <= desiredRange)
+        needsMovement = false;
+      if (threat && !melee && threatDistance < 1800) {
+        const dx = player.position.x - threat.position.x;
+        const dy = player.position.y - threat.position.y;
+        target = {
+          id: `retreat:${threat.id}`,
+          position: {
+            x: Math.round(player.position.x + dx * 2),
+            y: Math.round(player.position.y + dy * 2),
+          },
+        };
         needsMovement = true;
-      } else pilot.lootTarget = null;
+      } else if (threatDistance > 2400) {
+        const retainedLoot = state.loot.find(
+          (item) => item.id === pilot.lootTarget,
+        );
+        const loot =
+          retainedLoot &&
+          distance(retainedLoot.position, player.position) < 4500
+            ? retainedLoot
+            : state.loot
+                .filter((item) => item.kind !== "tonic" || player.tonics < 5)
+                .sort(
+                  (a, b) =>
+                    distance(a.position, player.position) -
+                      distance(b.position, player.position) ||
+                    a.id.localeCompare(b.id),
+                )[0];
+        if (
+          loot &&
+          distance(loot.position, player.position) <
+            Math.min(retainedLoot === loot ? 4500 : 3000, threatDistance)
+        ) {
+          target = { id: loot.id, position: loot.position };
+          pilot.lootTarget = loot.id;
+          needsMovement = true;
+        } else pilot.lootTarget = null;
+      }
     }
     if (
       pilot.map !== state.map.digest ||
@@ -210,13 +238,14 @@ try {
           distance(pilot.targetPosition, target.position) >= 512))
     ) {
       pilot.route = needsMovement
-        ? navigation.findNavigationRoute(
+        ? (hazard?.route ??
+          navigation.findNavigationRoute(
             state.map,
             scenery,
             player.position,
             target.position,
             player.radius,
-          )
+          ))
         : [];
       pilot.map = state.map.digest;
       pilot.target = target.id;
@@ -280,8 +309,12 @@ try {
       moveX,
       moveY,
       aim: threat ? { ...threat.position } : null,
-      attack: Boolean(threat && clearShot && threatDistance <= attackRange),
-      ability: Boolean(threat && clearShot && threatDistance <= abilityRange),
+      attack: Boolean(
+        !hazard && threat && clearShot && threatDistance <= attackRange,
+      ),
+      ability: Boolean(
+        !hazard && threat && clearShot && threatDistance <= abilityRange,
+      ),
       useTonic: player.health <= player.maxHealth - 40 && player.tonics > 0,
     };
   }
@@ -357,7 +390,17 @@ try {
         const initialState = snapshot(state);
         const checkpoints = [capture(state, "arrival")];
         const inputs = [];
-        const pilot = { route: [], routeUntil: 0, target: null, map: null };
+        const pilot = {
+          route: [],
+          routeUntil: 0,
+          target: null,
+          map: null,
+          hazards: new Map(),
+          hazardOpportunities: 0,
+          successfulDodges: 0,
+          slamHits: 0,
+          noLegalEscapeCount: 0,
+        };
         let previousInput = null;
         let lastProgressTick = 0;
         let progress = {
@@ -379,6 +422,27 @@ try {
             previousInput = serialized;
           }
           simulation.stepGame(state, input);
+          for (const hazard of pilot.hazards.values()) {
+            if (hazard.resolved || state.tick <= hazard.impactTick) continue;
+            hazard.resolved = true;
+            hazard.hit = state.eventLog.some(
+              (event) =>
+                event.tick === hazard.impactTick &&
+                event.type === "player_damaged" &&
+                event.sourceId === hazard.ownerId,
+            );
+            if (hazard.hit) pilot.slamHits += 1;
+            else {
+              const owner = state.monsters.find(
+                ({ id }) => id === hazard.ownerId,
+              );
+              if (
+                owner?.health > 0 &&
+                distance(state.player.position, hazard.origin) > hazard.range
+              )
+                pilot.successfulDodges += 1;
+            }
+          }
           if (state.tick === 300) {
             try {
               savedCheckpoint = saves.encodeSave(
@@ -540,6 +604,12 @@ try {
                 collision: placement.collision,
               })),
           },
+          hazard: {
+            opportunities: pilot.hazardOpportunities,
+            successfulDodges: pilot.successfulDodges,
+            slamHits: pilot.slamHits,
+            noLegalEscapeTicks: pilot.noLegalEscapeCount,
+          },
           replayMatched,
           snapshotMatched,
           saveResumeMatched,
@@ -580,7 +650,7 @@ try {
   });
   await fs.writeFile(
     path.join(output, "report.md"),
-    `# Campaign feedback\n\n${pass ? "PASS" : "FAIL"} — generated worlds, live AI, semantic inputs only. No actor teleportation, injected kills, stat buffs, or injected victory.\n\nThis is behavioral evidence. Browser controls, sound, and visual polish require separate review. The pilot has full state visibility, so completion times do not estimate first-time human play.\n\n${results.map((result) => `- ${result.id}: ${result.pass ? "PASS" : "FAIL"}; ${result.phase}; ${result.ticks ?? "replay"} ticks; ${result.blocker ?? "no blocker"}; exact replay ${result.replayMatched ? "matched" : "FAILED"}.`).join("\n")}\n${runtimeError ? `\nRuntime error: ${runtimeError}\n` : ""}`,
+    `# Campaign feedback\n\n${pass ? "PASS" : "FAIL"} — generated worlds, live AI, semantic inputs only. No actor teleportation, injected kills, stat buffs, or injected victory.\n\nThis is behavioral evidence. Browser controls, sound, and visual polish require separate review. The pilot has full state visibility, so completion times do not estimate first-time human play.\n\n${results.map((result) => `- ${result.id}: ${result.pass ? "PASS" : "FAIL"}; ${result.phase}; ${result.ticks ?? "replay"} ticks; ${result.blocker ?? "no blocker"}; exact replay ${result.replayMatched ? "matched" : "FAILED"}${result.hazard ? `; slam dodge ${result.hazard.successfulDodges}/${result.hazard.opportunities}; slam hits ${result.hazard.slamHits}; no-route ticks ${result.hazard.noLegalEscapeTicks}` : ""}.`).join("\n")}\n${runtimeError ? `\nRuntime error: ${runtimeError}\n` : ""}`,
   );
   console.log(`Campaign evidence: ${output}`);
   if (!pass) process.exitCode = 1;
