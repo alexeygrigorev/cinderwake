@@ -427,6 +427,12 @@
           "artifacts": []
         },
         {
+          "id": "forged-campaign-copy-marker",
+          "status": "UNRUN",
+          "signal": "",
+          "artifacts": []
+        },
+        {
           "id": "css-decoration-added-beside-sprite",
           "status": "UNRUN",
           "signal": "",

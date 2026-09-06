@@ -2,6 +2,26 @@ export declare const VISIBLE_SPRITE_PROVENANCE_SCENARIO_IDS: readonly string[];
 export declare const VISIBLE_SPRITE_PROVENANCE_PROFILE_IDS: readonly string[];
 export declare const VISIBLE_SPRITE_PROVENANCE_SIGNAL_IDS: readonly string[];
 export declare const VISIBLE_SPRITE_PROVENANCE_FAILURE_IDS: readonly string[];
+export interface CampaignCopyFacts {
+  scope: string | null;
+  rootTag: string;
+  rootClass: string;
+  rootLabel: string | null;
+  gameChild: boolean;
+  unique: boolean;
+  modal: boolean;
+  tag: string;
+  fontSize: number;
+  metadata?: boolean;
+  control?: boolean;
+}
+export declare function collectCampaignCopyFacts(): Record<
+  number,
+  CampaignCopyFacts
+>;
+export declare function nativeCampaignCopyPass(
+  copy?: CampaignCopyFacts,
+): boolean;
 
 export interface DecodedRasterAssetV1 {
   assetId?: string;
@@ -30,6 +50,7 @@ export interface VisibleSpriteStateV1 {
     value: string;
     visible: boolean;
     titleRole: boolean;
+    nativeCopy?: CampaignCopyFacts;
   }>;
   pseudoElements: Array<Record<string, unknown>>;
   cssDecorations: Array<Record<string, unknown>>;

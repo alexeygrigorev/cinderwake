@@ -5,6 +5,7 @@ import path from "node:path";
 import { chromium } from "@playwright/test";
 import {
   evaluateVisibleSpriteProvenanceEvidence,
+  collectCampaignCopyFacts,
   runVisibleSpriteProvenanceNegativeControls,
   VISIBLE_SPRITE_PROVENANCE_PROFILE_IDS,
   VISIBLE_SPRITE_PROVENANCE_SCENARIO_IDS,
@@ -14,7 +15,7 @@ import { sha256 } from "./lib/state-replay-evidence.mjs";
 const OUTPUT = path.resolve(
   "quality-results/visible-sprite-provenance/pres-sprite-009",
 );
-const EVALUATOR = "visible-dom-sprite-provenance-v1";
+const EVALUATOR = "visible-dom-sprite-provenance-v2";
 const TITLE_ALLOWLIST = [
   "Atlas failed.",
   "Arcanist",
@@ -246,8 +247,9 @@ async function collectState(
   await page.evaluate(() => window.__VISIBLE_SPRITE_CANVAS__?.reset());
   if (testMode) await page.evaluate(() => window.__GAME_TEST__?.render());
   else await waitForFrame(page);
+  const nativeCopyByIndex = await page.evaluate(collectCampaignCopyFacts);
   const inventory = await page.evaluate(
-    ({ requestedScenarioId, requestedStateId }) => {
+    ({ requestedScenarioId, requestedStateId, nativeCopyByIndex }) => {
       const visible = (element) => {
         let current = element;
         while (current) {
@@ -336,11 +338,34 @@ async function collectState(
             value,
             visible: visible(parent),
             titleRole: Boolean(parent.closest("[data-ui-title]")),
+            ...(nativeCopyByIndex[textIndex]
+              ? { nativeCopy: nativeCopyByIndex[textIndex] }
+              : {}),
           });
         textIndex += 1;
         textNode = walker.nextNode();
       }
       const pseudoElements = [];
+      const nativeUiSurfaces = [
+        ...document.querySelectorAll("[data-ui-copy]"),
+      ].map((element, index) => {
+        const style = getComputedStyle(element);
+        return {
+          id: elementId(element, index),
+          visible: visible(element),
+          kind: "native-campaign-ui",
+          scope: element.getAttribute("data-ui-copy"),
+          tag: element.tagName,
+          label: element.getAttribute("aria-label"),
+          styles: {
+            backgroundColor: style.backgroundColor,
+            border: style.border,
+            boxShadow: style.boxShadow,
+            fontSize: style.fontSize,
+            overflowY: style.overflowY,
+          },
+        };
+      });
       for (const element of document.querySelectorAll("*")) {
         if (!visible(element)) continue;
         for (const pseudo of ["::before", "::after"]) {
@@ -459,6 +484,7 @@ async function collectState(
         stateId: requestedStateId,
         visibleRoles,
         textNodes,
+        nativeUiSurfaces,
         pseudoElements,
         cssDecorations,
         canvasOperations: window.__VISIBLE_SPRITE_CANVAS__?.read() ?? [],
@@ -473,7 +499,11 @@ async function collectState(
           : null,
       };
     },
-    { requestedScenarioId: scenarioId, requestedStateId: stateId },
+    {
+      requestedScenarioId: scenarioId,
+      requestedStateId: stateId,
+      nativeCopyByIndex,
+    },
   );
   const screenshotDirectory = path.join(profileDirectory, "screenshots");
   await fs.mkdir(screenshotDirectory, { recursive: true });
@@ -647,6 +677,18 @@ async function runProfile(browser, profileId, profile, baseURL) {
         false,
       ),
     );
+    await page.locator("[data-journal]").click();
+    await page.locator("dialog.campaign-dialog").waitFor({ state: "visible" });
+    states.push(
+      await collectState(
+        page,
+        profileDirectory,
+        "campaign-journal",
+        "open-journal",
+        false,
+      ),
+    );
+    await page.locator("dialog.campaign-dialog [data-close]").click();
 
     await page.goto(`${baseURL}/?testMode=1&scenario=animation-idle`, {
       waitUntil: "domcontentloaded",

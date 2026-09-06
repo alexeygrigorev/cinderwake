@@ -382,6 +382,7 @@
         "requiredIds": [
           "public-selection",
           "ordinary-production-launch",
+          "campaign-journal",
           "outcome-win",
           "outcome-loss",
           "embercross-services"
@@ -396,11 +397,11 @@
         "requiredIds": ["select", "begin", "trigger-outcome"]
       },
       "evaluator": {
-        "id": "visible-dom-sprite-provenance-v1",
+        "id": "visible-dom-sprite-provenance-v2",
         "coverage": "partial",
         "requiredSignalIds": [
           "visible-roles-use-decoded-sprites",
-          "text-only-titles",
+          "text-roles-are-approved",
           "title-roles-exactly-allowlisted",
           "all-visible-draws-have-sprite-provenance"
         ]
@@ -414,6 +415,10 @@
         {
           "id": "non-title-marked-as-title",
           "expectedSignal": "title-role-not-allowlisted"
+        },
+        {
+          "id": "forged-campaign-copy-marker",
+          "expectedSignal": "visible-text-offender"
         },
         {
           "id": "css-decoration-added-beside-sprite",

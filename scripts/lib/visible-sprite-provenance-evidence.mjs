@@ -1,6 +1,7 @@
 export const VISIBLE_SPRITE_PROVENANCE_SCENARIO_IDS = [
   "public-selection",
   "ordinary-production-launch",
+  "campaign-journal",
   "outcome-win",
   "outcome-loss",
   "embercross-services",
@@ -13,7 +14,7 @@ export const VISIBLE_SPRITE_PROVENANCE_PROFILE_IDS = [
 
 export const VISIBLE_SPRITE_PROVENANCE_SIGNAL_IDS = [
   "visible-roles-use-decoded-sprites",
-  "text-only-titles",
+  "text-roles-are-approved",
   "title-roles-exactly-allowlisted",
   "all-visible-draws-have-sprite-provenance",
 ];
@@ -29,6 +30,85 @@ export const VISIBLE_SPRITE_PROVENANCE_FAILURE_IDS = [
 ];
 
 const LOCAL_ASSET_PREFIX = "/assets/";
+
+/** Runs in the browser. Markers are evidence inputs, never an exemption by themselves. */
+export function collectCampaignCopyFacts() {
+  const facts = {};
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode(),
+    index = 0;
+  while (node) {
+    const element = node.parentElement;
+    const root = element?.closest("[data-ui-copy]");
+    if (element && root) {
+      const scope = root.getAttribute("data-ui-copy");
+      facts[index] = {
+        scope,
+        rootTag: root.tagName,
+        rootClass: root.className,
+        rootLabel: root.getAttribute("aria-label"),
+        gameChild: root.parentElement?.matches("main.game") === true,
+        unique:
+          [...document.querySelectorAll("[data-ui-copy]")].filter(
+            (candidate) => candidate.getAttribute("data-ui-copy") === scope,
+          ).length === 1,
+        modal: root.matches("dialog[open]:modal"),
+        tag: element.tagName,
+        fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+        metadata: element.matches(
+          "header > div > small, article.discovery > small, [data-checkpoint-indicator][role='status']",
+        ),
+        control: element.matches(
+          "button[data-journal], button[data-interact], button[data-journal] > kbd",
+        ),
+      };
+    }
+    node = walker.nextNode();
+    index++;
+  }
+  return facts;
+}
+
+export function nativeCampaignCopyPass(copy) {
+  if (
+    !copy ||
+    copy.gameChild !== true ||
+    copy.unique !== true ||
+    !Number.isFinite(copy.fontSize)
+  )
+    return false;
+  if (copy.scope === "campaign-controls")
+    return (
+      copy.rootTag === "NAV" &&
+      copy.rootClass === "campaign-tools" &&
+      copy.rootLabel === "Journey controls" &&
+      ((copy.control === true &&
+        ["BUTTON", "KBD"].includes(copy.tag) &&
+        copy.fontSize >= 14) ||
+        (copy.metadata === true && copy.tag === "SPAN" && copy.fontSize >= 12))
+    );
+  if (
+    copy.scope !== "campaign-narrative" ||
+    copy.rootTag !== "DIALOG" ||
+    copy.rootClass !== "campaign-dialog" ||
+    copy.rootLabel !== "The Last Bell journal" ||
+    copy.modal !== true
+  )
+    return false;
+  const minimum = {
+    P: 16,
+    H2: 24,
+    H3: 16,
+    BUTTON: 14,
+    LABEL: 14,
+    KBD: 14,
+    SUMMARY: 16,
+    SPAN: 14,
+  }[copy.tag];
+  return minimum
+    ? copy.fontSize >= minimum
+    : copy.tag === "SMALL" && copy.metadata === true && copy.fontSize >= 12;
+}
 
 function isObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -161,6 +241,7 @@ function stateInventory(profile, state, titleAllowlist) {
   const textFailures = textNodes
     .filter(({ visible }) => visible === true)
     .filter(({ titleRole }) => titleRole !== true)
+    .filter(({ nativeCopy }) => !nativeCampaignCopyPass(nativeCopy))
     .map((text) => ({ id: text.id ?? null, value: text.value ?? null }));
   const titleFailures = textNodes
     .filter(({ visible }) => visible === true)
@@ -192,6 +273,10 @@ function stateInventory(profile, state, titleAllowlist) {
     stateId: state?.stateId ?? null,
     visibleSpriteRoleCount: visibleSpriteRoles.length,
     visibleTitleCount: visibleTitles.length,
+    visibleNativeCopyCount: textNodes.filter(
+      (text) =>
+        text.visible === true && nativeCampaignCopyPass(text.nativeCopy),
+    ).length,
     manifestDrawCount: manifestDraws.filter(({ visible }) => visible !== false)
       .length,
     canvasOperationCount: canvasOperations.filter(
@@ -257,7 +342,7 @@ export function evaluateVisibleSpriteProvenanceEvidence({
       ({ roleFailures, visibleSpriteRoleCount }) =>
         visibleSpriteRoleCount > 0 && roleFailures.length === 0,
     );
-  const allVisibleTextIsTitle =
+  const allVisibleTextIsApproved =
     inventoryComplete &&
     inventories.every(({ textFailures }) => textFailures.length === 0);
   const allTitleRolesAreAllowlisted =
@@ -283,7 +368,7 @@ export function evaluateVisibleSpriteProvenanceEvidence({
   const failures = [];
   if (!inventoryComplete) failures.push("provenance-inventory-incomplete");
   if (!allRolesUseDecodedSprites) failures.push("non-sprite-visible-role");
-  if (!allVisibleTextIsTitle) failures.push("visible-text-offender");
+  if (!allVisibleTextIsApproved) failures.push("visible-text-offender");
   if (!allTitleRolesAreAllowlisted) failures.push("title-role-not-allowlisted");
   if (!completeDrawProvenance)
     failures.push("visible-draw-without-sprite-provenance");
@@ -306,7 +391,7 @@ export function evaluateVisibleSpriteProvenanceEvidence({
       signal("visible-roles-use-decoded-sprites", allRolesUseDecodedSprites, {
         inventories,
       }),
-      signal("text-only-titles", allVisibleTextIsTitle, {
+      signal("text-roles-are-approved", allVisibleTextIsApproved, {
         inventories,
       }),
       signal("title-roles-exactly-allowlisted", allTitleRolesAreAllowlisted, {
@@ -346,6 +431,29 @@ export function runVisibleSpriteProvenanceNegativeControls(evidence) {
           value: "Ordinary copy",
           visible: true,
           titleRole: true,
+        });
+      },
+    },
+    {
+      id: "forged-campaign-copy-marker",
+      expectedSignal: "visible-text-offender",
+      mutate(value) {
+        value.profiles[0].states[0].textNodes.push({
+          id: "mutation:forged-campaign-copy",
+          value: "An unapproved HUD label",
+          visible: true,
+          titleRole: false,
+          nativeCopy: {
+            scope: "campaign-narrative",
+            rootTag: "DIV",
+            rootClass: "hud",
+            rootLabel: "The Last Bell journal",
+            gameChild: true,
+            unique: true,
+            modal: false,
+            tag: "P",
+            fontSize: 16,
+          },
         });
       },
     },
