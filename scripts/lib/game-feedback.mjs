@@ -1,10 +1,15 @@
+import {
+  GAME_FEEDBACK_COMPONENTS,
+  componentReportValid as validateComponentReport,
+} from "./game-feedback-contract.mjs";
+
 export function gameFeedbackVerdict(results, complete, sourceStable) {
+  const ids = Array.isArray(results) ? results.map((result) => result?.id) : [];
   if (
     !complete ||
-    results.length !== 4 ||
-    !["rules", "controls", "campaign", "browser"].every((id) =>
-      results.some((result) => result.id === id),
-    )
+    ids.length !== GAME_FEEDBACK_COMPONENTS.length ||
+    new Set(ids).size !== ids.length ||
+    !GAME_FEEDBACK_COMPONENTS.every((id) => ids.includes(id))
   )
     return "INCOMPLETE";
   if (
@@ -17,33 +22,6 @@ export function gameFeedbackVerdict(results, complete, sourceStable) {
   return "PASS";
 }
 
-export function componentReportValid(id, report) {
-  if (id === "rules")
-    return (
-      report?.success === true &&
-      report.numTotalTests > 0 &&
-      report.numFailedTests === 0 &&
-      report.numPendingTests === 0
-    );
-  if (id === "controls")
-    return (
-      report?.verdict === "PASS" &&
-      report?.complete === true &&
-      report?.plannedCases?.length === 9
-    );
-  if (id === "campaign")
-    return (
-      report?.complete === true &&
-      report?.pass === true &&
-      Array.isArray(report?.results) &&
-      report.results.length === 9 &&
-      report.results.every((result) => result.pass === true)
-    );
-  if (id === "browser")
-    return (
-      report?.stats?.expected >= 22 &&
-      report.stats.unexpected === 0 &&
-      report.stats.skipped === 0
-    );
-  return false;
+export function componentReportValid(id, report, context = {}) {
+  return validateComponentReport(id, report, context);
 }
