@@ -575,6 +575,7 @@ function hitCone(
   state: GameState,
   attack: PendingAttack,
   threshold: number,
+  scenery: readonly SceneryCollisionFootprint[],
 ): void {
   const rangeSquared = attack.range * attack.range;
   for (const monster of [...state.monsters].sort((a, b) =>
@@ -582,6 +583,8 @@ function hitCone(
   )) {
     if (monster.health <= 0) continue;
     if (distanceSquared(attack.origin, monster.position) > rangeSquared)
+      continue;
+    if (!actorPathWalkable(state, scenery, attack.origin, monster.position, 0))
       continue;
     const direction = normalized(attack.origin, monster.position);
     const dot =
@@ -630,7 +633,10 @@ function rotateDirection(direction: Vec2, sine: number): Vec2 {
   };
 }
 
-function resolvePendingAttacks(state: GameState): void {
+function resolvePendingAttacks(
+  state: GameState,
+  scenery: readonly SceneryCollisionFootprint[],
+): void {
   const due = state.pendingAttacks
     .filter((attack) => attack.impactTick <= state.tick)
     .sort((a, b) => a.id.localeCompare(b.id));
@@ -672,14 +678,28 @@ function resolvePendingAttacks(state: GameState): void {
           (towardPlayer.x * attack.direction.x +
             towardPlayer.y * attack.direction.y) /
           DIRECTION_SCALE;
-        if (inRange && dot >= 384)
+        if (
+          inRange &&
+          dot >= 384 &&
+          actorPathWalkable(
+            state,
+            scenery,
+            attack.origin,
+            state.player.position,
+            0,
+          )
+        )
           damagePlayer(state, attack.damage, attack.ownerId);
       }
       continue;
     }
+    // Movement remains responsive during wind-up. Contact must originate at
+    // the moving actor, otherwise a cleave can visibly overlap its target but
+    // miss and ranged shots appear behind the caster. Keep the committed aim.
+    attack.origin = { ...state.player.position };
     const classId = state.player.classId;
     if (classId === "vanguard") {
-      hitCone(state, attack, attack.kind === "ability" ? 512 : 724);
+      hitCone(state, attack, attack.kind === "ability" ? 512 : 724, scenery);
       state.effects.push({
         id: `effect:${attack.id}`,
         ownerId: "player",
@@ -713,7 +733,8 @@ function resolvePendingAttacks(state: GameState): void {
         if (
           monster.health > 0 &&
           distanceSquared(attack.origin, monster.position) <=
-            attack.range * attack.range
+            attack.range * attack.range &&
+          actorPathWalkable(state, scenery, attack.origin, monster.position, 0)
         ) {
           applyDamageToMonster(state, monster, attack.damage, "player");
         }
@@ -836,6 +857,35 @@ function updatePlayer(
   if (input.useTonic && player.tonics > 0 && player.health < player.maxHealth) {
     player.health = Math.min(player.maxHealth, player.health + 45);
     player.tonics -= 1;
+  }
+  if ((input.attack || input.ability) && !input.aim) {
+    const range = input.ability
+      ? player.classId === "vanguard"
+        ? 2355
+        : player.classId === "arcanist"
+          ? 2816
+          : ARCHETYPES[player.classId].attackRange
+      : ARCHETYPES[player.classId].attackRange;
+    const target = state.monsters
+      .filter(
+        (monster) =>
+          monster.health > 0 &&
+          distanceSquared(player.position, monster.position) <= range * range &&
+          actorPathWalkable(
+            state,
+            scenery,
+            player.position,
+            monster.position,
+            0,
+          ),
+      )
+      .sort(
+        (a, b) =>
+          distanceSquared(player.position, a.position) -
+            distanceSquared(player.position, b.position) ||
+          a.id.localeCompare(b.id),
+      )[0];
+    if (target) player.facing = normalized(player.position, target.position);
   }
   if (input.ability && state.tick >= player.abilityReadyTick)
     queuePlayerAttack(state, "ability");
@@ -1344,7 +1394,7 @@ export function stepGame(state: GameState, input: InputState): GameState {
   const scenery = sceneryCollisions(state.map);
   updatePlayer(state, input, scenery);
   updateMonsters(state, scenery);
-  resolvePendingAttacks(state);
+  resolvePendingAttacks(state, scenery);
   updateProjectiles(state, scenery);
   resolveDeaths(state);
   collectLoot(state);
