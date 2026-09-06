@@ -125,6 +125,7 @@ const cases = [
       "test",
       "tests/e2e/combat-controls.spec.ts",
       "tests/e2e/campaign.spec.ts",
+      "tests/e2e/combat-readability.spec.ts",
       "--workers=1",
       "--reporter=list,json",
       "--output",

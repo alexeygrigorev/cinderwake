@@ -41,7 +41,7 @@ export function componentReportValid(id, report) {
     );
   if (id === "browser")
     return (
-      report?.stats?.expected >= 16 &&
+      report?.stats?.expected >= 22 &&
       report.stats.unexpected === 0 &&
       report.stats.skipped === 0
     );
