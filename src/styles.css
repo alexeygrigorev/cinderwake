@@ -2391,8 +2391,11 @@ button {
   }
 
   .game .city-service-sheet {
+    top: max(90px, var(--safe-area-inset-top));
     right: calc(248px + max(10px, var(--safe-area-inset-right)));
     width: min(390px, calc(100vw - 370px));
+    max-height: calc(100svh - max(90px, var(--safe-area-inset-top)) - 8px);
+    overflow-y: auto;
   }
 
   .game .hud.bottom {
