@@ -22,7 +22,8 @@ require another model API or credentials.
 
 Each hero gets an isolated movement/combat case and two ordinary player journeys,
 one on desktop and one on a portrait phone. The isolated case requires movement,
-actual primary damage, ability activation, survival, and matching state hashes
+actual primary and ability damage, a kill, exit unlocking, physical loot pickup,
+survival, and matching state hashes
 when its retained initial state and input tape are replayed. The ordinary routes
 select a hero, launch the game, move using physical keyboard or Chromium touch
 events, and hold Strike through its cooldown. They require real time to advance,
@@ -80,7 +81,7 @@ case.
 
 Expectations read a dot-separated snapshot `path` and compare it with `value`.
 Supported operators are `eq`, `gte`, `lte`, `deltaGte` (change from the first
-capture), and `eventCountGte` (requires `event`, optionally `sourceId`, and counts
+capture, or an earlier captured `from` tick), and `eventCountGte` (requires `event`, optionally `sourceId`, and counts
 events after the initial tick). Missing paths fail. An optional `at` selects a
 captured tick; otherwise the check uses the final capture. A `hint` tells the next
 model where to investigate. Use a damage, pickup, outcome, or displacement check
