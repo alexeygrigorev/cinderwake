@@ -11,7 +11,9 @@ The command runs four checks in sequence so browser captures don't compete:
    road-sign discovery, city entry, and the ending. Each campaign must reproduce
    from its exact input tape and from a saved checkpoint.
 4. Browser tests for contextual attacks, the journal, save/reload, export/import,
-   audio playback, persistent mute, and pause behavior on a phone.
+   audio playback, persistent mute, and pause behavior on a phone. Combat
+   readability checks cover attack phases, actor spacing, and health-bar sizing
+   at desktop and phone camera scales, with deliberately broken controls.
 
 Missing reports, interrupted runs, changed source files, skipped browser tests,
 and unfinished campaigns can't produce `PASS`. The automated pilot knows the
