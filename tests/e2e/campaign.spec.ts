@@ -46,6 +46,62 @@ test("a discovered letter, complete game state and journal survive reload", asyn
     .getByRole("button", { name: "Journal and save", exact: true })
     .click();
   await expect(page.getByRole("dialog")).toContainText("Ileya's sealed letter");
+  await expect(page.getByRole("dialog")).toContainText(
+    "bell keeper has called the dead",
+  );
+});
+
+test("journal shows real progression and loot feedback only after pickup", async ({
+  page,
+}) => {
+  await begin(page);
+  await page
+    .getByRole("button", { name: "Journal and save", exact: true })
+    .click();
+  await expect(page.locator(".hero-progress")).toHaveText(
+    /Level \d+ · XP \d+\/\d+ · Power \d+ · Supplies \d+ tonics · Gold \d+/,
+  );
+  await page.getByRole("button", { name: "Back to game", exact: true }).click();
+
+  const beforePickup = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario("temporal-loot-bob");
+    return bridge.snapshot();
+  });
+  expect(beforePickup.eventLog.some(({ type }) => type === "loot_picked")).toBe(
+    false,
+  );
+  await expect(page.locator("#log")).toHaveAttribute(
+    "aria-label",
+    "The cinders stir.",
+  );
+
+  const picked = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario("combat-loot");
+    bridge.setInput({ attack: true });
+    bridge.step(45, { render: true });
+    bridge.setInput({ attack: false, moveX: 1 });
+    bridge.step(20, { render: true });
+    bridge.clearInput();
+    return bridge.snapshot();
+  });
+  const pickup = picked.eventLog.find(({ type }) => type === "loot_picked");
+  expect(pickup).toBeDefined();
+  if (!pickup || !pickup.detail || pickup.amount === undefined)
+    throw new Error("Expected a real loot pickup event");
+  const label =
+    pickup.detail === "weapon"
+      ? "Power"
+      : pickup.detail === "gold"
+        ? "Gold"
+        : pickup.detail === "tonic"
+          ? "Tonic"
+          : "Pelt";
+  await expect(page.locator("#log")).toHaveAttribute(
+    "aria-label",
+    new RegExp(`${label} \\+${pickup.amount}(?: /|$)`),
+  );
 });
 
 test("invalid imported saves leave a good checkpoint intact", async ({

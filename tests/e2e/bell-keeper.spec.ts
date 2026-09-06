@@ -236,3 +236,90 @@ test.describe("phone touch evasion", () => {
     ).toEqual([]);
   });
 });
+
+test.describe("warning HUD clearance", () => {
+  test.use({
+    deviceScaleFactor: 1,
+    hasTouch: true,
+    isMobile: true,
+  });
+
+  test("keeps the marked circle clear of health and touch controls", async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 844, height: 390 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await openBellKeeper(page);
+      await advance(page, 1);
+      const evidence = await page.evaluate(() => {
+        const telegraph =
+          window.__GAME_TEST__!.renderManifest().combatTelegraphs?.[0];
+        const canvas = document
+          .querySelector<HTMLCanvasElement>("canvas:not(.mini)")!
+          .getBoundingClientRect();
+        if (!telegraph) throw new Error("Expected a live Bell Keeper warning");
+        const warning = {
+          left:
+            canvas.left + (telegraph.projectedBounds.x / 960) * canvas.width,
+          top: canvas.top + (telegraph.projectedBounds.y / 540) * canvas.height,
+          right:
+            canvas.left +
+            ((telegraph.projectedBounds.x + telegraph.projectedBounds.width) /
+              960) *
+              canvas.width,
+          bottom:
+            canvas.top +
+            ((telegraph.projectedBounds.y + telegraph.projectedBounds.height) /
+              540) *
+              canvas.height,
+        };
+        const rect = (selector: string) => {
+          const box = document
+            .querySelector<HTMLElement>(selector)!
+            .getBoundingClientRect();
+          return {
+            left: box.left,
+            top: box.top,
+            right: box.right,
+            bottom: box.bottom,
+          };
+        };
+        return {
+          warning,
+          health: rect(".health"),
+          touch: [rect(".move-pad"), rect(".mobile-actions")],
+          objective: rect("#objective"),
+        };
+      });
+      const overlaps = (
+        first: typeof evidence.warning,
+        second: typeof evidence.warning,
+      ) =>
+        Math.max(
+          0,
+          Math.min(first.right, second.right) -
+            Math.max(first.left, second.left),
+        ) > 0 &&
+        Math.max(
+          0,
+          Math.min(first.bottom, second.bottom) -
+            Math.max(first.top, second.top),
+        ) > 0;
+      expect(
+        overlaps(evidence.warning, evidence.health),
+        `${viewport.width}x${viewport.height} health overlap`,
+      ).toBe(false);
+      expect(
+        evidence.touch.some((touch) => overlaps(evidence.warning, touch)),
+        `${viewport.width}x${viewport.height} touch overlap`,
+      ).toBe(false);
+      expect(
+        overlaps(evidence.warning, evidence.objective),
+        `${viewport.width}x${viewport.height} objective overlap`,
+      ).toBe(false);
+    }
+  });
+});

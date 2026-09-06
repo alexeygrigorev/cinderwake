@@ -8,6 +8,7 @@ import {
 } from "../../src/game/cityWorld";
 import { tileCenter } from "../../src/game/dungeon";
 import {
+  BELL_KEEPER_GUIDANCE,
   MISSION_VOICE_LINES,
   missionArchive,
   missionJournal,
@@ -104,6 +105,16 @@ describe("The Last Bell mission progression", () => {
     expect(
       missionJournal(stateFromSnapshot(JSON.parse(canonicalJson(state)))),
     ).toEqual(journal);
+  });
+
+  it("gives the live Bell Keeper a concise evasion and counterattack cue", () => {
+    const state = road();
+    kill(state, "monster:00");
+    kill(state, "monster:01");
+    expect(missionJournal(state).guidance).toBe(BELL_KEEPER_GUIDANCE);
+
+    kill(state, "monster:11");
+    expect(missionJournal(state).guidance).toBeNull();
   });
 
   it("changes from the road sign to the gate after discovery", () => {
