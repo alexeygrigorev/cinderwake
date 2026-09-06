@@ -9,6 +9,7 @@ import {
 import { tileCenter } from "../../src/game/dungeon";
 import {
   MISSION_VOICE_LINES,
+  missionArchive,
   missionJournal,
   missionLandmarks,
   missionNpcDialogue,
@@ -161,6 +162,24 @@ describe("The Last Bell mission progression", () => {
 });
 
 describe("mission directions and dialogue", () => {
+  it("retains read wilderness entries in town and excludes positions from the archive", () => {
+    const state = road();
+    const readIds = ["scroll:ileya:warning", CITY_DISCOVERY_LANDMARK_ID];
+    const before = missionArchive(state, readIds);
+    state.map = createEmbercrossMap();
+    const after = missionArchive(state, [...readIds, readIds[0]!, "unknown"]);
+    expect(after).toEqual(before);
+    expect(after).toHaveLength(2);
+    expect(after.every((reading) => !("position" in reading))).toBe(true);
+    state.phase = "won";
+    const withResident = missionArchive(
+      state,
+      new Set([...readIds, "npc:embercross:ileya"]),
+    );
+    expect(withResident).toHaveLength(3);
+    expect(withResident[2]!.text).toContain("ward holds");
+    expect(missionArchive(state, [])).toEqual([]);
+  });
   it("places the arrival letter and sign on existing authoritative anchors", () => {
     const state = road();
     const cues = missionLandmarks(state);
