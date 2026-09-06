@@ -338,7 +338,9 @@ async function writeReports(complete = false) {
       .map((check) => ({
         case: entry.id,
         ...check,
-        evidence: `${entry.id}/${check.evidence ?? "timeline.json"}`,
+        evidence: check.evidence
+          ? `${entry.id}/${check.evidence}`
+          : "feedback.json",
       })),
   );
   const report = {
@@ -348,7 +350,7 @@ async function writeReports(complete = false) {
     plannedCases: plan.cases.map(({ id }) => id),
     visualVerdict: "NEEDS_VISUAL_REVIEW",
     coverage:
-      "Isolated movement, primary damage, ability activation and deterministic replay for three heroes; ordinary desktop/phone launch, movement and held Strike. Custom plans report only their declared cases. This does not establish fun, animation quality, whole-run completion, balance or native-device performance.",
+      "The default plan probes movement, primary/ability damage, kill, exit unlock, pickup and deterministic replay for three heroes, plus ordinary desktop/phone launch, movement and held Strike. Only plannedCases in this report were run. This does not establish fun, animation quality, whole-run completion, balance or native-device performance.",
     failures,
     cases: results,
     metadata,
@@ -376,12 +378,12 @@ async function writeReports(complete = false) {
   const cards = results
     .map(
       (entry) =>
-        `<section><h2>${escapeHtml(entry.id)} — ${entry.checks.every((check) => check.pass) ? "PASS" : "FAIL"}</h2><ul>${entry.checks.map((check) => `<li class="${check.pass ? "pass" : "fail"}">${check.pass ? "PASS" : "FAIL"} ${escapeHtml(check.id)}: ${escapeHtml(check.message ?? JSON.stringify(check.actual ?? ""))} ${check.pass ? "" : escapeHtml(check.hint ?? "")}</li>`).join("")}</ul><p><a href="${entry.id}/timeline.json">State + render timeline</a> · <a href="${entry.id}/console.json">Browser faults</a></p>${entry.frames.map((frame) => `<a href="${entry.id}/${frame}"><img loading="lazy" src="${entry.id}/${frame}" alt="${escapeHtml(entry.id)} ${frame}"></a>`).join("")}</section>`,
+        `<section><h2>${escapeHtml(entry.id)} — ${entry.checks.every((check) => check.pass) ? "PASS" : "FAIL"}</h2><ul>${entry.checks.map((check) => `<li class="${check.pass ? "pass" : "fail"}">${check.pass ? "PASS" : "FAIL"} ${escapeHtml(check.id)}: ${escapeHtml(check.message ?? JSON.stringify(check.actual ?? ""))} ${check.pass ? "" : escapeHtml(check.hint ?? "")}</li>`).join("")}</ul><p><a href="${entry.id}/timeline.json">State + render timeline</a> · <a href="${entry.id}/console.json">Browser faults</a> · <a href="${entry.id}/contact-sheet.png">Canvas contact sheet</a></p>${entry.frames.map((frame) => `<figure><a href="${entry.id}/${frame}"><img loading="lazy" src="${entry.id}/${frame}" alt="${escapeHtml(entry.id)} ${frame}"></a><figcaption>${frame}</figcaption></figure>`).join("")}<details><summary>Full page with HUD (live pages are later, unsynchronized samples)</summary>${(entry.pages ?? []).map((frame) => `<figure><a href="${entry.id}/${frame}"><img loading="lazy" src="${entry.id}/${frame}" alt="${frame}"></a><figcaption>${frame}</figcaption></figure>`).join("")}</details></section>`,
     )
     .join("");
   await fs.writeFile(
     path.join(output, "report.html"),
-    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Game feedback ${verdict}</title><style>body{background:#15191f;color:#eee;font:16px system-ui;max-width:1200px;margin:32px auto;padding:16px}section{border-top:1px solid #637080;margin-top:28px}img{width:30%;height:auto;margin:1%}a{color:#9ed3ff}.pass{color:#9edbb4}.fail{color:#ff9b9b}li{margin:8px 0}</style><h1>Game feedback: ${verdict}</h1><p>Visual quality: NEEDS_VISUAL_REVIEW. Open full-size frames; passing checks do not approve appearance.</p><p>${escapeHtml(report.coverage)}</p><a href="feedback.json">Machine-readable feedback</a>${cards}</html>`,
+    `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Game feedback ${verdict}</title><style>body{background:#15191f;color:#eee;font:16px system-ui;max-width:1200px;margin:32px auto;padding:16px}section{border-top:1px solid #637080;margin-top:28px}figure{display:inline-block;width:30%;margin:1%;vertical-align:top}img{width:100%;height:auto}figcaption{font-size:12px}a{color:#9ed3ff}.pass{color:#9edbb4}.fail{color:#ff9b9b}li{margin:8px 0}</style><h1>Game feedback: ${verdict}</h1><p>Visual quality: NEEDS_VISUAL_REVIEW. Open full-size frames; passing checks do not approve appearance.</p><p>${escapeHtml(report.coverage)}</p><a href="feedback.json">Machine-readable feedback</a>${cards}</html>`,
   );
   if (!complete) return;
   console.log(
@@ -521,6 +523,7 @@ try {
           : "deterministic-semantic-input",
         checks,
         frames: samples.map(({ frame }) => frame),
+        pages: samples.map(({ pageFrame }) => pageFrame),
       });
       await context.close();
       console.log(

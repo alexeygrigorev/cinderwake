@@ -22,10 +22,19 @@ export function defaultFeedbackPlan() {
             ),
           },
           player: { tile: [8, 7] },
-          monsters: [{ id: "target", kind: "stonekin", tile: [10, 7] }],
+          monsters: [
+            {
+              id: "target",
+              kind: "stonekin",
+              tile: [10, 7],
+              health: 40,
+              maxHealth: 40,
+              guaranteedLoot: true,
+            },
+          ],
           settings: { ai: false },
         },
-        ticks: [0, 12, 24, 48, 72, 120],
+        ticks: [0, 12, 24, 48, 72, 96, 120, 144],
         commands: [
           { tick: 0, input: { moveX: 1 } },
           {
@@ -33,6 +42,8 @@ export function defaultFeedbackPlan() {
             input: { moveX: 0, attack: true, aim: { x: 10752, y: 7680 } },
           },
           { tick: 72, input: { attack: false, ability: true } },
+          { tick: 96, input: { ability: false, moveX: 1 } },
+          { tick: 120, input: { moveX: 0 } },
         ],
         expect: [
           {
@@ -65,6 +76,36 @@ export function defaultFeedbackPlan() {
             op: "gte",
             value: 1,
             hint: "The isolated target has AI disabled; inspect unexpected damage.",
+          },
+          {
+            id: "ability-hit",
+            from: 72,
+            at: 96,
+            path: "metrics.damageDealt",
+            op: "deltaGte",
+            value: 1,
+            hint: "The ability must deal new damage after primary input stops; inspect its impact and range.",
+          },
+          {
+            id: "kill",
+            path: "metrics.kills",
+            op: "gte",
+            value: 1,
+            hint: "The primary/ability combination should finish the weakened target.",
+          },
+          {
+            id: "exit-unlocked",
+            path: "exitUnlocked",
+            op: "eq",
+            value: true,
+            hint: "The last kill must unlock progression.",
+          },
+          {
+            id: "pickup",
+            path: "metrics.lootCollected",
+            op: "gte",
+            value: 1,
+            hint: "Walking over the guaranteed drop must produce a physical pickup.",
           },
         ],
       },
@@ -144,6 +185,15 @@ export function validateFeedbackPlan(plan) {
       if (check.at !== undefined && !entry.ticks.includes(check.at))
         throw new Error(`${entry.id}/${check.id}: at must be a captured tick`);
       if (
+        check.from !== undefined &&
+        (check.op !== "deltaGte" ||
+          !entry.ticks.includes(check.from) ||
+          check.from >= (check.at ?? entry.ticks.at(-1)))
+      )
+        throw new Error(
+          `${entry.id}/${check.id}: from must be an earlier captured tick for deltaGte`,
+        );
+      if (
         check.op !== "eq" &&
         (typeof check.value !== "number" || !Number.isFinite(check.value))
       )
@@ -178,7 +228,11 @@ export function assessExpectations(expectations, samples) {
         : samples.find(({ tick }) => tick === check.at);
     let actual = readPath(sample?.snapshot, check.path);
     if (check.op === "deltaGte") {
-      const initial = readPath(samples[0]?.snapshot, check.path);
+      const baseline =
+        check.from === undefined
+          ? samples[0]
+          : samples.find(({ tick }) => tick === check.from);
+      const initial = readPath(baseline?.snapshot, check.path);
       actual =
         typeof actual === "number" && typeof initial === "number"
           ? actual - initial
