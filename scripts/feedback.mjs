@@ -307,7 +307,7 @@ async function live(page, entry, directory, samples, checks) {
       (event) =>
         event.sourceId === "player" &&
         event.type === "attack_started" &&
-        event.tick > after,
+        event.tick >= after,
     ).length;
   checks.push({
     id: "movement-does-not-attack",

@@ -238,16 +238,22 @@ export function assessExpectations(expectations, samples) {
           ? actual - initial
           : undefined;
     }
-    if (check.op === "eventCountGte")
+    if (check.op === "eventCountGte") {
+      // Input at tick N emits events stamped N while advancing state to N+1.
+      // Exclude retained initial history, not new events on that first tick.
+      const matches = (event) =>
+        event.type === check.event &&
+        (check.sourceId === undefined || event.sourceId === check.sourceId) &&
+        event.tick >= samples[0].tick;
+      const initial = readPath(samples[0]?.snapshot, check.path);
       actual = Array.isArray(actual)
-        ? actual.filter(
-            (event) =>
-              event.type === check.event &&
-              (check.sourceId === undefined ||
-                event.sourceId === check.sourceId) &&
-              event.tick > samples[0].tick,
-          ).length
+        ? Math.max(
+            0,
+            actual.filter(matches).length -
+              (Array.isArray(initial) ? initial.filter(matches).length : 0),
+          )
         : undefined;
+    }
     const numeric = typeof actual === "number" && Number.isFinite(actual);
     const pass =
       check.op === "eq"
