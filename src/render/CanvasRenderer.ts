@@ -31,6 +31,21 @@ interface ImageBackedReference {
 export const DEFAULT_CAMERA_ZOOM = 0.9;
 const CAMERA_DEAD_ZONE_PIXELS = 56;
 
+export function monsterHealthFrameSize(
+  actorWidth: number,
+  zoom: number,
+): { width: number; height: number } {
+  const width = Math.round(
+    Math.max(
+      // Preserve the default-size Hexer bar while keeping it proportional on
+      // the wider portrait camera. A fixed 36px floor overwhelmed small actors.
+      (36 * zoom) / DEFAULT_CAMERA_ZOOM,
+      Math.min(52 * zoom, actorWidth * 0.35),
+    ),
+  );
+  return { width, height: Math.round((width * 82) / 197) };
+}
+
 /** Cover-fitted portrait canvases expose only their middle strip. */
 export function portraitCameraFrame(
   canvas: { width: number; height: number },
@@ -577,18 +592,10 @@ export class CanvasRenderer {
       const actorInkTop =
         call.destinationRect.y +
         (ink.top / call.sourceRect.height) * call.destinationRect.height;
-      const width = Math.round(
-        Math.max(
-          // Hexer's narrower 112px cell still needs to fit the shared health
-          // bar contract at the default 0.9 zoom.
-          36,
-          Math.min(
-            52 * manifest.camera.zoom,
-            call.destinationRect.width * 0.35,
-          ),
-        ),
+      const { width, height } = monsterHealthFrameSize(
+        call.destinationRect.width,
+        manifest.camera.zoom,
       );
-      const height = Math.round((width * 82) / 197);
       const destinationRect = {
         x: Math.round(call.screenAnchor.x - width / 2),
         y: Math.round(actorInkTop - height - 4),
