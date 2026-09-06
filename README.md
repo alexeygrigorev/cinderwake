@@ -17,7 +17,27 @@ npm ci
 npm run dev
 ```
 
-Choose Vanguard, Ranger, or Arcanist, enter a repeatable seed, clear the generated ruin, collect deterministic drops, and enter the opened rift. Use WASD or arrow keys to move, the pointer to aim, hold left click or Space to strike repeatedly, right click or E for the class ability, and Q to drink a tonic. Aim stays on the cursor while moving. Touch players can hold Strike and use the movement pad to face their target. Buildings and solid props block both heroes and monsters at their painted ground footprint; movement slides along their base instead of passing through the sprite.
+Choose Vanguard, Ranger, or Arcanist and enter a repeatable seed. Begin "The Last
+Bell" by breaking the ambush and defeating the Bell Keeper's host. Follow the
+road sign to deliver the warning to Embercross. Speak with the townsfolk before
+returning to the south gate to seal the rift.
+
+- Click clear ground to travel or click an enemy to pursue and attack.
+- Move with WASD or arrows. Hold Space or Shift-click to attack without pursuing.
+- Use right click / E for your class ability and Q for a tonic.
+- Press F or the nearby interaction button to read a letter, read a sign, or speak.
+- Press J for the paused journal, controls, sound settings, and saves.
+- On a phone, tap to travel or use the movement pad. Hold Strike to attack nearby foes.
+
+Collect drops to gain gold, supplies, and weapon power, and earn XP to level up.
+Buildings and solid props block movement, and melee attacks respect walls.
+The journal keeps your discovered writings and conversations. Quest voices and
+combat sounds use bundled ElevenLabs recordings, so you don't need an API key to play.
+
+Save a manual checkpoint from the journal, or resume the separate autosave made
+when you're safe and above half health. Choose "Continue journey" after reloading.
+Export a save file before clearing browser data or moving to another browser.
+You can import it from character selection or the journal.
 
 This project takes inspiration from the readable top-down combat loop of classic action RPGs, but its world, characters, enemies, art, names, and implementation are original.
 
@@ -46,7 +66,12 @@ The scenario schema can inject the tick and phase; player and enemy transforms, 
 
 ## Quality workflow
 
-For a short model-facing feedback loop, run `npm run feedback`. It checks actual
+Run `npm run feedback:game` to check live controls and nine generated campaigns
+with exact save replay. It also tests browser saves, journal interactions, and audio playback.
+Open the printed HTML report under `quality-results/game-feedback/`. Failures
+retain diagnostic logs, input tapes, states, and browser traces.
+
+For a shorter model-facing feedback loop, run `npm run feedback`. It checks actual
 movement and damage, replay consistency, and physical desktop/phone controls for
 all three heroes. Each run produces a compact failure report, state/input replay
 data, and images under `quality-results/feedback/`, including when checks fail.

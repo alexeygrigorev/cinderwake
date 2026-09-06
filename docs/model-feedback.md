@@ -1,19 +1,42 @@
 # Improving the game with model feedback
 
-Run `npm run feedback` from the repository root. It starts a local server and
+Run `npm run feedback:game` before and after a gameplay change. Open the printed
+`report.html` and read `feedback.json` under `quality-results/game-feedback/`.
+The command runs three checks in sequence so browser captures don't compete:
+
+1. Live desktop/phone controls and isolated combat for all three heroes.
+2. Nine generated campaigns: three seeds for each hero, real movement and combat,
+   road-sign discovery, city entry, and the ending. Each campaign must reproduce
+   from its exact input tape and from a saved checkpoint.
+3. Browser tests for contextual attacks, the journal, save/reload, export/import,
+   audio playback, persistent mute, and pause behavior on a phone.
+
+Missing reports, interrupted runs, changed source files, skipped browser tests,
+and unfinished campaigns can't produce `PASS`. The automated pilot knows the
+whole map: its completion time doesn't estimate how long a new player needs.
+Inspect the images and play the game as well; these checks don't rate fun.
+
+For a shorter check, run `npm run feedback`. It starts a local server and
 Chromium, runs nine short cases, and prints paths to `feedback.md` and
 `report.html` under a new `quality-results/feedback/run-*` directory. Install
 Chromium with `npx playwright install chromium` if needed.
 
 Give an implementation model the following task:
 
-> Run `npm run feedback`. Read the resulting feedback.md and feedback.json.
+> Run `npm run feedback:game`. Read the resulting feedback.md and feedback.json.
 > Open the contact sheets and full-size frames for the relevant cases. For a
 > failure, inspect its timeline.json, initial-state.json, commands.json and
 > console.json. Reproduce it, fix the cause, add a behavioral expectation or
 > regression test that fails before the fix, and rerun. Report what the evidence
 > proves and what still needs visual or gameplay review. Do not change thresholds
 > or screenshot baselines just to make a failure disappear.
+
+To investigate a campaign failure, read its `*-final-state.json` and blocker in
+`campaign/results.json`. The report includes the selected target, remaining
+route, nearby collision footprints, and a reproduction command. Run one seed
+and hero with `npm run feedback:campaign -- --seeds last-bell --classes ranger`.
+The campaign runner sends only movement, aim, attack, ability, and tonic inputs;
+it must never teleport actors, inject kills, or grant test-only stats.
 
 This workflow uses the model's existing image inspection tools; it does not
 require another model API or credentials.
