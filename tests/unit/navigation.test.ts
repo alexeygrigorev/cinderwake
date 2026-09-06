@@ -34,6 +34,29 @@ function openArena(width = 30, height = 15): string[] {
 }
 
 describe("deterministic navigation", () => {
+  it.each([
+    [3, -159, 2, 3],
+    [4, -350, 2, 3],
+    [318, 30, 1, 2],
+  ] as const)(
+    "finishes the nearest reachable cell from an off-center approach (%i, %i)",
+    (dx, dy, targetX, targetY) => {
+      const map = explicitDungeon([
+        "#####",
+        "#..E#",
+        "#.P.#",
+        "#...#",
+        "#####",
+      ]);
+      map.tiles[targetY * map.width + targetX] = 1;
+      const center = tileCenter(map.spawn);
+      const from = { x: center.x + dx, y: center.y + dy };
+      const target = tileCenter({ x: targetX, y: targetY });
+      expect(findNavigationRoute(map, [], from, target, 320)).toEqual([center]);
+      expect(findNavigationRoute(map, [], center, target, 320)).toEqual([]);
+    },
+  );
+
   it("returns the same safe route around a solid building from the same state", () => {
     const state = worldFromScenario(BUILTIN_SCENARIOS["animation-walk"]!);
     const building = buildSceneryLayout(state.map).find(
