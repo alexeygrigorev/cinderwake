@@ -19,6 +19,11 @@ import {
   type ScenarioV1,
 } from "./scenarios";
 import { stateFromSnapshot } from "./stateSnapshots";
+import {
+  cloneInputPatch,
+  validateAdvance,
+  validateTick,
+} from "./inputValidation";
 
 export interface TestHost {
   getState(): GameState;
@@ -123,10 +128,10 @@ export function installGameTestBridge(
     ready: true,
     loadScenario(value) {
       const scenario = resolveScenario(value);
-      input = { ...EMPTY_INPUT };
-      queued.clear();
       // Validation/construction happens before host mutation: never patch a live world.
       worldFromScenario(scenario);
+      input = { ...EMPTY_INPUT };
+      queued.clear();
       initial = { kind: "scenario", value: cloneScenario(scenario) };
       host.startScenario(cloneScenario(scenario));
       applyInput();
@@ -148,6 +153,7 @@ export function installGameTestBridge(
         : bridge.loadState(initial.value);
     },
     setInput(patch) {
+      patch = cloneInputPatch(patch);
       input = {
         ...input,
         ...patch,
@@ -161,7 +167,16 @@ export function installGameTestBridge(
       applyInput();
     },
     queueInputs(entries) {
-      for (const entry of entries) {
+      if (!Array.isArray(entries)) throw new Error("entries must be an array");
+      const owned = entries.map((entry) => {
+        if (!entry || typeof entry !== "object")
+          throw new Error("Each input entry must be an object");
+        validateTick(entry.tick);
+        if (entry.tick < host.getState().tick)
+          throw new Error(`Cannot queue input for past tick ${entry.tick}`);
+        return { tick: entry.tick, input: cloneInputPatch(entry.input) };
+      });
+      for (const entry of owned) {
         const list = queued.get(entry.tick) ?? [];
         list.push(entry.input);
         queued.set(entry.tick, list);
@@ -173,6 +188,7 @@ export function installGameTestBridge(
       applyInput();
     },
     step(ticks = 1, options = {}) {
+      validateAdvance(ticks, host.getState().tick);
       for (let index = 0; index < ticks; index += 1) {
         for (const patch of queued.get(host.getState().tick) ?? [])
           input = {
@@ -218,11 +234,25 @@ export function installGameTestBridge(
     captureEntityMask: (entityId) => host.captureEntityMask(entityId),
     capturePaintMask: (paintId) => host.capturePaintMask(paintId),
     captureSequence(ticks, options = {}) {
+      if (!Array.isArray(ticks)) throw new Error("ticks must be an array");
+      let previousTick = host.getState().tick;
+      for (const targetTick of ticks) {
+        validateTick(targetTick);
+        if (targetTick < previousTick)
+          throw new Error(`Cannot capture past tick ${targetTick}`);
+        previousTick = targetTick;
+      }
+      validateAdvance(
+        previousTick - host.getState().tick,
+        host.getState().tick,
+      );
       return ticks.map((targetTick) => {
         const remaining = targetTick - host.getState().tick;
         if (remaining < 0)
           throw new Error(`Cannot capture past tick ${targetTick}`);
         bridge.step(remaining, { render: options.render ?? true });
+        // A capture always synchronizes pixels, including zero-tick captures.
+        if (remaining === 0 || options.render === false) bridge.render();
         return {
           tick: host.getState().tick,
           snapshot: bridge.snapshot(),

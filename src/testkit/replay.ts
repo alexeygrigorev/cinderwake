@@ -1,6 +1,11 @@
 import { EMPTY_INPUT, type GameState, type InputState } from "../game/types";
 import { stepGame } from "../game/simulation";
 import { stateHash } from "./canonical";
+import {
+  cloneInputPatch,
+  validateAdvance,
+  validateTick,
+} from "./inputValidation";
 
 export interface ReplayEntryV1 {
   tick: number;
@@ -22,6 +27,7 @@ export interface ReplayResult {
 export function inputAtTick(tape: ReplayTapeV1, tick: number): InputState {
   const patch = tape.entries
     .filter((entry) => entry.tick <= tick)
+    .sort((first, second) => first.tick - second.tick)
     .reduce<Partial<InputState>>(
       (current, entry) => ({ ...current, ...entry.input }),
       {},
@@ -45,13 +51,24 @@ export function playReplay(
     throw new Error(
       `Replay scenario mismatch: expected ${tape.scenarioId}, got ${initial.scenarioId}`,
     );
-  for (const entry of tape.entries) {
-    if (!Number.isInteger(entry.tick) || entry.tick < 0)
-      throw new Error(`Replay entry tick is invalid: ${entry.tick}`);
-  }
+  if (!Array.isArray(tape.entries))
+    throw new Error("Replay entries must be an array");
+  const entries = tape.entries
+    .map((entry) => {
+      if (!entry || typeof entry !== "object")
+        throw new Error("Replay entry must be an object");
+      validateTick(entry.tick, "Replay entry tick");
+      return { tick: entry.tick, input: cloneInputPatch(entry.input) };
+    })
+    .sort((first, second) => first.tick - second.tick);
+  if (tape.checkpoints !== undefined && !Array.isArray(tape.checkpoints))
+    throw new Error("Replay checkpoints must be an array");
   for (const checkpoint of tape.checkpoints ?? []) {
-    if (!Number.isInteger(checkpoint.tick) || checkpoint.tick < 0)
-      throw new Error(`Replay checkpoint tick is invalid: ${checkpoint.tick}`);
+    if (!checkpoint || typeof checkpoint !== "object")
+      throw new Error("Replay checkpoint must be an object");
+    validateTick(checkpoint.tick, "Replay checkpoint tick");
+    if (typeof checkpoint.hash !== "string" || checkpoint.hash.length === 0)
+      throw new Error("Replay checkpoint hash must be a non-empty string");
   }
   const lastEntry = tape.entries.reduce(
     (max, entry) => Math.max(max, entry.tick),
@@ -62,9 +79,19 @@ export function playReplay(
     -1;
   const requiredFinalTick = Math.max(lastEntry + 1, lastCheckpoint);
   const count = ticks ?? Math.max(0, requiredFinalTick - initial.tick);
+  validateAdvance(count, initial.tick);
   const hashes: ReplayResult["hashes"] = [];
+  let nextEntry = 0;
+  let input = { ...EMPTY_INPUT };
   for (let index = 0; index < count; index += 1) {
-    stepGame(initial, inputAtTick(tape, initial.tick));
+    while (
+      nextEntry < entries.length &&
+      entries[nextEntry]!.tick <= initial.tick
+    ) {
+      input = { ...input, ...entries[nextEntry]!.input };
+      nextEntry += 1;
+    }
+    stepGame(initial, input);
     hashes.push({ tick: initial.tick, hash: stateHash(initial) });
   }
   for (const checkpoint of tape.checkpoints ?? []) {
