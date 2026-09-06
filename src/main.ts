@@ -12,7 +12,11 @@ import {
   isEmbercrossMap,
   wildernessCityLandmarkAnchor,
 } from "./game/cityWorld";
-import { findStateNavigationRoute } from "./game/navigation";
+import {
+  findStateNavigationRoute,
+  navigationSegmentWalkable,
+} from "./game/navigation";
+import { sceneryCollisions } from "./game/sceneryLayout";
 import type { CharacterClass, GameState } from "./game/types";
 import {
   BUILTIN_SCENARIOS,
@@ -21,7 +25,7 @@ import {
 } from "./testkit/scenarios";
 import { GameHost } from "./app/GameHost";
 import { CampaignUI, browserSave } from "./app/CampaignUI";
-import { decodeSave, type CampaignSave } from "./app/saveGame";
+import { decodeSave, storeSave, type CampaignSave } from "./app/saveGame";
 import { missionJournal } from "./game/missions";
 import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
@@ -287,7 +291,7 @@ function screen(): void {
     if (!file) return;
     try {
       if (file.size > 4_194_304) throw new Error("File exceeds 4 MB");
-      await resumeCampaign(decodeSave(await file.text()));
+      await resumeCampaign(decodeSave(await file.text()), true);
     } catch {
       importLabel
         .querySelector(".sprite-text")!
@@ -315,10 +319,26 @@ function screen(): void {
   const selectionLab = app.querySelector<HTMLButtonElement>(".lab-toggle");
   if (selectionLab) selectionLab.onclick = () => lab();
 }
-async function resumeCampaign(save: CampaignSave): Promise<void> {
+async function resumeCampaign(
+  save: CampaignSave,
+  imported = false,
+): Promise<void> {
+  let importNotice: string | undefined;
+  if (imported) {
+    try {
+      storeSave(localStorage, save.state, save.discoveries, "auto");
+    } catch {
+      importNotice =
+        "Imported for this session only: browser storage is unavailable. Keep your save file.";
+    }
+  }
   selected = save.state.player.classId;
   seed = save.state.seed;
   await boot(createRunScenario(seed, selected), save);
+  if (importNotice) {
+    campaign?.status(importNotice);
+    campaign?.open();
+  }
 }
 async function boot(scenario: ScenarioV1, saved?: CampaignSave): Promise<void> {
   host?.stop();
@@ -400,6 +420,17 @@ async function boot(scenario: ScenarioV1, saved?: CampaignSave): Promise<void> {
             id: monster.id,
             position: monster.position,
             range: ARCHETYPES[state.player.classId].attackRange,
+            lineOfSight: navigationSegmentWalkable(
+              state.map,
+              sceneryCollisions(state.map),
+              state.player.position,
+              monster.position,
+              state.player.classId === "ranger"
+                ? 110
+                : state.player.classId === "arcanist"
+                  ? 155
+                  : 0,
+            ),
           }
         : null;
     },
@@ -415,7 +446,7 @@ async function boot(scenario: ScenarioV1, saved?: CampaignSave): Promise<void> {
     campaign = new CampaignUI(
       host,
       input,
-      (save) => void resumeCampaign(save),
+      (save, imported) => void resumeCampaign(save, imported),
       () => screen(),
       saved?.discoveries,
     );

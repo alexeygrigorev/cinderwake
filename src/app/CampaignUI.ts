@@ -53,7 +53,7 @@ export class CampaignUI {
   constructor(
     private readonly host: GameHost,
     private readonly input: InputController,
-    private readonly resume: (save: CampaignSave) => void,
+    private readonly resume: (save: CampaignSave, imported?: boolean) => void,
     private readonly exit: () => void,
     discoveries: readonly string[] = [],
   ) {
@@ -133,7 +133,11 @@ export class CampaignUI {
     this.audio.observe(state);
     const journal = missionJournal(state);
     const missionKey = `${journal.activeId}:${state.phase}`;
-    if (this.lastMission && this.lastMission !== missionKey)
+    if (
+      this.lastMission &&
+      this.lastMission !== missionKey &&
+      state.phase !== "lost"
+    )
       this.say(journal.cue.voiceId);
     this.lastMission = missionKey;
     const landmarks = missionLandmarks(state);
@@ -252,7 +256,7 @@ export class CampaignUI {
       return false;
     }
   }
-  private status(message: string): void {
+  status(message: string): void {
     this.saveStatus = message;
     const status = this.dialog.querySelector("[data-save-status]");
     if (status) status.textContent = message;
@@ -282,7 +286,7 @@ export class CampaignUI {
       ${journal.ending ? `<p class="journal-ending">${escape(journal.ending)}</p>` : ""}
       ${read.length ? `<details><summary>Discovered writings and conversations (${this.discoveries.size})</summary>${read.map((entry) => `<h3>${escape(entry.title)}</h3><p>${escape(entry.text)}</p>`).join("")}</details>` : ""}
       <section class="save-controls" aria-label="Saved journey"><h3>Your journey</h3><p data-save-status role="status">${escape(this.saveStatus)}</p><div class="journal-actions"><button data-save ${state.phase === "lost" ? "disabled" : ""}>Save checkpoint</button><button data-load="manual" ${saved ? "" : "disabled"}>Load checkpoint</button><button data-load="auto" ${auto ? "" : "disabled"}>Load autosave</button><button data-export>Export save</button><label class="import-save">Import save<input type="file" accept=".json,application/json" data-import-save aria-label="Import save" /></label><button data-exit>Save and leave</button></div></section>
-      <details class="controls-help"><summary>Controls and sound</summary><p>Click clear ground to move. Click an enemy to pursue and attack. WASD / arrows move; Space or Shift-click holds your ground and attacks. Right click / E uses your class ability. Q drinks a tonic. F reads or speaks nearby. J opens this journal. On touch screens, tap to travel or use the movement pad; hold Strike to attack nearby foes.</p><p>Save checkpoint keeps a manual slot. Autosave uses a separate slot when you are safe and above half health. Export a file before clearing browser data.</p><button data-mute aria-pressed="${this.audio.snapshot().muted}">${this.audio.snapshot().muted ? "Unmute sound" : "Mute sound"}</button><label>Volume <input data-volume type="range" min="0" max="1" step="0.05" value="${this.audio.snapshot().volume}" /></label></details>`;
+      <details class="controls-help"><summary>Controls and sound</summary><p>Click clear ground to move. Click an enemy to pursue and attack. WASD / arrows move; Space or Shift-click holds your ground and attacks. Right click / E uses your class ability. Q drinks a tonic. F reads or speaks nearby. J opens this journal. On touch screens, tap to travel or use the movement pad; hold Strike to attack nearby foes.</p><p>Save checkpoint keeps a manual slot. Autosave uses a separate slot when you are safe and above half health. Export a file before clearing browser data.</p><button data-mute aria-pressed="${this.audio.snapshot().muted}">${this.audio.snapshot().muted ? "Unmute sound" : "Mute sound"}</button><label>Volume <input data-volume type="range" min="0" max="1" step="0.05" value="${this.audio.snapshot().volume}" /></label></details><button data-leave>Leave without saving</button>`;
     this.dialog.querySelector<HTMLButtonElement>("[data-close]")!.onclick =
       () => this.close();
     const listen =
@@ -324,7 +328,7 @@ export class CampaignUI {
         if (file.size > 4_194_304) throw new Error("File exceeds 4 MB.");
         const imported = decodeSave(await file.text());
         // Import is validated before any checkpoint or running state is replaced.
-        this.resume(imported);
+        this.resume(imported, true);
       } catch (error) {
         this.status(
           `Could not import: ${error instanceof Error ? error.message : "invalid file"}`,
@@ -335,6 +339,8 @@ export class CampaignUI {
       () => {
         if (this.save("manual")) this.exit();
       };
+    this.dialog.querySelector<HTMLButtonElement>("[data-leave]")!.onclick =
+      () => this.exit();
     this.dialog.querySelector<HTMLButtonElement>("[data-mute]")!.onclick = (
       event,
     ) => {
