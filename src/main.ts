@@ -326,13 +326,19 @@ async function boot(scenario: ScenarioV1): Promise<void> {
   host.startScenario(scenario);
   host.start();
   if (testMode) installGameTestBridge(host);
-  app
-    .querySelectorAll<HTMLButtonElement>("[data-action]")
-    .forEach(
-      (b) =>
-        (b.onclick = () =>
-          input!.press(b.dataset.action as "attack" | "ability" | "tonic")),
-    );
+  app.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((button) => {
+    const action = button.dataset.action as "attack" | "ability" | "tonic";
+    input!.attachActionButton(button, action);
+    const shortcut = button.querySelector<HTMLElement>(".sprite-shortcut");
+    if (shortcut && action !== "tonic")
+      setSpriteGlyphs(
+        shortcut,
+        action === "attack" ? "Hold / Space" : "RMB / E",
+      );
+    const detail = button.querySelector<HTMLElement>(".sprite-action-detail");
+    if (detail && action === "attack")
+      setSpriteGlyphs(detail, "Hold to strike");
+  });
   app.querySelector<HTMLElement>("#city-services")!.onclick = (event) => {
     const button = (event.target as HTMLElement).closest<HTMLButtonElement>(
       "[data-city-action]",

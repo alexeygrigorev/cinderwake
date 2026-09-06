@@ -19,6 +19,8 @@ export class InputController {
   };
   private blockedTouchTicks = 0;
   private aim: Vec2 | null = null;
+  private mouseAim: { x: number; y: number } | null = null;
+  private heldAttacks = new Set<number>();
   private attack = false;
   private ability = false;
   private tonic = false;
@@ -34,6 +36,13 @@ export class InputController {
       "keydown",
       (event) => {
         if (
+          event.target instanceof HTMLElement &&
+          event.target.closest(
+            "input, textarea, select, [contenteditable='true']",
+          )
+        )
+          return;
+        if (
           [
             "ArrowUp",
             "ArrowDown",
@@ -42,6 +51,8 @@ export class InputController {
             " ",
             "q",
             "Q",
+            "e",
+            "E",
           ].includes(event.key)
         )
           event.preventDefault();
@@ -59,7 +70,11 @@ export class InputController {
           ].includes(event.key.toLowerCase())
         )
           this.cancelTouchNavigation();
-        if (event.key.toLowerCase() === "q") this.tonic = true;
+        if (!event.repeat) {
+          if (event.key === " ") this.attack = true;
+          if (event.key.toLowerCase() === "e") this.ability = true;
+          if (event.key.toLowerCase() === "q") this.tonic = true;
+        }
       },
       { signal: this.listeners.signal },
     );
@@ -71,7 +86,8 @@ export class InputController {
     canvas.addEventListener(
       "pointermove",
       (event) => {
-        this.aim = this.point(event);
+        if (event.pointerType === "mouse")
+          this.mouseAim = { x: event.clientX, y: event.clientY };
       },
       { signal: this.listeners.signal },
     );
@@ -81,10 +97,16 @@ export class InputController {
         event.preventDefault();
         this.aim = this.point(event);
         if (event.pointerType === "mouse") {
+          this.mouseAim = { x: event.clientX, y: event.clientY };
           this.cancelTouchNavigation(false);
-          if (event.button === 0) this.attack = true;
+          if (event.button === 0) {
+            this.attack = true;
+            this.heldAttacks.add(event.pointerId);
+            canvas.setPointerCapture(event.pointerId);
+          }
           if (event.button === 2) this.ability = true;
         } else if (event.isPrimary) {
+          this.mouseAim = null;
           const player = this.getPlayerPosition();
           const route = this.resolveTouchRoute?.(player, this.aim) ?? [
             this.aim,
@@ -101,8 +123,29 @@ export class InputController {
     canvas.addEventListener("contextmenu", (event) => event.preventDefault(), {
       signal: this.listeners.signal,
     });
+    canvas.addEventListener(
+      "lostpointercapture",
+      (event) => this.heldAttacks.delete(event.pointerId),
+      { signal: this.listeners.signal },
+    );
+    for (const type of ["pointerup", "pointercancel"] as const)
+      window.addEventListener(
+        type,
+        (event) => this.heldAttacks.delete(event.pointerId),
+        { signal: this.listeners.signal },
+      );
+    window.addEventListener("blur", () => this.resetInput(), {
+      signal: this.listeners.signal,
+    });
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (document.hidden) this.resetInput();
+      },
+      { signal: this.listeners.signal },
+    );
   }
-  private point(e: PointerEvent): Vec2 {
+  private point(e: Pick<PointerEvent, "clientX" | "clientY">): Vec2 {
     const r = this.canvas.getBoundingClientRect();
     return this.toWorld(
       ((e.clientX - r.left) * 960) / r.width,
@@ -113,6 +156,37 @@ export class InputController {
     if (kind === "attack") this.attack = true;
     else if (kind === "ability") this.ability = true;
     else this.tonic = true;
+  }
+  /** Primary actions repeat while held; secondary actions activate once. */
+  attachActionButton(
+    element: HTMLElement,
+    kind: "attack" | "ability" | "tonic",
+  ): void {
+    element.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        if (event.pointerType !== "mouse") this.mouseAim = null;
+        this.press(kind);
+        if (kind === "attack") this.heldAttacks.add(event.pointerId);
+        element.setPointerCapture(event.pointerId);
+      },
+      { signal: this.listeners.signal },
+    );
+    element.addEventListener(
+      "lostpointercapture",
+      (event) => this.heldAttacks.delete(event.pointerId),
+      { signal: this.listeners.signal },
+    );
+    element.addEventListener(
+      "click",
+      (event) => {
+        // Keyboard and assistive-technology activation has no pointerdown.
+        if (event.detail === 0) this.press(kind);
+      },
+      { signal: this.listeners.signal },
+    );
   }
   /** Clear a world-space touch route after the map it was resolved against changes. */
   cancelNavigation(): void {
@@ -155,6 +229,7 @@ export class InputController {
       "pointerdown",
       (event) => {
         event.preventDefault();
+        this.mouseAim = null;
         this.cancelTouchNavigation();
         activePointer = event.pointerId;
         element.setPointerCapture(event.pointerId);
@@ -183,13 +258,24 @@ export class InputController {
       },
       { signal: this.listeners.signal },
     );
+    element.addEventListener("lostpointercapture", reset, {
+      signal: this.listeners.signal,
+    });
     reset();
   }
   destroy(): void {
     this.listeners.abort();
-    this.keys.clear();
-    this.cancelNavigation();
+    this.resetInput();
     this.resetMovePad = undefined;
+  }
+  private resetInput(): void {
+    this.keys.clear();
+    this.heldAttacks.clear();
+    this.mouseAim = null;
+    this.attack = false;
+    this.ability = false;
+    this.tonic = false;
+    this.cancelNavigation();
   }
   private cancelTouchNavigation(clearAim = true): void {
     this.touchRoute = [];
@@ -261,8 +347,12 @@ export class InputController {
         -1,
         Math.min(1, moveY || this.touchMove.y || tapMove.y),
       ) as -1 | 0 | 1,
-      aim: this.aim,
-      attack: this.attack,
+      // Reproject the cursor every tick: the camera may move while the mouse
+      // remains still. Touch navigation owns its separate world-space aim.
+      aim: this.mouseAim
+        ? this.point({ clientX: this.mouseAim.x, clientY: this.mouseAim.y })
+        : this.aim,
+      attack: this.attack || this.heldAttacks.size > 0 || this.keys.has(" "),
       ability: this.ability,
       useTonic: this.tonic,
     };

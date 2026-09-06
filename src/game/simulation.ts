@@ -837,10 +837,10 @@ function updatePlayer(
     player.health = Math.min(player.maxHealth, player.health + 45);
     player.tonics -= 1;
   }
-  if (input.attack && state.tick >= player.attackReadyTick)
-    queuePlayerAttack(state, "primary");
-  else if (input.ability && state.tick >= player.abilityReadyTick)
+  if (input.ability && state.tick >= player.abilityReadyTick)
     queuePlayerAttack(state, "ability");
+  else if (input.attack && state.tick >= player.attackReadyTick)
+    queuePlayerAttack(state, "primary");
   else if (state.tick >= player.animation.lockedUntilTick)
     setAnimation(
       player,
