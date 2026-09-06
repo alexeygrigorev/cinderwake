@@ -46,6 +46,27 @@ function stateFixture(scenarioId: string): VisibleSpriteStateV1 {
         visible: true,
         titleRole: true,
       },
+      ...(scenarioId === "campaign-journal"
+        ? [
+            {
+              id: "journal-prose",
+              value: "Carry the warning to Embercross.",
+              visible: true,
+              titleRole: false,
+              nativeCopy: {
+                scope: "campaign-narrative",
+                rootTag: "DIALOG",
+                rootClass: "campaign-dialog",
+                rootLabel: "The Last Bell journal",
+                gameChild: true,
+                unique: true,
+                modal: true,
+                tag: "P",
+                fontSize: 16,
+              },
+            },
+          ]
+        : []),
     ],
     pseudoElements: [
       {
@@ -222,5 +243,16 @@ describe("visible sprite provenance evidence", () => {
     const missingAsset = evaluateVisibleSpriteProvenanceEvidence(complete);
     expect(missingAsset.failures).toContain("non-sprite-visible-role");
     expect(missingAsset.failures).toContain("decoded-asset-missing");
+  });
+
+  it("does not accept an empty journal capture as narrative coverage", () => {
+    const evidence = evidenceFixture();
+    const journal = evidence.profiles[0].states.find(
+      (state) => state.scenarioId === "campaign-journal",
+    )!;
+    journal.textNodes = journal.textNodes.filter((text) => !text.nativeCopy);
+    expect(
+      evaluateVisibleSpriteProvenanceEvidence(evidence).failures,
+    ).toContain("provenance-inventory-incomplete");
   });
 });
