@@ -604,17 +604,29 @@ function updateHud(state: GameState): void {
     "aria-label",
     `${objectiveHeading}. ${objectiveCopy}. Direction marker points toward ${target.id}.`,
   );
-  const events = (state.events.length ? state.events : state.eventLog).slice(
-    -2,
-  );
-  log!.innerHTML = spriteText(
+  const events = state.eventLog
+    .filter(
+      (event) =>
+        event.type !== "movement_blocked" && event.type !== "attack_started",
+    )
+    .slice(-2);
+  setSpriteLabel(
+    log!,
     events.length
       ? events
           .map(
             (event) =>
-              (event.type === "movement_blocked"
-                ? `Blocked: ${event.detail ?? event.targetId ?? "obstacle"}`
-                : event.type.replaceAll("_", " ")) +
+              (event.type === "monster_died"
+                ? "Foe slain"
+                : event.type === "loot_picked"
+                  ? "Spoils gathered"
+                  : event.type === "exit_unlocked"
+                    ? "Road opened"
+                    : event.type === "player_damaged"
+                      ? "Wounded"
+                      : event.type === "damage"
+                        ? "Hit"
+                        : event.type.replaceAll("_", " ")) +
               (event.amount ? ` +${event.amount}` : ""),
           )
           .join(" / ")
