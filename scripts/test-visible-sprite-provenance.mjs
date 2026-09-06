@@ -432,6 +432,10 @@ async function collectState(
         window.__GAME_TEST__?.renderManifest() ??
         window.__GAME_OBSERVE__?.renderManifest() ??
         null;
+      const liveState =
+        window.__GAME_TEST__?.snapshot() ??
+        window.__GAME_OBSERVE__?.snapshot() ??
+        null;
       const manifestDraws = [];
       const addManifestDraw = (reference, id, visibleOverride) => {
         if (!reference || typeof reference !== "object") return;
@@ -444,6 +448,31 @@ async function collectState(
           renderMode: reference.renderMode,
           spriteId: reference.spriteId,
           assetId: reference.assetId,
+        });
+      };
+      const addCombatTelegraphDraw = (paint) => {
+        const telegraph = paint?.telegraph;
+        if (!telegraph || typeof telegraph !== "object") {
+          manifestDraws.push({
+            id: paint?.paintId ?? null,
+            visible: true,
+            role: "combat-telegraph",
+            paintRole: null,
+          });
+          return;
+        }
+        manifestDraws.push({
+          id: paint.paintId,
+          visible: telegraph.visible !== false,
+          role: "combat-telegraph",
+          paintRole: telegraph.paintRole,
+          layer: telegraph.layer,
+          attackId: telegraph.attackId,
+          ownerId: telegraph.ownerId,
+          worldCenter: telegraph.worldCenter,
+          radius: telegraph.radius,
+          impactTick: telegraph.impactTick,
+          projectedBounds: telegraph.projectedBounds,
         });
       };
       if (Array.isArray(manifest?.paintQueue))
@@ -464,6 +493,8 @@ async function collectState(
               paint.paintId,
               paint.worldUi?.visible,
             );
+          else if (paint.kind === "combat-telegraph")
+            addCombatTelegraphDraw(paint);
         }
       if (!manifestDraws.length) {
         for (const draw of manifest?.drawCalls ?? [])
@@ -495,6 +526,24 @@ async function collectState(
               spriteCatalogRevision: manifest.spriteCatalogRevision,
               tick: manifest.tick,
               paintCount: manifest.paintQueue?.length ?? 0,
+            }
+          : null,
+        combatState: liveState
+          ? {
+              tick: liveState.tick,
+              pendingAttacks: (liveState.pendingAttacks ?? []).map(
+                ({ id, ownerId, kind, impactTick, origin, range }) => ({
+                  id,
+                  ownerId,
+                  kind,
+                  impactTick,
+                  origin,
+                  range,
+                }),
+              ),
+              monsters: (liveState.monsters ?? []).map(
+                ({ id, kind, elite, health }) => ({ id, kind, elite, health }),
+              ),
             }
           : null,
       };

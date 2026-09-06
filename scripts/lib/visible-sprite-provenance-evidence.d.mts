@@ -56,6 +56,23 @@ export interface VisibleSpriteStateV1 {
   cssDecorations: Array<Record<string, unknown>>;
   canvasOperations: Array<Record<string, unknown>>;
   manifestDraws: Array<Record<string, unknown>>;
+  combatState?: {
+    tick: number;
+    pendingAttacks: Array<{
+      id: string;
+      ownerId: string;
+      kind: "primary" | "ability";
+      impactTick: number;
+      origin: { x: number; y: number };
+      range: number;
+    }>;
+    monsters: Array<{
+      id: string;
+      kind: string;
+      elite: boolean;
+      health: number;
+    }>;
+  } | null;
 }
 
 export interface VisibleSpriteProfileV1 {

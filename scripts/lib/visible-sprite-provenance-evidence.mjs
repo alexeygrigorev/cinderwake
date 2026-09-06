@@ -17,6 +17,7 @@ export const VISIBLE_SPRITE_PROVENANCE_SIGNAL_IDS = [
   "text-roles-are-approved",
   "title-roles-exactly-allowlisted",
   "all-visible-draws-have-sprite-provenance",
+  "combat-telegraphs-match-live-attacks",
 ];
 
 export const VISIBLE_SPRITE_PROVENANCE_FAILURE_IDS = [
@@ -27,6 +28,7 @@ export const VISIBLE_SPRITE_PROVENANCE_FAILURE_IDS = [
   "visible-draw-without-sprite-provenance",
   "decoded-asset-missing",
   "manifest-provenance-mismatch",
+  "combat-telegraph-contract-mismatch",
 ];
 
 const LOCAL_ASSET_PREFIX = "/assets/";
@@ -211,7 +213,63 @@ function canvasOperationPass(profile, operation) {
   return operation.provenance?.kind === "manifest-sprite";
 }
 
-function manifestDrawPass(profile, draw) {
+function sameVec(first, second) {
+  return (
+    isObject(first) &&
+    isObject(second) &&
+    first.x === second.x &&
+    first.y === second.y
+  );
+}
+
+function finiteBounds(bounds) {
+  return (
+    isObject(bounds) &&
+    [bounds.x, bounds.y, bounds.width, bounds.height].every(
+      (value) => typeof value === "number" && Number.isFinite(value),
+    ) &&
+    bounds.width >= 0 &&
+    bounds.height >= 0
+  );
+}
+
+function combatTelegraphPass(state, draw) {
+  if (
+    draw?.role !== "combat-telegraph" ||
+    draw.paintRole !== "combat-telegraph" ||
+    draw.layer !== "effects" ||
+    !isNonEmptyString(draw.attackId) ||
+    !isNonEmptyString(draw.ownerId) ||
+    typeof draw.radius !== "number" ||
+    !Number.isFinite(draw.radius) ||
+    typeof draw.impactTick !== "number" ||
+    !Number.isInteger(draw.impactTick) ||
+    !finiteBounds(draw.projectedBounds)
+  )
+    return false;
+  const combatState = state?.combatState;
+  const pending = combatState?.pendingAttacks?.find(
+    (attack) => attack?.id === draw.attackId,
+  );
+  const owner = combatState?.monsters?.find(
+    (monster) => monster?.id === draw.ownerId,
+  );
+  return (
+    pending?.kind === "ability" &&
+    pending.ownerId === draw.ownerId &&
+    pending.impactTick === draw.impactTick &&
+    pending.range === draw.radius &&
+    sameVec(pending.origin, draw.worldCenter) &&
+    owner?.kind === "stonekin" &&
+    owner.elite === true &&
+    typeof owner.health === "number" &&
+    owner.health > 0
+  );
+}
+
+function manifestDrawPass(profile, draw, state) {
+  if (draw?.role === "combat-telegraph")
+    return combatTelegraphPass(state, draw);
   return draw?.visible === false || decodedCatalogAssetPass(profile, draw);
 }
 
@@ -259,8 +317,12 @@ function stateInventory(profile, state, titleAllowlist) {
   const canvasFailures = canvasOperations
     .filter((operation) => !canvasOperationPass(profile, operation))
     .map((operation) => ({ id: operation.id ?? null, operation }));
+  const combatTelegraphFailures = manifestDraws
+    .filter(({ role }) => role === "combat-telegraph")
+    .filter((draw) => !combatTelegraphPass(state, draw))
+    .map((draw) => ({ id: draw.id ?? null, draw }));
   const manifestFailures = manifestDraws
-    .filter((draw) => !manifestDrawPass(profile, draw))
+    .filter((draw) => !manifestDrawPass(profile, draw, state))
     .map((draw) => ({ id: draw.id ?? null, draw }));
   const visibleSpriteRoles = roles.filter(
     ({ visible, role }) => visible === true && role === "sprite",
@@ -285,6 +347,9 @@ function stateInventory(profile, state, titleAllowlist) {
     ).length,
     manifestDrawCount: manifestDraws.filter(({ visible }) => visible !== false)
       .length,
+    combatTelegraphCount: manifestDraws.filter(
+      ({ role }) => role === "combat-telegraph",
+    ).length,
     canvasOperationCount: canvasOperations.filter(
       ({ visible }) => visible !== false,
     ).length,
@@ -295,6 +360,7 @@ function stateInventory(profile, state, titleAllowlist) {
     decorationFailures,
     canvasFailures,
     manifestFailures,
+    combatTelegraphFailures,
   };
 }
 
@@ -372,6 +438,11 @@ export function evaluateVisibleSpriteProvenanceEvidence({
     ) &&
     inventories.some(({ manifestDrawCount }) => manifestDrawCount > 0) &&
     inventories.some(({ canvasOperationCount }) => canvasOperationCount > 0);
+  const combatTelegraphsMatchLiveAttacks =
+    inventoryComplete &&
+    inventories.every(
+      ({ combatTelegraphFailures }) => combatTelegraphFailures.length === 0,
+    );
 
   const failures = [];
   if (!inventoryComplete) failures.push("provenance-inventory-incomplete");
@@ -390,6 +461,8 @@ export function evaluateVisibleSpriteProvenanceEvidence({
     failures.push("decoded-asset-missing");
   if (inventories.some(({ manifestFailures }) => manifestFailures.length > 0))
     failures.push("manifest-provenance-mismatch");
+  if (!combatTelegraphsMatchLiveAttacks)
+    failures.push("combat-telegraph-contract-mismatch");
 
   return {
     pass: failures.length === 0,
@@ -409,6 +482,11 @@ export function evaluateVisibleSpriteProvenanceEvidence({
       signal(
         "all-visible-draws-have-sprite-provenance",
         completeDrawProvenance,
+        { inventories },
+      ),
+      signal(
+        "combat-telegraphs-match-live-attacks",
+        combatTelegraphsMatchLiveAttacks,
         { inventories },
       ),
     ],
