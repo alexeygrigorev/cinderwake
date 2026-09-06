@@ -153,7 +153,7 @@ test("keyboard and pointer adapter feed deterministic input sampling", async ({
   const canvas = page.locator("canvas");
   await page.keyboard.down("d");
   await page.mouse.move(800, 400);
-  await canvas.click({ position: { x: 600, y: 270 } });
+  await canvas.click({ position: { x: 600, y: 270 }, modifiers: ["Shift"] });
   const snapshot: any = await page.evaluate(() => {
     window.__GAME_TEST__!.step(1, { useBrowserInput: true });
     return window.__GAME_TEST__!.snapshot();
