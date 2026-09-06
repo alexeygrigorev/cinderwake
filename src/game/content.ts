@@ -6,6 +6,11 @@ import type {
   MonsterKind,
 } from "./types";
 
+/** Cumulative XP needed for the next level: 80, 200, 360, 560, ... */
+export function nextLevelExperience(level: number): number {
+  return 20 * level * (level + 3);
+}
+
 export const ARCHETYPES: Record<CharacterClass, ArchetypeDefinition> = {
   vanguard: {
     id: "vanguard",

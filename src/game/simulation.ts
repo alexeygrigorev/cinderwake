@@ -1,4 +1,4 @@
-import { ARCHETYPES, MONSTERS } from "./content";
+import { ARCHETYPES, MONSTERS, nextLevelExperience } from "./content";
 import {
   CITY_DISCOVERY_LANDMARK_ID,
   CITY_GATE_ID,
@@ -551,6 +551,28 @@ function resolveDeaths(state: GameState): void {
     monster.velocity = { x: 0, y: 0 };
     state.metrics.kills += 1;
     state.player.xp += MONSTERS[monster.kind].xp;
+    while (state.player.xp >= nextLevelExperience(state.player.level)) {
+      state.player.level += 1;
+      state.player.maxHealth += 12;
+      state.player.power += 2;
+      if (state.player.health > 0) {
+        state.player.health = Math.min(
+          state.player.maxHealth,
+          state.player.health + 12,
+        );
+        state.effects.push({
+          id: `effect:level:${state.nextEntityId}`,
+          ownerId: "player",
+          kind: "nova",
+          position: { ...state.player.position },
+          color: "#ffd875",
+          startedAtTick: state.tick,
+          expiresAtTick: state.tick + 30,
+          radius: 1200,
+        });
+        state.nextEntityId += 1;
+      }
+    }
     emit(state, {
       type: "monster_died",
       sourceId: "player",
