@@ -1,6 +1,7 @@
 import type { GameHost } from "./GameHost";
 import type { InputController } from "../input/InputController";
 import { GameAudio, VOICE_CUES, type VoiceCue } from "../audio/GameAudio";
+import { nextLevelExperience } from "../game/content";
 import {
   missionJournal,
   missionLandmarks,
@@ -280,8 +281,9 @@ export class CampaignUI {
     const saved = browserSave("manual");
     const auto = browserSave("auto");
     this.dialog.innerHTML = `<header><div><small>FIELD JOURNAL · GAME PAUSED</small><h2>The Last Bell</h2></div><button data-close aria-label="Back to game">Back to game <kbd>Esc</kbd></button></header>
-      <p class="hero-progress">Level ${state.player.level} · ${state.player.xp} XP · ${state.player.gold} gold · ${state.player.tonics} tonics</p>
+      <p class="hero-progress">Level ${state.player.level} · XP ${state.player.xp}/${nextLevelExperience(state.player.level)} · Power ${state.player.power} · Supplies ${state.player.tonics} tonics · Gold ${state.player.gold}</p>
       ${cue ? `<article class="discovery"><small>${escape(cue.kind.toUpperCase())}</small><h3>${escape(cue.title)}</h3><p>${escape(cue.text)}</p>${cue.voiceId ? "<button data-listen>Listen again</button>" : ""}</article>` : `<p class="journal-summary">${escape(journal.summary)}</p>`}
+      ${journal.guidance ? `<p class="journal-guidance" role="note"><strong>Bell Keeper tactic.</strong> ${escape(journal.guidance)}</p>` : ""}
       <ol class="mission-list">${journal.objectives.map((objective) => `<li data-mission-id="${objective.id}" data-complete="${objective.complete}" ${objective.id === journal.activeId ? 'aria-current="step"' : ""}><span>${objective.complete ? "✓" : `${objective.current}/${objective.total}`}</span><div><h3>${escape(objective.title)}</h3><p>${escape(objective.description)}</p></div></li>`).join("")}</ol>
       ${journal.ending ? `<p class="journal-ending">${escape(journal.ending)}</p>` : ""}
       ${read.length ? `<details><summary>Discovered writings and conversations (${this.discoveries.size})</summary>${read.map((entry) => `<h3>${escape(entry.title)}</h3><p>${escape(entry.text)}</p>`).join("")}</details>` : ""}

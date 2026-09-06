@@ -34,6 +34,7 @@ export interface MissionJournal {
   chapter: string;
   title: string;
   summary: string;
+  guidance: string | null;
   activeId: MissionId;
   objectives: MissionObjective[];
   cue: MissionCue;
@@ -74,6 +75,9 @@ export const MISSION_VOICE_LINES = {
   "quest:complete":
     "For one more dawn, the dead are silent. Embercross remembers your name.",
 } as const;
+
+export const BELL_KEEPER_GUIDANCE =
+  "Move outside the marked circle, then counterattack during recovery.";
 
 const OPENING_IDS = ["monster:00", "monster:01"] as const;
 
@@ -205,6 +209,10 @@ export function missionJournal(state: GameState): MissionJournal {
   const remaining = state.monsters.filter(
     (monster) => monster.health > 0,
   ).length;
+  const bellKeeperAlive = state.monsters.some(
+    (monster) =>
+      monster.health > 0 && monster.elite && monster.kind === "stonekin",
+  );
   const totalThreats = Math.max(1, state.metrics.kills + remaining);
   const objectives: MissionObjective[] = [
     {
@@ -278,6 +286,7 @@ export function missionJournal(state: GameState): MissionJournal {
     title: won ? "The rift is sealed" : active.title,
     summary:
       "Embercross's bell keeper called into the dark for his lost daughter. The dead answered. Silence his host and bring the warning home before another night falls.",
+    guidance: bellKeeperAlive ? BELL_KEEPER_GUIDANCE : null,
     activeId: active.id,
     objectives,
     cue,

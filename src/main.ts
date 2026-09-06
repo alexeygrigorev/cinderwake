@@ -17,7 +17,7 @@ import {
   navigationSegmentWalkable,
 } from "./game/navigation";
 import { sceneryCollisions } from "./game/sceneryLayout";
-import type { CharacterClass, GameState } from "./game/types";
+import type { CharacterClass, GameEvent, GameState } from "./game/types";
 import {
   BUILTIN_SCENARIOS,
   createRunScenario,
@@ -27,6 +27,7 @@ import { GameHost } from "./app/GameHost";
 import { CampaignUI, browserSave } from "./app/CampaignUI";
 import { decodeSave, storeSave, type CampaignSave } from "./app/saveGame";
 import { missionJournal } from "./game/missions";
+import { lootPickupCopy } from "./game/rewardCopy";
 import { InputController } from "./input/InputController";
 import { installGameTestBridge } from "./testkit/browserBridge";
 import { installPlayerObserver } from "./testkit/playerObserver";
@@ -187,6 +188,24 @@ function setSpriteLabel(
   element.innerHTML = spriteText(value, className);
   element.setAttribute("aria-label", value);
   element.setAttribute("data-sprite-role", "glyph-text");
+}
+
+function eventLogCopy(event: GameEvent): string {
+  const pickup = lootPickupCopy(event);
+  if (pickup) return pickup;
+  return event.type === "movement_blocked"
+    ? `Blocked: ${event.detail ?? event.targetId ?? "obstacle"}`
+    : event.type === "monster_died"
+      ? "Foe slain"
+      : event.type === "loot_picked"
+        ? "Reward collected"
+        : event.type === "exit_unlocked"
+          ? "Road opened"
+          : event.type === "player_damaged"
+            ? "Wounded"
+            : event.type === "damage"
+              ? "Hit"
+              : event.type.replaceAll("_", " ");
 }
 
 function annotateSpriteRoles(root: ParentNode): void {
@@ -519,6 +538,7 @@ function updateHud(state: GameState): void {
   const livingMonsters = state.monsters.filter((monster) => monster.health > 0);
   const insideCity =
     isEmbercrossMap(state.map) && state.city.locationPhase === "inside";
+  const journal = campaign ? missionJournal(state) : undefined;
   setSpriteGlyphs(
     monsters!,
     insideCity
@@ -578,12 +598,14 @@ function updateHud(state: GameState): void {
   const objectiveHeading = campaign
     ? state.phase === "won"
       ? "Rift sealed"
-      : {
-          "break-ambush": "Break the ambush",
-          "silence-bell": "Silence the bell",
-          "carry-warning": "Reach Embercross",
-          "seal-night": "Seal the rift",
-        }[missionJournal(state).activeId]
+      : journal?.cue.kind === "enemy"
+        ? journal.cue.title
+        : {
+            "break-ambush": "Break the ambush",
+            "silence-bell": "Silence the bell",
+            "carry-warning": "Reach Embercross",
+            "seal-night": "Seal the rift",
+          }[journal!.activeId]
     : state.phase === "won"
       ? "Rift sealed"
       : livingMonsters.length
@@ -660,20 +682,8 @@ function updateHud(state: GameState): void {
       ? events
           .map(
             (event) =>
-              (event.type === "movement_blocked"
-                ? `Blocked: ${event.detail ?? event.targetId ?? "obstacle"}`
-                : event.type === "monster_died"
-                  ? "Foe slain"
-                  : event.type === "loot_picked"
-                    ? "Spoils gathered"
-                    : event.type === "exit_unlocked"
-                      ? "Road opened"
-                      : event.type === "player_damaged"
-                        ? "Wounded"
-                        : event.type === "damage"
-                          ? "Hit"
-                          : event.type.replaceAll("_", " ")) +
-              (event.amount
+              eventLogCopy(event) +
+              (event.amount && event.type !== "loot_picked"
                 ? ` ${event.type === "player_damaged" ? "-" : "+"}${event.amount}`
                 : ""),
           )

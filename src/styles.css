@@ -309,6 +309,15 @@ button {
   border: 1px solid #705a3e;
   background: #29271f;
 }
+.journal-guidance {
+  padding: 12px 14px;
+  border-left: 3px solid #dfae6f;
+  background: #24231d;
+  color: #e8d6b6;
+}
+.journal-guidance strong {
+  color: #f1d1a0;
+}
 .journal-actions {
   display: flex;
   gap: 8px;
