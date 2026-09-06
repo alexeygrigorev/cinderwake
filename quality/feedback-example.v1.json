@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "walk-and-stop",
+      "scenario": "animation-walk",
+      "ticks": [0, 10, 20, 40],
+      "commands": [
+        { "tick": 0, "input": { "moveX": 1 } },
+        { "tick": 20, "input": { "moveX": 0 } }
+      ],
+      "expect": [
+        {
+          "id": "movement",
+          "path": "metrics.distanceUnits",
+          "op": "deltaGte",
+          "value": 500,
+          "hint": "Inspect input consumption, movement speed and collision if the actor walks in place."
+        },
+        {
+          "id": "stopped",
+          "path": "player.velocity.x",
+          "op": "eq",
+          "value": 0,
+          "hint": "The movement patch was released at tick 20."
+        }
+      ]
+    }
+  ]
+}

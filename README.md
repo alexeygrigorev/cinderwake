@@ -17,7 +17,7 @@ npm ci
 npm run dev
 ```
 
-Choose Vanguard, Ranger, or Arcanist, enter a repeatable seed, clear the generated ruin, collect deterministic drops, and enter the opened rift. Use WASD or arrow keys to move, the pointer to aim, left click to strike, right click for the class ability, and Q to drink a tonic. The interface also works with touch action buttons. Buildings and solid props block both heroes and monsters at their painted ground footprint; movement slides along their base instead of passing through the sprite.
+Choose Vanguard, Ranger, or Arcanist, enter a repeatable seed, clear the generated ruin, collect deterministic drops, and enter the opened rift. Use WASD or arrow keys to move, the pointer to aim, hold left click or Space to strike repeatedly, right click or E for the class ability, and Q to drink a tonic. Aim stays on the cursor while moving. Touch players can hold Strike and use the movement pad to face their target. Buildings and solid props block both heroes and monsters at their painted ground footprint; movement slides along their base instead of passing through the sprite.
 
 This project takes inspiration from the readable top-down combat loop of classic action RPGs, but its world, characters, enemies, art, names, and implementation are original.
 
@@ -45,6 +45,14 @@ window.__GAME_TEST__.reset(); // rebuild last source and clear live/queued input
 The scenario schema can inject the tick and phase; player and enemy transforms, velocities, health, cooldowns, and animation locks; active attacks, projectiles, loot, and effects; RNG stream states; metrics; exit state; and event history. Loading validates and constructs a fresh world instead of patching a running one, so old timers, inputs, and entities cannot leak into the next test. `loadState(GameState | JSON)` likewise reconstructs a complete persisted world, and `reset()` reloads the last scenario or state. See [scenario authoring](docs/scenario-authoring.md) and the [complete fixture](public/scenarios/arbitrary-state.json).
 
 ## Quality workflow
+
+For a short model-facing feedback loop, run `npm run feedback`. It checks actual
+movement and damage, replay consistency, and physical desktop/phone controls for
+all three heroes. Each run produces a compact failure report, state/input replay
+data, and images under `quality-results/feedback/`, including when checks fail.
+See [the model feedback workflow](docs/model-feedback.md) for an agent task,
+custom behavioral expectations, and focused reruns. Passing checks do not approve
+visual quality; the report keeps that review explicit.
 
 ```text
 ScenarioV1 + exact input tape
