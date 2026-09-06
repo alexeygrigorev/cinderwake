@@ -225,7 +225,7 @@ try {
     }
     while (
       pilot.route.length &&
-      distance(player.position, pilot.route[0]) <= player.moveSpeed * 0.8
+      distance(player.position, pilot.route[0]) <= 160
     )
       pilot.route.shift();
     let moveX = 0;
