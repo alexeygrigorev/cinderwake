@@ -2380,6 +2380,21 @@ button {
     right: 132px;
   }
 
+  .game .mobile-controls {
+    height: 108px;
+  }
+
+  .game .mobile-actions {
+    grid-template: "ability tonic primary" 88px / 68px 68px 88px;
+    align-items: center;
+    width: 238px;
+  }
+
+  .game .city-service-sheet {
+    right: calc(248px + max(10px, var(--safe-area-inset-right)));
+    width: min(390px, calc(100vw - 370px));
+  }
+
   .game .hud.bottom {
     bottom: max(7px, var(--safe-area-inset-bottom));
   }
