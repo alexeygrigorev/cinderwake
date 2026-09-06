@@ -195,6 +195,10 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
       "npc:embercross:ileya",
     ];
     return {
+      cameraZoom: manifest.camera.zoom,
+      cssPixelsPerLogicalPixel:
+        document.querySelector("canvas")!.getBoundingClientRect().height /
+        manifest.viewport.height,
       scenes: cityIds.map((id) => {
         const scene = manifest.sceneSprites.find(
           ({ objectId }) => objectId === id,
@@ -327,7 +331,16 @@ test("portrait city composition uses reviewed sprites and stable idle frames", a
   ).toBe(4);
   for (const mask of evidence.residentMasks) {
     expect(Math.abs(mask.bottomOffset), mask.entityId).toBeLessThanOrEqual(1);
-    expect(mask.inkBounds.height, mask.entityId).toBeGreaterThanOrEqual(90);
+    // Original 90px ink at 0.9 zoom means 100 world pixels. Preserve that art
+    // check while separately requiring legible size in the phone viewport.
+    expect(
+      mask.inkBounds.height / evidence.cameraZoom,
+      mask.entityId,
+    ).toBeGreaterThanOrEqual(100);
+    expect(
+      mask.inkBounds.height * evidence.cssPixelsPerLogicalPixel,
+      mask.entityId,
+    ).toBeGreaterThanOrEqual(64);
   }
   await expect(page.locator(".game")).toHaveScreenshot(
     "embercross-market-mobile.png",

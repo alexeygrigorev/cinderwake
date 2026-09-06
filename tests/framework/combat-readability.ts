@@ -7,6 +7,7 @@ import type {
 export const COMBAT_READABILITY_LIMITS = {
   maximumPlayerMonsterDestinationOverlap: 0.57,
   minimumPlayerMonsterAnchorDistance: 48,
+  anchorDistanceReferenceZoom: 0.9,
   maximumHealthWidthActorRatio: 0.37,
   maximumHealthHeightActorRatio: 0.18,
   minimumHealthInkGap: 3,
@@ -25,6 +26,7 @@ export interface CombatReadabilityEvidence {
     monsterId: string;
     destinationOverlapRatio: number;
     anchorDistance: number;
+    anchorDistanceAtReferenceZoom: number;
     depthOrderCorrect: boolean;
   }>;
   health: Array<{
@@ -114,6 +116,12 @@ export function assessCombatReadability(
         monster.destinationRect,
       );
       const anchorDistance = screenDistance(player, monster);
+      // The threshold was authored at 0.9 zoom; compare the same world-space
+      // separation on responsive cameras rather than requiring larger bodies.
+      const anchorDistanceAtReferenceZoom =
+        (anchorDistance *
+          COMBAT_READABILITY_LIMITS.anchorDistanceReferenceZoom) /
+        manifest.camera.zoom;
       const footDelta = monster.footAnchor.y - player.footAnchor.y;
       const depthOrderCorrect =
         Math.abs(footDelta) < 0.01 ||
@@ -124,6 +132,7 @@ export function assessCombatReadability(
         monsterId: monster.entityId,
         destinationOverlapRatio: overlap,
         anchorDistance,
+        anchorDistanceAtReferenceZoom,
         depthOrderCorrect,
       });
       if (
@@ -132,7 +141,7 @@ export function assessCombatReadability(
       )
         violations.push(`combat:body-overlap:${monster.entityId}`);
       if (
-        anchorDistance <
+        anchorDistanceAtReferenceZoom <
         COMBAT_READABILITY_LIMITS.minimumPlayerMonsterAnchorDistance
       )
         violations.push(`combat:anchor-separation:${monster.entityId}`);

@@ -48,6 +48,35 @@ function meleeScenario(monsterTile: [number, number]): ScenarioV1 {
 }
 
 describe("presentation-only combat readability", () => {
+  it.each([0.4, 0.5776093083961622, 0.9, 1.25])(
+    "keeps the same anchor separation requirement at zoom %f",
+    (zoom) => {
+      const state = worldFromScenario(meleeScenario([9.6, 7]));
+      const manifest = buildRenderManifest(state, { ...CAMERA, zoom });
+      const assessment = assessCombatReadability(manifest);
+      expect(
+        assessment.violations.filter((value) =>
+          value.startsWith("combat:anchor-separation"),
+        ),
+      ).toEqual([]);
+      expect(
+        assessment.evidence.actorPairs[0].anchorDistanceAtReferenceZoom,
+      ).toBeCloseTo(57.6);
+      const monster = manifest.drawCalls.find(
+        ({ type }) => type === "monster",
+      )!;
+      const player = manifest.drawCalls.find(
+        ({ entityId }) => entityId === "player",
+      )!;
+      monster.screenAnchor = {
+        x: player.screenAnchor.x + 40 * zoom,
+        y: player.screenAnchor.y,
+      };
+      expect(assessCombatReadability(manifest).violations).toContain(
+        "combat:anchor-separation:monster:readability",
+      );
+    },
+  );
   it("preserves original melee reach and a stacked state's simulation coordinates", () => {
     const state = worldFromScenario(meleeScenario([9, 7]));
     const monster = state.monsters[0]!;
