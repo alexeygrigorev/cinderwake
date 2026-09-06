@@ -15,6 +15,8 @@ const VIEW_WIDTH = 960;
 const VIEW_HEIGHT = 540;
 const UNITS_PER_TILE = 1024;
 const BELL_KEEPER_RANGE = 2 * UNITS_PER_TILE;
+const VANGUARD_ABILITY_RANGE = 2355;
+const DESKTOP_NAVIGATION_PULSE_MS = 220;
 // Match the production pointer controller's stop distance so a click-to-pursue
 // target and this driver agree on when the real held strike can take over.
 const ROUTE_TARGET_DISTANCE = ARCHETYPES.vanguard.attackRange * 0.9;
@@ -68,11 +70,24 @@ function canVanguardStrike(
 }
 
 function hasVanguardAbilityTarget(state: GameState): boolean {
-  const abilityRange = 2355;
-  return state.monsters.some(
-    (monster) =>
-      monster.health > 0 &&
-      distance(state.player.position, monster.position) <= abilityRange,
+  return state.monsters.some((monster) => canVanguardAbility(state, monster));
+}
+
+function canVanguardAbility(
+  state: GameState,
+  monster: GameState["monsters"][number],
+): boolean {
+  return (
+    monster.health > 0 &&
+    distance(state.player.position, monster.position) <=
+      VANGUARD_ABILITY_RANGE &&
+    navigationSegmentWalkable(
+      state.map,
+      sceneryCollisions(state.map),
+      state.player.position,
+      monster.position,
+      0,
+    )
   );
 }
 
@@ -128,6 +143,22 @@ function physicalDirection(state: GameState, target: Vec2): Vec2 {
       y: Math.sign(target.y - current.y),
     }
   );
+}
+
+function combatDirection(
+  state: GameState,
+  target: GameState["monsters"][number],
+): Vec2 {
+  const delta = {
+    x: target.position.x - state.player.position.x,
+    y: target.position.y - state.player.position.y,
+  };
+  if (Math.hypot(delta.x, delta.y) <= ROUTE_TARGET_DISTANCE)
+    return physicalDirection(state, {
+      x: state.player.position.x - delta.y,
+      y: state.player.position.y + delta.x,
+    });
+  return physicalDirection(state, target.position);
 }
 
 function progressSignature(state: GameState): string {
@@ -211,7 +242,7 @@ export class CampaignBrowserDriver {
   }> = [];
   private session?: CDPSession;
   private strikeActive = false;
-  private readonly dodgedProjectiles = new Set<string>();
+  private readonly dodgedProjectiles = new Map<string, number>();
 
   constructor(
     private readonly page: Page,
@@ -382,14 +413,36 @@ export class CampaignBrowserDriver {
         if (!observer) throw new Error("Production observer is unavailable");
         return observer.navigationRoute(requestedTarget);
       }, target);
-      if (route.length === 0)
-        throw new Error(
-          `${label} has no route from ${JSON.stringify({
-            player: before.player.position,
-            target,
-            map: before.map.digest,
-          })}`,
+      if (route.length === 0) {
+        const fallbackStart = { ...before.player.position };
+        await this.pulse(
+          physicalDirection(before, target),
+          this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
         );
+        this.record("no-route-pulse", {
+          label,
+          attempt,
+          target,
+        });
+        const latest = await this.waitFor(
+          `${label} no-route fallback ${attempt}`,
+          (state) =>
+            complete(state) ||
+            distance(state.player.position, fallbackStart) > 64,
+          this.profile.hasTouch ? 2_000 : 1_000,
+        );
+        if (complete(latest)) {
+          await this.stopNavigation();
+          return latest;
+        }
+        // A production actor can be physically safe while standing in a
+        // cell whose exact current point has no valid segment to the next
+        // route cell (for example after a diagonal corner or a monster
+        // collision). One legal pulse lets the observer's routefinder
+        // replan from the new physical position; waitFor still enforces the
+        // ten-second no-progress ceiling.
+        continue;
+      }
       const waypoint =
         route[Math.min(route.length - 1, this.profile.hasTouch ? 4 : 6)]!;
       const gesture = await this.navigateToPoint(
@@ -405,20 +458,18 @@ export class CampaignBrowserDriver {
         routeLength: route.length,
       });
       const start = { ...before.player.position };
+      const routeGesture =
+        gesture.action.includes("route") || gesture.action.includes("pursuit");
       const waypointReached = (state: GameState): boolean =>
         complete(state) ||
         distance(state.player.position, waypoint) < 176 ||
-        distance(state.player.position, start) > 64;
+        (!routeGesture && distance(state.player.position, start) > 64);
       let latest: GameState;
       try {
         latest = await this.waitFor(
           `${label} waypoint ${attempt}`,
           waypointReached,
-          gesture.action.includes("route") || gesture.action.includes("pursuit")
-            ? this.profile.hasTouch
-              ? 3_500
-              : 1_500
-            : 10_000,
+          routeGesture ? 5_500 : 10_000,
         );
       } catch (error) {
         if (
@@ -429,8 +480,8 @@ export class CampaignBrowserDriver {
         const fallback = await this.state();
         const fallbackStart = { ...fallback.player.position };
         await this.pulse(
-          physicalDirection(fallback, waypoint),
-          this.profile.hasTouch ? 800 : 220,
+          physicalDirection(fallback, route[0] ?? waypoint),
+          this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
         );
         latest = await this.waitFor(
           `${label} keyboard fallback ${attempt}`,
@@ -471,7 +522,13 @@ export class CampaignBrowserDriver {
       const monster = state.monsters.find(({ id }) => id === monsterId);
       if (!monster || monster.health <= 0) return state;
       if (state.phase !== "playing") return state;
-      if (!canVanguardStrike(state, monster)) {
+      const canEngage = (
+        current: GameState,
+        target: GameState["monsters"][number],
+      ) =>
+        canVanguardStrike(current, target) ||
+        canVanguardAbility(current, target);
+      if (!canEngage(state, monster)) {
         state = await this.moveTo(
           monster.position,
           `approach ${monsterId}`,
@@ -483,13 +540,13 @@ export class CampaignBrowserDriver {
               (candidate) =>
                 candidate.id !== monsterId &&
                 candidate.health > 0 &&
-                canVanguardStrike(current, candidate),
+                canEngage(current, candidate),
             );
             return (
               current.phase !== "playing" ||
               !currentMonster ||
               currentMonster.health <= 0 ||
-              canVanguardStrike(current, currentMonster) ||
+              canEngage(current, currentMonster) ||
               alternateInRange
             );
           },
@@ -505,7 +562,7 @@ export class CampaignBrowserDriver {
             (candidate) =>
               candidate.id !== monsterId &&
               candidate.health > 0 &&
-              canVanguardStrike(state, candidate),
+              canEngage(state, candidate),
           )
         )
           return state;
@@ -644,7 +701,7 @@ export class CampaignBrowserDriver {
         : (routeFirstPoint ?? point);
       await this.pulse(
         physicalDirection(fallback, fallbackTarget),
-        this.profile.hasTouch ? 800 : 220,
+        this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
       );
       return {
         action: this.profile.hasTouch ? "joystick-pulse" : "keyboard-pulse",
@@ -714,6 +771,31 @@ export class CampaignBrowserDriver {
 
   private async stopNavigation(): Promise<void> {
     if (!this.profile.hasTouch) {
+      const [state, geometry, manifest] = await Promise.all([
+        this.state(),
+        this.geometry(),
+        this.manifest(),
+      ]);
+      const projected = screenFor(state.player.position, manifest.camera);
+      const devicePoint = {
+        x:
+          geometry.canvas.x +
+          (projected.x / VIEW_WIDTH) * geometry.canvas.width,
+        y:
+          geometry.canvas.y +
+          (projected.y / VIEW_HEIGHT) * geometry.canvas.height,
+      };
+      const hitTarget = await this.page.evaluate(({ x, y }) => {
+        const element = document.elementFromPoint(x, y);
+        return element?.tagName ?? null;
+      }, devicePoint);
+      if (hitTarget === "CANVAS") {
+        await this.page.mouse.click(devicePoint.x, devicePoint.y);
+        this.record("stop-navigation", {
+          input: "mouse-current-position",
+        });
+        return;
+      }
       try {
         await this.page.keyboard.down("a");
         await this.page.waitForTimeout(25);
@@ -755,19 +837,21 @@ export class CampaignBrowserDriver {
         const target = state.monsters.find(({ id }) => id === monsterId);
         if (state.phase !== "playing" || !target || target.health <= 0) return;
         await this.maybeUseTonic(state);
-        await this.evadeProjectile(state);
+        const dodged = await this.evadeProjectile(state);
         if (await this.escapeIfNeeded(state)) return;
+        if (dodged) {
+          nextCombatStepAt = Date.now() + 450;
+          await this.page.waitForTimeout(75);
+          continue;
+        }
         if (
           state.player.abilityReadyTick <= state.tick &&
           hasVanguardAbilityTarget(state)
         )
           await this.useAbility();
         if (Date.now() >= nextCombatStepAt) {
-          await this.pulse(
-            physicalDirection(state, target.position),
-            this.profile.hasTouch ? 220 : 180,
-          );
-          nextCombatStepAt = Date.now() + 450;
+          await this.pulse(combatDirection(state, target), 300);
+          nextCombatStepAt = Date.now() + 50;
         }
         await this.page.waitForTimeout(75);
       }
@@ -822,10 +906,13 @@ export class CampaignBrowserDriver {
       .filter((attack) => {
         const owner = state.monsters.find(({ id }) => id === attack.ownerId);
         return (
-          owner?.kind === "hexer" &&
+          owner &&
+          owner.health > 0 &&
+          !bellKeeperSlam(state, attack) &&
           attack.kind === "primary" &&
           attack.impactTick >= state.tick &&
-          attack.impactTick - state.tick <= 30
+          attack.impactTick - state.tick <= 30 &&
+          distance(state.player.position, attack.origin) <= attack.range + 512
         );
       })
       .sort((first, second) => first.impactTick - second.impactTick)[0];
@@ -836,8 +923,9 @@ export class CampaignBrowserDriver {
     )
       return false;
     const threatId = pending?.id ?? projectileThreat!.projectile.id;
-    if (this.dodgedProjectiles.has(threatId)) return false;
-    this.dodgedProjectiles.add(threatId);
+    const lastDodge = this.dodgedProjectiles.get(threatId);
+    if (lastDodge !== undefined && Date.now() - lastDodge < 750) return false;
+    this.dodgedProjectiles.set(threatId, Date.now());
     const velocity = pending
       ? {
           x: pending.direction.x,
@@ -854,7 +942,7 @@ export class CampaignBrowserDriver {
         x: state.player.position.x + (sideways.x / length) * UNITS_PER_TILE,
         y: state.player.position.y + (sideways.y / length) * UNITS_PER_TILE,
       }),
-      this.profile.hasTouch ? 300 : 220,
+      this.profile.hasTouch ? 400 : 300,
     );
     this.record("hexer-projectile-dodge", {
       projectileId: threatId,
@@ -869,22 +957,41 @@ export class CampaignBrowserDriver {
     const state = currentState ?? (await this.state());
     const attack = state.pendingAttacks.find(
       (candidate) =>
-        candidate.impactTick >= state.tick &&
-        bellKeeperSlam(state, candidate) &&
-        distance(state.player.position, candidate.origin) <= candidate.range,
+        candidate.impactTick >= state.tick && bellKeeperSlam(state, candidate),
     );
-    if (!attack) return false;
+    const animatedAttacker = attack
+      ? undefined
+      : state.monsters.find(
+          (monster) =>
+            monster.health > 0 &&
+            monster.animation.lockedUntilTick > state.tick &&
+            (monster.animation.clip === "ability" ||
+              (monster.animation.clip === "attack" &&
+                monster.kind === "stonekin")) &&
+            distance(state.player.position, monster.position) <=
+              (monster.elite ? BELL_KEEPER_RANGE : monster.attackRange) + 512,
+        );
+    if (!attack && !animatedAttacker) return false;
+    const threatId =
+      attack?.id ??
+      `animation:${animatedAttacker!.id}:${animatedAttacker!.animation.lockedUntilTick}`;
+    const lastDodge = this.dodgedProjectiles.get(threatId);
+    if (lastDodge !== undefined && Date.now() - lastDodge < 750) return false;
+    this.dodgedProjectiles.set(threatId, Date.now());
     await this.stopStrike();
+    const origin = attack?.origin ?? animatedAttacker!.position;
     const away = {
-      x: state.player.position.x - attack.origin.x,
-      y: state.player.position.y - attack.origin.y,
+      x: state.player.position.x - origin.x,
+      y: state.player.position.y - origin.y,
     };
     const direction =
       Math.hypot(away.x, away.y) > 1 ? away : { x: -UNITS_PER_TILE, y: 0 };
-    await this.pulse(direction, 380);
-    this.record("bell-keeper-dodge", {
-      attackId: attack.id,
-      remainingTicks: attack.impactTick - state.tick,
+    await this.pulse(direction, this.profile.hasTouch ? 500 : 350);
+    this.record(attack ? "bell-keeper-dodge" : "enemy-attack-dodge", {
+      attackId: threatId,
+      remainingTicks: attack
+        ? attack.impactTick - state.tick
+        : animatedAttacker!.animation.lockedUntilTick - state.tick,
     });
     return true;
   }
