@@ -517,7 +517,9 @@ function reportIssue(component, report, entry, outputDirectory, context) {
 }
 
 function processIssue(result, entry, outputDirectory) {
-  const timeout = String(result?.error ?? "").includes("five-minute limit");
+  const timeout = /exceeded (?:five-minute|\d+ ms) limit/.test(
+    String(result?.error ?? ""),
+  );
   const category = timeout
     ? "unknown"
     : result?.exitCode === null

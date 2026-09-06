@@ -16,6 +16,7 @@ import {
   renderNextAction,
   shellQuote,
 } from "./lib/game-feedback-diagnostics.mjs";
+import { runGameFeedback } from "./lib/run-game-feedback.mjs";
 
 function passingRules() {
   return {
@@ -389,5 +390,53 @@ test("diagnostics distinguish runtime, evidence, source and unknown failures", (
     assert.equal(shellQuote("a'b"), `'a'"'"'b'`);
   } finally {
     fs.rmSync(outputDirectory, { recursive: true, force: true });
+  }
+});
+
+test("extracted runner accepts isolated injected components", async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "game-feedback-runner-"));
+  try {
+    const outputDirectory = path.join(root, "run");
+    const definitions = ["alpha", "beta"].map((id) => {
+      const reportPath = path.join(outputDirectory, `${id}.json`);
+      const script = `require("node:fs").writeFileSync(${JSON.stringify(reportPath)}, JSON.stringify({ok:true}))`;
+      return {
+        id,
+        command: process.execPath,
+        args: ["-e", script],
+        json: `${id}.json`,
+        evidence: `${id}.json`,
+        validateReport: (report) => report?.ok === true,
+      };
+    });
+    const result = await runGameFeedback({
+      componentDefinitions: definitions,
+      outputDirectory,
+      sourceIdentity: async () => "isolated-source",
+      browserDiscovery: {
+        command: ["node", "--list"],
+        report: { errors: [], suites: [] },
+        cases: [],
+        error: null,
+      },
+      contract: { version: 1 },
+    });
+    const report = JSON.parse(
+      fs.readFileSync(path.join(outputDirectory, "feedback.json"), "utf8"),
+    );
+    assert.equal(result.verdict, "PASS");
+    assert.deepEqual(
+      result.results.map(({ id }) => id),
+      ["alpha", "beta"],
+    );
+    assert.equal(report.complete, true);
+    assert.equal(report.sourceStable, true);
+    assert.deepEqual(report.issues, []);
+    assert.match(
+      fs.readFileSync(path.join(outputDirectory, "next-action.md"), "utf8"),
+      /Verdict: PASS/,
+    );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
