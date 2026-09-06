@@ -12,6 +12,10 @@ import {
   CONTROL_CASE_IDS,
   collectBrowserCases,
 } from "./lib/game-feedback-contract.mjs";
+import {
+  buildIssues,
+  renderNextAction,
+} from "./lib/game-feedback-diagnostics.mjs";
 import { escapeHtml } from "./lib/feedback.mjs";
 
 if (process.argv.includes("--help")) {
@@ -47,6 +51,8 @@ const sourceIdentity = async () => {
 };
 const fingerprint = await sourceIdentity();
 const results = [];
+const reports = new Map();
+const reportErrors = new Map();
 let child,
   interrupted = false;
 for (const signal of ["SIGINT", "SIGTERM"])
@@ -157,15 +163,22 @@ await fs.writeFile(
 );
 async function report(complete = false) {
   const sourceStable = fingerprint === (await sourceIdentity());
-  const verdict = gameFeedbackVerdict(
+  const runComplete = complete && !interrupted;
+  const verdict = gameFeedbackVerdict(results, runComplete, sourceStable);
+  const issues = buildIssues({
     results,
-    complete && !interrupted,
+    complete: runComplete,
     sourceStable,
-  );
+    componentDefinitions: cases,
+    reports,
+    reportErrors,
+    outputDirectory: output,
+    expectedBrowserCases: browserDiscovery.cases,
+  });
   const value = {
     schemaVersion: 1,
     verdict,
-    complete: complete && !interrupted,
+    complete: runComplete,
     sourceStable,
     fingerprint,
     contract: {
@@ -179,6 +192,7 @@ async function report(complete = false) {
         evidence: "browser-list.json",
       },
     },
+    issues,
     results,
     limitation:
       "Automated pilots know the map. PASS is behavioral evidence, not proof of fun, human pacing, or visual quality.",
@@ -188,12 +202,22 @@ async function report(complete = false) {
     `${JSON.stringify(value, null, 2)}\n`,
   );
   await fs.writeFile(
+    path.join(output, "next-action.md"),
+    renderNextAction({
+      verdict,
+      complete: runComplete,
+      sourceStable,
+      issues,
+      outputDirectory: output,
+    }),
+  );
+  await fs.writeFile(
     path.join(output, "feedback.md"),
-    `# Game feedback: ${verdict}\n\n${value.limitation}\n\n${results.map((result) => `- ${result.id}: ${result.exitCode === 0 && result.reportValid ? "PASS" : "FAIL"}; [evidence](${result.evidence}); [log](${result.id}.log)`).join("\n")}\n- Browser test manifest: [browser-list.json](browser-list.json)\n${sourceStable ? "" : "\nSource changed during this run. Repeat after edits finish.\n"}`,
+    `# Game feedback: ${verdict}\n\n${value.limitation}\n\n${results.map((result) => `- ${result.id}: ${result.exitCode === 0 && result.reportValid ? "PASS" : "FAIL"}; [evidence](${result.evidence}); [log](${result.id}.log)`).join("\n")}\n- Browser test manifest: [browser-list.json](browser-list.json)\n- First-failure handoff: [next-action.md](next-action.md)\n${sourceStable ? "" : "\nSource changed during this run. Repeat after edits finish.\n"}`,
   );
   await fs.writeFile(
     path.join(output, "report.html"),
-    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Game feedback ${verdict}</title><style>body{background:#14191c;color:#e9e1d5;font:17px/1.6 system-ui;max-width:900px;margin:40px auto;padding:20px}a{color:#edc88e}li{margin:20px 0}code{color:#d6ac77}</style><h1>Game feedback: ${verdict}</h1><p>${value.limitation}</p><ul>${results.map((result) => `<li><strong>${escapeHtml(result.id)}: ${result.exitCode === 0 && result.reportValid ? "PASS" : "FAIL"}</strong> · <a href="${result.evidence}">Evidence</a> · <a href="${result.id}.log">Diagnostic log</a>${result.error ? `<p>${escapeHtml(result.error)}</p>` : ""}</li>`).join("")}</ul><p>${sourceStable ? "Source fingerprint held constant." : "Source changed. Rerun after edits finish."}</p><p><a href="feedback.json">Machine-readable summary</a></p>`,
+    `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Game feedback ${verdict}</title><style>body{background:#14191c;color:#e9e1d5;font:17px/1.6 system-ui;max-width:900px;margin:40px auto;padding:20px}a{color:#edc88e}li{margin:20px 0}code{color:#d6ac77}</style><h1>Game feedback: ${verdict}</h1><p>${value.limitation}</p><ul>${results.map((result) => `<li><strong>${escapeHtml(result.id)}: ${result.exitCode === 0 && result.reportValid ? "PASS" : "FAIL"}</strong> · <a href="${result.evidence}">Evidence</a> · <a href="${result.id}.log">Diagnostic log</a>${result.error ? `<p>${escapeHtml(result.error)}</p>` : ""}</li>`).join("")}</ul><p><a href="next-action.md">First-failure handoff</a> · <a href="browser-list.json">Browser manifest</a></p><p>${sourceStable ? "Source fingerprint held constant." : "Source changed. Rerun after edits finish."}</p><p><a href="feedback.json">Machine-readable summary</a></p>`,
   );
   return verdict;
 }
@@ -241,14 +265,35 @@ for (const entry of cases) {
   child = undefined;
   await log.close();
   let reportValid = false;
+  let parsedReport;
   try {
-    reportValid = componentReportValid(
-      entry.id,
-      JSON.parse(await fs.readFile(path.join(output, entry.json), "utf8")),
-      { expectedBrowserCases: browserDiscovery.cases },
-    );
-  } catch {
-    /* Missing or malformed evidence is not a pass. */
+    const rawReport = await fs.readFile(path.join(output, entry.json), "utf8");
+    try {
+      parsedReport = JSON.parse(rawReport);
+      reports.set(entry.id, parsedReport);
+    } catch (error) {
+      reportErrors.set(entry.id, {
+        kind: "malformed",
+        message: error.message,
+      });
+    }
+  } catch (error) {
+    reportErrors.set(entry.id, {
+      kind: error.code === "ENOENT" ? "missing" : "read-error",
+      message: error.message,
+    });
+  }
+  if (parsedReport !== undefined && !reportErrors.has(entry.id)) {
+    try {
+      reportValid = componentReportValid(entry.id, parsedReport, {
+        expectedBrowserCases: browserDiscovery.cases,
+      });
+    } catch (error) {
+      reportErrors.set(entry.id, {
+        kind: "malformed",
+        message: `Report validation failed: ${error.message}`,
+      });
+    }
   }
   results.push({
     id: entry.id,

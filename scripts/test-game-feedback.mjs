@@ -1,5 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import {
   CAMPAIGN_CASES,
   CONTROL_CASE_IDS,
@@ -8,6 +11,11 @@ import {
   componentReportValid,
 } from "./lib/game-feedback-contract.mjs";
 import { gameFeedbackVerdict } from "./lib/game-feedback.mjs";
+import {
+  buildIssues,
+  renderNextAction,
+  shellQuote,
+} from "./lib/game-feedback-diagnostics.mjs";
 
 function passingRules() {
   return {
@@ -274,4 +282,112 @@ test("rules reject a passing headline that disagrees with nested results", () =>
     numPendingTests: 0,
   };
   assert.equal(componentReportValid("rules", summaryOnly), false);
+});
+
+test("diagnostics distinguish runtime, evidence, source and unknown failures", () => {
+  const outputDirectory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "game-feedback-diagnostics-"),
+  );
+  try {
+    fs.writeFileSync(path.join(outputDirectory, "browser.json"), "{}");
+    fs.writeFileSync(path.join(outputDirectory, "browser.log"), "runtime log");
+    const browserEntry = {
+      id: "browser",
+      command: "node",
+      args: ["-e", "a'b <unsafe>"],
+      json: "browser.json",
+      evidence: "browser.json",
+    };
+    const timeoutIssues = buildIssues({
+      complete: true,
+      sourceStable: true,
+      outputDirectory,
+      componentDefinitions: [browserEntry],
+      results: [
+        {
+          id: "browser",
+          exitCode: null,
+          error: "Component exceeded five-minute limit.",
+          reportValid: false,
+        },
+      ],
+    });
+    assert.equal(timeoutIssues.length, 1);
+    assert.equal(timeoutIssues[0].category, "unknown");
+    assert.equal(timeoutIssues[0].code, "component-timeout");
+    assert.equal(timeoutIssues[0].category === "transport", false);
+    assert.equal(
+      timeoutIssues[0].reproduceCommand.includes("'a'\"'\"'b"),
+      true,
+    );
+
+    const sourceIssues = buildIssues({
+      complete: true,
+      sourceStable: false,
+      outputDirectory,
+      componentDefinitions: [],
+      results: [],
+    });
+    assert.equal(sourceIssues[0].code, "source-changed");
+    assert.deepEqual(sourceIssues[0].evidencePaths, ["feedback.json"]);
+
+    const missingIssues = buildIssues({
+      complete: true,
+      sourceStable: true,
+      outputDirectory,
+      componentDefinitions: [
+        {
+          id: "rules",
+          command: "node",
+          args: ["scripts/run-rules.mjs"],
+          json: "rules.json",
+          evidence: "rules.json",
+        },
+      ],
+      results: [{ id: "rules", exitCode: 0, reportValid: false }],
+      reportErrors: new Map([
+        ["rules", { kind: "missing", message: "ENOENT: <missing>" }],
+      ]),
+    });
+    assert.equal(missingIssues[0].category, "evidence");
+    assert.equal(missingIssues[0].code, "report-missing");
+
+    fs.writeFileSync(path.join(outputDirectory, "rules.json"), "malformed");
+    const malformedIssues = buildIssues({
+      complete: true,
+      sourceStable: true,
+      outputDirectory,
+      componentDefinitions: [
+        {
+          id: "rules",
+          command: "node",
+          args: ["scripts/run-rules.mjs"],
+          json: "rules.json",
+          evidence: "rules.json",
+        },
+      ],
+      results: [{ id: "rules", exitCode: 0, reportValid: false }],
+      reportErrors: new Map([
+        [
+          "rules",
+          { kind: "malformed", message: "<script>alert('&')</script>" },
+        ],
+      ]),
+    });
+    assert.equal(malformedIssues[0].code, "report-malformed");
+    const handoff = renderNextAction({
+      verdict: "FAIL",
+      complete: true,
+      sourceStable: true,
+      issues: malformedIssues,
+      outputDirectory,
+    });
+    assert.equal(handoff.includes("<script>"), false);
+    assert.equal(handoff.includes("&lt;script&gt;"), true);
+    assert.match(handoff, /rules\.json/);
+    assert.equal(handoff.split("\n").length <= 120, true);
+    assert.equal(shellQuote("a'b"), `'a'"'"'b'`);
+  } finally {
+    fs.rmSync(outputDirectory, { recursive: true, force: true });
+  }
 });
