@@ -2170,3 +2170,217 @@ button {
   align-items: center;
   justify-content: center;
 }
+
+/* Atlas cells include transparent padding. HUD type needs a larger cell and
+   tighter advance to read at normal viewing distance, including on phones. */
+.game .hud .sprite-word > .sprite-glyph + .sprite-glyph,
+.game .loot-log .sprite-word > .sprite-glyph + .sprite-glyph,
+.game .mobile-controls .sprite-word > .sprite-glyph + .sprite-glyph {
+  margin-left: -0.76em;
+}
+
+.game .hud .sprite-glyph,
+.game .loot-log .sprite-glyph,
+.game .mobile-controls .sprite-glyph {
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+.game .hud .sprite-word,
+.game .mobile-controls .sprite-word {
+  font-size: inherit;
+}
+
+.game .brand small {
+  max-width: 220px;
+  font-size: 17px;
+}
+
+.game #monsters {
+  width: 112px;
+  height: 64px;
+  font-size: 17px;
+}
+
+.game .objective {
+  right: 132px;
+  width: 320px;
+  height: 80px;
+  padding: 12px 20px 12px 12px;
+  grid-template-columns: 42px minmax(0, 1fr);
+}
+
+.game .objective strong {
+  font-size: 21px;
+}
+
+.game .objective small {
+  font-size: 18px;
+}
+
+.game .health-label .sprite-text,
+.game .health-label .sprite-word {
+  font-size: 18px;
+}
+
+.game #hp,
+.game #cd,
+.game #tonics {
+  font-size: 20px;
+}
+
+.game #hp {
+  flex-wrap: nowrap;
+}
+
+.game #cd,
+.game #tonics {
+  justify-content: center;
+}
+
+.game .skills {
+  gap: 10px;
+}
+
+.game .skills button {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 112px;
+  min-width: 112px;
+  height: 112px;
+  padding: 14px 8px;
+}
+
+.game .skills .sprite-shortcut {
+  min-height: 40px;
+  font-size: 16px;
+}
+
+.game .skills .sprite-action-label {
+  font-size: 21px;
+}
+
+.game .skills button:focus-visible,
+.game .mobile-actions button:focus-visible {
+  outline: 3px solid #fff2c9;
+  outline-offset: 2px;
+}
+
+.game .loot-log {
+  top: 96px;
+  width: 244px;
+  padding: 24px;
+}
+
+.game .loot-log strong > .sprite-text,
+.game .loot-log .sprite-log {
+  font-size: 18px;
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .game .brand small {
+    max-width: 180px;
+    font-size: 15px;
+  }
+
+  .game .objective {
+    top: max(66px, calc(var(--safe-area-inset-top) + 56px));
+    right: max(10px, var(--safe-area-inset-right));
+    width: min(300px, calc(100vw - 20px));
+    height: 76px;
+    padding: 10px 18px 10px 10px;
+    grid-template-columns: 36px minmax(0, 1fr);
+    background-position: 66.667% 0;
+  }
+
+  .game .objective > span {
+    display: grid;
+  }
+
+  .game .objective strong {
+    font-size: 19px;
+  }
+
+  .game .objective small {
+    font-size: 17px;
+  }
+
+  .game .mobile-actions {
+    grid-template:
+      "ability primary" 68px
+      "tonic primary" 68px / 68px 88px;
+    width: 163px;
+  }
+
+  .game .mobile-controls {
+    height: calc(148px + var(--safe-area-inset-bottom));
+  }
+
+  .game .mobile-actions button {
+    width: 68px;
+    min-width: 68px;
+    height: 68px;
+    min-height: 68px;
+    padding: 6px 0;
+  }
+
+  .game .mobile-actions .primary-action {
+    width: 88px;
+    min-width: 88px;
+    height: 88px;
+    min-height: 88px;
+  }
+
+  .game .mobile-actions .sprite-action-label {
+    font-size: 15px;
+  }
+
+  .game .mobile-actions .primary-action .sprite-action-label {
+    font-size: 20px;
+  }
+
+  .game .mobile-actions .sprite-action-detail,
+  .game #mobile-cd,
+  .game #mobile-tonics,
+  .game .move-pad small > .sprite-text {
+    font-size: 15px;
+  }
+
+  .game .hud.bottom {
+    bottom: calc(148px + var(--safe-area-inset-bottom));
+  }
+
+  .game #mobile-cd,
+  .game #mobile-tonics {
+    justify-content: center;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 760px) {
+  .game .city-service-sheet {
+    bottom: calc(148px + var(--safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 340px) {
+  .game .mobile-controls {
+    gap: 6px;
+  }
+
+  .game .move-pad {
+    flex-basis: 88px;
+    width: 88px;
+    height: 88px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) and (pointer: coarse) {
+  .game .objective {
+    top: max(8px, var(--safe-area-inset-top));
+    right: 132px;
+  }
+
+  .game .hud.bottom {
+    bottom: max(7px, var(--safe-area-inset-bottom));
+  }
+}
