@@ -71,6 +71,20 @@ test("causal checks detect frozen movement, ineffective attacks and missing evid
   );
   assert.equal(
     assessExpectations(
+      [{ ...expectations[1], op: "deltaGte", from: 0 }],
+      samples,
+    )[0].pass,
+    true,
+  );
+  assert.equal(
+    assessExpectations(
+      [{ ...expectations[1], op: "deltaGte", from: 12 }],
+      samples,
+    )[0].pass,
+    false,
+  );
+  assert.equal(
+    assessExpectations(
       [{ ...expectations[2], sourceId: "monster" }],
       samples,
     )[0].pass,
@@ -98,6 +112,12 @@ test("plans reject ignored live expectations, bad ticks and invalid comparisons"
     },
     (plan) => {
       plan.cases[0].expect[0].at = 999;
+    },
+    (plan) => {
+      plan.cases[0].expect[0].from = 999;
+    },
+    (plan) => {
+      plan.cases[0].expect[0].from = 144;
     },
     (plan) => {
       plan.cases[0].expect[0].op = "typo";
