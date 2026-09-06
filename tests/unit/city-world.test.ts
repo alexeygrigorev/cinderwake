@@ -22,6 +22,7 @@ import {
 import { stepGame } from "../../src/game/simulation";
 import { EMPTY_INPUT } from "../../src/game/types";
 import { buildRenderManifest } from "../../src/render/manifest";
+import { stateFromSnapshot } from "../../src/testkit/stateSnapshots";
 import {
   BUILTIN_SCENARIOS,
   createRunScenario,
@@ -283,6 +284,17 @@ describe("deterministic Embercross world", () => {
     );
     state.monsters = [];
     state.exitUnlocked = true;
+    state.loot = [
+      {
+        id: "wilderness-loot",
+        kind: "gold",
+        rarity: "common",
+        position: { ...state.player.position },
+        amount: 5,
+        sourceId: "fallen-foe",
+        bobOffset: 0,
+      },
+    ];
     const wildernessDigest = state.map.digest;
     const gate = tileCenter(state.map.exit);
 
@@ -307,6 +319,8 @@ describe("deterministic Embercross world", () => {
     stepGame(state, EMPTY_INPUT);
     expect(state.city.locationPhase).toBe("inside");
     expect(isEmbercrossMap(state.map)).toBe(true);
+    expect(state.loot).toEqual([]);
+    expect(() => stateFromSnapshot(structuredClone(state))).not.toThrow();
     expect(state.player.position).toEqual(tileCenter(state.map.spawn));
     expect(state.phase).toBe("playing");
     expect(state.eventLog.some(({ type }) => type === "run_won")).toBe(false);
