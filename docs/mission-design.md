@@ -30,7 +30,8 @@ the mission module does not invent scenery collision or a separate map.
 ## Implementation contract
 
 `src/game/missions.ts` exports `missionJournal(state)`,
-`missionLandmarks(state)`, and `missionNpcDialogue(npcId, state)`. All positions
+`missionLandmarks(state)`, `missionArchive(state, discoveredIds)`, and
+`missionNpcDialogue(npcId, state)`. World cue positions
 are integer world units. Cue IDs identify existing actors, landmarks, gates,
 or the arrival letter. The nearest living enemy supplies the combat direction;
 equal distances use stable actor IDs. The client can route toward that world
@@ -46,7 +47,8 @@ death supplies recovery copy without completing unfinished objectives.
 The mission module is pure and adds no fields to `GameState`. Save envelopes
 can store journal read IDs alongside an exact state snapshot. Save/load UI and
 storage are owned by the client. The chapter does not require a paid inn stay
-to save.
+to save. The archive retains known read entries across map changes and omits
+world positions, so old wilderness clues do not acquire city coordinates.
 
 Six stable voice IDs and their exact scripts live in `MISSION_VOICE_LINES`.
 The audio runtime maps those IDs to generated assets. Reading the same text
@@ -62,3 +64,31 @@ the letter, follow objectives, save and resume, interact with a resident, and
 reach the final gate using real controls. Passing these checks establishes the
 chapter's reachable behavior; combat pacing, directional clarity, and visual
 quality still need rendered playthrough evidence.
+
+Run the deterministic campaign probe with:
+
+```bash
+node scripts/test-campaign-journey.mjs
+```
+
+It drives three generated seeds through all three classes using ordinary
+movement, aim, strike, ability, and tonic inputs with live enemy AI. It retains
+selected targets while traveling, collects nearby loot, follows the sign and
+gate, and ends on victory, death, ten seconds without progress, or the declared
+tick budget. It records failures without converting them into victory states.
+
+Each output directory under `quality-results/campaign` contains results,
+checkpoint summaries, final states, exact input tapes, a real save captured at
+tick 300, and source identity. Both a full input replay and continuation from
+the saved checkpoint must produce the identical final state. The final state
+must also pass the normal snapshot validator. To focus a regression:
+
+```bash
+node scripts/test-campaign-journey.mjs --seeds last-bell --classes ranger
+node scripts/test-campaign-journey.mjs --replay path/to/retained-tape.json
+```
+
+Replay verifies the recorded outcome, including a recorded failure. This
+pilot sees the full state and does not operate browser events; its completion
+time does not estimate a first-time player's experience. Use the browser
+feedback suite alongside it for control and presentation checks.
