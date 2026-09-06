@@ -16,7 +16,7 @@ async function advance(page: Page, ticks: number) {
   );
 }
 
-test("held mouse strike repeats while strafing and keeps aiming at the cursor", async ({
+test("held Shift-click strike repeats while strafing and keeps aiming at the cursor", async ({
   page,
 }) => {
   await openArena(page);
@@ -26,6 +26,7 @@ test("held mouse strike repeats while strafing and keeps aiming at the cursor", 
     canvas.x + canvas.width * 0.7,
     canvas.y + canvas.height * 0.5,
   );
+  await page.keyboard.down("Shift");
   await page.mouse.down();
   await page.keyboard.down("a");
   const strafing = await advance(page, 65);
@@ -43,10 +44,100 @@ test("held mouse strike repeats while strafing and keeps aiming at the cursor", 
   // Releasing outside the canvas must stop the held action too.
   await page.mouse.move(0, 0);
   await page.mouse.up();
+  await page.keyboard.up("Shift");
   await page.keyboard.up("a");
   const released = await advance(page, 60);
   expect(released.player.position).toEqual(strafing.player.position);
   expect(released.player.attackReadyTick).toBe(strafing.player.attackReadyTick);
+});
+
+test("a ground click walks to its destination without starting an attack", async ({
+  page,
+}) => {
+  await openArena(page);
+  const before = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    return {
+      state: bridge.snapshot(),
+      player: bridge
+        .renderManifest()
+        .drawCalls.find(({ type }) => type === "player")!,
+    };
+  });
+  const canvas = (await page.locator("canvas").boundingBox())!;
+  await page.mouse.click(
+    canvas.x + ((before.player.footAnchor.x + 96) * canvas.width) / 960,
+    canvas.y + (before.player.footAnchor.y * canvas.height) / 540,
+  );
+  const arrived = await advance(page, 90);
+  expect(arrived.player.position.x).toBeGreaterThan(
+    before.state.player.position.x + 1500,
+  );
+  expect(arrived.player.velocity).toEqual({ x: 0, y: 0 });
+  expect(
+    arrived.eventLog.filter(({ type }) => type === "attack_started"),
+  ).toHaveLength(0);
+});
+
+test("clicking a distant enemy approaches, attacks, and stops after the kill", async ({
+  page,
+}) => {
+  await openArena(page);
+  const before = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario({
+      schemaVersion: 1,
+      id: "pointer-pursuit",
+      seed: "pointer-pursuit",
+      classId: "vanguard",
+      map: {
+        mode: "explicit",
+        rows: [
+          "#####################",
+          "#...................#",
+          "#...................#",
+          "#........P........E.#",
+          "#...................#",
+          "#...................#",
+          "#####################",
+        ],
+      },
+      monsters: [{ id: "pursued-target", kind: "ashfang", tile: [13, 3] }],
+      settings: { ai: false, autoPickup: false, cameraFollow: true },
+    });
+    return {
+      state: bridge.snapshot(),
+      target: bridge
+        .renderManifest()
+        .drawCalls.find(({ entityId }) => entityId === "pursued-target")!,
+    };
+  });
+  const canvas = (await page.locator("canvas").boundingBox())!;
+  await page.mouse.click(
+    canvas.x +
+      ((before.target.destinationRect.x +
+        before.target.destinationRect.width / 2) *
+        canvas.width) /
+        960,
+    canvas.y +
+      ((before.target.destinationRect.y +
+        before.target.destinationRect.height * 0.7) *
+        canvas.height) /
+        540,
+  );
+  const approached = await advance(page, 15);
+  expect(approached.player.position.x).toBeGreaterThan(
+    before.state.player.position.x,
+  );
+  expect(
+    approached.eventLog.filter(({ type }) => type === "attack_started"),
+  ).toHaveLength(0);
+  const killed = await advance(page, 150);
+  expect(killed.metrics.kills).toBe(1);
+  expect(killed.metrics.damageDealt).toBe(36);
+  const stopped = await advance(page, 60);
+  expect(stopped.player.position).toEqual(killed.player.position);
+  expect(stopped.player.attackReadyTick).toBe(killed.player.attackReadyTick);
 });
 
 test("stationary mouse aim follows the screen point as the camera moves", async ({
@@ -156,6 +247,45 @@ test.describe("touch combat", () => {
     });
     const released = await advance(page, 60);
     expect(released.player.attackReadyTick).toBe(held.player.attackReadyTick);
+    await session.detach();
+  });
+
+  test("touch strike cancels a retreat route and aims at the nearby enemy", async ({
+    page,
+  }) => {
+    await openArena(page);
+    const player = await page.evaluate(() => {
+      const bridge = window.__GAME_TEST__!;
+      bridge.loadScenario("combat-loot");
+      return bridge
+        .renderManifest()
+        .drawCalls.find(({ type }) => type === "player")!;
+    });
+    const canvas = (await page.locator("canvas").boundingBox())!;
+    await page.touchscreen.tap(
+      canvas.x + (player.footAnchor.x * canvas.width) / 960,
+      canvas.y + ((player.footAnchor.y + 48) * canvas.height) / 540,
+    );
+    const retreat = await advance(page, 1);
+    expect(retreat.player.velocity.y).toBeGreaterThan(0);
+    const strike = (await page
+      .locator(".mobile-actions [data-action='attack']")
+      .boundingBox())!;
+    const session = await page.context().newCDPSession(page);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [
+        { x: strike.x + strike.width / 2, y: strike.y + strike.height / 2 },
+      ],
+    });
+    const hit = await advance(page, 12);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    expect(hit.player.position).toEqual(retreat.player.position);
+    expect(hit.metrics.kills).toBe(1);
+    expect(hit.metrics.damageDealt).toBeGreaterThan(0);
     await session.detach();
   });
 });
