@@ -116,6 +116,29 @@ async function bootCity(page: Page): Promise<void> {
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
 }
 
+async function expectServiceCopyVisible(page: Page): Promise<void> {
+  const clipped = await page.locator("#city-services").evaluate((element) => {
+    const panel = element as HTMLElement;
+    const bounds = panel.getBoundingClientRect();
+    const top = bounds.top + panel.clientTop;
+    const left = bounds.left + panel.clientLeft;
+    return [...panel.querySelectorAll<HTMLElement>(".sprite-text")]
+      .filter((text) => {
+        const rect = text.getBoundingClientRect();
+        return (
+          rect.top < top - 1 ||
+          rect.bottom > top + panel.clientHeight + 1 ||
+          rect.left < left - 1 ||
+          rect.right > left + panel.clientWidth + 1
+        );
+      })
+      .map((text) => text.getAttribute("aria-label"));
+  });
+  expect(clipped, "Service copy must remain visible inside the panel").toEqual(
+    [],
+  );
+}
+
 async function loadCityAt(
   page: Page,
   npcId: CityNpcId,
@@ -259,6 +282,7 @@ async function captureServiceCase(
   const actionLabel = await button
     .locator(".sprite-city-action")
     .getAttribute("aria-label");
+  await expectServiceCopyVisible(page);
   await expect(sheet).toHaveScreenshot(
     `city-service-${service.slug}-${profile}-before.png`,
   );
@@ -277,6 +301,7 @@ async function captureServiceCase(
     (element) => getComputedStyle(element).filter,
   );
   expect(pressedFilter).not.toBe(idleFilter);
+  await expectServiceCopyVisible(page);
   await expect(sheet).toHaveScreenshot(
     `city-service-${service.slug}-${profile}-pointer-down.png`,
   );
@@ -287,6 +312,7 @@ async function captureServiceCase(
   );
   const after = await page.evaluate(() => window.__GAME_TEST__!.snapshot());
   expect(after.city.receipts.at(-1)?.deltas).toEqual(previewDeltas);
+  await expectServiceCopyVisible(page);
   await expect(sheet).toHaveScreenshot(
     `city-service-${service.slug}-${profile}-success.png`,
   );
@@ -312,6 +338,7 @@ async function captureServiceCase(
     window.__GAME_TEST__!.snapshot(),
   );
   expect(rejectedState.city.receipts).toHaveLength(0);
+  await expectServiceCopyVisible(page);
   await expect(sheet).toHaveScreenshot(
     `city-service-${service.slug}-${profile}-rejection.png`,
   );
