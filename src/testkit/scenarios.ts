@@ -536,7 +536,10 @@ function generatedMonsterSpecs(state: GameState): ScenarioMonsterV1[] {
     if (!tile) break;
     specs.push({
       id: `monster:${specs.length.toString().padStart(2, "0")}`,
-      kind: distantKinds[specs.length % distantKinds.length]!,
+      kind:
+        specs.length === 11
+          ? "stonekin"
+          : distantKinds[specs.length % distantKinds.length]!,
       tile: [tile.x, tile.y],
       elite: specs.length === 11,
       guaranteedLoot: specs.length === 0 || specs.length === 11,
