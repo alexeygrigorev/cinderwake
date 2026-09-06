@@ -199,6 +199,23 @@ test("journal pauses the real game, clears held movement, and fits a phone", asy
     .getByRole("button", { name: "Enter the wake", exact: true })
     .click();
   await expect(page.locator("canvas")).toBeVisible();
+  const toolbar = (await page.locator(".campaign-tools").boundingBox())!;
+  for (const selector of [".health", ".mobile-actions", ".move-pad"]) {
+    const control = (await page.locator(selector).boundingBox())!;
+    const overlap =
+      Math.max(
+        0,
+        Math.min(toolbar.x + toolbar.width, control.x + control.width) -
+          Math.max(toolbar.x, control.x),
+      ) *
+      Math.max(
+        0,
+        Math.min(toolbar.y + toolbar.height, control.y + control.height) -
+          Math.max(toolbar.y, control.y),
+      );
+    expect(overlap, `journal must not cover ${selector}`).toBe(0);
+  }
+  await page.screenshot({ path: "quality-results/campaign-play-phone.png" });
   await page.keyboard.down("d");
   await page
     .getByRole("button", { name: "Journal and save", exact: true })
