@@ -10,6 +10,7 @@ export interface PointerAttackTarget {
   id: string;
   position: Vec2;
   range: number;
+  lineOfSight?: boolean;
 }
 
 /** A target id refreshes an existing selection; no id hit-tests a new click. */
@@ -390,10 +391,11 @@ export class InputController {
           this.touchRoute.length === 0
         )
           this.navigateTo(target.position);
-        // A bend in the route means a wall or prop still separates us. Walk
-        // around it before attacking, even if the target is close in distance.
+        // Grid routes contain intermediate cell centers even on a clear shot.
+        // The game supplies the attack's actual collision-width sight test so
+        // ranged classes can fire across those cells without closing to melee.
         targetInRange =
-          this.touchRoute.length <= 1 &&
+          (target.lineOfSight ?? this.touchRoute.length <= 1) &&
           Math.hypot(
             target.position.x - this.getPlayerPosition().x,
             target.position.y - this.getPlayerPosition().y,
