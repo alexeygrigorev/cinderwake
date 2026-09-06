@@ -246,6 +246,37 @@ describe("deterministic Embercross world", () => {
     expect(state.city.locationPhase).toBe("discovered");
   });
 
+  it.each([
+    "cinder-041",
+    "ember-road",
+    "last-bell",
+    ...Array.from({ length: 12 }, (_, index) => `city-gate-route-${index}`),
+  ])("keeps generated sign and gate routes reachable (%s)", (seed) => {
+    const state = worldFromScenario(createRunScenario(seed, "vanguard"));
+    const sign = wildernessCityLandmarkAnchor(state.map);
+    const approach = findStateNavigationRoute(
+      state,
+      state.player.position,
+      sign,
+      state.player.radius,
+    ).at(-1)!;
+    expect(approach).toBeDefined();
+    expect(
+      Math.hypot(approach.x - sign.x, approach.y - sign.y),
+    ).toBeLessThanOrEqual(CITY_DISCOVERY_INTERACTION_RADIUS);
+    const gate = tileCenter(state.map.exit);
+    expect(
+      findStateNavigationRoute(state, approach, gate, state.player.radius).at(
+        -1,
+      ),
+    ).toEqual(gate);
+    expect(
+      buildSceneryLayout(state.map).some(
+        ({ name }) => name === "embercross-road-sign",
+      ),
+    ).toBe(true);
+  });
+
   it("requires discovery before the gate and enters the city without ending the run", () => {
     const state = worldFromScenario(
       createRunScenario("city-route-transition", "vanguard"),
