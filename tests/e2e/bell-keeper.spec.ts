@@ -66,6 +66,23 @@ async function attachFullPage(page: Page, name: string): Promise<void> {
   });
 }
 
+async function openBellKeeperWithCampaign(page: Page): Promise<void> {
+  await page.goto("/?testMode=1&selection=1");
+  await page
+    .getByRole("button", { name: "Enter the wake", exact: true })
+    .click();
+  await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
+  await page
+    .getByRole("button", { name: "Journal and save", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Back to game", exact: true }).click();
+  await page.evaluate((scenario) => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario(scenario);
+    bridge.setCamera({ x: 6 * 48, y: 4 * 48, zoom: 0.9 }, "fixed");
+  }, BELL_KEEPER_SCENARIO);
+}
+
 test("desktop warning survives save/load, marks the boundary, and permits recovery counterplay", async ({
   page,
 }) => {
@@ -321,5 +338,80 @@ test.describe("warning HUD clearance", () => {
         `${viewport.width}x${viewport.height} objective overlap`,
       ).toBe(false);
     }
+  });
+});
+
+test.describe("warning audio", () => {
+  test("plays once for an enabled windup and not again when the warning save is loaded", async ({
+    page,
+  }) => {
+    await openBellKeeperWithCampaign(page);
+    await page.evaluate(() => window.__GAME_TEST__!.step(1, { render: true }));
+    await expect
+      .poll(async () =>
+        page.evaluate(() =>
+          JSON.parse(
+            document.querySelector<HTMLElement>(".campaign-tools")!.dataset
+              .audio!,
+          ),
+        ),
+      )
+      .toMatchObject({ played: 1, lastCue: "danger", failed: 0 });
+    await page.evaluate(() => window.__GAME_TEST__!.render());
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          () =>
+            JSON.parse(
+              document.querySelector<HTMLElement>(".campaign-tools")!.dataset
+                .audio!,
+            ).played,
+        ),
+      )
+      .toBe(1);
+
+    const warningSave = await page.evaluate(() =>
+      window.__GAME_TEST__!.snapshot(),
+    );
+    await page.evaluate((state) => {
+      const bridge = window.__GAME_TEST__!;
+      bridge.loadState(state);
+      bridge.render();
+    }, warningSave);
+    await expect
+      .poll(async () =>
+        page.evaluate(
+          () =>
+            JSON.parse(
+              document.querySelector<HTMLElement>(".campaign-tools")!.dataset
+                .audio!,
+            ).played,
+        ),
+      )
+      .toBe(1);
+  });
+
+  test("keeps the game playable with warning audio muted", async ({ page }) => {
+    await openBellKeeperWithCampaign(page);
+    await page
+      .getByRole("button", { name: "Journal and save", exact: true })
+      .click();
+    await page.getByText("Controls and sound", { exact: true }).click();
+    await page.getByRole("button", { name: "Mute sound", exact: true }).click();
+    await page
+      .getByRole("button", { name: "Back to game", exact: true })
+      .click();
+    await page.evaluate(() => window.__GAME_TEST__!.step(1, { render: true }));
+    await expect
+      .poll(async () =>
+        page.evaluate(() =>
+          JSON.parse(
+            document.querySelector<HTMLElement>(".campaign-tools")!.dataset
+              .audio!,
+          ),
+        ),
+      )
+      .toMatchObject({ muted: true, played: 0 });
+    await expect(page.locator(".health")).toBeVisible();
   });
 });

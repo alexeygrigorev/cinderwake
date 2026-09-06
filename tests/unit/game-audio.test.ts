@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { GameAudio, soundForEvent } from "../../src/audio/GameAudio";
+import { UNITS_PER_TILE } from "../../src/game/constants";
 import type { GameState } from "../../src/game/types";
 import { worldFromScenario } from "../../src/testkit/scenarios";
 
@@ -79,6 +80,53 @@ function state(): GameState {
   });
 }
 
+function warningState(): GameState {
+  const world = worldFromScenario({
+    schemaVersion: 1,
+    id: "audio-warning",
+    seed: "audio-warning",
+    classId: "vanguard",
+    map: {
+      mode: "explicit",
+      rows: [
+        "############",
+        "#..........#",
+        "#..........#",
+        "#...P......#",
+        "#.....E....#",
+        "#..........#",
+        "#..........#",
+        "############",
+      ],
+    },
+    monsters: [
+      {
+        id: "monster:bell-keeper",
+        kind: "stonekin",
+        tile: [6, 4],
+        elite: true,
+        attackReadyTick: 10_000,
+      },
+    ],
+    settings: { ai: false },
+  });
+  return world;
+}
+
+function addWarning(world: GameState, id = "attack:bell-keeper:1"): void {
+  const owner = world.monsters[0]!;
+  world.pendingAttacks.push({
+    id,
+    ownerId: owner.id,
+    kind: "ability",
+    impactTick: world.tick + 48,
+    origin: { ...owner.position },
+    direction: { x: -UNITS_PER_TILE, y: 0 },
+    range: 2 * UNITS_PER_TILE,
+    damage: owner.attackDamage,
+  });
+}
+
 describe("game audio", () => {
   it("loads only after activation and reuses one context and one request per asset", async () => {
     const { audio, createContext, fetcher } = setup();
@@ -108,6 +156,44 @@ describe("game audio", () => {
       "hit",
     );
     expect(soundForEvent({ tick: 2, type: "loot_picked" })).toBe("loot");
+  });
+
+  it("plays one danger cue for each new Bell Keeper windup", async () => {
+    const { audio, advance } = setup();
+    const world = warningState();
+    audio.activate();
+    await flush();
+    audio.observe(world);
+
+    world.tick = 1;
+    addWarning(world);
+    audio.observe(world);
+    await flush();
+    expect(audio.snapshot().played).toBe(1);
+    expect(audio.snapshot().lastCue).toBe("danger");
+
+    world.tick = 2;
+    audio.observe(world);
+    await flush();
+    expect(audio.snapshot().played).toBe(1);
+
+    advance(500);
+    world.tick = 3;
+    addWarning(world, "attack:bell-keeper:2");
+    audio.observe(world);
+    await flush();
+    expect(audio.snapshot().played).toBe(2);
+  });
+
+  it("does not replay a warning already present in a loaded mid-warning state", async () => {
+    const { audio } = setup();
+    const world = warningState();
+    addWarning(world);
+    audio.activate();
+    await flush();
+    audio.observe(world);
+    await flush();
+    expect(audio.snapshot().played).toBe(0);
   });
 
   it("observes skipped ticks exactly once without changing simulation state", async () => {
