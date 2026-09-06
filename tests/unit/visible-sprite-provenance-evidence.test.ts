@@ -167,6 +167,48 @@ function evidenceFixture(): {
   };
 }
 
+function registeredTelegraphEvidence() {
+  const evidence = evidenceFixture();
+  const state = evidence.profiles[0].states.find(
+    ({ scenarioId }) => scenarioId === "ordinary-production-launch",
+  )!;
+  state.combatState = {
+    tick: 40,
+    pendingAttacks: [
+      {
+        id: "attack:bell-keeper:ability",
+        ownerId: "monster:bell-keeper",
+        kind: "ability",
+        impactTick: 48,
+        origin: { x: 6656, y: 4608 },
+        range: 2048,
+      },
+    ],
+    monsters: [
+      {
+        id: "monster:bell-keeper",
+        kind: "stonekin",
+        elite: true,
+        health: 1000,
+      },
+    ],
+  };
+  state.manifestDraws.push({
+    id: "combat-telegraph:attack:bell-keeper:ability",
+    visible: true,
+    role: "combat-telegraph",
+    paintRole: "combat-telegraph",
+    layer: "effects",
+    attackId: "attack:bell-keeper:ability",
+    ownerId: "monster:bell-keeper",
+    worldCenter: { x: 6656, y: 4608 },
+    radius: 2048,
+    impactTick: 48,
+    projectedBounds: { x: 0, y: 0, width: 184, height: 184 },
+  });
+  return evidence;
+}
+
 describe("visible sprite provenance evidence", () => {
   it("accepts a complete decoded-role and canvas manifest inventory", () => {
     const evidence = evidenceFixture();
@@ -254,5 +296,43 @@ describe("visible sprite provenance evidence", () => {
     expect(
       evaluateVisibleSpriteProvenanceEvidence(evidence).failures,
     ).toContain("provenance-inventory-incomplete");
+  });
+
+  it("accepts only a manifest telegraph backed by a live radial-slam attack", () => {
+    const evidence = registeredTelegraphEvidence();
+    const accepted = evaluateVisibleSpriteProvenanceEvidence(evidence);
+    expect(accepted.pass).toBe(true);
+    expect(accepted.signals).toContainEqual(
+      expect.objectContaining({
+        id: "combat-telegraphs-match-live-attacks",
+        pass: true,
+      }),
+    );
+
+    const wrongRadius = structuredClone(evidence);
+    wrongRadius.profiles[0].states[1]!.manifestDraws.at(-1)!.radius = 2047;
+    const rejectedRadius = evaluateVisibleSpriteProvenanceEvidence(wrongRadius);
+    expect(rejectedRadius.failures).toContain(
+      "combat-telegraph-contract-mismatch",
+    );
+
+    const forged = evidenceFixture();
+    forged.profiles[0].states[1]!.manifestDraws.push({
+      id: "combat-telegraph:forged",
+      visible: true,
+      role: "combat-telegraph",
+      paintRole: "combat-telegraph",
+      layer: "effects",
+      attackId: "attack:missing",
+      ownerId: "monster:missing",
+      worldCenter: { x: 1, y: 1 },
+      radius: 2048,
+      impactTick: 48,
+      projectedBounds: { x: 0, y: 0, width: 184, height: 184 },
+    });
+    const rejectedForged = evaluateVisibleSpriteProvenanceEvidence(forged);
+    expect(rejectedForged.failures).toContain(
+      "combat-telegraph-contract-mismatch",
+    );
   });
 });
