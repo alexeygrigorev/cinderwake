@@ -12,7 +12,7 @@ import {
 
 if (process.argv.includes("--help")) {
   console.log(
-    "Usage: npm run feedback:game\nRuns live controls, nine generated campaigns with exact save replay, and browser interaction/save/audio tests. Keeps incremental JSON/Markdown/HTML evidence. PASS verifies declared behavior, not subjective fun or visual approval.",
+    "Usage: npm run feedback:game\nRuns live controls, nine generated campaigns with exact save replay, browser interaction/save/audio tests, and two physical production journeys. Keeps incremental JSON/Markdown/HTML evidence. PASS verifies declared behavior, not subjective fun or visual approval.",
   );
   process.exit(0);
 }
@@ -44,11 +44,11 @@ const sourceIdentity = async () => {
   return createHash("sha256").update(JSON.stringify(source)).digest("hex");
 };
 
-function discoverBrowserCases() {
+function discoverBrowserCases(testFiles) {
   const args = [
     "playwright",
     "test",
-    ...BROWSER_TEST_FILES,
+    ...testFiles,
     "--list",
     "--reporter=json",
   ];
@@ -86,7 +86,10 @@ function discoverBrowserCases() {
   }
 }
 
-const browserDiscovery = discoverBrowserCases();
+const browserDiscovery = discoverBrowserCases(BROWSER_TEST_FILES);
+const campaignBrowserDiscovery = discoverBrowserCases([
+  "tests/e2e/campaign-production-journey.spec.ts",
+]);
 const componentDefinitions = [
   {
     id: "rules",
@@ -133,6 +136,28 @@ const componentDefinitions = [
     json: "browser.json",
     evidence: "browser.json",
   },
+  {
+    id: "campaign-browser",
+    command: "npx",
+    args: [
+      "playwright",
+      "test",
+      "tests/e2e/campaign-production-journey.spec.ts",
+      "--workers=1",
+      "--reporter=list,json",
+      "--output",
+      path.join(output, "campaign-browser-artifacts"),
+    ],
+    json: "campaign-browser.json",
+    evidence: "campaign-browser.json",
+    timeoutMs: 660_000,
+    environment: {
+      PLAYWRIGHT_JSON_OUTPUT_NAME: path.join(output, "campaign-browser.json"),
+    },
+    browserDiscovery: campaignBrowserDiscovery,
+    expectedBrowserCases: campaignBrowserDiscovery.cases,
+    browserManifest: "campaign-browser-list.json",
+  },
 ];
 
 console.log(`Game feedback evidence: ${path.join(output, "report.html")}`);
@@ -147,6 +172,8 @@ const run = await runGameFeedback({
     campaign: CAMPAIGN_CASES,
     browser: browserDiscovery.cases,
     browserDiscovery,
+    campaignBrowser: campaignBrowserDiscovery.cases,
+    campaignBrowserDiscovery,
   },
 });
 console.log(`${run.verdict}: ${path.join(output, "report.html")}`);

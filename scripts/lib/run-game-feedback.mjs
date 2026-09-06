@@ -22,6 +22,19 @@ function normalizedBrowserDiscovery(value) {
   };
 }
 
+function expectedBrowserCases(entry, discovery) {
+  return Array.isArray(entry?.expectedBrowserCases)
+    ? entry.expectedBrowserCases
+    : discovery.cases;
+}
+
+function browserManifest(entry) {
+  return (
+    entry?.browserManifest ??
+    (entry?.id === "browser" ? "browser-list.json" : `${entry?.id}-list.json`)
+  );
+}
+
 function validateDefinitions(definitions) {
   if (!Array.isArray(definitions) || !definitions.length)
     throw new Error("At least one feedback component is required");
@@ -97,12 +110,42 @@ export async function runGameFeedback({
       error: contract.browserDiscovery?.error ?? discovery.error,
       evidence: "browser-list.json",
     },
+    campaignBrowser:
+      contract.campaignBrowser ??
+      definitions.find((entry) => entry.id === "campaign-browser")
+        ?.expectedBrowserCases ??
+      [],
+    campaignBrowserDiscovery: {
+      command:
+        contract.campaignBrowserDiscovery?.command ??
+        definitions.find((entry) => entry.id === "campaign-browser")
+          ?.browserDiscovery?.command ??
+        null,
+      error:
+        contract.campaignBrowserDiscovery?.error ??
+        definitions.find((entry) => entry.id === "campaign-browser")
+          ?.browserDiscovery?.error ??
+        null,
+      evidence: "campaign-browser-list.json",
+    },
   };
 
   await fs.writeFile(
     path.join(output, "browser-list.json"),
     `${JSON.stringify(discovery.report ?? { error: discovery.error }, null, 2)}\n`,
   );
+  for (const entry of definitions) {
+    if (!entry.browserDiscovery && entry.id !== "browser") continue;
+    const entryDiscovery = normalizedBrowserDiscovery(
+      entry.browserDiscovery ?? discovery,
+    );
+    const manifest = browserManifest(entry);
+    if (manifest === "browser-list.json") continue;
+    await fs.writeFile(
+      path.join(output, manifest),
+      `${JSON.stringify(entryDiscovery.report ?? { error: entryDiscovery.error }, null, 2)}\n`,
+    );
+  }
 
   async function writeReports(complete = false) {
     const sourceStable =
@@ -169,7 +212,9 @@ export async function runGameFeedback({
         env: {
           ...environment,
           ...(entry.environment ?? {}),
-          PLAYWRIGHT_JSON_OUTPUT_NAME: path.join(output, "browser.json"),
+          PLAYWRIGHT_JSON_OUTPUT_NAME:
+            entry.environment?.PLAYWRIGHT_JSON_OUTPUT_NAME ??
+            path.join(output, "browser.json"),
         },
       });
       let timedOut = false;
@@ -240,10 +285,10 @@ export async function runGameFeedback({
         try {
           reportValid = await (entry.validateReport
             ? entry.validateReport(parsedReport, {
-                expectedBrowserCases: discovery.cases,
+                expectedBrowserCases: expectedBrowserCases(entry, discovery),
               })
             : componentReportValid(entry.id, parsedReport, {
-                expectedBrowserCases: discovery.cases,
+                expectedBrowserCases: expectedBrowserCases(entry, discovery),
               }));
         } catch (error) {
           reportErrors.set(entry.id, {

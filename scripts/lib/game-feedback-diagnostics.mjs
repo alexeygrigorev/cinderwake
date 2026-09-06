@@ -389,20 +389,25 @@ function firstCampaignIssue(report, entry, outputDirectory) {
   return null;
 }
 
-function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
+function firstBrowserIssue(
+  report,
+  entry,
+  outputDirectory,
+  expectedCases,
+  component = "browser",
+) {
+  const manifest =
+    entry?.browserManifest ??
+    (component === "browser" ? "browser-list.json" : `${component}-list.json`);
+  const log = `${component}.log`;
   if (Array.isArray(report?.errors) && report.errors.length) {
     return issue({
-      component: "browser",
+      component,
       category: "runtime",
       code: "browser-top-level-error",
       expected: [],
       actual: report.errors,
-      evidence: [
-        entry?.json,
-        entry?.evidence,
-        "browser-list.json",
-        "browser.log",
-      ],
+      evidence: [entry?.json, entry?.evidence, manifest, log],
       reproduceCommand: componentCommand(entry),
       outputDirectory,
     });
@@ -416,18 +421,13 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
   );
   if (missing) {
     return issue({
-      component: "browser",
+      component,
       caseId: missing.id ?? null,
       category: "evidence",
       code: "browser-case-missing",
       expected: missing,
       actual: null,
-      evidence: [
-        entry?.json,
-        entry?.evidence,
-        "browser-list.json",
-        "browser.log",
-      ],
+      evidence: [entry?.json, entry?.evidence, manifest, log],
       reproduceCommand: componentCommand(entry),
       outputDirectory,
     });
@@ -437,13 +437,13 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
   );
   if (extra) {
     return issue({
-      component: "browser",
+      component,
       caseId: extra.id,
       category: "evidence",
       code: "browser-case-unexpected",
       expected: expected.map((candidate) => candidate.id),
       actual: extra,
-      evidence: [entry?.json, entry?.evidence, "browser.log"],
+      evidence: [entry?.json, entry?.evidence, log],
       reproduceCommand: componentCommand(entry),
       outputDirectory,
     });
@@ -458,7 +458,7 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
   );
   if (failed) {
     return issue({
-      component: "browser",
+      component,
       caseId: failed.id,
       category: "evidence",
       code: "browser-case-not-passing",
@@ -468,7 +468,7 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
         expectedStatus: failed.test?.expectedStatus ?? null,
         results: failed.test?.results ?? null,
       },
-      evidence: [entry?.json, entry?.evidence, "browser.log"],
+      evidence: [entry?.json, entry?.evidence, log],
       reproduceCommand: componentCommand(entry),
       outputDirectory,
     });
@@ -481,7 +481,7 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
       report.stats.expected !== actualCases.length)
   ) {
     return issue({
-      component: "browser",
+      component,
       category: "evidence",
       code: "browser-summary-mismatch",
       expected: {
@@ -491,7 +491,7 @@ function firstBrowserIssue(report, entry, outputDirectory, expectedCases) {
         flaky: 0,
       },
       actual: report.stats,
-      evidence: [entry?.json, entry?.evidence, "browser.log"],
+      evidence: [entry?.json, entry?.evidence, manifest, log],
       reproduceCommand: componentCommand(entry),
       outputDirectory,
     });
@@ -506,12 +506,13 @@ function reportIssue(component, report, entry, outputDirectory, context) {
     return firstControlsIssue(report, entry, outputDirectory);
   if (component === "campaign")
     return firstCampaignIssue(report, entry, outputDirectory);
-  if (component === "browser")
+  if (component === "browser" || component === "campaign-browser")
     return firstBrowserIssue(
       report,
       entry,
       outputDirectory,
       context.expectedBrowserCases,
+      component,
     );
   return null;
 }
@@ -623,7 +624,10 @@ export function buildIssues({
         mapValue(reports, entry.id),
         entry,
         outputDirectory,
-        { expectedBrowserCases },
+        {
+          expectedBrowserCases:
+            entry.expectedBrowserCases ?? expectedBrowserCases,
+        },
       );
       issues.push(
         diagnosed ??

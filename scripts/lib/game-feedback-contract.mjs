@@ -5,6 +5,7 @@ export const GAME_FEEDBACK_COMPONENTS = Object.freeze([
   "controls",
   "campaign",
   "browser",
+  "campaign-browser",
 ]);
 
 export const CONTROL_CASE_IDS = Object.freeze([
@@ -330,7 +331,7 @@ export function componentReportValid(id, report, context = {}) {
   if (id === "rules") return rulesReportValid(report);
   if (id === "controls") return controlsReportValid(report);
   if (id === "campaign") return campaignReportValid(report);
-  if (id === "browser")
+  if (id === "browser" || id === "campaign-browser")
     return browserReportValid(
       report,
       context.expectedBrowserCases,

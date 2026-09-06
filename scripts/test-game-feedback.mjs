@@ -123,7 +123,13 @@ function browserExpectation(report) {
 }
 
 test("aggregate rejects missing, duplicate and source-mixed evidence", () => {
-  const passing = ["rules", "controls", "campaign", "browser"].map((id) => ({
+  const passing = [
+    "rules",
+    "controls",
+    "campaign",
+    "browser",
+    "campaign-browser",
+  ].map((id) => ({
     id,
     exitCode: 0,
     reportValid: true,
@@ -137,6 +143,7 @@ test("aggregate rejects missing, duplicate and source-mixed evidence", () => {
       [
         ...passing.slice(0, 3),
         { id: "browser", exitCode: 0, reportValid: false },
+        passing[4],
       ],
       true,
       true,
@@ -161,6 +168,13 @@ test("passing component reports contain complete nested evidence", () => {
   assert.equal(componentReportValid("campaign", passingCampaign()), true);
   assert.equal(
     componentReportValid("browser", browser, {
+      expectedBrowserCases,
+      repositoryRoot: "/repo",
+    }),
+    true,
+  );
+  assert.equal(
+    componentReportValid("campaign-browser", browser, {
       expectedBrowserCases,
       repositoryRoot: "/repo",
     }),
@@ -436,6 +450,80 @@ test("extracted runner accepts isolated injected components", async () => {
       fs.readFileSync(path.join(outputDirectory, "next-action.md"), "utf8"),
       /Verdict: PASS/,
     );
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("runner keeps independent campaign browser evidence on its own paths", async () => {
+  const root = fs.mkdtempSync(
+    path.join(os.tmpdir(), "game-feedback-campaign-browser-"),
+  );
+  try {
+    const outputDirectory = path.join(root, "run");
+    const report = passingBrowser();
+    const expectedBrowserCases = collectBrowserCases(report).map(
+      ({ id, project, file, titlePath }) => ({
+        id,
+        project,
+        file,
+        titlePath,
+      }),
+    );
+    const reportScript = `const fs=require("node:fs");const path=require("node:path");const file=process.env.PLAYWRIGHT_JSON_OUTPUT_NAME;fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,${JSON.stringify(JSON.stringify(report))})`;
+    const discovery = {
+      command: ["node", "campaign-browser-list"],
+      report,
+      cases: expectedBrowserCases,
+      error: null,
+    };
+    const result = await runGameFeedback({
+      componentDefinitions: [
+        {
+          id: "campaign-browser",
+          command: process.execPath,
+          args: ["-e", reportScript],
+          json: "campaign-browser.json",
+          evidence: "campaign-browser.json",
+          browserDiscovery: discovery,
+          expectedBrowserCases,
+          browserManifest: "campaign-browser-list.json",
+          environment: {
+            PLAYWRIGHT_JSON_OUTPUT_NAME: path.join(
+              outputDirectory,
+              "campaign-browser.json",
+            ),
+          },
+        },
+      ],
+      outputDirectory,
+      sourceIdentity: async () => "campaign-browser-source",
+      browserDiscovery: {
+        command: ["node", "browser-list"],
+        report: { errors: [], suites: [] },
+        cases: [],
+        error: null,
+      },
+      contract: {
+        version: 1,
+        campaignBrowser: expectedBrowserCases,
+        campaignBrowserDiscovery: discovery,
+      },
+    });
+    assert.equal(result.verdict, "PASS");
+    assert.equal(
+      fs.existsSync(path.join(outputDirectory, "campaign-browser.json")),
+      true,
+    );
+    assert.equal(
+      fs.existsSync(path.join(outputDirectory, "campaign-browser-list.json")),
+      true,
+    );
+    const feedback = JSON.parse(
+      fs.readFileSync(path.join(outputDirectory, "feedback.json"), "utf8"),
+    );
+    assert.deepEqual(feedback.issues, []);
+    assert.deepEqual(feedback.contract.campaignBrowser, expectedBrowserCases);
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
   }
