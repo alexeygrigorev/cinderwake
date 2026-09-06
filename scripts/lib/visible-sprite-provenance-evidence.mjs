@@ -277,6 +277,12 @@ function stateInventory(profile, state, titleAllowlist) {
       (text) =>
         text.visible === true && nativeCampaignCopyPass(text.nativeCopy),
     ).length,
+    visibleNarrativeCopyCount: textNodes.filter(
+      (text) =>
+        text.visible === true &&
+        text.nativeCopy?.scope === "campaign-narrative" &&
+        nativeCampaignCopyPass(text.nativeCopy),
+    ).length,
     manifestDrawCount: manifestDraws.filter(({ visible }) => visible !== false)
       .length,
     canvasOperationCount: canvasOperations.filter(
@@ -334,7 +340,9 @@ export function evaluateVisibleSpriteProvenanceEvidence({
     inventories.every(
       (inventory) =>
         isNonEmptyString(inventory.scenarioId) &&
-        isNonEmptyString(inventory.stateId),
+        isNonEmptyString(inventory.stateId) &&
+        (inventory.scenarioId !== "campaign-journal" ||
+          inventory.visibleNarrativeCopyCount > 0),
     );
   const allRolesUseDecodedSprites =
     inventoryComplete &&
