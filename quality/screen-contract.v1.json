@@ -85,6 +85,14 @@
       "ready": "canvas",
       "required": ["canvas", ".hud.top", ".health"],
       "publicForbidden": [".game > .lab-toggle"],
+      "hudObstruction": {
+        "protectedTargets": ["player", "monster", "npc", "loot", "exit"],
+        "maximumOverlapRatio": 0.05,
+        "normalization": "Intersection area divided by the smaller projected target or objective rectangle area.",
+        "backgroundArchitecture": "Record intersecting structures in hud-obstruction-evidence.json for visual review; background overlap alone is not a gameplay obstruction failure.",
+        "calibration": "Place the negative-control objective over the projected player center. The former top-center mutation only crossed a roof, falsely rewarding unreadable or hidden guidance.",
+        "limits": "This geometry check protects gameplay targets at the captured state. It does not approve appearance, architecture readability, or every point in a moving encounter."
+      },
       "appearance": [
         "The world is the dominant surface: no dashboard or black void competes with the playfield.",
         "Buildings, props, ground, actors, and effects share one scale, perspective, palette, and light direction.",
