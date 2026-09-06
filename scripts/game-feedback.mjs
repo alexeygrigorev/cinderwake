@@ -88,6 +88,18 @@ async function report(complete = false) {
 await report();
 const cases = [
   {
+    id: "rules",
+    command: "npx",
+    args: [
+      "vitest",
+      "run",
+      "--reporter=json",
+      `--outputFile=${path.join(output, "rules.json")}`,
+    ],
+    json: "rules.json",
+    evidence: "rules.json",
+  },
+  {
     id: "controls",
     command: process.execPath,
     args: ["scripts/feedback.mjs", "--output", path.join(output, "controls")],

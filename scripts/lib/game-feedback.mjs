@@ -1,5 +1,12 @@
 export function gameFeedbackVerdict(results, complete, sourceStable) {
-  if (!complete || results.length !== 3) return "INCOMPLETE";
+  if (
+    !complete ||
+    results.length !== 4 ||
+    !["rules", "controls", "campaign", "browser"].every((id) =>
+      results.some((result) => result.id === id),
+    )
+  )
+    return "INCOMPLETE";
   if (
     !sourceStable ||
     results.some(
@@ -11,6 +18,13 @@ export function gameFeedbackVerdict(results, complete, sourceStable) {
 }
 
 export function componentReportValid(id, report) {
+  if (id === "rules")
+    return (
+      report?.success === true &&
+      report.numTotalTests > 0 &&
+      report.numFailedTests === 0 &&
+      report.numPendingTests === 0
+    );
   if (id === "controls")
     return (
       report?.verdict === "PASS" &&
@@ -27,7 +41,7 @@ export function componentReportValid(id, report) {
     );
   if (id === "browser")
     return (
-      report?.stats?.expected >= 13 &&
+      report?.stats?.expected >= 16 &&
       report.stats.unexpected === 0 &&
       report.stats.skipped === 0
     );
