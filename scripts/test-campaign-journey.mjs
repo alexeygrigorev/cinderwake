@@ -456,6 +456,24 @@ try {
           power: state.player.power,
           mission: missions.missionJournal(state).activeId,
           target: missions.missionJournal(state).cue,
+          navigation: {
+            pilotTargetId: pilot.target,
+            pilotTargetPosition: pilot.targetPosition,
+            remainingWaypoints: pilot.route,
+            nearbySolidScenery: sceneryApi
+              .buildSceneryLayout(state.map)
+              .filter(
+                (placement) =>
+                  placement.collision &&
+                  distance(placement.collision.center, state.player.position) <
+                    4096,
+              )
+              .map((placement) => ({
+                id: placement.id,
+                name: placement.name,
+                collision: placement.collision,
+              })),
+          },
           replayMatched,
           snapshotMatched,
           saveResumeMatched,
