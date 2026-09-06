@@ -149,15 +149,16 @@ test("desktop keyboard movement, canvas strike, and Strike button advance the pr
   );
   expect(movementFrame).not.toBe(openingFrame);
 
-  // This is a physical mouse gesture on the desktop game canvas. It should be
-  // interpreted as an attack, rather than a touch-route command.
+  // Shift-click physically invokes a stationary strike on clear ground.
   const canvas = page.locator("canvas");
   const canvasBox = await canvas.boundingBox();
   if (!canvasBox) throw new Error("Canvas has no bounds");
+  await page.keyboard.down("Shift");
   await page.mouse.click(
     canvasBox.x + canvasBox.width * 0.7,
     canvasBox.y + canvasBox.height * 0.5,
   );
+  await page.keyboard.up("Shift");
   await expect
     .poll(
       () =>

@@ -122,7 +122,12 @@ test("ordinary production route advances in real time and opens on a visible enc
     }
     return {
       tick: state.tick,
-      visibleMonsters: openingSample.visibleMonsterIds.length,
+      canvasVisibleMonsters: openingSample.visibleMonsterIds.length,
+      deviceVisibleMonsters:
+        openingSample.deviceVisibleMonsterIds?.length ?? null,
+      deviceOpeningIds: openingSample.deviceVisibleMonsterIds?.filter((id) =>
+        ["monster:00", "monster:01"].includes(id),
+      ),
       objectiveTarget:
         document.querySelector<HTMLElement>("#objective")?.dataset.targetId,
       objectiveState:
@@ -134,7 +139,10 @@ test("ordinary production route advances in real time and opens on a visible enc
       rejectedCellTopGap,
     };
   });
-  expect(initial.visibleMonsters).toBe(2);
+  expect(initial.deviceOpeningIds).toEqual(["monster:00", "monster:01"]);
+  expect(initial.deviceVisibleMonsters).toBeLessThanOrEqual(
+    initial.canvasVisibleMonsters,
+  );
   expect(initial.objectiveTarget).toMatch(/^monster:/);
   expect(initial.objectiveState).toBe("hunt");
   expect(initial.openingCount).toBe(2);
@@ -165,7 +173,8 @@ test("ordinary production route advances in real time and opens on a visible enc
         ),
       ).size,
       everVisibleThreat: samples.some(
-        ({ visibleMonsterIds }) => visibleMonsterIds.length > 0,
+        ({ deviceVisibleMonsterIds }) =>
+          (deviceVisibleMonsterIds?.length ?? 0) > 0,
       ),
     };
   });
