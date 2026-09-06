@@ -164,6 +164,7 @@ function spriteText(value: string, className = ""): string {
 }
 
 function setSpriteGlyphs(element: HTMLElement, value: string): void {
+  if (element.getAttribute("aria-label") === value) return;
   element.innerHTML = spriteGlyphs(value);
   element.setAttribute("aria-label", value);
   element.setAttribute("data-sprite-role", "glyph-text");
@@ -174,6 +175,7 @@ function setSpriteLabel(
   value: string,
   className = "",
 ): void {
+  if (element.getAttribute("aria-label") === value) return;
   element.innerHTML = spriteText(value, className);
   element.setAttribute("aria-label", value);
   element.setAttribute("data-sprite-role", "glyph-text");
@@ -313,6 +315,44 @@ async function boot(scenario: ScenarioV1): Promise<void> {
     (from, target) => {
       const state = host!.getState();
       return findStateNavigationRoute(state, from, target, state.player.radius);
+    },
+    (point, targetId) => {
+      const state = host!.getState();
+      const manifest = host!.getManifest();
+      const monster = targetId
+        ? state.monsters.find(
+            (enemy) => enemy.id === targetId && enemy.health > 0,
+          )
+        : [...manifest.drawCalls]
+            .reverse()
+            .filter((call) => call.type === "monster" && call.visible)
+            .map((call) => {
+              const rect = call.destinationRect;
+              const top = host!.worldAt(
+                rect.x + rect.width * 0.2,
+                rect.y + rect.height * 0.15,
+              );
+              const bottom = host!.worldAt(
+                rect.x + rect.width * 0.8,
+                rect.y + rect.height,
+              );
+              return point.x >= top.x &&
+                point.x <= bottom.x &&
+                point.y >= top.y &&
+                point.y <= bottom.y
+                ? state.monsters.find(
+                    (enemy) => enemy.id === call.entityId && enemy.health > 0,
+                  )
+                : undefined;
+            })
+            .find(Boolean);
+      return monster
+        ? {
+            id: monster.id,
+            position: monster.position,
+            range: ARCHETYPES[state.player.classId].attackRange,
+          }
+        : null;
     },
   );
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
