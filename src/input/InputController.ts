@@ -6,6 +6,18 @@ export type TouchRouteResolver = (
   requestedTarget: Vec2,
 ) => readonly Vec2[];
 
+export interface PointerAttackTarget {
+  id: string;
+  position: Vec2;
+  range: number;
+}
+
+/** A target id refreshes an existing selection; no id hit-tests a new click. */
+export type PointerTargetResolver = (
+  point: Vec2,
+  targetId?: string,
+) => PointerAttackTarget | null;
+
 export class InputController {
   private static readonly TAP_ARRIVAL_DISTANCE = 96;
   private static readonly TAP_AXIS_DEAD_ZONE = 32;
@@ -21,6 +33,8 @@ export class InputController {
   private aim: Vec2 | null = null;
   private mouseAim: { x: number; y: number } | null = null;
   private heldAttacks = new Set<number>();
+  private attackTarget: PointerAttackTarget | null = null;
+  private routedTarget: Vec2 | null = null;
   private attack = false;
   private ability = false;
   private tonic = false;
@@ -31,6 +45,7 @@ export class InputController {
     private readonly toWorld: (x: number, y: number) => Vec2,
     private readonly getPlayerPosition: () => Vec2,
     private readonly resolveTouchRoute?: TouchRouteResolver,
+    private readonly resolvePointerTarget?: PointerTargetResolver,
   ) {
     window.addEventListener(
       "keydown",
@@ -98,24 +113,24 @@ export class InputController {
         this.aim = this.point(event);
         if (event.pointerType === "mouse") {
           this.mouseAim = { x: event.clientX, y: event.clientY };
+          this.attackTarget = null;
           this.cancelTouchNavigation(false);
           if (event.button === 0) {
-            this.attack = true;
-            this.heldAttacks.add(event.pointerId);
-            canvas.setPointerCapture(event.pointerId);
+            if (event.shiftKey || !this.resolvePointerTarget) {
+              this.attack = true;
+              this.heldAttacks.add(event.pointerId);
+              canvas.setPointerCapture(event.pointerId);
+            } else {
+              this.attackTarget = this.resolvePointerTarget(this.aim);
+              this.mouseAim = null;
+              this.navigateTo(this.attackTarget?.position ?? this.aim);
+            }
           }
           if (event.button === 2) this.ability = true;
         } else if (event.isPrimary) {
           this.mouseAim = null;
-          const player = this.getPlayerPosition();
-          const route = this.resolveTouchRoute?.(player, this.aim) ?? [
-            this.aim,
-          ];
-          this.touchRoute = route.map((point) => ({ ...point }));
-          this.lastTouchPosition = null;
-          this.lastTouchCommand = { x: 0, y: 0 };
-          this.blockedTouchTicks = 0;
-          if (this.touchRoute.length === 0) this.cancelTouchNavigation();
+          this.attackTarget = null;
+          this.navigateTo(this.aim);
         }
       },
       { signal: this.listeners.signal },
@@ -167,7 +182,13 @@ export class InputController {
       (event) => {
         if (event.button !== 0) return;
         event.preventDefault();
-        if (event.pointerType !== "mouse") this.mouseAim = null;
+        if (event.pointerType !== "mouse") {
+          this.mouseAim = null;
+          if (kind !== "tonic") {
+            this.attackTarget = null;
+            this.cancelTouchNavigation();
+          }
+        }
         this.press(kind);
         if (kind === "attack") this.heldAttacks.add(event.pointerId);
         element.setPointerCapture(event.pointerId);
@@ -190,6 +211,7 @@ export class InputController {
   }
   /** Clear a world-space touch route after the map it was resolved against changes. */
   cancelNavigation(): void {
+    this.attackTarget = null;
     this.cancelTouchNavigation();
     this.touchMove = { x: 0, y: 0 };
     this.resetMovePad?.();
@@ -268,7 +290,7 @@ export class InputController {
     this.resetInput();
     this.resetMovePad = undefined;
   }
-  private resetInput(): void {
+  resetInput(): void {
     this.keys.clear();
     this.heldAttacks.clear();
     this.mouseAim = null;
@@ -283,6 +305,18 @@ export class InputController {
     this.lastTouchCommand = { x: 0, y: 0 };
     this.blockedTouchTicks = 0;
     if (clearAim) this.aim = null;
+  }
+  private navigateTo(target: Vec2): void {
+    const route = this.resolveTouchRoute?.(
+      this.getPlayerPosition(),
+      target,
+    ) ?? [target];
+    this.touchRoute = route.map((point) => ({ ...point }));
+    this.routedTarget = { ...target };
+    this.lastTouchPosition = null;
+    this.lastTouchCommand = { x: 0, y: 0 };
+    this.blockedTouchTicks = 0;
+    if (this.touchRoute.length === 0) this.cancelTouchNavigation();
   }
   private tapMove(): { x: -1 | 0 | 1; y: -1 | 0 | 1 } {
     if (this.touchRoute.length === 0) return { x: 0, y: 0 };
@@ -334,8 +368,40 @@ export class InputController {
     const moveY =
       (this.keys.has("w") || this.keys.has("arrowup") ? -1 : 0) +
       (this.keys.has("s") || this.keys.has("arrowdown") ? 1 : 0);
-    if (moveX !== 0 || moveY !== 0 || this.touchMove.x || this.touchMove.y)
+    if (moveX !== 0 || moveY !== 0 || this.touchMove.x || this.touchMove.y) {
+      this.attackTarget = null;
       this.cancelTouchNavigation();
+    }
+    let targetInRange = false;
+    if (this.attackTarget && this.resolvePointerTarget) {
+      this.attackTarget = this.resolvePointerTarget(
+        this.attackTarget.position,
+        this.attackTarget.id,
+      );
+      if (!this.attackTarget) this.cancelTouchNavigation();
+      else {
+        const target = this.attackTarget;
+        if (
+          !this.routedTarget ||
+          Math.hypot(
+            target.position.x - this.routedTarget.x,
+            target.position.y - this.routedTarget.y,
+          ) > 256 ||
+          this.touchRoute.length === 0
+        )
+          this.navigateTo(target.position);
+        // A bend in the route means a wall or prop still separates us. Walk
+        // around it before attacking, even if the target is close in distance.
+        targetInRange =
+          this.touchRoute.length <= 1 &&
+          Math.hypot(
+            target.position.x - this.getPlayerPosition().x,
+            target.position.y - this.getPlayerPosition().y,
+          ) <=
+            target.range * 0.9;
+        if (targetInRange) this.cancelTouchNavigation(false);
+      }
+    }
     const tapMove = this.tapMove();
     const input = {
       ...EMPTY_INPUT,
@@ -349,10 +415,18 @@ export class InputController {
       ) as -1 | 0 | 1,
       // Reproject the cursor every tick: the camera may move while the mouse
       // remains still. Touch navigation owns its separate world-space aim.
-      aim: this.mouseAim
-        ? this.point({ clientX: this.mouseAim.x, clientY: this.mouseAim.y })
-        : this.aim,
-      attack: this.attack || this.heldAttacks.size > 0 || this.keys.has(" "),
+      aim: this.attackTarget
+        ? { ...this.attackTarget.position }
+        : this.touchRoute.length > 0
+          ? this.aim
+          : this.mouseAim
+            ? this.point({ clientX: this.mouseAim.x, clientY: this.mouseAim.y })
+            : this.aim,
+      attack:
+        targetInRange ||
+        this.attack ||
+        this.heldAttacks.size > 0 ||
+        this.keys.has(" "),
       ability: this.ability,
       useTonic: this.tonic,
     };
