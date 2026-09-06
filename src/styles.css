@@ -379,7 +379,17 @@ button {
     left: 12px;
     transform: none;
     width: auto;
-    max-width: 50vw;
+    max-width: 210px;
+  }
+}
+
+@media (max-width: 760px) and (orientation: portrait) {
+  .game:has(.campaign-tools) .campaign-tools {
+    bottom: calc(202px + var(--safe-area-inset-bottom));
+  }
+  .game:has(.campaign-tools) .city-service-sheet {
+    bottom: calc(254px + var(--safe-area-inset-bottom));
+    max-height: calc(100svh - 410px);
   }
 }
 .stage {

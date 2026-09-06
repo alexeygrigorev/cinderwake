@@ -576,7 +576,14 @@ function updateHud(state: GameState): void {
               },
             };
   const objectiveHeading = campaign
-    ? missionJournal(state).title
+    ? state.phase === "won"
+      ? "Rift sealed"
+      : {
+          "break-ambush": "Break the ambush",
+          "silence-bell": "Silence the bell",
+          "carry-warning": "Reach Embercross",
+          "seal-night": "Seal the rift",
+        }[missionJournal(state).activeId]
     : state.phase === "won"
       ? "Rift sealed"
       : livingMonsters.length
@@ -590,7 +597,7 @@ function updateHud(state: GameState): void {
     ? state.phase === "won"
       ? "Embercross is safe"
       : livingMonsters.length
-        ? `${livingMonsters.length} remain / J journal`
+        ? `${livingMonsters.length} remain`
         : insideCity
           ? "Return to south gate"
           : state.city.locationPhase === "undiscovered"
@@ -658,7 +665,9 @@ function updateHud(state: GameState): void {
                       : event.type === "damage"
                         ? "Hit"
                         : event.type.replaceAll("_", " ")) +
-              (event.amount ? ` +${event.amount}` : ""),
+              (event.amount
+                ? ` ${event.type === "player_damaged" ? "-" : "+"}${event.amount}`
+                : ""),
           )
           .join(" / ")
       : "The cinders stir.",
