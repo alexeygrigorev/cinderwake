@@ -135,7 +135,7 @@ test("plans reject ignored live expectations, bad ticks and invalid comparisons"
   }
 });
 
-function runFeedback(args) {
+function runFeedback(args, interruptAfterCase = false) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, ["scripts/feedback.mjs", ...args], {
       stdio: ["ignore", "pipe", "pipe"],
@@ -143,6 +143,10 @@ function runFeedback(args) {
     let log = "";
     child.stdout.on("data", (chunk) => {
       log += chunk;
+      if (interruptAfterCase && log.includes("vanguard-combat: PASS")) {
+        interruptAfterCase = false;
+        child.kill("SIGTERM");
+      }
     });
     child.stderr.on("data", (chunk) => {
       log += chunk;
@@ -237,6 +241,28 @@ test(
         "invalid-scenario/console.json",
       ])
         assert.ok((await fs.stat(path.join(badOutput, file))).size > 0, file);
+      await fs.writeFile(
+        planFile,
+        JSON.stringify({
+          version: 1,
+          cases: [plan.cases[0], defaultFeedbackPlan().cases[1]],
+        }),
+      );
+      const interruptedOutput = path.join(temporary, "interrupted");
+      const interrupted = await runFeedback(
+        ["--plan", planFile, "--output", interruptedOutput],
+        true,
+      );
+      assert.equal(interrupted.code, 143, interrupted.log);
+      const partial = JSON.parse(
+        await fs.readFile(
+          path.join(interruptedOutput, "feedback.json"),
+          "utf8",
+        ),
+      );
+      assert.equal(partial.verdict, "INCOMPLETE");
+      assert.equal(partial.complete, false);
+      assert.ok(partial.cases.some(({ id }) => id === "vanguard-combat"));
     } finally {
       await fs.rm(temporary, { recursive: true, force: true });
     }
