@@ -7,3 +7,4 @@ quality-results/
 .vite/
 *.log
 .DS_Store
+.tmp/
