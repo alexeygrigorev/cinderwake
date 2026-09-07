@@ -11,6 +11,7 @@ import {
   evaluateDirectionalBankEvidence,
 } from "./lib/directional-bank-evidence.mjs";
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
+import { runtimeFingerprint } from "./lib/action-visual-review.mjs";
 
 const OUTPUT = path.resolve("quality-results/directional-bank/pres-facing-015");
 const PROFILES = {
@@ -821,6 +822,13 @@ async function runProfile(browser, profileId, profile, baseURL) {
 }
 
 async function main() {
+  const registry = JSON.parse(
+    await fs.readFile("quality/action-review.v1.json", "utf8"),
+  );
+  const capturedRuntime = await runtimeFingerprint(
+    process.cwd(),
+    registry.sourceRoots,
+  );
   const requestedProfiles = option("profiles", null);
   const profileIds = requestedProfiles
     ? requestedProfiles.split(",").filter((id) => id in PROFILES)
@@ -861,6 +869,7 @@ async function main() {
     const source = sourceSnapshot();
     const metadata = {
       schemaVersion: 1,
+      runtimeFingerprint: capturedRuntime,
       checkId: "PRES-FACING-015",
       recipeId: "recipe:pres-facing-015",
       evaluator: "directional-bank-selection-v1",

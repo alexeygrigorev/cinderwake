@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "gameId": "cinderwake",
+  "reviewer": { "model": "gpt-5.6-luna", "reasoningEffort": "high" },
+  "sourceRoots": ["src", "public/assets/sprites", "art/actor-atlas-v1.json"],
+  "actors": ["vanguard", "ranger", "arcanist"],
+  "profiles": ["desktop", "phone-portrait"],
+  "directions": ["north", "east", "south", "west"],
+  "actions": [
+    {
+      "id": "idle",
+      "runtimeClip": "idle",
+      "stages": ["start", "middle", "end"],
+      "checks": [
+        {
+          "id": "resting-continuity",
+          "instruction": "Inspect the visible front of the actor against the requested facing. Across the resting cycle check stable feet, identity, silhouette and equipment; flag jumps, floating or unintended movement."
+        }
+      ]
+    },
+    {
+      "id": "walk",
+      "runtimeClip": "walk",
+      "stages": ["start", "middle", "end"],
+      "checks": [
+        {
+          "id": "travel-and-contact",
+          "instruction": "Compare the visible front of the actor with actual displacement across ordered frames. Check alternating supporting feet, stable body identity and ground contact; flag backwards locomotion, sliding and flicker."
+        }
+      ]
+    },
+    {
+      "id": "attack",
+      "runtimeClip": "attack",
+      "runtimeInput": "attack",
+      "stages": ["windup", "impact", "recovery"],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the actual visible arrowhead or effect front independently of its bounding box and metadata. Does it point toward the declared target and along its displacement, in this cardinal direction? For melee, check the swing faces the target. A sideways or backwards arrow is FAIL."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Does the projectile visibly leave the bow, hand or weapon at release, with no detached start or incorrect side after reflection? Compare windup, impact and recovery for continuous identity and a readable connection between action and result."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check the action at actual gameplay scale and inspect small details at original resolution. Flag clipped arrows, misleading streaks, wrong orientation, equipment popping, incoherent recovery or unclear impact. If sparse frames cannot establish movement, return UNCERTAIN and request consecutive flight frames."
+        }
+      ]
+    },
+    {
+      "id": "ability",
+      "runtimeClip": "ability",
+      "runtimeInput": "ability",
+      "stages": ["windup", "impact", "recovery"],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the visible tip/front of every projectile or directional effect and compare it with target direction and displacement. A Ranger fan must spread around the intended direction and each arrowhead must align with its own travel. For radial effects inspect symmetry and centering."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Compare anticipation, release and recovery: effects must originate at the correct hand/weapon or actor center and remain attached through mirroring. Flag discontinuity, equipment popping, disconnected effects or unreadable consequence."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check each effect at gameplay size and original resolution. Flag clipping, unrelated white streaks, reversed tips and visual overlap that hides intent. Return UNCERTAIN when the frame interval or crop cannot reveal projectile motion."
+        }
+      ]
+    },
+    {
+      "id": "hurt",
+      "runtimeClip": "hurt",
+      "stages": ["before", "impact", "recovery"],
+      "checks": [
+        {
+          "id": "readable-feedback",
+          "instruction": "Compare pre-hit, reaction and recovery. Verify the struck actor is visually identifiable, reacts at the hit location and returns coherently without sprite identity changes, unexplained facing reversal or unreadable damage feedback."
+        }
+      ]
+    },
+    {
+      "id": "death",
+      "runtimeClip": "death",
+      "stages": ["before", "collapse", "settled"],
+      "checks": [
+        {
+          "id": "readable-final-state",
+          "instruction": "Inspect before, collapse and settled frames. Defeat must be visually distinct from idle or hurt, maintain actor identity and ground contact, and end without clipping, flicker, floating or an unexplained return to a living pose."
+        }
+      ]
+    },
+    {
+      "id": "tonic",
+      "runtimeInput": "useTonic",
+      "stages": ["before", "use", "after"],
+      "checks": [
+        {
+          "id": "readable-result",
+          "instruction": "Compare the input cue, use frame and resulting health/supply presentation. A player must see that the item was used and what changed; flag invisible success, feedback hidden behind controls or an effect that resembles incoming damage."
+        }
+      ]
+    }
+  ]
+}
