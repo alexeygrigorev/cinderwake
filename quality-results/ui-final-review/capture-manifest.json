@@ -1,0 +1,123 @@
+{
+  "sourceRoots": [
+    "src",
+    "public/assets/sprites",
+    "public/assets/selection"
+  ],
+  "sourceFingerprint": "bcd1a4d68146796ed5182d7c709d65932cb33374d800366c06788c469b7a7338",
+  "sourceWorkspace": "/data/tmp/cinderwake-capture-cydn9g",
+  "frames": [
+    {
+      "profile": "desktop",
+      "actor": "vanguard",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/desktop-selection-vanguard.png",
+      "sha256": "c19465abebe8d856da65ab55068afb3f565b78e38934ed25aa54c29dea0f8757"
+    },
+    {
+      "profile": "desktop",
+      "actor": "ranger",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/desktop-selection-ranger.png",
+      "sha256": "b8d5af1363b51be62f0f9d5d328266c14c747e4280b6915c4067123e5f340845"
+    },
+    {
+      "profile": "desktop",
+      "actor": "arcanist",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/desktop-selection-arcanist.png",
+      "sha256": "e5af14ab295c9dd8dec1dcba65c117f89e17aa7eb4a5f13a5f247edd78f70287"
+    },
+    {
+      "profile": "desktop",
+      "actor": "vanguard",
+      "stage": "gameplay",
+      "file": "quality-results/ui-final-review/desktop-gameplay.png",
+      "sha256": "57746057531db23f2b43ac39e5c09b8c9c2ec5d8c9f3f5d0e5be7d758ca4fb99"
+    },
+    {
+      "profile": "narrow-desktop",
+      "actor": "vanguard",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/narrow-desktop-selection-vanguard.png",
+      "sha256": "6782960f3cd05fd173c84b13b61a2fbd99d9cdb54bbcea00b83c72947b937438"
+    },
+    {
+      "profile": "narrow-desktop",
+      "actor": "ranger",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/narrow-desktop-selection-ranger.png",
+      "sha256": "16ec8ccb6f65b407393dff314842cf2d8e97834819756d0824c4aad0f33fa3fe"
+    },
+    {
+      "profile": "narrow-desktop",
+      "actor": "arcanist",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/narrow-desktop-selection-arcanist.png",
+      "sha256": "2c4fd062492e2afe4409935316cab4f5e4bbe77f6f4344baa87f4bf453d05ab6"
+    },
+    {
+      "profile": "narrow-desktop",
+      "actor": "vanguard",
+      "stage": "gameplay",
+      "file": "quality-results/ui-final-review/narrow-desktop-gameplay.png",
+      "sha256": "acb9103b2ff86f1e2432e263260f80b7aece7a8c93e2cacb718d8b0cabdd8863"
+    },
+    {
+      "profile": "phone-portrait",
+      "actor": "vanguard",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-portrait-selection-vanguard.png",
+      "sha256": "007e67f517f637308c4db61e287b82118324eb6cec13bd73c4848e304ba2a114"
+    },
+    {
+      "profile": "phone-portrait",
+      "actor": "ranger",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-portrait-selection-ranger.png",
+      "sha256": "d790d90c58ba59d9a5b55d3ef6be330ff0ffad376b54f2606f1f2fd2860b8ecc"
+    },
+    {
+      "profile": "phone-portrait",
+      "actor": "arcanist",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-portrait-selection-arcanist.png",
+      "sha256": "e026aa3fc52ac38db0627a95e89b642bf93c9a7d40ca8b81e29eeb3b3843220d"
+    },
+    {
+      "profile": "phone-portrait",
+      "actor": "vanguard",
+      "stage": "gameplay",
+      "file": "quality-results/ui-final-review/phone-portrait-gameplay.png",
+      "sha256": "9226cf5b0ec6aa2b3e4bd91bb04ebcb586272af77ae44ccbbad736f3edac56c2"
+    },
+    {
+      "profile": "phone-landscape",
+      "actor": "vanguard",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-landscape-selection-vanguard.png",
+      "sha256": "93c8ad0292a69f69b5cb45b9ac25ad07fce34e5e25ba8e3bfbc27444dbdafdd0"
+    },
+    {
+      "profile": "phone-landscape",
+      "actor": "ranger",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-landscape-selection-ranger.png",
+      "sha256": "a66261fd7f284b53376fc3a1074cabe4fcdcd80fb9d4a9cc0808c798f13ad1a1"
+    },
+    {
+      "profile": "phone-landscape",
+      "actor": "arcanist",
+      "stage": "selection",
+      "file": "quality-results/ui-final-review/phone-landscape-selection-arcanist.png",
+      "sha256": "09e0c6504673f1823b0a02c9c56265ea1db74cfb3e4ca7f3c60e1c71c3e7bed5"
+    },
+    {
+      "profile": "phone-landscape",
+      "actor": "vanguard",
+      "stage": "gameplay",
+      "file": "quality-results/ui-final-review/phone-landscape-gameplay.png",
+      "sha256": "88a98382ed102473ac421d4ce3d1a8698f062243357dad3f5a4bd5773a67c5c2"
+    }
+  ]
+}

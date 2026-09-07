@@ -1,0 +1,208 @@
+{
+  "sourceFingerprint": "278947d9cb6fcbd280f4f83724aa5428ed4fd882dd84a84cac12dbc52d30fbd7",
+  "inspectedFrames": [
+    "desktop-selection-vanguard.png",
+    "desktop-selection-ranger.png",
+    "desktop-selection-arcanist.png",
+    "desktop-gameplay.png",
+    "narrow-desktop-selection-vanguard.png",
+    "narrow-desktop-selection-ranger.png",
+    "narrow-desktop-selection-arcanist.png",
+    "narrow-desktop-gameplay.png",
+    "phone-portrait-selection-vanguard.png",
+    "phone-portrait-selection-ranger.png",
+    "phone-portrait-selection-arcanist.png",
+    "phone-portrait-gameplay.png",
+    "phone-landscape-selection-vanguard.png",
+    "phone-landscape-selection-ranger.png",
+    "phone-landscape-selection-arcanist.png",
+    "phone-landscape-gameplay.png"
+  ],
+  "frames": [
+    {
+      "file": "desktop-selection-vanguard.png",
+      "verdict": "PASS",
+      "observations": [
+        "The centered panel visibly says Choose your hero; Vanguard has a gold border and check/Selected label, while Ranger and Arcanist say Choose.",
+        "The large Start game button is the dominant action. Import save and + World options are visibly separate secondary controls with no clipping or overlap."
+      ],
+      "limitations": [
+        "This is a selection frame, so gameplay fences and scene collision context are not observable."
+      ]
+    },
+    {
+      "file": "desktop-selection-ranger.png",
+      "verdict": "PASS",
+      "observations": [
+        "Ranger is visibly named in the heading and has the gold selected card/check; the other class cards remain labeled Choose.",
+        "Start game, Import save, and + World options are readable, distinct, and fully contained in the panel."
+      ],
+      "limitations": [
+        "This is a selection frame, so gameplay fences and scene collision context are not observable."
+      ]
+    },
+    {
+      "file": "desktop-selection-arcanist.png",
+      "verdict": "PASS",
+      "observations": [
+        "Arcanist is visibly named and its card has the gold selected border/check; Vanguard and Ranger visibly say Choose.",
+        "The primary Start game button and the separate Import save and + World options controls are readable with clear spacing."
+      ],
+      "limitations": [
+        "This is a selection frame, so gameplay fences and scene collision context are not observable."
+      ]
+    },
+    {
+      "file": "desktop-gameplay.png",
+      "verdict": "PASS",
+      "observations": [
+        "Break the ambush / 14 remain is clearly readable at top right, with the separate 14 foes counter and Run log. The visible next action is to move with WASD/arrows or click ground and attack a foe/click or hold Space.",
+        "Journal, Read: Iley's sealed letter, Sound on, Saved here, Vitality 160 / 160, Ability READY, Tonic 2, and Hold/Space Strike are all visibly readable and separated.",
+        "Fence runs visibly use repeated upright posts and horizontal rails around the encounter. Buildings have grounded dark rubble but no bright white fringe, checkerboard, stray-square, or floor-pattern artifact that reads as a fence."
+      ],
+      "limitations": []
+    },
+    {
+      "file": "narrow-desktop-selection-vanguard.png",
+      "verdict": "PASS",
+      "observations": [
+        "At 800x600 the right-side panel still clearly identifies Vanguard as selected, shows all three class names/statuses, and keeps Start game dominant.",
+        "Import save and + World options remain visibly separate and the shown controls do not overlap or clip."
+      ],
+      "limitations": [
+        "The narrow layout omits the longer class ability sentence and the sound/progress footer, so only the compact selection guidance is visible.",
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "narrow-desktop-selection-ranger.png",
+      "verdict": "PASS",
+      "observations": [
+        "Ranger is clearly the selected hero through the heading and gold checked card; all alternate cards are labeled Choose.",
+        "Start game, Import save, and + World options are readable and separated in the panel with no visible overlap."
+      ],
+      "limitations": [
+        "The narrow layout omits the longer class ability sentence and the sound/progress footer.",
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "narrow-desktop-selection-arcanist.png",
+      "verdict": "PASS",
+      "observations": [
+        "Arcanist is clearly selected via the heading and gold checked card; Vanguard and Ranger are visibly available as Choose.",
+        "The large Start game action and separate Import save/+ World options controls remain readable without overlap."
+      ],
+      "limitations": [
+        "The narrow layout omits the longer class ability sentence and the sound/progress footer.",
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "narrow-desktop-gameplay.png",
+      "verdict": "FAIL",
+      "observations": [
+        "The objective card at the top visibly occupies the same area as the Saved here status: Saved here is rendered inside/under the objective card beside 14 remain rather than as a separate non-overlapping status surface.",
+        "The Move/Attack helper bar visibly overlaps the upper portion of the Hold/Space Strike card at the bottom, so the two control surfaces are not cleanly separated.",
+        "The objective, Journal, Read: Iley's sealed letter, Sound on, Vitality, Ability, Tonic, and Strike labels are otherwise readable. The visible scene has recognizable post-and-rail fences; surrounding building rubble is dark/gray and does not form a checkerboard or bright fringe."
+      ],
+      "limitations": []
+    },
+    {
+      "file": "phone-portrait-selection-vanguard.png",
+      "verdict": "PASS",
+      "observations": [
+        "The portrait panel clearly says Choose your hero, identifies Vanguard with a checked Selected card, and presents readable Ranger/Arcanist alternatives.",
+        "Start game is prominent; Import save, + World options, movement guidance, and sound/progress copy are visible within the rounded panel without overlap."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-portrait-selection-ranger.png",
+      "verdict": "PASS",
+      "observations": [
+        "Ranger is clearly named and selected with a checked gold card; the other two class cards visibly say Choose.",
+        "The complete panel remains in the 390px portrait frame: Start game, Import save, + World options, movement guidance, and sound/progress copy are readable and non-overlapping."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-portrait-selection-arcanist.png",
+      "verdict": "PASS",
+      "observations": [
+        "Arcanist is clearly selected with the checked gold card and heading; Vanguard and Ranger remain readable as Choose.",
+        "Start game is dominant and Import save/+ World options plus the compact mobile guidance are fully visible with no overlap."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-portrait-gameplay.png",
+      "verdict": "PASS",
+      "observations": [
+        "Break the ambush / 14 remain is readable at the top. Journal, the Read: Iley's s... save-entry control, Sound on, vitality, MOVE pad, Ability READY, Tonic 2, and Strike Hold are visibly present and separated.",
+        "The mobile helper explicitly says Drag the pad to move and Hold Strike near a foe, making the next action clear. The objective and controls do not overlap.",
+        "Visible fence segments read as upright rails/posts at the scene edges; building edges are grounded with dark rubble rather than a bright fringe, checkerboard, or stray squares."
+      ],
+      "limitations": [
+        "The Read entry is intentionally ellipsized to Read: Iley's s... at portrait width, and no separate Saved here badge is visible."
+      ]
+    },
+    {
+      "file": "phone-landscape-selection-vanguard.png",
+      "verdict": "PASS",
+      "observations": [
+        "The landscape panel clearly identifies Vanguard as selected and shows Ranger/Arcanist as Choose.",
+        "Start game, Import save, + World options, and movement guidance are fully visible, readable, and separated in the 844x390 frame."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-landscape-selection-ranger.png",
+      "verdict": "PASS",
+      "observations": [
+        "Ranger is clearly named and marked Selected with the gold checked card; the alternate class cards remain labeled Choose.",
+        "Start game and the separate Import save/+ World options controls are readable and fully contained in the landscape panel."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-landscape-selection-arcanist.png",
+      "verdict": "PASS",
+      "observations": [
+        "Arcanist is clearly selected via the heading and checked gold card; Vanguard and Ranger visibly say Choose.",
+        "Start game, Import save, + World options, and movement guidance fit within the panel without clipping or overlap."
+      ],
+      "limitations": [
+        "Selection view does not expose gameplay fence/context evidence."
+      ]
+    },
+    {
+      "file": "phone-landscape-gameplay.png",
+      "verdict": "PASS",
+      "observations": [
+        "Break the ambush / 14 remain, the 14 foes counter, Journal, Read: Iley's s..., Sound on, the move helper, Vitality, Ability READY, Tonic 2, and Strike Hold are all visibly readable and do not overlap.",
+        "The helper says Drag the pad to move and Hold Strike near a foe, so the next action is clear. Bottom MOVE, Ability, Tonic, and Strike surfaces are separated.",
+        "Visible barriers use repeated upright posts and horizontal rails. Building bases have dark grounded rubble with no bright white fringe, checkerboard, stray squares, or floor pattern that could be mistaken for a fence."
+      ],
+      "limitations": [
+        "The Read entry is ellipsized to Read: Iley's s... at landscape phone width, and no separate Saved here badge is visible."
+      ]
+    }
+  ],
+  "overallVerdict": "REVISE",
+  "unresolved": [
+    "At 800x600 narrow-desktop gameplay, separate the Saved here status from the objective card; it is visibly overlaid inside the objective region.",
+    "At 800x600 narrow-desktop gameplay, move or reflow the Move/Attack helper so it no longer overlaps the Hold/Space Strike card.",
+    "Mobile gameplay's Read entry is visibly ellipsized and does not show a separate Saved here badge; this is a readability limitation, not an overlap failure."
+  ]
+}
