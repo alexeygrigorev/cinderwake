@@ -42,7 +42,11 @@
     "encoding": "Lossless RGBA PNG to preserve all unrelated palette colors"
   },
   "review": {
-    "accepted": false,
-    "notes": "Automatic pixel preservation and mutation checks cover the preparation change. Final Ranger action captures require a fresh independent visual review."
+    "accepted": true,
+    "scope": "This detached-projectile correction in desktop Ranger firing only; not whole-atlas or whole-game acceptance.",
+    "reviewer": "gpt-5.6-luna",
+    "evidence": "quality-results/action-review/ranger/review.json",
+    "bundle": "quality-results/action-review/ranger/bundle.json",
+    "notes": "Four independent direction reviews accepted all eight primary/ability cases and inspected all 128 scene/crop images. North firing contains no extra sideways actor-baked projectile. Automatic checks preserve every other actor and bow pixel."
   }
 }
