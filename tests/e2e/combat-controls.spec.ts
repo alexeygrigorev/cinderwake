@@ -79,6 +79,75 @@ test("a ground click walks to its destination without starting an attack", async
   ).toHaveLength(0);
 });
 
+test("clicking loot walks to it and picks that item up", async ({ page }) => {
+  await openArena(page);
+  const before = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    bridge.loadScenario({
+      schemaVersion: 1,
+      id: "pointer-loot-pickup",
+      seed: "pointer-loot-pickup",
+      classId: "vanguard",
+      map: {
+        mode: "explicit",
+        rows: [
+          "#####################",
+          "#...................#",
+          "#...................#",
+          "#........P........E.#",
+          "#...................#",
+          "#...................#",
+          "#####################",
+        ],
+      },
+      loot: [
+        {
+          id: "loot:clicked",
+          kind: "gold",
+          rarity: "common",
+          tile: [13, 3],
+          amount: 7,
+        },
+      ],
+      settings: { ai: false, autoPickup: false, cameraFollow: true },
+    });
+    return {
+      state: bridge.snapshot(),
+      loot: bridge
+        .renderManifest()
+        .drawCalls.find(({ entityId }) => entityId === "loot:clicked")!,
+    };
+  });
+  const canvas = (await page.locator("canvas").boundingBox())!;
+  await page.mouse.click(
+    canvas.x +
+      ((before.loot.destinationRect.x + before.loot.destinationRect.width / 2) *
+        canvas.width) /
+        960,
+    canvas.y +
+      ((before.loot.destinationRect.y +
+        before.loot.destinationRect.height / 2) *
+        canvas.height) /
+        540,
+  );
+  const arrived = await advance(page, 90);
+  expect(arrived.player.position.x).toBeGreaterThan(
+    before.state.player.position.x + 2000,
+  );
+  expect(arrived.player.gold).toBe(7);
+  expect(arrived.loot).toHaveLength(0);
+  expect(arrived.metrics.lootCollected).toBe(1);
+  expect(
+    arrived.eventLog.some(
+      ({ type, targetId }) =>
+        type === "loot_picked" && targetId === "loot:clicked",
+    ),
+  ).toBe(true);
+  expect(
+    arrived.eventLog.filter(({ type }) => type === "attack_started"),
+  ).toHaveLength(0);
+});
+
 test("clicking a distant enemy approaches, attacks, and stops after the kill", async ({
   page,
 }) => {
