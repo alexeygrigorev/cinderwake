@@ -2717,9 +2717,14 @@ summary:focus-visible,
 #app .campaign-tools button {
   font-size: 14px;
 }
+#app .run-options summary,
+#app .selection-import {
+  min-height: 44px;
+}
 .selection.selection-v2 {
   display: flex;
   flex-direction: column;
+  gap: 0;
   align-items: center;
   justify-content: space-between;
   min-height: 100svh;
@@ -3326,7 +3331,7 @@ summary:focus-visible,
   .selection.selection-v2 {
     align-items: flex-end;
     justify-content: center;
-    padding: 16px;
+    padding: 10px 16px;
   }
   .selection-v2 .selection-header {
     position: absolute;
