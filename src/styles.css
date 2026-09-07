@@ -572,11 +572,13 @@ button {
 }
 .outcome {
   position: absolute;
+  z-index: 20;
   inset: 0;
   display: grid;
   place-content: center;
   text-align: center;
   background: #080b0ddd;
+  pointer-events: auto;
 }
 .outcome p {
   color: #d39a5a;
@@ -596,6 +598,11 @@ button {
   background: #d6954f;
   color: #171412;
   padding: 10px;
+}
+.outcome button {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 .hidden {
   display: none;
