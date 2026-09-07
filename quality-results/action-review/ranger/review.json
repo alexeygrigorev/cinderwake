@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "bundleHash": "0a095182e3596c9aa77937cae91e9ddc97a5fcc557f891544fc2a55850382dbf",
+  "bundleHash": "d3618dc08ef276333bc6ebd581407d503e76879b398d08f50a36c6aee2b5a1c1",
   "reviewer": {
     "model": "gpt-5.6-luna"
   },
@@ -8,38 +8,52 @@
     {
       "id": "ranger/attack/north/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0088-ranger-move-north-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0089-ranger-move-north-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0090-ranger-move-north-primary-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0091-ranger-move-north-primary-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0092-ranger-move-north-primary-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0093-ranger-move-north-primary-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0094-ranger-move-north-primary-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0095-ranger-move-north-primary-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0088-ranger-move-north-primary-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0089-ranger-move-north-primary-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0090-ranger-move-north-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0091-ranger-move-north-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0092-ranger-move-north-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0093-ranger-move-north-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0094-ranger-move-north-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0095-ranger-move-north-primary-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
-          "verdict": "UNCERTAIN",
-          "observation": "The impact frame shows the ranger drawing, but no separable arrowhead/front; the recovery frame contains no visible projectile. Northward heading cannot be established from the painted pixels.",
+          "verdict": "FAIL",
+          "observation": "The painted bright arrow front remains a short horizontal east-facing mark in the consecutive flight closeups while the projectile moves north/up; it is not aligned with the declared direction.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0091-ranger-move-north-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0092-ranger-move-north-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0093-ranger-move-north-primary-flight-5-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "Windup and impact show a readable bow pose, but no release-adjacent image shows the projectile leaving the hand; the recovery image has no projectile to connect to the action.",
+          "verdict": "FAIL",
+          "observation": "The impact and first-flight closeups show no arrow leaving the bow hand; the visible projectile is absent or appears low across the ranger's hips/feet, then appears horizontally in flight, leaving a detached start.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0089-ranger-move-north-primary-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0090-ranger-move-north-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0091-ranger-move-north-primary-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "Only ticks 1, 7, and 33 are supplied and the flight is not visible between them. Request consecutive flight captures (ticks 2-6 or denser) with the northbound projectile in frame.",
+          "verdict": "FAIL",
+          "observation": "The dense flight sequence makes the moving projectile legible, but the arrow remains painted sideways/east-facing while its displacement is north; the detached low start is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0090-ranger-move-north-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0091-ranger-move-north-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0094-ranger-move-north-primary-flight-8-closeup.png"
           ]
         }
       ]
@@ -47,38 +61,53 @@
     {
       "id": "ranger/attack/east/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0109-ranger-move-east-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0110-ranger-move-east-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0111-ranger-move-east-primary-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0112-ranger-move-east-primary-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0113-ranger-move-east-primary-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0114-ranger-move-east-primary-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0115-ranger-move-east-primary-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0116-ranger-move-east-primary-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0109-ranger-move-east-primary-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0110-ranger-move-east-primary-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0111-ranger-move-east-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0112-ranger-move-east-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0113-ranger-move-east-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0114-ranger-move-east-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0115-ranger-move-east-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0116-ranger-move-east-primary-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
           "verdict": "PASS",
-          "observation": "The impact arrow is horizontal at the ranger and the recovery arrow is displaced to the right. Its blue fletching is on the left and its orange/bright tip is on the right, so the painted front points east.",
+          "observation": "The bright blue region is the feathered tail, not the tip: in the flight closeups the dark/metal point is on the right/east end and advances right with the projectile. The painted arrow front aligns with eastward travel.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0112-ranger-move-east-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0113-ranger-move-east-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0114-ranger-move-east-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0115-ranger-move-east-primary-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The eastward displacement is visible from impact to recovery, but the sparse set has no release-adjacent frame proving a continuous leave-from-bow connection. Request a frame immediately after release.",
+          "verdict": "FAIL",
+          "observation": "At impact and flight+1 the projectile is a detached horizontal streak across the ranger's lower body/feet rather than visibly leaving the drawn bow hand; later frames preserve that disconnected identity.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0110-ranger-move-east-primary-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0111-ranger-move-east-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0112-ranger-move-east-primary-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "The arrow is legible at the endpoints, but ticks 1, 7, and 33 skip the flight; endpoint displacement alone is not consecutive motion evidence. Request dense flight frames between release and impact.",
+          "verdict": "PASS",
+          "observation": "The arrow remains legible at original scale through the consecutive flight frames, with its metal point leading right/east and no clipping; the separate low emission defect is covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0111-ranger-move-east-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0114-ranger-move-east-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0116-ranger-move-east-primary-recovery-closeup.png"
           ]
         }
       ]
@@ -86,38 +115,53 @@
     {
       "id": "ranger/attack/south/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0130-ranger-move-south-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0131-ranger-move-south-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0132-ranger-move-south-primary-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0133-ranger-move-south-primary-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0134-ranger-move-south-primary-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0135-ranger-move-south-primary-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0136-ranger-move-south-primary-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0137-ranger-move-south-primary-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0130-ranger-move-south-primary-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0131-ranger-move-south-primary-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0132-ranger-move-south-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0133-ranger-move-south-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0134-ranger-move-south-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0135-ranger-move-south-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0136-ranger-move-south-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0137-ranger-move-south-primary-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
           "verdict": "PASS",
-          "observation": "The south impact image shows a vertical arrow at the ranger with blue fletching above the shaft; in recovery the same vertical arrow is below with its bright/orange tip lower than the fletching. The painted front points south.",
+          "observation": "The bright blue region is the feathered tail: the metal point is at the lower/south end of the vertical arrow in flight closeups and moves down with the projectile, aligning the painted front with southward travel.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0133-ranger-move-south-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0134-ranger-move-south-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0135-ranger-move-south-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0136-ranger-move-south-primary-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "Impact and recovery support a southward displacement, but no release-adjacent frame shows the arrow leaving the bow/hand or preserves continuous identity through the large tick gap.",
+          "verdict": "FAIL",
+          "observation": "The impact and first-flight closeups show the vertical streak below the ranger's legs/feet, with no visible leave from the bow hand; it starts detached from the action.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0131-ranger-move-south-primary-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0132-ranger-move-south-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0133-ranger-move-south-primary-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "The vertical arrow is small and only endpoint stages at ticks 1, 7, and 33 are supplied. Request consecutive southbound flight frames to rule out a discontinuous or clipped path.",
+          "verdict": "PASS",
+          "observation": "The consecutive southbound streak is readable at original scale, with the metal point leading down/south and no clipping; its low detached start is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0132-ranger-move-south-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0135-ranger-move-south-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0137-ranger-move-south-primary-recovery-closeup.png"
           ]
         }
       ]
@@ -125,38 +169,52 @@
     {
       "id": "ranger/attack/west/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0151-ranger-move-west-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0152-ranger-move-west-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0153-ranger-move-west-primary-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0154-ranger-move-west-primary-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0155-ranger-move-west-primary-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0156-ranger-move-west-primary-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0157-ranger-move-west-primary-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0158-ranger-move-west-primary-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0151-ranger-move-west-primary-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0152-ranger-move-west-primary-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0153-ranger-move-west-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0154-ranger-move-west-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0155-ranger-move-west-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0156-ranger-move-west-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0157-ranger-move-west-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0158-ranger-move-west-primary-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
           "verdict": "PASS",
-          "observation": "The impact arrow is horizontal at the ranger and the recovery arrow is displaced to the left. Its orange/bright tip is on the left and blue fletching is on the right, so the painted front points west.",
+          "observation": "Across the consecutive flight closeups the dark/metal point is on the left/west end, with the blue feathered tail trailing right; the visible tip aligns with westward displacement.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0153-ranger-move-west-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0155-ranger-move-west-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0157-ranger-move-west-primary-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The westward displacement is visible from impact to recovery, but the sparse set has no release-adjacent frame proving a continuous leave-from-bow connection. Request a frame immediately after release.",
+          "verdict": "FAIL",
+          "observation": "The impact and first-flight closeups show the arrow streak low across the ranger's hips/feet rather than visibly leaving the bow hand; its release is detached from the weapon.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0152-ranger-move-west-primary-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0153-ranger-move-west-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0154-ranger-move-west-primary-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "The arrow is legible at the endpoints, but ticks 1, 7, and 33 skip the flight; endpoint displacement alone is not consecutive motion evidence. Request dense flight frames between release and impact.",
+          "verdict": "PASS",
+          "observation": "The arrow remains clearly visible at original scale through flight+1, +2, +3, +5 and +8, moves continuously left without clipping, and remains legible in recovery; the separate emission defect is covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0153-ranger-move-west-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0156-ranger-move-west-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0158-ranger-move-west-primary-recovery-closeup.png"
           ]
         }
       ]
@@ -164,38 +222,51 @@
     {
       "id": "ranger/ability/north/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0097-ranger-move-north-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0098-ranger-move-north-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0099-ranger-move-north-ability-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0100-ranger-move-north-ability-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0101-ranger-move-north-ability-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0102-ranger-move-north-ability-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0103-ranger-move-north-ability-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0104-ranger-move-north-ability-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0097-ranger-move-north-ability-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0098-ranger-move-north-ability-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0099-ranger-move-north-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0100-ranger-move-north-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0101-ranger-move-north-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0102-ranger-move-north-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0103-ranger-move-north-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0104-ranger-move-north-ability-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
-          "verdict": "UNCERTAIN",
-          "observation": "The impact frame shows a hand glow and a small overlapping mark under the ranger, not a separable arrowhead/front; the recovery frame shows no visible northbound projectiles. Heading of the three effects cannot be judged.",
+          "verdict": "PASS",
+          "observation": "The three fan arrows show blue feathered tails below their dark/metal points in the flight closeups; each metal point leads north/up with its own displacement and the fan spread is coherent.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0102-ranger-move-north-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0103-ranger-move-north-ability-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The ability pose and hand glow are visible, but no release-adjacent frame shows the three projectiles leaving the hand and the recovery frame has no effects to connect to that release.",
+          "verdict": "FAIL",
+          "observation": "At release/impact the fan is a cluster under the ranger's torso and feet, not connected to the raised hand or bow; the arrows only separate later, so there is no readable hand/weapon emission.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0098-ranger-move-north-ability-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0099-ranger-move-north-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0102-ranger-move-north-ability-flight-5-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "Only ticks 1, 7, and 33 are supplied and the three-projectile flight is not visible. Request consecutive flight captures with all three northbound effects visible.",
+          "verdict": "PASS",
+          "observation": "The three northbound arrows are legible in the later closeups with consistent point-first motion and no clipping; the delayed low emission is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0102-ranger-move-north-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0103-ranger-move-north-ability-flight-8-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0104-ranger-move-north-ability-recovery-closeup.png"
           ]
         }
       ]
@@ -203,38 +274,52 @@
     {
       "id": "ranger/ability/east/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0118-ranger-move-east-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0119-ranger-move-east-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0120-ranger-move-east-ability-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0121-ranger-move-east-ability-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0122-ranger-move-east-ability-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0123-ranger-move-east-ability-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0124-ranger-move-east-ability-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0125-ranger-move-east-ability-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0118-ranger-move-east-ability-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0119-ranger-move-east-ability-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0120-ranger-move-east-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0121-ranger-move-east-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0122-ranger-move-east-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0123-ranger-move-east-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0124-ranger-move-east-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0125-ranger-move-east-ability-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
           "verdict": "PASS",
-          "observation": "The impact effect is horizontal at the ranger; recovery shows three separated arrows to the right, each with blue fletching on the left and orange/bright tip on the right. All three painted fronts point east.",
+          "observation": "The blue regions are feathered tails: all three fan arrows have their metal points leading right/east (including both diagonals) in the flight closeups, matching each velocity and spread.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0121-ranger-move-east-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0123-ranger-move-east-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0124-ranger-move-east-ability-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The three arrows are visibly displaced east by recovery, but no release-adjacent frame proves all three emit from the bow/hand or preserves their continuous identity through the large tick gap.",
+          "verdict": "FAIL",
+          "observation": "The three arrows first appear as an overlapping streak at the ranger's lower torso/feet, not from the extended bow hand; the later fan separates from that detached origin.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0119-ranger-move-east-ability-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0120-ranger-move-east-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0121-ranger-move-east-ability-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "The three arrows are legible at recovery, but ticks 1, 7, and 33 omit consecutive flight. Request dense frames between release and recovery to establish continuous eastward motion.",
+          "verdict": "PASS",
+          "observation": "The fan remains visible and separated through flight with point-first eastward/diagonal travel and no clipping; the low detached emission is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0120-ranger-move-east-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0123-ranger-move-east-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0125-ranger-move-east-ability-recovery-closeup.png"
           ]
         }
       ]
@@ -242,38 +327,52 @@
     {
       "id": "ranger/ability/south/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0139-ranger-move-south-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0140-ranger-move-south-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0141-ranger-move-south-ability-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0142-ranger-move-south-ability-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0143-ranger-move-south-ability-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0144-ranger-move-south-ability-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0145-ranger-move-south-ability-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0146-ranger-move-south-ability-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0139-ranger-move-south-ability-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0140-ranger-move-south-ability-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0141-ranger-move-south-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0142-ranger-move-south-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0143-ranger-move-south-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0144-ranger-move-south-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0145-ranger-move-south-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0146-ranger-move-south-ability-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
-          "verdict": "UNCERTAIN",
-          "observation": "The impact frame contains overlapping blue/orange vertical marks beneath the ranger, but the three projectile fronts are not separable; recovery contains no visible southbound arrows. Request a closer capture where each arrowhead is distinct.",
+          "verdict": "PASS",
+          "observation": "The blue regions are feathered tails above the metal points: all three fan arrows lead down/south in the flight closeups, matching their individual diagonal and center displacements.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0142-ranger-move-south-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0144-ranger-move-south-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0145-ranger-move-south-ability-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The hand effect is visible at impact, but no release-adjacent frame shows three projectiles leaving the hand and recovery has no effects to connect to that action.",
+          "verdict": "FAIL",
+          "observation": "The fan first appears as three streaks beneath the ranger's body/feet rather than leaving the hand or bow; the release is visibly detached from the ability pose.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0140-ranger-move-south-ability-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0141-ranger-move-south-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0142-ranger-move-south-ability-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "Only ticks 1, 7, and 33 are supplied; the small overlapping effects disappear before recovery and provide no consecutive southbound flight evidence. Request dense captures with all three effects in view.",
+          "verdict": "PASS",
+          "observation": "The dense flight sequence clearly shows point-first southbound fan motion without clipping; the detached under-feet start is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0141-ranger-move-south-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0144-ranger-move-south-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0146-ranger-move-south-ability-recovery-closeup.png"
           ]
         }
       ]
@@ -281,38 +380,52 @@
     {
       "id": "ranger/ability/west/desktop",
       "inspectedFrames": [
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
-        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0160-ranger-move-west-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0161-ranger-move-west-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0162-ranger-move-west-ability-flight-1.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0163-ranger-move-west-ability-flight-2.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0164-ranger-move-west-ability-flight-3.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0165-ranger-move-west-ability-flight-5.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0166-ranger-move-west-ability-flight-8.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0167-ranger-move-west-ability-recovery.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0160-ranger-move-west-ability-after-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0161-ranger-move-west-ability-impact-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0162-ranger-move-west-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0163-ranger-move-west-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0164-ranger-move-west-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0165-ranger-move-west-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0166-ranger-move-west-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0167-ranger-move-west-ability-recovery-closeup.png"
       ],
       "checks": [
         {
           "id": "visible-heading",
           "verdict": "PASS",
-          "observation": "The impact effect is horizontal at the ranger; recovery shows three separated arrows to the left, each with orange/bright tip on the left and blue fletching on the right. All three painted fronts point west.",
+          "observation": "The blue regions are feathered tails: every westbound fan arrow has its dark/metal point leading left/west in the flight closeups, matching all three displacements.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0162-ranger-move-west-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0164-ranger-move-west-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0166-ranger-move-west-ability-flight-8-closeup.png"
           ]
         },
         {
           "id": "origin-and-timing",
-          "verdict": "UNCERTAIN",
-          "observation": "The three arrows are visibly displaced west by recovery, but no release-adjacent frame proves all three emit from the bow/hand or preserves their continuous identity through the large tick gap.",
+          "verdict": "FAIL",
+          "observation": "At impact and flight+1 the fan is clustered low at the ranger's hips/feet rather than visibly leaving the bow hand; separation later does not repair the detached emission.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0161-ranger-move-west-ability-impact-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0162-ranger-move-west-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0163-ranger-move-west-ability-flight-2-closeup.png"
           ]
         },
         {
           "id": "readable-motion",
-          "verdict": "UNCERTAIN",
-          "observation": "The three arrows are legible at recovery, but ticks 1, 7, and 33 omit consecutive flight. Request dense frames between release and recovery to establish continuous westward motion.",
+          "verdict": "PASS",
+          "observation": "The fan remains visible through recovery with point-first westward motion and no clipping; the detached low start is separately covered by origin-and-timing.",
           "frames": [
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
-            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0163-ranger-move-west-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0165-ranger-move-west-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0167-ranger-move-west-ability-recovery-closeup.png"
           ]
         }
       ]
