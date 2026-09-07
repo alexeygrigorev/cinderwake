@@ -573,14 +573,23 @@ export class CampaignBrowserDriver {
     for (;;) {
       const state = await this.state();
       if (state.phase !== "playing") return state;
-      const target = state.monsters
-        .filter(({ health }) => health > 0)
-        .sort(
-          (first, second) =>
-            distance(state.player.position, first.position) -
-              distance(state.player.position, second.position) ||
-            first.id.localeCompare(second.id),
-        )[0];
+      const living = state.monsters.filter(({ health }) => health > 0);
+      // Finish the encounter already on top of the player before crossing
+      // the map toward a ranged threat; once the local pack is clear, remove
+      // hexers and the elite before lower-threat distant targets.
+      const nearby = living.filter(
+        (monster) =>
+          distance(state.player.position, monster.position) <=
+          4 * UNITS_PER_TILE,
+      );
+      const target = (nearby.length > 0 ? nearby : living).sort(
+        (first, second) =>
+          Number(second.kind !== "hexer") - Number(first.kind !== "hexer") ||
+          Number(second.elite) - Number(first.elite) ||
+          distance(state.player.position, first.position) -
+            distance(state.player.position, second.position) ||
+          first.id.localeCompare(second.id),
+      )[0];
       if (!target) return state;
       await this.defeatMonster(target.id);
     }
