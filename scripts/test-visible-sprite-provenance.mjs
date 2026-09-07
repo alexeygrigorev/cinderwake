@@ -310,7 +310,11 @@ async function collectState(
         const dataRole = element.getAttribute("data-sprite-role");
         const canvasSurface = element.tagName === "CANVAS";
         const urls = rasterUrls(element);
-        const role = canvasSurface ? "layout" : "sprite";
+        const nativeSurface =
+          element.matches("[data-native-ui]") &&
+          element.closest("main[data-ui-copy='interface']")?.parentElement
+            ?.id === "app";
+        const role = canvasSurface || nativeSurface ? "layout" : "sprite";
         const result = {
           id: elementId(element, index),
           visible: visible(element),
@@ -379,9 +383,13 @@ async function collectState(
             style.borderLeftStyle !== "none" ||
             style.boxShadow !== "none";
           if (!hasVisual) continue;
-          const allowed = Boolean(
-            element.closest("[data-provenance-decoration='legibility-mask']"),
-          );
+          const allowed =
+            Boolean(
+              element.closest("[data-provenance-decoration='legibility-mask']"),
+            ) ||
+            (element.matches("[data-native-ui]") &&
+              element.closest("main[data-ui-copy='interface']")?.parentElement
+                ?.id === "app");
           pseudoElements.push({
             id: `${elementId(element, 0)}${pseudo}`,
             visible: true,
@@ -402,7 +410,10 @@ async function collectState(
         if (!visible(element) || element.tagName === "CANVAS") continue;
         const style = getComputedStyle(element);
         const declared =
-          element.getAttribute("data-css-decoration-contract") === "declared";
+          element.getAttribute("data-css-decoration-contract") === "declared" ||
+          (element.matches("[data-native-ui]") &&
+            element.closest("main[data-ui-copy='interface']")?.parentElement
+              ?.id === "app");
         const details = [];
         if (style.backgroundImage.includes("gradient"))
           details.push({ kind: "gradient", value: style.backgroundImage });

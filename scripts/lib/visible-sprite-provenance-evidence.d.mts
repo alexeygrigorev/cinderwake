@@ -8,6 +8,8 @@ export interface CampaignCopyFacts {
   rootClass: string;
   rootLabel: string | null;
   gameChild: boolean;
+  interfaceRoot?: boolean;
+  nativeElement?: boolean;
   unique: boolean;
   modal: boolean;
   tag: string;

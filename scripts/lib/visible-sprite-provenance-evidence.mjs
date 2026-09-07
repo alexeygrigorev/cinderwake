@@ -50,6 +50,10 @@ export function collectCampaignCopyFacts() {
         rootClass: root.className,
         rootLabel: root.getAttribute("aria-label"),
         gameChild: root.parentElement?.matches("main.game") === true,
+        interfaceRoot:
+          root.matches("main[data-ui-copy='interface']") &&
+          root.parentElement?.id === "app",
+        nativeElement: Boolean(element.closest("[data-native-ui]")),
         unique:
           [...document.querySelectorAll("[data-ui-copy]")].filter(
             (candidate) => candidate.getAttribute("data-ui-copy") === scope,
@@ -61,7 +65,7 @@ export function collectCampaignCopyFacts() {
           "header > div > small, article.discovery > small, [data-checkpoint-indicator][role='status']",
         ),
         control: element.matches(
-          "button[data-journal], button[data-interact], button[data-journal] > kbd",
+          "button[data-journal], button[data-interact], button[data-sound-toggle], button[data-journal] > kbd",
         ),
       };
     }
@@ -72,6 +76,16 @@ export function collectCampaignCopyFacts() {
 }
 
 export function nativeCampaignCopyPass(copy) {
+  // Interface copy is a semantic, readable DOM surface. Raster provenance
+  // belongs to artwork; forcing text into an atlas made controls unreadable.
+  if (copy?.scope === "interface")
+    return (
+      copy.interfaceRoot === true &&
+      copy.unique === true &&
+      copy.nativeElement === true &&
+      Number.isFinite(copy.fontSize) &&
+      copy.fontSize >= 14
+    );
   if (
     !copy ||
     copy.gameChild !== true ||
@@ -107,6 +121,8 @@ export function nativeCampaignCopyPass(copy) {
     KBD: 14,
     SUMMARY: 16,
     SPAN: 14,
+    DT: 14,
+    DD: 14,
   }[copy.tag];
   return minimum
     ? copy.fontSize >= minimum
