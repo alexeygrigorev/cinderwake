@@ -4,6 +4,7 @@ import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
 import { cleanStructurePixels } from "./lib/structure-alpha.mjs";
+import { prepareRangerProjectileAtlas } from "./lib/ranger-projectile-preparation.mjs";
 
 const ROOT = process.cwd();
 const ACTOR_SPEC_PATH = path.join(ROOT, "art", "actor-atlas-v1.json");
@@ -51,6 +52,7 @@ Options:
                        Build only the approved environment-kit atlas
   --structures-only   Build only the cleaned structure atlas, preserving other manifest entries
   --fence-only        Prepare only the standalone iron fence orientations
+  --ranger-only       Rebuild only Ranger with the reviewed detached-arrow correction
   --help               Show this help`);
 }
 
@@ -62,6 +64,7 @@ function parseArguments(args) {
   let environmentKitOnly = false;
   let structuresOnly = false;
   let fenceOnly = false;
+  let rangerOnly = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--help") {
@@ -82,6 +85,10 @@ function parseArguments(args) {
     }
     if (argument === "--fence-only") {
       fenceOnly = true;
+      continue;
+    }
+    if (argument === "--ranger-only") {
+      rangerOnly = true;
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
@@ -109,8 +116,13 @@ function parseArguments(args) {
     }
   }
   if (
-    [actorsOnly, environmentKitOnly, structuresOnly, fenceOnly].filter(Boolean)
-      .length > 1
+    [
+      actorsOnly,
+      environmentKitOnly,
+      structuresOnly,
+      fenceOnly,
+      rangerOnly,
+    ].filter(Boolean).length > 1
   )
     throw new Error("Only one isolated atlas mode can be selected");
   return {
@@ -120,6 +132,7 @@ function parseArguments(args) {
     environmentKitOnly,
     structuresOnly,
     fenceOnly,
+    rangerOnly,
     outputDirectory,
   };
 }
@@ -518,7 +531,7 @@ async function buildActor(actorId) {
       });
   }
   const destination = outputPath(`actor-${actorId}.png`);
-  await sharp({
+  const assembled = await sharp({
     create: {
       width: ACTOR_ATLAS_WIDTH,
       height: ACTOR_ATLAS_HEIGHT,
@@ -528,7 +541,20 @@ async function buildActor(actorId) {
   })
     .composite(composites)
     .png({ compressionLevel: 9, palette: true, quality: 100 })
-    .toFile(destination);
+    .toBuffer();
+  const prepared =
+    actorId === "ranger"
+      ? await prepareRangerProjectileAtlas(
+          assembled,
+          await sha256(
+            path.join(
+              OPTIONS.actorSourceDirectory,
+              "ranger-direction-actions-source.png",
+            ),
+          ),
+        )
+      : assembled;
+  await fs.writeFile(destination, prepared);
   return destination;
 }
 
@@ -974,6 +1000,29 @@ async function copyApprovedAtlas(spec) {
 }
 
 await fs.mkdir(outputPath("."), { recursive: true });
+if (OPTIONS.rangerOnly) {
+  const destination = await buildActor("ranger");
+  const manifest = await fs
+    .readFile(outputPath("build-manifest.json"), "utf8")
+    .then(JSON.parse)
+    .catch(() => ({
+      schemaVersion: 1,
+      pipeline: ACTOR_SPEC.id,
+      builtAt: "deterministic-from-committed-source",
+      outputs: {},
+    }));
+  manifest.outputs["actor-ranger.png"] = {
+    sha256: await sha256(destination),
+    source: path.relative(ROOT, destination),
+    preparationRecord: "art/generation/ranger-north-attack/v1.json",
+  };
+  await fs.writeFile(
+    outputPath("build-manifest.json"),
+    `${JSON.stringify(manifest, null, 2)}\n`,
+  );
+  console.log("Built Ranger with the isolated detached-arrow correction.");
+  process.exit(0);
+}
 if (OPTIONS.fenceOnly) {
   const manifest = await fs
     .readFile(outputPath("build-manifest.json"), "utf8")
@@ -1092,6 +1141,9 @@ const manifest = {
     ),
   ),
 };
+if (manifest.outputs["actor-ranger.png"])
+  manifest.outputs["actor-ranger.png"].preparationRecord =
+    "art/generation/ranger-north-attack/v1.json";
 if (OPTIONS.structuresOnly) {
   const existing = await fs
     .readFile(outputPath("build-manifest.json"), "utf8")
