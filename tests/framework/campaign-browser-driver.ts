@@ -456,12 +456,10 @@ export class CampaignBrowserDriver {
       const waypointIndex = this.profile.hasTouch ? 4 : 6;
       const waypoint = route[Math.min(route.length - 1, waypointIndex)]!;
       if (attackWhileMoving && attempt >= 8) {
-        // A mouse pursuit is the safest opening approach because it keeps the
-        // attack target alive while the player closes on a moving enemy. Once
-        // several pursuits have failed, however, the pointer router can keep
-        // chasing a target around a wall. Switch to short, collision-aware
-        // physical pulses so the held strike remains in the same input mode
-        // and the next attempt recomputes the authoritative route.
+        // Touch evasion intentionally cancels pointer pursuit so a joystick
+        // dodge cannot leave a stale target route active. After several
+        // unsuccessful pursuits, use short collision-aware physical pulses;
+        // the next attempt then recomputes the authoritative route.
         await this.evadeProjectile(before);
         const pulseTarget = route[0] ?? waypoint;
         await this.pulse(
@@ -532,7 +530,11 @@ export class CampaignBrowserDriver {
         latest = await this.waitFor(
           `${label} waypoint ${attempt}`,
           waypointReached,
-          routeGesture ? 5_500 : 10_000,
+          routeGesture
+            ? attackWhileMoving && this.profile.hasTouch
+              ? 1_500
+              : 5_500
+            : 10_000,
         );
       } catch (error) {
         if (!recoverableGesture) throw error;
