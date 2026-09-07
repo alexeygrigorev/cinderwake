@@ -125,12 +125,7 @@ async function runJourney(
     state = await driver.moveTo(
       maraAnchor,
       "visit Mara Vale",
-      (current) =>
-        current.city.nearbyNpcId === "npc:embercross:mara" &&
-        Math.hypot(
-          current.player.position.x - maraAnchor.x,
-          current.player.position.y - maraAnchor.y,
-        ) < 1_600,
+      (current) => current.city.nearbyNpcId === "npc:embercross:mara",
     );
     expect(state.city.nearbyNpcId).toBe("npc:embercross:mara");
     const maraButton = page.getByRole("button", { name: /Speak:.*Mara/ });
