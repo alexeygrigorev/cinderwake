@@ -128,6 +128,8 @@ test("builds an ordered, hash-bound image prompt and accepts specific visual evi
   assert.match(prompt, /MUST open every listed PNG/);
   assert.match(prompt, /gpt-5\.6-luna/);
   assert.match(prompt, /actual visible arrowhead/);
+  assert.match(prompt, /shape, not brightness alone/);
+  assert.match(prompt, /baked into actor animation cells/);
   assert.match(prompt, /UNCERTAIN/);
   assert.ok(prompt.indexOf('"windup"') < prompt.indexOf('"impact"'));
 });
