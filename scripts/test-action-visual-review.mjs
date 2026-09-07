@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import ts from "typescript";
+import { parseStrictJson } from "./lib/strict-json.mjs";
 import {
   buildBundle,
   hash,
@@ -285,4 +287,128 @@ test("rejects closeups not bound to the same-tick scene and out-of-order flight"
     { ...source, tick: 4 },
   ];
   await assert.rejects(buildBundle(input), /Nonsequential ticks/);
+});
+
+test("rejects a later PASS that would overwrite a reviewer's FAIL", () => {
+  const source =
+    '{"cases":[{"id":"ranger/attack/south/desktop","checks":[{"id":"readable-motion","verdict":"FAIL","verdict":"PASS"}]}]}';
+  assert.equal(
+    JSON.parse(source).cases[0].checks[0].verdict,
+    "PASS",
+    "Negative control demonstrates native JSON's silent overwrite",
+  );
+  assert.throws(
+    () => parseStrictJson(source, "review.json"),
+    /Duplicate JSON object key "verdict" in review\.json:1:/,
+  );
+});
+
+test("rejects duplicate bundle hashes, registry fields and nested capture keys", () => {
+  for (const source of [
+    '{"bundleHash":"old","bundleHash":"new"}',
+    '{"actions":[],"actions":[{"id":"attack"}]}',
+    '{"captures":[{"frames":[{"sha256":"old","sha256":"new"}]}]}',
+    '{"__proto__":0,"__proto__":1}',
+    '{"nested":{"same":true,"same":true}}',
+  ])
+    assert.throws(() => parseStrictJson(source), /Duplicate JSON object key/);
+});
+
+test("compares decoded JSON keys including escaped spelling and Unicode", () => {
+  for (const source of [
+    String.raw`{"verdict":"FAIL","ver\u0064ict":"PASS"}`,
+    String.raw`{"\u0062undleHash":"old","bundleHash":"new"}`,
+    String.raw`{"a\\b":1,"a\u005cb":2}`,
+    String.raw`{"a\"b":1,"a\u0022b":2}`,
+    String.raw`{"😀":1,"\ud83d\ude00":2}`,
+  ])
+    assert.throws(() => parseStrictJson(source), /Duplicate JSON object key/);
+});
+
+test("permits the same key in separate objects and ordinary escaped string contents", () => {
+  const source = String.raw`{"cases":[{"id":"first","verdict":"PASS"},{"id":"second","verdict":"FAIL"}],"nested":{"id":"third"},"text":"quotes: \"verdict\":\"FAIL\",\"verdict\":\"PASS\"; braces {}[]; slash \\; line\n; unicode \u263a","a\\b":1,"a/b":2}`;
+  assert.deepEqual(parseStrictJson(source), JSON.parse(source));
+  for (const value of [
+    null,
+    true,
+    false,
+    0,
+    -12.5,
+    "text",
+    [],
+    [{ a: 1 }, { a: 2 }],
+  ])
+    assert.deepEqual(parseStrictJson(JSON.stringify(value)), value);
+});
+
+test("keeps standard JSON syntax strict despite the TypeScript parser's extensions", () => {
+  for (const source of [
+    '{"a":1,}',
+    "{a:1}",
+    "{'a':1}",
+    '{"a":/*comment*/1}',
+    '{"a":undefined}',
+    "[1,]",
+    "true false",
+    '{"a":01}',
+    String.raw`{"text":"\x41"}`,
+    '{"text":"line\nbreak"}',
+  ])
+    assert.throws(() => parseStrictJson(source, "strict.json"), SyntaxError);
+});
+
+test("CLI rejects duplicate keys in every externally supplied JSON document", async (t) => {
+  const { root } = await fixture(t);
+  const validRegistry = path.join(root, "registry.json");
+  await fs.writeFile(validRegistry, JSON.stringify(registry));
+  await fs.writeFile(
+    path.join(root, "duplicate-registry.json"),
+    '{"schemaVersion":1,"schemaVersion":1}',
+  );
+  await fs.writeFile(
+    path.join(root, "captures.json"),
+    '{"captures":[],"captures":[]}',
+  );
+  await fs.writeFile(
+    path.join(root, "bundle.json"),
+    '{"bundleHash":"first","bundleHash":"second"}',
+  );
+  const cli = (...args) =>
+    spawnSync(process.execPath, ["scripts/action-visual-review.mjs", ...args], {
+      encoding: "utf8",
+    });
+  const reject = (result, key) => {
+    assert.notEqual(result.status, 0);
+    assert.ok(
+      result.stderr.includes(`Duplicate JSON object key "${key}"`),
+      result.stderr,
+    );
+  };
+  reject(
+    cli("lint", "--registry", path.join(root, "duplicate-registry.json")),
+    "schemaVersion",
+  );
+  reject(
+    cli(
+      "build",
+      "--registry",
+      validRegistry,
+      "--captures",
+      path.join(root, "captures.json"),
+    ),
+    "captures",
+  );
+  reject(
+    cli("validate", "--registry", validRegistry, "--output", root),
+    "bundleHash",
+  );
+  await fs.writeFile(path.join(root, "bundle.json"), "{}");
+  await fs.writeFile(
+    path.join(root, "review.json"),
+    '{"verdict":"FAIL","verdict":"PASS"}',
+  );
+  reject(
+    cli("validate", "--registry", validRegistry, "--output", root),
+    "verdict",
+  );
 });
