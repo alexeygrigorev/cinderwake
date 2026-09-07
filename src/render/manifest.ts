@@ -1044,7 +1044,12 @@ export function buildRenderManifest(
       bounds: { ...destinationRect },
       footAnchor: { ...screenAnchor },
       facingBucket: bucket,
-      flipX: horizontalFlipForGeometry(semantic.geometryId, bucket),
+      // Projectiles use an authored tail-to-tip rotation; reflecting the cell
+      // as well reverses the arrowhead for eastward shots.
+      flipX:
+        semantic.type === "projectile"
+          ? false
+          : horizontalFlipForGeometry(semantic.geometryId, bucket),
       visible: intersectsViewport(destinationRect),
       zOrder: 0,
     });
