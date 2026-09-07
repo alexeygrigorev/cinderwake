@@ -22,8 +22,9 @@
       "source": "public/assets/sprites/actor-vanguard.png"
     },
     "actor-ranger.png": {
-      "sha256": "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862",
-      "source": "public/assets/sprites/actor-ranger.png"
+      "sha256": "f46351074f423b36a04a0c376d63084edf5f180f1bf1f7d2b953dfcda057593c",
+      "source": "public/assets/sprites/actor-ranger.png",
+      "preparationRecord": "art/generation/ranger-north-attack/v1.json"
     },
     "actor-arcanist.png": {
       "sha256": "77d6a7650a9fab427ad7118a5e36cd2c7a36c35577eaee04860203a61c0156d4",

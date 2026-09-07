@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "ranger-north-detached-arrow-v1",
+  "kind": "deterministic-preparation-correction",
+  "created": "2026-09-07",
+  "source": {
+    "file": "art/source/actors/ranger-direction-actions-source.png",
+    "sha256": "4e5786247b78c975c1a5b2ba62965c47ffdd999e990b07ba5d9d4ddd5c6c6a4b",
+    "sourceFamily": "directionActions",
+    "cell": 2,
+    "modified": false
+  },
+  "baseline": {
+    "atlasSha256": "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862",
+    "decodedRgbaSha256": "6be40d2b6964736cd5cef103dbb2131d9ecc35568f3ae3242624a5bd1386e004",
+    "releaseCellRgbaSha256": "efbcfde0009e5c185d836658ee07c501e34df0552ff0f56e5fa2bc91bbaa0e25",
+    "releaseCellEvidence": "art/generation/ranger-north-attack/before-cell.png"
+  },
+  "preparation": {
+    "command": "node scripts/build-sprite-assets.mjs --ranger-only",
+    "script": "scripts/lib/ranger-projectile-preparation.mjs",
+    "stage": "After source normalization, fixed-foot reanchoring, and palette assembly",
+    "reason": "The source's two detached horizontal arrow components persisted inside the north release frame while the simulation emitted an upward projectile. Interior components were outside the existing boundary-artifact filter.",
+    "atlasRow": 10,
+    "atlasColumns": [2, 3],
+    "removedComponentsPerCell": [
+      {
+        "pixels": 24,
+        "bounds": { "x": 101, "y": 37, "width": 11, "height": 4 }
+      },
+      { "pixels": 4, "bounds": { "x": 95, "y": 39, "width": 2, "height": 2 } }
+    ],
+    "changedPixels": 56,
+    "preservation": "Every other decoded RGBA pixel, including the entire actor and bow at their existing coordinates, is byte-identical. No other source or atlas is rewritten by the isolated build.",
+    "changedSourcePolicy": "Pinned source hash, release-cell hash and exact component areas/bounds fail closed and require renewed review when art changes."
+  },
+  "output": {
+    "file": "public/assets/sprites/actor-ranger.png",
+    "sha256": "f46351074f423b36a04a0c376d63084edf5f180f1bf1f7d2b953dfcda057593c",
+    "width": 1024,
+    "height": 2560,
+    "encoding": "Lossless RGBA PNG to preserve all unrelated palette colors"
+  },
+  "review": {
+    "accepted": false,
+    "notes": "Automatic pixel preservation and mutation checks cover the preparation change. Final Ranger action captures require a fresh independent visual review."
+  }
+}
