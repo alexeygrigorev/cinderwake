@@ -40,6 +40,13 @@ recorder. Other games supply their own action catalog and ordered captures.
    evidence. Re-record and repeat review after changing runtime or art. A missing
    image, case, check, observation or supporting frame reference blocks acceptance.
 
+The directional and flicker recorders copy runtime sources, public assets and
+artwork metadata into a temporary capture workspace before starting the browser.
+This prevents parallel edits from reloading a scene halfway through a recording.
+The capture fingerprint belongs to that frozen workspace. Acceptance still
+compares it with the working game's current files: isolation keeps a recording
+coherent, and freshness checks prevent an older recording from approving new code.
+
 `scripts/test-action-visual-review.mjs` reads the actual TypeScript
 `AnimationClip` union and boolean `InputState` actions. Adding a runtime animation
 or input action without a registry entry fails the project check. When adapting
