@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "kind": "exact-pixel-equivalence-not-new-visual-review",
+  "originalManifest": "quality-results/ui-final-review/capture-manifest.json",
+  "currentManifest": "quality-results/ui-final-source-equivalence/capture-manifest.json",
+  "originalReview": "quality-results/ui-final-review/review.json",
+  "originalReviewSha256": "ec245239dbfcc2186a17ebec688fc82cb41e60a5b6724854cbda71246a4c1e46",
+  "originalFingerprint": "bcd1a4d68146796ed5182d7c709d65932cb33374d800366c06788c469b7a7338",
+  "currentFingerprint": "643fb906a7e560018a3d02ed9869199b02d70dcec64e116d00c8aeebb1566a31",
+  "scope": "Same sixteen opening selection/gameplay screenshots only; does not certify Ranger combat",
+  "pairs": [
+    {
+      "reviewed": "quality-results/ui-final-review/desktop-selection-vanguard.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/desktop-selection-vanguard.png",
+      "sha256": "c19465abebe8d856da65ab55068afb3f565b78e38934ed25aa54c29dea0f8757"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/desktop-selection-ranger.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/desktop-selection-ranger.png",
+      "sha256": "b8d5af1363b51be62f0f9d5d328266c14c747e4280b6915c4067123e5f340845"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/desktop-selection-arcanist.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/desktop-selection-arcanist.png",
+      "sha256": "e5af14ab295c9dd8dec1dcba65c117f89e17aa7eb4a5f13a5f247edd78f70287"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/desktop-gameplay.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/desktop-gameplay.png",
+      "sha256": "57746057531db23f2b43ac39e5c09b8c9c2ec5d8c9f3f5d0e5be7d758ca4fb99"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/narrow-desktop-selection-vanguard.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/narrow-desktop-selection-vanguard.png",
+      "sha256": "6782960f3cd05fd173c84b13b61a2fbd99d9cdb54bbcea00b83c72947b937438"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/narrow-desktop-selection-ranger.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/narrow-desktop-selection-ranger.png",
+      "sha256": "16ec8ccb6f65b407393dff314842cf2d8e97834819756d0824c4aad0f33fa3fe"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/narrow-desktop-selection-arcanist.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/narrow-desktop-selection-arcanist.png",
+      "sha256": "2c4fd062492e2afe4409935316cab4f5e4bbe77f6f4344baa87f4bf453d05ab6"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/narrow-desktop-gameplay.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/narrow-desktop-gameplay.png",
+      "sha256": "acb9103b2ff86f1e2432e263260f80b7aece7a8c93e2cacb718d8b0cabdd8863"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-portrait-selection-vanguard.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-portrait-selection-vanguard.png",
+      "sha256": "007e67f517f637308c4db61e287b82118324eb6cec13bd73c4848e304ba2a114"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-portrait-selection-ranger.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-portrait-selection-ranger.png",
+      "sha256": "d790d90c58ba59d9a5b55d3ef6be330ff0ffad376b54f2606f1f2fd2860b8ecc"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-portrait-selection-arcanist.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-portrait-selection-arcanist.png",
+      "sha256": "e026aa3fc52ac38db0627a95e89b642bf93c9a7d40ca8b81e29eeb3b3843220d"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-portrait-gameplay.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-portrait-gameplay.png",
+      "sha256": "9226cf5b0ec6aa2b3e4bd91bb04ebcb586272af77ae44ccbbad736f3edac56c2"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-landscape-selection-vanguard.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-landscape-selection-vanguard.png",
+      "sha256": "93c8ad0292a69f69b5cb45b9ac25ad07fce34e5e25ba8e3bfbc27444dbdafdd0"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-landscape-selection-ranger.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-landscape-selection-ranger.png",
+      "sha256": "a66261fd7f284b53376fc3a1074cabe4fcdcd80fb9d4a9cc0808c798f13ad1a1"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-landscape-selection-arcanist.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-landscape-selection-arcanist.png",
+      "sha256": "09e0c6504673f1823b0a02c9c56265ea1db74cfb3e4ca7f3c60e1c71c3e7bed5"
+    },
+    {
+      "reviewed": "quality-results/ui-final-review/phone-landscape-gameplay.png",
+      "recaptured": "quality-results/ui-final-source-equivalence/phone-landscape-gameplay.png",
+      "sha256": "88a98382ed102473ac421d4ce3d1a8698f062243357dad3f5a4bd5773a67c5c2"
+    }
+  ]
+}
