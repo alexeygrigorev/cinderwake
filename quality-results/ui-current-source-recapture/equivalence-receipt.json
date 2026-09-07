@@ -1,0 +1,46 @@
+{
+  "kind": "exact-image-source-equivalence",
+  "result": "IDENTICAL",
+  "scope": "The 16 opening selection and Vanguard gameplay screens across desktop, narrow desktop, portrait phone and landscape phone. This receipt does not cover Ranger projectiles, other combat animation, saved journeys, or audio.",
+  "reason": "Recaptured after commit 9f469c7 changed Ranger projectile presentation and bow-hand socket metadata.",
+  "originalReview": {
+    "file": "quality-results/ui-final-review/review.json",
+    "sha256": "ec245239dbfcc2186a17ebec688fc82cb41e60a5b6724854cbda71246a4c1e46",
+    "verdict": "ACCEPT",
+    "manifest": "quality-results/ui-final-review/capture-manifest.json",
+    "manifestSha256": "befa4db8bde5294d48d4a610a78e59d07e3878a1e89ddd49b8529c890c15792e",
+    "sourceFingerprint": "bcd1a4d68146796ed5182d7c709d65932cb33374d800366c06788c469b7a7338"
+  },
+  "freshCapture": {
+    "manifest": "quality-results/ui-current-source-recapture/capture-manifest.json",
+    "manifestSha256": "002f4907ca3bc3d288c5f4088ba444158a1a5ffdde1472aac79a548ed1f38869",
+    "sourceFingerprint": "7535ad07041fcc9fba374d418c7cb594eb1aba24277f435eb5282606633381d9",
+    "sourceFingerprintMatchedWorkingTreeAtVerification": true,
+    "captureCommand": "node .tmp/capture-ui-review.mjs",
+    "captureMethod": "The existing real-browser 16-frame capture ran against a new frozen source workspace; only its output directory changed. The original accepted evidence was not overwritten."
+  },
+  "comparison": {
+    "method": "Join original and fresh manifests by PNG basename; require exactly 16 frames in each; verify each actual PNG SHA-256 against its own manifest; require original and fresh PNG SHA-256 equality for every pair. Verify the original ACCEPT review fingerprint binds its unchanged original manifest, and the fresh fingerprint matches current sourceRoots.",
+    "matchedFrames": 16,
+    "mismatchedFrames": 0,
+    "frames": [
+      "desktop-selection-vanguard.png",
+      "desktop-selection-ranger.png",
+      "desktop-selection-arcanist.png",
+      "desktop-gameplay.png",
+      "narrow-desktop-selection-vanguard.png",
+      "narrow-desktop-selection-ranger.png",
+      "narrow-desktop-selection-arcanist.png",
+      "narrow-desktop-gameplay.png",
+      "phone-portrait-selection-vanguard.png",
+      "phone-portrait-selection-ranger.png",
+      "phone-portrait-selection-arcanist.png",
+      "phone-portrait-gameplay.png",
+      "phone-landscape-selection-vanguard.png",
+      "phone-landscape-selection-ranger.png",
+      "phone-landscape-selection-arcanist.png",
+      "phone-landscape-gameplay.png"
+    ]
+  },
+  "reviewInterpretation": "This is an automatic exact-image equivalence receipt, not a new Luna review or a claim that Luna inspected the fresh source. Luna's original frame-cited ACCEPT and its limitations remain unchanged and apply to the identical visible pixels. Separate action reviews are required for the changed Ranger projectiles."
+}
