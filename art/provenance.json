@@ -244,6 +244,13 @@
       "reference": "art/source/environment/structures-source.png"
     },
     {
+      "file": "art/source/environment/iron-fence-source.png",
+      "kind": "prop-source",
+      "grid": "single horizontal fence",
+      "sha256": "027f644d074ab58a4cb64fc9e86e7642f2544e00ccddb74695f68b9cbfa61c8b",
+      "generationRecord": "art/generation/iron-fence-v1.json"
+    },
+    {
       "file": "art/source/environment/props-source.png",
       "kind": "prop-source",
       "grid": "4x4"

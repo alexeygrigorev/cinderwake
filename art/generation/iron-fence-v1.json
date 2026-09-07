@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "iron-fence-v1",
+  "status": "prepared-for-composed-screen-review",
+  "created": "2026-09-07",
+  "tool": "OpenAI built-in image generation tool",
+  "artifactId": "exec-6a33a794-bb57-47fc-9cb5-00931f302996",
+  "source": {
+    "file": "art/source/environment/iron-fence-source.png",
+    "sha256": "027f644d074ab58a4cb64fc9e86e7642f2544e00ccddb74695f68b9cbfa61c8b",
+    "observedWidth": 1254,
+    "observedHeight": 1254,
+    "observedChannels": "srgb",
+    "background": "Generated magenta chroma key, removed deterministically"
+  },
+  "prompt": "art/generation/iron-fence-prompt.txt",
+  "preparation": {
+    "command": "node scripts/build-sprite-assets.mjs --fence-only",
+    "operation": "Use the established native magenta hue key and spill removal; discard alpha below 24, crop to visible alpha bounds, and add two transparent pixels on each side without resizing."
+  },
+  "output": {
+    "file": "public/assets/sprites/iron-fence.png",
+    "sha256": "1da278f40909bbb21c06e7eb310a5bce471b473e6d35cde1bd8e51497729d4e3",
+    "width": 1086,
+    "height": 471,
+    "channels": "srgba"
+  },
+  "review": {
+    "accepted": false,
+    "notes": "Prepared asset inspection on charcoal ground confirms two posts, five inner uprights, two connecting rails and clear transparent gaps without magenta spill. Formal acceptance requires composed-screen review at gameplay scale."
+  }
+}

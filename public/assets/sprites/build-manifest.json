@@ -140,6 +140,15 @@
     "environment-kit-v2.png": {
       "sha256": "2af4efd5dad1a3b0472c7360b53851f6d329ac6254aa59024f3191a06da00210",
       "source": "public/assets/sprites/environment-kit-v2.png"
+    },
+    "iron-fence.png": {
+      "sha256": "1da278f40909bbb21c06e7eb310a5bce471b473e6d35cde1bd8e51497729d4e3",
+      "source": "art/source/environment/iron-fence-source.png",
+      "sourceSha256": "027f644d074ab58a4cb64fc9e86e7642f2544e00ccddb74695f68b9cbfa61c8b",
+      "generationRecord": "art/generation/iron-fence-v1.json",
+      "preparation": "Native-resolution magenta key and spill removal; alpha-bound crop with 2px transparent padding",
+      "width": 1086,
+      "height": 471
     }
   }
 }
