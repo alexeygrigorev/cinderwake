@@ -64,7 +64,7 @@ browser journeys and presentation checks.
 ## Run the Ranger example
 
 ```sh
-node scripts/test-directional-bank.mjs --profiles desktop
+node scripts/test-directional-bank.mjs --actors ranger --profiles desktop
 node scripts/action-visual-review.mjs build --actors ranger --actions attack,ability --profiles desktop
 ```
 
@@ -72,6 +72,13 @@ Use the recorder's `--output quality-results/directional-bank/round-name` and
 the bundle builder's matching `--directional-bank` option to preserve an earlier
 round while a reviewer is still inspecting it. Never overwrite evidence under
 an active review.
+
+Omit `--actors` to capture all actors. Targeted capture preserves the same
+directional checks and seven negative controls while avoiding recordings of
+unaffected characters. For parallel, inexpensive reviews, build separate bundles
+with `--directions north`, `east`, `south` and `west` into different `--output`
+directories. Each then contains two cases and 32 native images. Validate all four
+partitions before claiming the eight-case Ranger firing matrix passed.
 
 The result is eight cases: primary and ability in four directions. Each case has
 ordered windup, impact and recovery images, intended direction, input, emitted
