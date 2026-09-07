@@ -9,6 +9,7 @@ import {
   measurePngResidual,
   runLiveCompositorNegativeControls,
 } from "./lib/compositor-evidence.mjs";
+import { createCaptureWorkspace } from "./lib/capture-workspace.mjs";
 
 const OUTPUT = path.resolve("quality-results/compositor/pres-flicker-024");
 const VIEWPORT = { width: 960, height: 540 };
@@ -88,7 +89,85 @@ async function writeJson(file, value) {
   await fs.writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-async function startServer(port) {
+async function retainBrowserFailure(page, file, error, details = {}) {
+  const report = {
+    schemaVersion: 1,
+    status: "FAILED",
+    message: error instanceof Error ? error.message : String(error),
+    url: page.url(),
+    ...details,
+  };
+  // Write the basic failure first: an unresponsive renderer may reject diagnostics too.
+  await writeJson(file, report);
+  let timer;
+  try {
+    report.browser = await Promise.race([
+      page.evaluate(() => {
+        const observer = window.__GAME_OBSERVE__;
+        const snapshot = observer?.snapshot();
+        return {
+          visibility: document.visibilityState,
+          focused: document.hasFocus(),
+          ready: observer?.ready,
+          testBridge: Boolean(window.__GAME_TEST__?.ready),
+          phase: snapshot?.phase,
+          tick: snapshot?.tick,
+          player: snapshot?.player,
+          recentEvents: snapshot?.eventLog?.slice(-12),
+          dialogs: [...document.querySelectorAll("dialog[open]")].map((node) =>
+            node.textContent?.slice(0, 300),
+          ),
+          loadingError: document.querySelector(".loading-failed")?.textContent,
+          loadingStatus: document
+            .querySelector(".loading-status")
+            ?.getAttribute("aria-label"),
+          controls: [
+            ...document.querySelectorAll(
+              ".mobile-actions button, .skills button",
+            ),
+          ].map((node) => {
+            const bounds = node.getBoundingClientRect();
+            const center = {
+              x: bounds.x + bounds.width / 2,
+              y: bounds.y + bounds.height / 2,
+            };
+            const hit = document.elementFromPoint(center.x, center.y);
+            return {
+              action: node.getAttribute("data-action"),
+              bounds: bounds.toJSON(),
+              disabled: node.disabled,
+              hit: hit?.outerHTML.slice(0, 300),
+            };
+          }),
+        };
+      }),
+      new Promise((_, reject) => {
+        timer = setTimeout(
+          () =>
+            reject(new Error("Browser diagnostics timed out after 3 seconds")),
+          3_000,
+        );
+      }),
+    ]);
+  } catch (diagnosticError) {
+    report.diagnosticError = String(diagnosticError);
+  } finally {
+    clearTimeout(timer);
+  }
+  try {
+    const screenshot = file.replace(/\.json$/, ".png");
+    await page.screenshot({ path: screenshot, timeout: 3_000 });
+    report.screenshot = path.relative(OUTPUT, screenshot);
+  } catch (screenshotError) {
+    report.screenshotError = String(screenshotError);
+  }
+  await writeJson(file, report);
+  console.error(
+    `Flicker failure evidence: ${path.relative(process.cwd(), file)}`,
+  );
+}
+
+async function startServer(port, directory) {
   const server = spawn(
     "npm",
     [
@@ -101,7 +180,7 @@ async function startServer(port) {
       String(port),
       "--strictPort",
     ],
-    { stdio: "ignore" },
+    { stdio: "ignore", cwd: directory },
   );
   const baseURL = `http://127.0.0.1:${port}`;
   for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -259,9 +338,11 @@ function assertExpectedEffectCorpus(lifecycles) {
 
 async function waitForLiveReady(page) {
   await page.locator("canvas").waitFor({ state: "visible", timeout: 30_000 });
-  await page.waitForFunction(() => Boolean(window.__GAME_OBSERVE__?.ready), {
-    timeout: 30_000,
-  });
+  await page.waitForFunction(
+    () => Boolean(window.__GAME_OBSERVE__?.ready),
+    undefined,
+    { timeout: 30_000 },
+  );
   const route = await page.evaluate(() => ({
     bridgeExposed: Boolean(window.__GAME_TEST__),
     mode: window.__GAME_OBSERVE__?.mode,
@@ -436,26 +517,39 @@ async function runLiveRecording(
   const page = await context.newPage();
   const session = profile.hasTouch ? await context.newCDPSession(page) : null;
   const faults = [];
+  const failedRequests = [];
   const frames = [];
   page.on("pageerror", (error) => faults.push(`page: ${error.message}`));
   page.on("console", (message) => {
     if (message.type() === "error") faults.push(`console: ${message.text()}`);
   });
+  page.on("requestfailed", (request) =>
+    failedRequests.push({
+      url: request.url(),
+      error: request.failure()?.errorText,
+    }),
+  );
   let result;
   let videoPath;
+  let step = "start-production-route";
+  console.log(`Flicker live pass: ${profileId}/${actorId}/${paceId}`);
   try {
     await beginLiveRoute(page, baseURL, profile, actorId);
     const capture = async (label) => {
       if (captureFrames) frames.push(await captureLiveFrame(page, label));
     };
     await capture("initial");
+    step = "sustained-movement-and-turn";
     if (profile.hasTouch) await holdTouchMovement(page, session, pace);
     else await holdKeyboardMovement(page, pace);
     await capture("after-sustained-movement-and-turn");
+    step = "first-attack";
     await activateLiveAction(page, profile, "attack", pace);
     await capture("after-first-attack");
+    step = "second-attack";
     await activateLiveAction(page, profile, "attack", pace);
     await capture("after-second-attack");
+    step = "ability";
     await activateLiveAction(page, profile, "ability", pace);
     await capture("after-ability");
     await page.waitForTimeout(pace.actionGapMs * 2 + 250);
@@ -469,6 +563,14 @@ async function runLiveRecording(
         `${profileId}/${actorId}/${paceId} browser faults: ${faults.join("; ")}`,
       );
     result = { samples, frames };
+  } catch (error) {
+    await retainBrowserFailure(
+      page,
+      path.join(liveDirectory, `${paceId}-failure.json`),
+      error,
+      { profileId, actorId, paceId, step, faults, failedRequests },
+    );
+    throw error;
   } finally {
     await session?.detach();
     const video = page.video();
@@ -587,8 +689,19 @@ async function main() {
 
   let server;
   let browser;
+  let deterministicPage;
+  const deterministicFaults = [];
+  let workspace;
   try {
-    const started = await startServer(port);
+    const registry = JSON.parse(
+      await fs.readFile("quality/action-review.v1.json", "utf8"),
+    );
+    const source = sourceSnapshot();
+    workspace = await createCaptureWorkspace(
+      process.cwd(),
+      registry.sourceRoots,
+    );
+    const started = await startServer(port, workspace.directory);
     server = started.server;
     browser = await chromium.launch();
     const context = await browser.newContext({
@@ -597,6 +710,15 @@ async function main() {
       colorScheme: "dark",
     });
     const page = await context.newPage();
+    deterministicPage = page;
+    page.on("pageerror", (error) =>
+      deterministicFaults.push(`page: ${error.message}`),
+    );
+    page.on("requestfailed", (request) =>
+      deterministicFaults.push(
+        `request: ${request.url()} ${request.failure()?.errorText}`,
+      ),
+    );
     await page.goto(`${started.baseURL}/?testMode=1&scenario=animation-idle`, {
       waitUntil: "networkidle",
     });
@@ -682,6 +804,10 @@ async function main() {
       dataUrlBuffer(transitionFrame),
       dataUrlBuffer(freshFrame),
     );
+    // GameHost keeps rendering in test mode. Its completed page must not compete
+    // with the production rAF cadence and touch processing being measured below.
+    await context.close();
+    deterministicPage = undefined;
     const liveRuns = [];
     for (const [profileId, profile] of Object.entries(LIVE_PROFILES))
       liveRuns.push(
@@ -750,7 +876,6 @@ async function main() {
       transitionArtifacts[name] = { file, sha256: sha256(bytes) };
     }
 
-    const source = sourceSnapshot();
     const metadata = {
       schemaVersion: 1,
       checkId: "PRES-FLICKER-024",
@@ -797,6 +922,9 @@ async function main() {
         }),
       ),
       source,
+      runtimeFingerprint: workspace.fingerprint,
+      captureWorkspace:
+        "frozen copy; source edits cannot reload the page during capture",
       environment: {
         platform: `${os.platform()} ${os.release()} ${os.arch()}`,
         node: process.version,
@@ -891,9 +1019,20 @@ async function main() {
       `PRES-FLICKER-024 PASS: ${segments.length} ordered segments, ${residual.differingPixels} residual pixels, ${controls.length} compositor controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
+  } catch (error) {
+    if (deterministicPage && !deterministicPage.isClosed())
+      await retainBrowserFailure(
+        deterministicPage,
+        path.join(OUTPUT, "deterministic-failure.json"),
+        error,
+        { faults: deterministicFaults },
+      );
+    throw error;
   } finally {
     await browser?.close();
     server?.kill();
+    if (workspace)
+      await fs.rm(workspace.directory, { recursive: true, force: true });
   }
 }
 
