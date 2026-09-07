@@ -36,7 +36,9 @@ test("character selection is stable with decoded local key art", async ({
           .filter(Boolean),
       ),
     ]);
-  expect(spriteUrls.length).toBeGreaterThanOrEqual(5);
+  // The three illustrated classes remain raster assets; control text and
+  // surfaces are native UI and have separate readability/hit-target gates.
+  expect(spriteUrls.length).toBeGreaterThanOrEqual(3);
   await page.evaluate(async (urls) => {
     await Promise.all(
       urls.map(async (url) => {
@@ -68,9 +70,16 @@ test("character selection is stable with decoded local key art", async ({
         const portraitBox = card
           .querySelector<HTMLElement>(".class-portrait")!
           .getBoundingClientRect();
+        const style = getComputedStyle(card);
+        const borderWidth =
+          parseFloat(style.borderLeftWidth) +
+          parseFloat(style.borderRightWidth);
+        const borderHeight =
+          parseFloat(style.borderTopWidth) +
+          parseFloat(style.borderBottomWidth);
         return (
-          Math.abs(portraitBox.width - cardBox.width) <= 2 &&
-          Math.abs(portraitBox.height - cardBox.height) <= 2
+          Math.abs(portraitBox.width + borderWidth - cardBox.width) <= 1 &&
+          Math.abs(portraitBox.height + borderHeight - cardBox.height) <= 1
         );
       }),
       wordsStayWhole: [...document.querySelectorAll(".sprite-word")].every(
