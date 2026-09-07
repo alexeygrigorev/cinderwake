@@ -760,6 +760,11 @@ describe("sprite atlas quality contract", () => {
         CAMERA,
       ),
     );
+    const rangerProjectile = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-friendly-projectile"]!,
+    );
+    rangerProjectile.player.classId = "ranger";
+    manifests.push(buildRenderManifest(rangerProjectile, CAMERA));
 
     const city = worldFromScenario(BUILTIN_SCENARIOS["temporal-city-entry"]!);
     city.player.position = tileCenter(city.map.exit);
@@ -784,6 +789,7 @@ describe("sprite atlas quality contract", () => {
       expect.arrayContaining([
         "effect:nova",
         "loot:gold:common",
+        "projectile:arcane",
         "projectile:friendly",
         "resident:embercross:mara",
         "scenery:structure:embercross-market",

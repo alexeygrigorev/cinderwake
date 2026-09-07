@@ -180,6 +180,7 @@ export const REQUIRED_SPRITE_CLIPS: Record<string, readonly string[]> = {
   ...Object.fromEntries(LOOT_SPRITES.map((id) => [id, ["loot"]])),
   ...Object.fromEntries(RESIDENT_SPRITES.map((id) => [id, ["resident-idle"]])),
   "projectile:friendly": ["projectile"],
+  "projectile:arcane": ["projectile"],
   "projectile:hostile": ["projectile"],
   "scenery:tile:floor": ["static"],
   "scenery:tile:wall": ["static"],

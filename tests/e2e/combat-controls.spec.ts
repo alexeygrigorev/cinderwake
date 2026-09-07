@@ -79,6 +79,37 @@ test("a ground click walks to its destination without starting an attack", async
   ).toHaveLength(0);
 });
 
+test("a native click event also routes the hero to clear ground", async ({
+  page,
+}) => {
+  await openArena(page);
+  const before = await page.evaluate(() => {
+    const bridge = window.__GAME_TEST__!;
+    const canvas = document.querySelector("canvas")!.getBoundingClientRect();
+    return {
+      state: bridge.snapshot(),
+      x: canvas.x + canvas.width * 0.7,
+      y: canvas.y + canvas.height * 0.5,
+    };
+  });
+  await page.evaluate(({ x, y }) => {
+    document.querySelector("canvas")!.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        clientX: x,
+        clientY: y,
+      }),
+    );
+  }, before);
+  const arrived = await advance(page, 90);
+  expect(arrived.player.position.x).toBeGreaterThan(
+    before.state.player.position.x + 1500,
+  );
+  expect(
+    arrived.eventLog.filter(({ type }) => type === "attack_started"),
+  ).toHaveLength(0);
+});
+
 test("clicking loot walks to it and picks that item up", async ({ page }) => {
   await openArena(page);
   const before = await page.evaluate(() => {
@@ -306,7 +337,18 @@ for (const classId of ["ranger", "arcanist"] as const) {
           canvas.height) /
           540,
     );
-    const hit = await advance(page, 60);
+    await advance(page, 10);
+    expect(
+      await page.evaluate(
+        () =>
+          window
+            .__GAME_TEST__!.renderManifest()
+            .drawCalls.find(({ type }) => type === "projectile")?.spriteId,
+      ),
+    ).toBe(
+      classId === "arcanist" ? "projectile:arcane" : "projectile:friendly",
+    );
+    const hit = await advance(page, 50);
     expect(hit.player.position).toEqual(before.state.player.position);
     expect(hit.metrics.damageDealt).toBeGreaterThan(0);
     expect(
@@ -381,6 +423,30 @@ test.describe("touch combat", () => {
     const released = await advance(page, 60);
     expect(released.player.attackReadyTick).toBe(held.player.attackReadyTick);
     await session.detach();
+  });
+
+  test("tapping clear ground walks the hero there", async ({ page }) => {
+    await openArena(page);
+    const before = await page.evaluate(() => {
+      const bridge = window.__GAME_TEST__!;
+      bridge.loadScenario("animation-idle");
+      return {
+        state: bridge.snapshot(),
+        player: bridge
+          .renderManifest()
+          .drawCalls.find(({ type }) => type === "player")!,
+      };
+    });
+    const canvas = (await page.locator("canvas").boundingBox())!;
+    await page.touchscreen.tap(
+      canvas.x + ((before.player.footAnchor.x + 96) * canvas.width) / 960,
+      canvas.y + (before.player.footAnchor.y * canvas.height) / 540,
+    );
+    const arrived = await advance(page, 60);
+    expect(arrived.player.position.x).toBeGreaterThan(
+      before.state.player.position.x + 900,
+    );
+    expect(arrived.player.velocity).toEqual({ x: 0, y: 0 });
   });
 
   test("touch strike cancels a retreat route and aims at the nearby enemy", async ({

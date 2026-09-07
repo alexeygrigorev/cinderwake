@@ -34,7 +34,22 @@ describe("painted projectile orientation", () => {
       spriteId: "projectile:friendly",
     });
   });
-  for (const spriteId of ["projectile:friendly", "projectile:hostile"]) {
+  it("uses the crystal bolt for an arcanist projectile", () => {
+    const state = worldFromScenario(
+      BUILTIN_SCENARIOS["temporal-friendly-projectile"]!,
+    );
+    const call = buildRenderManifest(state, {
+      x: 480,
+      y: 270,
+      zoom: 1,
+    }).drawCalls.find(({ type }) => type === "projectile");
+    expect(call?.spriteId).toBe("projectile:arcane");
+  });
+  for (const spriteId of [
+    "projectile:friendly",
+    "projectile:arcane",
+    "projectile:hostile",
+  ]) {
     for (const travel of [
       { x: 1, y: 0 },
       { x: -1, y: 0 },
