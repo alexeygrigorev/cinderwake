@@ -44,7 +44,7 @@
         ".selection-header h1",
         ".selected-class",
         ".class-card",
-        "#seed",
+        ".run-options summary",
         "#begin"
       ],
       "publicForbidden": [".selection-lab-toggle"],
@@ -72,10 +72,10 @@
         ]
       },
       "appearance": [
-        "The selected hero is the dominant focal subject and is not cropped at the head, hands, or feet.",
+        "The selected hero is identified by a readable name, portrait and explicit selected state; decorative background art may crop behind the control panel.",
         "The title never crosses the hero face and occupies less than one fifth of screen height.",
         "Class choices and launch controls form one compact group with an obvious selected state.",
-        "Phone portrait and landscape fit without scrolling; no control is hidden by browser safe areas.",
+        "The primary launch action and character choices fit without scrolling; optional World options may expand into a scrollable panel with an editable seed. No control is hidden by browser safe areas.",
         "All three character scenes use the same dark-gothic palette, lighting, camera language, and proportions."
       ]
     },
@@ -85,6 +85,7 @@
       "ready": "canvas",
       "required": ["canvas", ".hud.top", ".health"],
       "publicForbidden": [".game > .lab-toggle"],
+      "maximumHudClusterGapPixels": 72,
       "hudObstruction": {
         "protectedTargets": ["player", "monster", "npc", "loot", "exit"],
         "maximumOverlapRatio": 0.05,

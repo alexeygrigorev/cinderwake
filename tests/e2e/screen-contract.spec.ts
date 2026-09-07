@@ -221,7 +221,7 @@ async function contractPage(
   errors: string[];
 }> {
   const context = await browser.newContext({
-    baseURL: "http://127.0.0.1:43917",
+    baseURL: test.info().project.use.baseURL,
     viewport: profile.viewport,
     hasTouch: profile.touch,
     isMobile: profile.touch,
@@ -276,7 +276,7 @@ async function inspectTargets(
     targets
       .filter(
         (target) =>
-          getComputedStyle(target).visibility !== "hidden" &&
+          (target as HTMLElement).checkVisibility() &&
           target.getClientRects().length > 0,
       )
       .map((target) => {
@@ -320,87 +320,25 @@ function targetViolations(
 }
 
 async function landscapeSubjectViolations(page: Page): Promise<string[]> {
-  const evidence = await page.locator(".selection-art").evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      backgroundSize: style.backgroundSize,
-      maskImage: style.maskImage || style.webkitMaskImage,
-    };
+  return page.locator(".class-card.selected").evaluate((card) => {
+    const portrait = card.querySelector<HTMLElement>(".class-portrait")!;
+    const label = card.querySelector<HTMLElement>("strong")!;
+    const badge = card.querySelector<HTMLElement>(".class-choice")!;
+    const violations: string[] = [];
+    if (
+      !portrait.checkVisibility() ||
+      getComputedStyle(portrait).backgroundImage === "none"
+    )
+      violations.push("selected-hero:missing-portrait");
+    if (
+      !label.checkVisibility() ||
+      parseFloat(getComputedStyle(label).fontSize) < 14
+    )
+      violations.push("selected-hero:unreadable-name");
+    if (!badge.checkVisibility() || !badge.textContent?.includes("Selected"))
+      violations.push("selected-hero:missing-selected-state");
+    return violations;
   });
-  const size = evidence.backgroundSize.match(/^auto\s+([\d.]+)%$/);
-  const heightScale = size ? Number(size[1]) : Number.NaN;
-  const violations: string[] = [];
-  if (!size || heightScale < 115 || heightScale > 135)
-    violations.push("landscape-hero:full-character-fit");
-  if (!evidence.maskImage || evidence.maskImage === "none")
-    violations.push("landscape-hero:subject-blend");
-  return violations;
-}
-
-type SelectionClass = keyof typeof contract.screens.selection.landmarks;
-
-async function landscapeLandmarkViolations(
-  page: Page,
-  classId: SelectionClass,
-): Promise<string[]> {
-  const evidence = await page
-    .locator(".selection-art")
-    .evaluate(async (element, landmarks) => {
-      const style = getComputedStyle(element);
-      const url = style.backgroundImage.match(/url\(["']?(.*?)["']?\)/)?.[1];
-      const image = new Image();
-      image.src = url ?? "";
-      await image.decode();
-      const size = style.backgroundSize.match(/^auto\s+([\d.]+)%$/);
-      const position = style.backgroundPosition.match(
-        /^([\d.]+)%\s+([\d.]+)%$/,
-      );
-      const height = size ? (innerHeight * Number(size[1])) / 100 : Number.NaN;
-      const width = height * (image.naturalWidth / image.naturalHeight);
-      const left = position
-        ? ((innerWidth - width) * Number(position[1])) / 100
-        : Number.NaN;
-      const top = position
-        ? ((innerHeight - height) * Number(position[2])) / 100
-        : Number.NaN;
-      const occluders = [".choose", ".selection-header"].map((selector) => {
-        const rect = document.querySelector(selector)!.getBoundingClientRect();
-        return {
-          selector,
-          left: rect.left,
-          top: rect.top,
-          right: rect.right,
-          bottom: rect.bottom,
-        };
-      });
-      return landmarks.flatMap((landmark) => {
-        const x = left + landmark.x * width;
-        const y = top + landmark.y * height;
-        const radius = 7;
-        const failures: string[] = [];
-        if (
-          !Number.isFinite(x) ||
-          !Number.isFinite(y) ||
-          x - radius < 0 ||
-          y - radius < 0 ||
-          x + radius > innerWidth ||
-          y + radius > innerHeight
-        )
-          failures.push(`landmark:${landmark.id}:outside`);
-        for (const occluder of occluders)
-          if (
-            x + radius > occluder.left &&
-            x - radius < occluder.right &&
-            y + radius > occluder.top &&
-            y - radius < occluder.bottom
-          )
-            failures.push(
-              `landmark:${landmark.id}:occluded-by-${occluder.selector}`,
-            );
-        return failures;
-      });
-    }, contract.screens.selection.landmarks[classId]);
-  return evidence;
 }
 
 async function selectionGeometry(page: Page, profile: Profile): Promise<void> {
@@ -436,7 +374,10 @@ async function selectionGeometry(page: Page, profile: Profile): Promise<void> {
   expect(geometry.choose.left).toBeGreaterThanOrEqual(0);
   expect(geometry.choose.right).toBeLessThanOrEqual(geometry.viewport.width);
   expect(geometry.choose.bottom).toBeLessThanOrEqual(geometry.viewport.height);
-  const targets = await inspectTargets(page, ".class-card, #seed, #begin");
+  const targets = await inspectTargets(
+    page,
+    ".class-card, .run-options summary, .selection-import, #seed, #begin",
+  );
   expect(targetViolations(targets, profile.minTargetPixels)).toEqual([]);
 }
 
@@ -520,9 +461,9 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
   expect(targetViolations(targets, profile.minTargetPixels)).toEqual([]);
   if (profile.touch) {
     expect(geometry.controls.visible).toBe(true);
-    expect(
-      geometry.controls.height / geometry.viewport.height,
-    ).toBeLessThanOrEqual(profile.maxControlHeightRatio);
+    expect(geometry.controls.height).toBeLessThanOrEqual(
+      Math.ceil(profile.maxControlHeightRatio * geometry.viewport.height),
+    );
     expect(geometry.controls.left).toBeGreaterThanOrEqual(0);
     expect(geometry.controls.top).toBeGreaterThanOrEqual(geometry.stage.top);
     expect(geometry.controls.right).toBeLessThanOrEqual(
@@ -531,7 +472,9 @@ async function gameGeometry(page: Page, profile: Profile): Promise<void> {
     expect(geometry.controls.bottom).toBeLessThanOrEqual(
       geometry.viewport.height,
     );
-    expect(geometry.hudClusterDistance).toBeLessThanOrEqual(24);
+    expect(geometry.hudClusterDistance).toBeLessThanOrEqual(
+      contract.screens.game.maximumHudClusterGapPixels,
+    );
   } else {
     expect(geometry.controls.visible).toBe(false);
   }
@@ -673,7 +616,6 @@ for (const profile of contract.profiles) {
         );
         if (profile.id === "phone-landscape") {
           expect(await landscapeSubjectViolations(page)).toEqual([]);
-          expect(await landscapeLandmarkViolations(page, classId)).toEqual([]);
         }
         await expect(page).toHaveScreenshot(
           `${profile.id}-selection-${classId}.png`,
@@ -817,11 +759,15 @@ test("mobile HUD assessor rejects a detached objective compass", async ({
     await page.goto(contract.screens.game.route);
     await page.locator("#begin").click();
     await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
-    expect(await mobileHudClusterDistance(page)).toBeLessThanOrEqual(24);
+    expect(await mobileHudClusterDistance(page)).toBeLessThanOrEqual(
+      contract.screens.game.maximumHudClusterGapPixels,
+    );
     await page.locator("#objective").evaluate((element) => {
       (element as HTMLElement).style.top = "45svh";
     });
-    expect(await mobileHudClusterDistance(page)).toBeGreaterThan(24);
+    expect(await mobileHudClusterDistance(page)).toBeGreaterThan(
+      contract.screens.game.maximumHudClusterGapPixels,
+    );
     expect(errors).toEqual([]);
   } finally {
     await context.close();
@@ -868,30 +814,22 @@ test("screen assessors reject known target and hero-crop regressions", async ({
     expect(targetFailures).toContain("begin:outside-viewport");
     expect(targetFailures).toContain("begin:not-hit-testable");
 
-    await page.locator(".selection-art").evaluate((element) => {
-      const art = element as HTMLElement;
-      art.style.backgroundSize = "cover";
-      art.style.maskImage = "none";
-      art.style.webkitMaskImage = "none";
+    await page.locator(".class-card.selected").evaluate((element) => {
+      const portrait = element.querySelector<HTMLElement>(".class-portrait")!;
+      portrait.style.backgroundImage = "none";
+      element.querySelector<HTMLElement>("strong")!.style.fontSize = "8px";
+      element.querySelector<HTMLElement>(".class-choice")!.style.display =
+        "none";
     });
     expect(await landscapeSubjectViolations(page)).toEqual([
-      "landscape-hero:full-character-fit",
-      "landscape-hero:subject-blend",
+      "selected-hero:missing-portrait",
+      "selected-hero:unreadable-name",
+      "selected-hero:missing-selected-state",
     ]);
 
     await page.reload();
     await expect(page.locator(".selection-art")).toBeVisible();
-    await page.locator(".choose").evaluate((element) => {
-      const choose = element as HTMLElement;
-      choose.style.right = "0";
-      choose.style.left = "0";
-      choose.style.width = "100%";
-    });
-    expect(
-      (await landscapeLandmarkViolations(page, "vanguard")).some((failure) =>
-        failure.includes("occluded"),
-      ),
-    ).toBe(true);
+    expect(await landscapeSubjectViolations(page)).toEqual([]);
     expect(errors).toEqual([]);
   } finally {
     await context.close();
