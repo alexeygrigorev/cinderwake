@@ -50,7 +50,7 @@ Options:
   --environment-kit-only
                        Build only the approved environment-kit atlas
   --structures-only   Build only the cleaned structure atlas, preserving other manifest entries
-  --fence-only        Prepare only the standalone iron fence
+  --fence-only        Prepare only the standalone iron fence orientations
   --help               Show this help`);
 }
 
@@ -634,13 +634,13 @@ async function buildStructureAtlas() {
   return destination;
 }
 
-async function buildIronFence() {
-  const source = inputPath("environment", "iron-fence-source.png");
+async function buildIronFence(stem = "iron-fence") {
+  const source = inputPath("environment", `${stem}-source.png`);
   const cleaned = await cleanLowAlpha(
     await normalizeSource(source, "magenta", false),
   );
   const bounds = await alphaBounds(cleaned);
-  const destination = outputPath("iron-fence.png");
+  const destination = outputPath(`${stem}.png`);
   await sharp(cleaned)
     .extract(bounds)
     .extend({ top: 2, bottom: 2, left: 2, right: 2, background: transparent })
@@ -651,13 +651,12 @@ async function buildIronFence() {
 
 async function fenceManifestEntry(destination) {
   const metadata = await sharp(destination).metadata();
+  const stem = path.basename(destination, ".png");
   return {
     sha256: await sha256(destination),
-    source: "art/source/environment/iron-fence-source.png",
-    sourceSha256: await sha256(
-      inputPath("environment", "iron-fence-source.png"),
-    ),
-    generationRecord: "art/generation/iron-fence-v1.json",
+    source: `art/source/environment/${stem}-source.png`,
+    sourceSha256: await sha256(inputPath("environment", `${stem}-source.png`)),
+    generationRecord: `art/generation/${stem}-v1.json`,
     preparation:
       "Native-resolution magenta key and spill removal; alpha-bound crop with 2px transparent padding",
     width: metadata.width,
@@ -976,7 +975,6 @@ async function copyApprovedAtlas(spec) {
 
 await fs.mkdir(outputPath("."), { recursive: true });
 if (OPTIONS.fenceOnly) {
-  const destination = await buildIronFence();
   const manifest = await fs
     .readFile(outputPath("build-manifest.json"), "utf8")
     .then(JSON.parse)
@@ -986,12 +984,15 @@ if (OPTIONS.fenceOnly) {
       builtAt: "deterministic-from-committed-source",
       outputs: {},
     }));
-  manifest.outputs["iron-fence.png"] = await fenceManifestEntry(destination);
+  for (const stem of ["iron-fence", "iron-fence-vertical"]) {
+    const destination = await buildIronFence(stem);
+    manifest.outputs[`${stem}.png`] = await fenceManifestEntry(destination);
+  }
   await fs.writeFile(
     outputPath("build-manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,
   );
-  console.log("Built standalone iron fence.");
+  console.log("Built standalone iron fence orientations.");
   process.exit(0);
 }
 const outputs = [];
@@ -1050,6 +1051,7 @@ if (
     await copyApprovedAtlas(CITY_KIT_SPEC),
     await copyApprovedAtlas(RESIDENT_ATLAS_SPEC),
     await buildIronFence(),
+    await buildIronFence("iron-fence-vertical"),
   );
 }
 if (!OPTIONS.actorsOnly && !OPTIONS.structuresOnly)
@@ -1120,10 +1122,11 @@ for (const spec of [CITY_KIT_SPEC, RESIDENT_ATLAS_SPEC]) {
   if (!manifest.outputs[spec.atlas.file]) continue;
   manifest.outputs[spec.atlas.file].source = spec.provenance.preparedFile;
 }
-if (manifest.outputs["iron-fence.png"] && !OPTIONS.structuresOnly)
-  manifest.outputs["iron-fence.png"] = await fenceManifestEntry(
-    outputPath("iron-fence.png"),
-  );
+for (const stem of ["iron-fence", "iron-fence-vertical"])
+  if (manifest.outputs[`${stem}.png`] && !OPTIONS.structuresOnly)
+    manifest.outputs[`${stem}.png`] = await fenceManifestEntry(
+      outputPath(`${stem}.png`),
+    );
 if (
   !OPTIONS.actorsOnly &&
   !OPTIONS.environmentKitOnly &&
