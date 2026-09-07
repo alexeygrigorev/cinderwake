@@ -453,6 +453,7 @@ export class CampaignBrowserDriver {
         attackWhileMoving ? pursuitMonsterId : undefined,
         target,
         route[0],
+        route.length,
       );
       this.record(gesture.action, {
         label,
@@ -488,13 +489,22 @@ export class CampaignBrowserDriver {
           physicalDirection(fallback, route[0] ?? waypoint),
           PHYSICAL_NAVIGATION_PULSE_MS,
         );
-        latest = await this.waitFor(
-          `${label} keyboard fallback ${attempt}`,
-          (state) =>
-            complete(state) ||
-            distance(state.player.position, fallbackStart) > 64,
-          2_000,
-        );
+        try {
+          latest = await this.waitFor(
+            `${label} keyboard fallback ${attempt}`,
+            (state) =>
+              complete(state) ||
+              distance(state.player.position, fallbackStart) > 64,
+            2_000,
+          );
+        } catch {
+          this.record("navigation-replan", {
+            label,
+            attempt,
+            reason: "fallback-blocked",
+          });
+          continue;
+        }
       }
       if (complete(latest)) {
         await this.stopNavigation();
@@ -632,6 +642,7 @@ export class CampaignBrowserDriver {
     pursuitMonsterId?: string,
     navigationTarget?: Vec2,
     routeFirstPoint?: Vec2,
+    routeLength = Number.POSITIVE_INFINITY,
   ): Promise<{ action: string }> {
     const live = await this.state();
     if (live.phase !== "playing") return { action: "terminal" };
@@ -701,7 +712,8 @@ export class CampaignBrowserDriver {
     }
     if (!devicePoint) {
       const fallback = await this.state();
-      const fallbackTarget = routeFirstPoint ?? point;
+      const fallbackTarget =
+        routeLength <= 2 ? point : (routeFirstPoint ?? point);
       await this.pulse(
         physicalDirection(fallback, fallbackTarget),
         PHYSICAL_NAVIGATION_PULSE_MS,
