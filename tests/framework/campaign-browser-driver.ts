@@ -378,6 +378,13 @@ export class CampaignBrowserDriver {
         throw new Error(`${label} made no meaningful progress for 10 seconds`);
       }
     }
+    // A transition can land during the final sampling wait. Check the state
+    // that was actually observed before reporting a timeout; otherwise a
+    // city-entry or victory transition at the budget boundary is discarded.
+    if (predicate(latest)) {
+      this.assertBudget(label);
+      return latest;
+    }
     throw new Error(
       `${label} exceeded ${timeoutMs}ms; last state ${JSON.stringify(
         stateSummary(latest),
@@ -448,6 +455,52 @@ export class CampaignBrowserDriver {
       // within the slower aggregate browser budget; desktop can use six.
       const waypointIndex = this.profile.hasTouch ? 4 : 6;
       const waypoint = route[Math.min(route.length - 1, waypointIndex)]!;
+      if (attackWhileMoving && attempt >= 8) {
+        // A mouse pursuit is the safest opening approach because it keeps the
+        // attack target alive while the player closes on a moving enemy. Once
+        // several pursuits have failed, however, the pointer router can keep
+        // chasing a target around a wall. Switch to short, collision-aware
+        // physical pulses so the held strike remains in the same input mode
+        // and the next attempt recomputes the authoritative route.
+        await this.evadeProjectile(before);
+        const pulseTarget = route[0] ?? waypoint;
+        await this.pulse(
+          physicalDirection(before, pulseTarget),
+          PHYSICAL_NAVIGATION_PULSE_MS,
+        );
+        this.record(
+          this.profile.hasTouch ? "joystick-pulse" : "keyboard-pulse",
+          {
+            label,
+            attempt,
+            waypoint,
+            routeLength: route.length,
+            combat: true,
+          },
+        );
+        const start = { ...before.player.position };
+        let latest: GameState;
+        try {
+          latest = await this.waitFor(
+            `${label} combat pulse ${attempt}`,
+            (state) =>
+              complete(state) || distance(state.player.position, start) > 64,
+            2_000,
+          );
+        } catch {
+          this.record("navigation-replan", {
+            label,
+            attempt,
+            reason: "combat-pulse-blocked",
+          });
+          continue;
+        }
+        if (complete(latest)) {
+          await this.stopNavigation();
+          return latest;
+        }
+        continue;
+      }
       const gesture = await this.navigateToPoint(
         waypoint,
         attackWhileMoving ? pursuitMonsterId : undefined,
