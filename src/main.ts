@@ -181,6 +181,7 @@ function setSpriteLabel(
   value: string,
   className = "",
 ): void {
+  element.dataset.nativeUi = "true";
   if (element.getAttribute("aria-label") === value) return;
   element.innerHTML = spriteText(value, className);
   element.setAttribute("aria-label", value);
