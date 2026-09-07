@@ -2,9 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function begin(page: Page) {
   await page.goto("/?testMode=1&selection=1");
-  await page
-    .getByRole("button", { name: "Enter the wake", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Start game", exact: true }).click();
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
 }
 
@@ -154,7 +152,10 @@ test("letter voice actually plays and mute survives a reload", async ({
   expect(audio.failed).toBe(0);
   expect(audio.lastCue).toBe("quest:arrival");
   await page.getByText("Controls and sound", { exact: true }).click();
-  await page.getByRole("button", { name: "Mute sound", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Mute sound", exact: true })
+    .click();
   await page
     .getByRole("button", { name: "Save checkpoint", exact: true })
     .click();
@@ -242,7 +243,7 @@ test("denied browser storage still permits exporting and leaving", async ({
     .getByRole("button", { name: "Leave without saving", exact: true })
     .click();
   await expect(
-    page.getByRole("button", { name: "Enter the wake", exact: true }),
+    page.getByRole("button", { name: "Start game", exact: true }),
   ).toBeVisible();
 });
 
@@ -251,9 +252,7 @@ test("journal pauses the real game, clears held movement, and fits a phone", asy
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?selection=1");
-  await page
-    .getByRole("button", { name: "Enter the wake", exact: true })
-    .click();
+  await page.getByRole("button", { name: "Start game", exact: true }).click();
   await expect(page.locator("canvas")).toBeVisible();
   const toolbar = (await page.locator(".campaign-tools").boundingBox())!;
   for (const selector of [".health", ".mobile-actions", ".move-pad"]) {
