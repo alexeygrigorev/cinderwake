@@ -81,7 +81,7 @@ async function expectApprovedText(page: Page): Promise<void> {
   expect(audit.titles.every((title) => ALLOWED_TITLES.has(title))).toBe(true);
 }
 
-async function expectSpriteBacked(
+async function expectIllustrated(
   page: Page,
   selectors: string[],
 ): Promise<void> {
@@ -132,19 +132,22 @@ test("campaign narrative is readable native copy only inside its semantic modal"
   ).toBe(true);
 });
 
-test("selection exposes only approved title text and renders the editable seed with glyph sprites", async ({
+test("selection has readable native controls and an editable seed behind world options", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?testMode=1&selection=1");
   await expect(page.locator(".selection")).toBeVisible();
   await expectApprovedText(page);
-  await expectSpriteBacked(page, [
-    ".class-portrait",
-    ".seed-control",
-    ".begin",
-    ".selection-lab-toggle",
-  ]);
+  await expectIllustrated(page, [".class-portrait"]);
+  await expect(
+    page.getByRole("button", { name: "Start game", exact: true }),
+  ).toBeVisible();
+  await expect(page.locator('[data-class="vanguard"]')).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.getByText("World options", { exact: true }).click();
 
   const seed = page.locator("#seed");
   await seed.fill("ash-123");
@@ -172,7 +175,7 @@ test("selection exposes only approved title text and renders the editable seed w
       overlap,
     };
   });
-  expect(seedPresentation.inputFill).toBe("rgba(0, 0, 0, 0)");
+  expect(seedPresentation.inputFill).not.toBe("rgba(0, 0, 0, 0)");
   expect(seedPresentation.labPosition).toBe("fixed");
   expect(seedPresentation.overlap).toBe(false);
 });
@@ -182,6 +185,7 @@ test("ordinary selection and gameplay do not expose developer controls", async (
 }) => {
   await page.goto("/");
   await expect(page.locator(".selection-lab-toggle")).toHaveCount(0);
+  await page.getByText("World options", { exact: true }).click();
   await page.locator("#seed").fill("qa-enter-0042");
   await page.locator("#seed").press("Enter");
   await expect(page.locator("canvas")).toBeVisible({ timeout: 30_000 });
@@ -192,7 +196,7 @@ test("ordinary selection and gameplay do not expose developer controls", async (
   await expect(page.locator(".game > .lab-toggle")).toHaveCount(0);
 });
 
-test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph atlas", async ({
+test("loading, gameplay, outcomes, and Test Lab expose readable labels", async ({
   page,
 }) => {
   let releaseEffects: (() => void) | undefined;
@@ -216,19 +220,17 @@ test("loading, gameplay, outcomes, and Test Lab keep non-title UI on the glyph a
   releaseEffects!();
   await page.waitForFunction(() => Boolean(window.__GAME_TEST__?.ready));
   await expectApprovedText(page);
-  await expectSpriteBacked(page, [
-    ".health b",
-    ".skills [data-action='attack']",
-    ".mobile-controls",
-    ".mobile-actions [data-action='ability']",
-    ".loot-log",
-    ".game > .lab-toggle",
-  ]);
+  await expect(
+    page.getByRole("complementary", { name: "How to play" }),
+  ).toBeVisible();
+  await expect(
+    page.locator(".skills [data-action='attack']"),
+  ).toHaveAccessibleName("Strike");
 
   await page.locator(".game > .lab-toggle").click();
   await expect(page.locator(".lab")).toBeVisible();
   await expectApprovedText(page);
-  await expectSpriteBacked(page, [
+  await expectIllustrated(page, [
     ".lab",
     ".scenario-value",
     ".lab [data-lab='scenario-next']",
