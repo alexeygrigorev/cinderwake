@@ -48,7 +48,7 @@ export class CampaignUI {
   private routeTarget = "";
   private previousFocus?: HTMLElement;
   private savingDisabled = false;
-  private saveStatus = "Manual checkpoints stay separate from safe autosaves.";
+  private saveStatus = "Progress saves here automatically when you are safe.";
   readonly audio = new GameAudio(import.meta.env.BASE_URL);
 
   constructor(
@@ -140,6 +140,8 @@ export class CampaignUI {
       state.phase !== "lost"
     )
       this.say(journal.cue.voiceId);
+    if (state.phase === "won" && this.lastMission !== missionKey)
+      this.autosave();
     this.lastMission = missionKey;
     const landmarks = missionLandmarks(state);
     this.nearby = landmarks
@@ -241,28 +243,43 @@ export class CampaignUI {
       return false;
     }
     try {
-      storeSave(localStorage, state, [...this.discoveries], kind);
+      const saved = storeSave(localStorage, state, [...this.discoveries], kind);
       this.status(
         kind === "manual"
           ? "Checkpoint saved on this browser."
           : "Autosaved safely on this browser.",
+        "saved",
       );
+      const slot = this.dialog.querySelector(`[data-save-slot="${kind}"]`);
+      if (slot) slot.textContent = this.describeSave(saved);
       this.savingDisabled = false;
       return true;
     } catch {
       this.savingDisabled = true;
       this.status(
         "Browser storage unavailable. Export a save file to keep your progress.",
+        "unavailable",
       );
       return false;
     }
   }
-  status(message: string): void {
+  status(message: string, saveState?: "saved" | "unavailable"): void {
     this.saveStatus = message;
     const status = this.dialog.querySelector("[data-save-status]");
     if (status) status.textContent = message;
-    this.tools.querySelector("[data-checkpoint-indicator]")!.textContent =
-      message.startsWith("Autosaved") ? "Saved" : "";
+    const indicator = this.tools.querySelector<HTMLElement>(
+      "[data-checkpoint-indicator]",
+    )!;
+    if (saveState) {
+      indicator.dataset.saveState = saveState;
+      indicator.textContent =
+        saveState === "saved" ? "Saved here" : "Save unavailable";
+      indicator.title = message;
+    }
+  }
+  private describeSave(save: CampaignSave | null): string {
+    if (!save) return "No checkpoint yet";
+    return `${new Date(save.savedAt).toLocaleString()} · Level ${save.state.player.level}${save.state.phase === "won" ? " · Journey complete" : ""}`;
   }
   private interact(): void {
     if (!this.nearby) return;
@@ -287,7 +304,7 @@ export class CampaignUI {
       <ol class="mission-list">${journal.objectives.map((objective) => `<li data-mission-id="${objective.id}" data-complete="${objective.complete}" ${objective.id === journal.activeId ? 'aria-current="step"' : ""}><span>${objective.complete ? "✓" : `${objective.current}/${objective.total}`}</span><div><h3>${escape(objective.title)}</h3><p>${escape(objective.description)}</p></div></li>`).join("")}</ol>
       ${journal.ending ? `<p class="journal-ending">${escape(journal.ending)}</p>` : ""}
       ${read.length ? `<details><summary>Discovered writings and conversations (${this.discoveries.size})</summary>${read.map((entry) => `<h3>${escape(entry.title)}</h3><p>${escape(entry.text)}</p>`).join("")}</details>` : ""}
-      <section class="save-controls" aria-label="Saved journey"><h3>Your journey</h3><p data-save-status role="status">${escape(this.saveStatus)}</p><div class="journal-actions"><button data-save ${state.phase === "lost" ? "disabled" : ""}>Save checkpoint</button><button data-load="manual" ${saved ? "" : "disabled"}>Load checkpoint</button><button data-load="auto" ${auto ? "" : "disabled"}>Load autosave</button><button data-export>Export save</button><label class="import-save">Import save<input type="file" accept=".json,application/json" data-import-save aria-label="Import save" /></label><button data-exit>Save and leave</button></div></section>
+      <section class="save-controls" aria-label="Saved journey"><h3>Save your progress</h3><p data-save-status role="status">${escape(this.saveStatus)}</p><p class="save-location">Saved in this browser on this device. Clearing site data removes these saves. Export a save file to keep a backup or move to another device, then import it there.</p><dl class="save-slots"><dt>Manual checkpoint</dt><dd data-save-slot="manual">${escape(this.describeSave(saved))}</dd><dt>Safe autosave</dt><dd data-save-slot="auto">${escape(this.describeSave(auto))}</dd></dl><div class="journal-actions"><button data-save ${state.phase === "lost" ? "disabled" : ""}>Save checkpoint</button><button data-load="manual" ${saved ? "" : "disabled"}>Load checkpoint</button><button data-load="auto" ${auto ? "" : "disabled"}>Load autosave</button><button data-export>Export save</button><label class="import-save">Import save<input type="file" accept=".json,application/json" data-import-save aria-label="Import save" /></label><button data-exit>Save and leave</button></div></section>
       <details class="controls-help"><summary>Controls and sound</summary><p>Click clear ground to move. Click an enemy to pursue and attack. WASD / arrows move; Space or Shift-click holds your ground and attacks. Right click / E uses your class ability. Q drinks a tonic. F reads or speaks nearby. J opens this journal. On touch screens, tap to travel or use the movement pad; hold Strike to attack nearby foes.</p><p>Save checkpoint keeps a manual slot. Autosave uses a separate slot when you are safe and above half health. Export a file before clearing browser data.</p><button data-mute aria-pressed="${this.audio.snapshot().muted}">${this.audio.snapshot().muted ? "Unmute sound" : "Mute sound"}</button><label>Volume <input data-volume type="range" min="0" max="1" step="0.05" value="${this.audio.snapshot().volume}" /></label></details><button data-leave>Leave without saving</button>`;
     this.dialog.querySelector<HTMLButtonElement>("[data-close]")!.onclick =
       () => this.close();

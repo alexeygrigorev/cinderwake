@@ -88,6 +88,8 @@ export function storeSave(
 }
 
 export function safeToAutosave(state: GameState): boolean {
+  // Completion is a stable checkpoint even when the final battle left low health.
+  if (state.phase === "won") return true;
   return (
     state.phase === "playing" &&
     state.player.health >= state.player.maxHealth * 0.5 &&
