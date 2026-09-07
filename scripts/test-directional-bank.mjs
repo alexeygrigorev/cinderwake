@@ -11,7 +11,7 @@ import {
   evaluateDirectionalBankEvidence,
 } from "./lib/directional-bank-evidence.mjs";
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
-import { runtimeFingerprint } from "./lib/action-visual-review.mjs";
+import { createCaptureWorkspace } from "./lib/capture-workspace.mjs";
 
 const OUTPUT = path.resolve("quality-results/directional-bank/pres-facing-015");
 const PROFILES = {
@@ -91,7 +91,7 @@ async function writeJson(file, value) {
   await fs.writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-async function startServer(port) {
+async function startServer(port, directory) {
   const server = spawn(
     "npm",
     [
@@ -104,7 +104,7 @@ async function startServer(port) {
       String(port),
       "--strictPort",
     ],
-    { stdio: "ignore" },
+    { stdio: "ignore", cwd: directory },
   );
   const baseURL = `http://127.0.0.1:${port}`;
   for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -912,10 +912,6 @@ async function main() {
   const registry = JSON.parse(
     await fs.readFile("quality/action-review.v1.json", "utf8"),
   );
-  const capturedRuntime = await runtimeFingerprint(
-    process.cwd(),
-    registry.sourceRoots,
-  );
   const requestedProfiles = option("profiles", null);
   const profileIds = requestedProfiles
     ? requestedProfiles.split(",").filter((id) => id in PROFILES)
@@ -930,8 +926,14 @@ async function main() {
   await fs.mkdir(OUTPUT, { recursive: true });
   let server;
   let browser;
+  let workspace;
   try {
-    const started = await startServer(port);
+    workspace = await createCaptureWorkspace(
+      process.cwd(),
+      registry.sourceRoots,
+    );
+    const capturedRuntime = workspace.fingerprint;
+    const started = await startServer(port, workspace.directory);
     server = started.server;
     browser = await chromium.launch();
     const profiles = [];
@@ -1027,6 +1029,8 @@ async function main() {
   } finally {
     await browser?.close();
     server?.kill();
+    if (workspace)
+      await fs.rm(workspace.directory, { recursive: true, force: true });
   }
 }
 

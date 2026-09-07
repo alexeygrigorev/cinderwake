@@ -2,7 +2,14 @@
   "schemaVersion": 1,
   "gameId": "cinderwake",
   "reviewer": { "model": "gpt-5.6-luna", "reasoningEffort": "high" },
-  "sourceRoots": ["src", "public/assets/sprites", "art/actor-atlas-v1.json"],
+  "sourceRoots": [
+    "src",
+    "public/assets/sprites",
+    "art/actor-atlas-v1.json",
+    "art/city-kit-v1.json",
+    "art/environment-kit-v2.json",
+    "art/resident-atlas-v1.json"
+  ],
   "actors": ["vanguard", "ranger", "arcanist"],
   "profiles": ["desktop", "phone-portrait"],
   "directions": ["north", "east", "south", "west"],
