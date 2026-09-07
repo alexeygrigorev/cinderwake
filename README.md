@@ -8,6 +8,12 @@ Cinderwake is an original browser action RPG and, more importantly, a reference 
 2. a semantic render manifest explaining every actor's clip, frame, anchors, bounds, layer, and camera transform;
 3. PNG frames and contact sheets showing whether the result actually looks natural over time.
 
+New games inherit the [player experience requirements](docs/player-experience-contract.md).
+Use the [automatic checks and Luna visual review workflow](docs/action-visual-review.md)
+for each new action: record ordered gameplay frames, generate precise review
+questions, and validate frame-cited results against the current code and assets.
+The [saving guide](docs/game-saving.md) explains browser checkpoints and portable files.
+
 ![The three original Cinderwake heroes](public/assets/cinderwake-heroes.png)
 
 ## Play
