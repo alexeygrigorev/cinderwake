@@ -77,6 +77,36 @@ test("lets the complete death animation play before showing the loss modal", asy
   await expect(page.locator("#outcome h2")).toHaveText("Run ended.");
 });
 
+test("clicks the game-over retry button above the playfield", async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    window.__GAME_TEST__!.loadScenario("temporal-run-loss");
+    window.__GAME_TEST__!.step(48, { render: true });
+  });
+  const button = page.getByRole("button", { name: "Try again" });
+  await expect(button).toBeVisible();
+  const bounds = await button.boundingBox();
+  expect(bounds).not.toBeNull();
+  await page.mouse.click(
+    bounds!.x + bounds!.width / 2,
+    bounds!.y + bounds!.height / 2,
+  );
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => ({
+          phase: window.__GAME_TEST__?.snapshot().phase,
+          tick: window.__GAME_TEST__?.snapshot().tick,
+          outcomeHidden: document
+            .querySelector("#outcome")
+            ?.classList.contains("hidden"),
+        })),
+      { timeout: 30_000 },
+    )
+    .toEqual({ phase: "playing", tick: 0, outcomeHidden: true });
+});
+
 test("restores an exact canonical GameState snapshot and resets to it", async ({
   page,
 }) => {
