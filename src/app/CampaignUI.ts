@@ -49,7 +49,6 @@ export class CampaignUI {
   private previousFocus?: HTMLElement;
   private savingDisabled = false;
   private saveStatus = "Progress saves here automatically when you are safe.";
-  readonly audio = new GameAudio(import.meta.env.BASE_URL);
 
   constructor(
     private readonly host: GameHost,
@@ -57,13 +56,14 @@ export class CampaignUI {
     private readonly resume: (save: CampaignSave, imported?: boolean) => void,
     private readonly exit: () => void,
     discoveries: readonly string[] = [],
+    readonly audio = new GameAudio(import.meta.env.BASE_URL),
   ) {
     this.discoveries = new Set(discoveries);
     this.tools.className = "campaign-tools";
     this.tools.setAttribute("aria-label", "Journey controls");
     this.tools.dataset.uiCopy = "campaign-controls";
     this.tools.innerHTML =
-      '<button data-journal aria-label="Journal and save">Journal <kbd>J</kbd></button><button data-interact hidden></button><span data-checkpoint-indicator role="status"></span>';
+      '<button data-journal aria-label="Journal and save">Journal <kbd>J</kbd></button><button data-interact hidden></button><button data-sound-toggle aria-label="Enable sound">Sound off</button><span data-checkpoint-indicator role="status"></span>';
     this.dialog.className = "campaign-dialog";
     this.dialog.dataset.uiCopy = "campaign-narrative";
     this.dialog.setAttribute("aria-label", "The Last Bell journal");
@@ -72,6 +72,24 @@ export class CampaignUI {
       () => this.open();
     this.tools.querySelector<HTMLButtonElement>("[data-interact]")!.onclick =
       () => this.interact();
+    this.tools.querySelector<HTMLButtonElement>(
+      "[data-sound-toggle]",
+    )!.onclick = () => {
+      const snapshot = this.audio.snapshot();
+      this.audio.activate();
+      if (
+        snapshot.muted ||
+        snapshot.volume === 0 ||
+        snapshot.contextState !== "running"
+      ) {
+        this.audio.setMuted(false);
+        if (snapshot.volume === 0) this.audio.setVolume(0.65);
+        this.audio.startMusic();
+      } else this.audio.setMuted(true);
+      this.updateSoundStatus();
+    };
+    this.audio.startMusic();
+    this.updateSoundStatus();
     this.dialog.addEventListener("cancel", (event) => {
       event.preventDefault();
       this.close();
@@ -223,8 +241,26 @@ export class CampaignUI {
     }
     if (state.tick < this.autosaveTick) this.autosaveTick = state.tick;
     if (state.tick - this.autosaveTick >= 600) this.autosave();
+    this.updateSoundStatus();
+  }
+
+  private updateSoundStatus(): void {
     const snapshot = this.audio.snapshot();
     this.tools.dataset.audio = JSON.stringify(snapshot);
+    const button = this.tools.querySelector<HTMLButtonElement>(
+      "[data-sound-toggle]",
+    )!;
+    const enabled =
+      !snapshot.muted &&
+      snapshot.volume > 0 &&
+      snapshot.contextState === "running";
+    const text = enabled ? "Sound on" : "Sound off";
+    if (button.textContent !== text) button.textContent = text;
+    button.setAttribute("aria-label", enabled ? "Mute sound" : "Enable sound");
+    button.setAttribute("aria-pressed", String(enabled));
+    button.title = snapshot.failed
+      ? "Some audio could not load. Check your connection."
+      : "Music, combat sounds and voices";
   }
 
   /** Start-of-run checkpoint is intentional even if the opening ambush is nearby. */
@@ -379,6 +415,7 @@ export class CampaignUI {
     this.dialog.close();
     this.input.resetInput();
     this.host.setPaused(false);
+    this.audio.startMusic();
     this.previousFocus?.focus();
   }
 }

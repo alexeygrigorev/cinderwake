@@ -134,6 +134,14 @@ const narration = [
     "For one more dawn, the dead are silent. Embercross remembers your name.",
   ],
 ].map(([cue, character, text]) => ({ cue, kind: "voice", character, text }));
+const music = [
+  {
+    cue: "music",
+    kind: "music",
+    duration: 45,
+    text: "Instrumental exploration music for a dark fantasy adventure. Warm plucked lute motif, low soft bowed strings, airy wooden flute, restrained hand percussion at 76 BPM. Intimate, hopeful under a melancholy dusk, inviting the player forward. Clearly audible melody from the opening second, steady gentle energy throughout. No vocals, no choir, no dramatic crescendo, no long silent intro or outro. End on the same sustained D minor harmony as the opening so it loops naturally.",
+  },
+];
 
 const key = process.env.ELEVENLABS_API_KEY;
 const normalizeExisting = process.argv.includes("--normalize-existing");
@@ -155,7 +163,10 @@ const manifest = await readFile(manifestUrl, "utf8")
     ],
     assets: [],
   }));
-for (const item of [...sounds, ...narration]) {
+const musicDocs = "https://elevenlabs.io/docs/api-reference/music/compose";
+if (!manifest.documentation.includes(musicDocs))
+  manifest.documentation.push(musicDocs);
+for (const item of [...sounds, ...narration, ...music]) {
   if (only && item.cue !== only) continue;
   const file = `${item.cue.replaceAll(":", "-")}.mp3`;
   const destination = new URL(file, directory);
@@ -182,10 +193,16 @@ for (const item of [...sounds, ...narration]) {
   }
   if (normalizeExisting) continue;
   const voice = item.kind === "voice" ? voices[item.character] : undefined;
-  const model = voice ? "eleven_multilingual_v2" : "eleven_text_to_sound_v2";
+  const model = voice
+    ? "eleven_multilingual_v2"
+    : item.kind === "music"
+      ? "music_v1"
+      : "eleven_text_to_sound_v2";
   const endpoint = voice
     ? `/v1/text-to-speech/${voice.id}?output_format=mp3_44100_128`
-    : "/v1/sound-generation";
+    : item.kind === "music"
+      ? "/v1/music?output_format=mp3_44100_128"
+      : "/v1/sound-generation";
   const body = voice
     ? {
         text: item.text,
@@ -198,12 +215,19 @@ for (const item of [...sounds, ...narration]) {
           speed: 1.0,
         },
       }
-    : {
-        text: item.text,
-        model_id: model,
-        duration_seconds: item.duration,
-        prompt_influence: 0.55,
-      };
+    : item.kind === "music"
+      ? {
+          prompt: item.text,
+          model_id: model,
+          music_length_ms: item.duration * 1000,
+          force_instrumental: true,
+        }
+      : {
+          text: item.text,
+          model_id: model,
+          duration_seconds: item.duration,
+          prompt_influence: 0.55,
+        };
   console.log(`generate ${file}`);
   const response = await fetch(`https://api.elevenlabs.io${endpoint}`, {
     method: "POST",

@@ -12,7 +12,7 @@ export const VOICE_CUES = [
 export type VoiceCue = (typeof VOICE_CUES)[number];
 export type SoundCue =
   "strike" | "hit" | "loot" | "quest" | "danger" | "ability";
-type Cue = SoundCue | VoiceCue;
+type Cue = SoundCue | VoiceCue | "music";
 const SOUND_CUES: SoundCue[] = [
   "strike",
   "hit",
@@ -62,6 +62,9 @@ export interface AudioSnapshot {
   played: number;
   failed: number;
   lastCue: Cue | null;
+  contextState: AudioContextState | "inactive";
+  musicPlaying: boolean;
+  outputRms: number;
 }
 
 export function soundForEvent(event: GameEvent): SoundCue | null {
@@ -90,6 +93,11 @@ export class GameAudio {
   private context?: AudioContext;
   private master?: GainNode;
   private effects?: GainNode;
+  private musicGain?: GainNode;
+  private music?: AudioBufferSourceNode;
+  private musicWanted = false;
+  private analyser?: AnalyserNode;
+  private samples = new Float32Array(256);
   private buffers = new Map<Cue, AudioBuffer>();
   private loading = new Map<Cue, Promise<AudioBuffer | undefined>>();
   private active = new Set<AudioBufferSourceNode>();
@@ -140,15 +148,23 @@ export class GameAudio {
         this.context = this.options.createContext?.() ?? new AudioContext();
         this.master = this.context.createGain();
         this.effects = this.context.createGain();
+        this.musicGain = this.context.createGain();
+        this.musicGain.gain.value = 0.4;
+        this.musicGain.connect(this.master);
         this.effects.connect(this.master);
-        this.master.connect(this.context.destination);
+        this.analyser = this.context.createAnalyser();
+        this.analyser.fftSize = 256;
+        this.master.connect(this.analyser);
+        this.analyser.connect(this.context.destination);
         this.updateVolume();
-        for (const cue of [...SOUND_CUES, ...VOICE_CUES]) void this.load(cue);
+        for (const cue of [...SOUND_CUES, ...VOICE_CUES, "music"] as Cue[])
+          void this.load(cue);
       }
       if (this.context.state === "suspended")
         void this.context.resume().catch(() => {
           this.failed++;
         });
+      this.ensureMusic();
     } catch {
       this.failed++;
     }
@@ -156,16 +172,24 @@ export class GameAudio {
 
   setMuted(value: boolean): void {
     this.muted = value;
-    if (value) this.stop();
+    if (value) {
+      this.stopEffects();
+      this.stopMusicSource();
+    }
     this.updateVolume();
+    this.ensureMusic();
     this.persist();
   }
 
   setVolume(value: number): void {
     if (!Number.isFinite(value)) return;
     this.volume = Math.max(0, Math.min(1, value));
-    if (this.volume === 0) this.stop();
+    if (this.volume === 0) {
+      this.stopEffects();
+      this.stopMusicSource();
+    }
     this.updateVolume();
+    this.ensureMusic();
     this.persist();
   }
 
@@ -177,7 +201,7 @@ export class GameAudio {
       state.tick < this.lastTick ||
       (this.observedState !== undefined && this.observedState !== state)
     ) {
-      this.stop();
+      this.stopEffects();
       this.world = world;
       this.lastTick = state.tick;
       this.observedState = state;
@@ -263,12 +287,14 @@ export class GameAudio {
         this.voice = source;
         this.speaking = cue;
         this.effects!.gain.value = 0.4;
+        this.musicGain!.gain.value = 0.16;
         source.onended = () => {
           source.disconnect();
           if (this.voice !== source) return;
           this.voice = undefined;
           this.speaking = null;
           this.effects!.gain.value = 1;
+          this.musicGain!.gain.value = 0.4;
         };
         source.start();
         this.record(cue);
@@ -279,6 +305,45 @@ export class GameAudio {
   }
 
   stop(): void {
+    this.musicWanted = false;
+    this.stopMusicSource();
+    this.stopEffects();
+  }
+
+  /** Called when entering/resuming a game. Activation must still come from a gesture. */
+  startMusic(): void {
+    this.musicWanted = true;
+    this.ensureMusic();
+  }
+
+  private ensureMusic(): void {
+    if (!this.musicWanted || this.music || !this.canPlay()) return;
+    void this.load("music")
+      .then((buffer) => {
+        if (!buffer || !this.musicWanted || this.music || !this.canPlay())
+          return;
+        const source = this.context!.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        source.connect(this.musicGain!);
+        this.music = source;
+        source.onended = () => {
+          source.disconnect();
+          if (this.music === source) this.music = undefined;
+        };
+        source.start();
+      })
+      .catch(() => {
+        this.failed++;
+      });
+  }
+
+  private stopMusicSource(): void {
+    this.music?.stop();
+    this.music = undefined;
+  }
+
+  private stopEffects(): void {
     this.generation++;
     this.voiceRequest++;
     for (const source of this.active) source.stop();
@@ -288,9 +353,15 @@ export class GameAudio {
     this.speaking = null;
     this.lastSounds.clear();
     if (this.effects) this.effects.gain.value = 1;
+    if (this.musicGain) this.musicGain.gain.value = 0.4;
   }
 
   snapshot(): AudioSnapshot {
+    this.analyser?.getFloatTimeDomainData(this.samples);
+    const outputRms = Math.sqrt(
+      this.samples.reduce((sum, sample) => sum + sample * sample, 0) /
+        this.samples.length,
+    );
     return {
       activated: !!this.context,
       muted: this.muted,
@@ -301,6 +372,10 @@ export class GameAudio {
       played: this.played,
       failed: this.failed,
       lastCue: this.lastCue,
+      contextState: this.context?.state ?? "inactive",
+      musicPlaying:
+        !!this.music && this.canPlay() && this.context?.state === "running",
+      outputRms,
     };
   }
 
