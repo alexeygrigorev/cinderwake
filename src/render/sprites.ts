@@ -562,7 +562,18 @@ register({
   ),
   // Arrowhead (49, 211), fletching (202, 80), measured on the source cell.
   sourceDirection: { x: -153, y: 131 },
+  // A flying object rotates around its center, not an actor's foot anchor.
+  anchor: { x: 128, y: 128 },
+  logicalSize: { width: 256, height: 256 },
 });
+
+/** Bow-hand points measured in the Ranger's 256px release cells. */
+export const RANGER_RELEASE_SOCKETS = {
+  north: { x: 196, y: 85 },
+  east: { x: 174, y: 118 },
+  south: { x: 179, y: 102 },
+  west: { x: 82, y: 118 },
+} as const;
 register({
   ...singleFrameSprite(
     "projectile:arcane",

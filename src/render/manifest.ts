@@ -24,6 +24,7 @@ import {
 import {
   SPRITE_CATALOG,
   SPRITE_CATALOG_REVISION,
+  RANGER_RELEASE_SOCKETS,
   horizontalFlipForGeometry,
   spriteFrame,
   type SourceRectV1,
@@ -1243,6 +1244,19 @@ export function buildRenderManifest(
   }
 
   for (const projectile of state.projectiles) {
+    // Simulation positions remain ground-plane collision coordinates. Lift the
+    // Ranger's arrow to the authored bow hand, retaining that launch direction
+    // even if the player subsequently turns or moves during flight.
+    const launchFacing = facingBucket(projectile.velocity);
+    const socket =
+      RANGER_RELEASE_SOCKETS[launchFacing === "none" ? "east" : launchFacing];
+    const releaseOffset =
+      !projectile.hostile && state.player.classId === "ranger"
+        ? {
+            x: ((socket.x - 128) * playerSpritePixels * camera.zoom) / 256,
+            y: ((socket.y - 232) * playerSpritePixels * camera.zoom) / 256,
+          }
+        : { x: 0, y: 0 };
     add(
       {
         entityId: projectile.id,
@@ -1271,6 +1285,7 @@ export function buildRenderManifest(
       },
       42,
       42,
+      releaseOffset,
     );
   }
 
