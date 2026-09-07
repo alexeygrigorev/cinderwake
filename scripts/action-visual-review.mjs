@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { parseStrictJson } from "./lib/strict-json.mjs";
 import {
   buildBundle,
   reviewPrompt,
@@ -14,7 +15,8 @@ const option = (name, fallback) => {
   return index < 0 ? fallback : args[index + 1];
 };
 const root = process.cwd();
-const read = async (file) => JSON.parse(await fs.readFile(file, "utf8"));
+const read = async (file) =>
+  parseStrictJson(await fs.readFile(file, "utf8"), file);
 const registry = validateRegistry(
   await read(option("registry", "quality/action-review.v1.json")),
 );
