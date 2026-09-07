@@ -713,7 +713,9 @@ export class CampaignBrowserDriver {
     if (!devicePoint) {
       const fallback = await this.state();
       const fallbackTarget =
-        routeLength <= 2 ? point : (routeFirstPoint ?? point);
+        routeLength <= 2
+          ? (navigationTarget ?? point)
+          : (routeFirstPoint ?? point);
       await this.pulse(
         physicalDirection(fallback, fallbackTarget),
         PHYSICAL_NAVIGATION_PULSE_MS,
