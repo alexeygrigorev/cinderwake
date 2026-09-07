@@ -12,6 +12,9 @@ import {
 import { createCaptureWorkspace } from "./lib/capture-workspace.mjs";
 
 const OUTPUT = path.resolve("quality-results/compositor/pres-flicker-024");
+const FAILURE_OUTPUT = path.resolve(
+  "quality-results/compositor/flicker-failures",
+);
 const VIEWPORT = { width: 960, height: 540 };
 const PLAYABLE_ACTOR_IDS = ["vanguard", "ranger", "arcanist"];
 const LIVE_PROFILES = {
@@ -97,8 +100,14 @@ async function retainBrowserFailure(page, file, error, details = {}) {
     url: page.url(),
     ...details,
   };
+  await fs.mkdir(FAILURE_OUTPUT, { recursive: true });
+  const archive = path.join(
+    FAILURE_OUTPUT,
+    `${Date.now()}-${path.relative(OUTPUT, file).replaceAll(/[\\/]/g, "-")}`,
+  );
   // Write the basic failure first: an unresponsive renderer may reject diagnostics too.
   await writeJson(file, report);
+  await writeJson(archive, report);
   let timer;
   try {
     report.browser = await Promise.race([
@@ -158,10 +167,17 @@ async function retainBrowserFailure(page, file, error, details = {}) {
     const screenshot = file.replace(/\.json$/, ".png");
     await page.screenshot({ path: screenshot, timeout: 3_000 });
     report.screenshot = path.relative(OUTPUT, screenshot);
+    await fs.copyFile(screenshot, archive.replace(/\.json$/, ".png"));
   } catch (screenshotError) {
     report.screenshotError = String(screenshotError);
   }
   await writeJson(file, report);
+  await writeJson(archive, {
+    ...report,
+    screenshot: report.screenshot
+      ? path.basename(archive.replace(/\.json$/, ".png"))
+      : undefined,
+  });
   console.error(
     `Flicker failure evidence: ${path.relative(process.cwd(), file)}`,
   );
@@ -442,7 +458,48 @@ async function actionEventCount(page, eventType) {
   );
 }
 
+async function keepLivePlayerReady(page, profile) {
+  const before = await page.evaluate(() => {
+    const state = window.__GAME_OBSERVE__?.snapshot();
+    return state
+      ? {
+          phase: state.phase,
+          tick: state.tick,
+          health: state.player.health,
+          maxHealth: state.player.maxHealth,
+          tonics: state.player.tonics,
+        }
+      : null;
+  });
+  if (!before || before.phase !== "playing")
+    throw new Error(
+      `Live recording cannot continue: phase=${before?.phase ?? "unavailable"}, tick=${before?.tick ?? "unknown"}`,
+    );
+  if (before.health > before.maxHealth * 0.65 || before.tonics === 0) return;
+  // Recording PNGs takes real time while opening enemies remain active. Use the
+  // player's actual recovery control; do not alter health, AI, or simulation time.
+  const tonic = page.locator(
+    `${profile.hasTouch ? ".mobile-actions" : ".skills"} [data-action='tonic']`,
+  );
+  if (profile.hasTouch) await tonic.tap();
+  else await tonic.click();
+  await page.waitForFunction(
+    (previous) => {
+      const state = window.__GAME_OBSERVE__?.snapshot();
+      return Boolean(
+        state &&
+        state.phase === "playing" &&
+        state.player.tonics === previous.tonics - 1 &&
+        state.player.health > previous.health,
+      );
+    },
+    before,
+    { timeout: 3_000 },
+  );
+}
+
 async function activateLiveAction(page, profile, action, pace) {
+  await keepLivePlayerReady(page, profile);
   const eventType = action === "ability" ? "ability_started" : "attack_started";
   const readyTickKey =
     action === "ability" ? "abilityReadyTick" : "attackReadyTick";
@@ -536,6 +593,7 @@ async function runLiveRecording(
   try {
     await beginLiveRoute(page, baseURL, profile, actorId);
     const capture = async (label) => {
+      await keepLivePlayerReady(page, profile);
       if (captureFrames) frames.push(await captureLiveFrame(page, label));
     };
     await capture("initial");
