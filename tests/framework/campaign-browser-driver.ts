@@ -254,7 +254,7 @@ export class CampaignBrowserDriver {
       this.session = await this.page.context().newCDPSession(this.page);
     await this.page.goto("/?selection=1", { waitUntil: "networkidle" });
     await this.page
-      .getByRole("button", { name: "Enter the wake", exact: true })
+      .getByRole("button", { name: "Start game", exact: true })
       .waitFor({
         state: "visible",
         timeout: 30_000,
@@ -263,6 +263,7 @@ export class CampaignBrowserDriver {
 
   async chooseVanguard(seed = "cinder-041"): Promise<void> {
     await this.page.locator("[data-class='vanguard']").click();
+    await this.page.getByText("World options", { exact: true }).click();
     await this.page.locator("#seed").fill(seed);
     const begin = this.page.locator("#begin");
     if (this.profile.hasTouch) await begin.tap();

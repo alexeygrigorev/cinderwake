@@ -1,4 +1,23 @@
 import { expect, test } from "@playwright/test";
+import { CampaignBrowserDriver } from "../framework/campaign-browser-driver";
+
+test("shared production driver launches through Start and optional world settings", async ({
+  page,
+}) => {
+  const driver = new CampaignBrowserDriver(page, {
+    id: "desktop",
+    viewport: { width: 1440, height: 900 },
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    isMobile: false,
+  });
+  await driver.start();
+  await driver.chooseVanguard("driver-ui-smoke");
+  await expect(page.locator(".brand small")).toHaveAttribute(
+    "aria-label",
+    "driver-ui-smoke",
+  );
+});
 
 const profiles = [
   { name: "desktop", width: 1440, height: 900, touch: false },
