@@ -135,14 +135,7 @@ export class InputController {
               this.heldAttacks.add(event.pointerId);
               canvas.setPointerCapture(event.pointerId);
             } else {
-              this.attackTarget = this.resolvePointerTarget(this.aim);
-              this.mouseAim = null;
-              if (this.attackTarget)
-                this.navigateTo(this.attackTarget.position);
-              else {
-                this.pickupTarget = this.resolvePointerLoot?.(this.aim) ?? null;
-                this.navigateTo(this.pickupTarget?.position ?? this.aim);
-              }
+              this.navigateFromPointer(this.aim);
             }
           }
           if (event.button === 2) this.ability = true;
@@ -152,6 +145,21 @@ export class InputController {
           this.pickupTarget = this.resolvePointerLoot?.(this.aim) ?? null;
           this.navigateTo(this.pickupTarget?.position ?? this.aim);
         }
+      },
+      { signal: this.listeners.signal },
+    );
+    canvas.addEventListener(
+      "click",
+      (event) => {
+        if (
+          event.shiftKey ||
+          !this.resolvePointerTarget ||
+          this.attackTarget ||
+          this.pickupTarget ||
+          this.touchRoute.length > 0
+        )
+          return;
+        this.navigateFromPointer(this.point(event));
       },
       { signal: this.listeners.signal },
     );
@@ -339,6 +347,16 @@ export class InputController {
     this.lastTouchCommand = { x: 0, y: 0 };
     this.blockedTouchTicks = 0;
     if (this.touchRoute.length === 0) this.cancelTouchNavigation();
+  }
+  private navigateFromPointer(point: Vec2): void {
+    if (!this.resolvePointerTarget) return;
+    this.attackTarget = this.resolvePointerTarget(point);
+    this.mouseAim = null;
+    if (this.attackTarget) this.navigateTo(this.attackTarget.position);
+    else {
+      this.pickupTarget = this.resolvePointerLoot?.(point) ?? null;
+      this.navigateTo(this.pickupTarget?.position ?? point);
+    }
   }
   private tapMove(): { x: -1 | 0 | 1; y: -1 | 0 | 1 } {
     if (this.touchRoute.length === 0) return { x: 0, y: 0 };

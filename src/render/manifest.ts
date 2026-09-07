@@ -1249,7 +1249,9 @@ export function buildRenderManifest(
         type: "projectile",
         geometryId: projectile.hostile
           ? "projectile:hostile"
-          : "projectile:friendly",
+          : state.player.classId === "arcanist"
+            ? "projectile:arcane"
+            : "projectile:friendly",
         clip: "projectile",
         frameIndex: 0,
         frameCount: 1,

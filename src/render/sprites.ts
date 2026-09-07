@@ -565,6 +565,17 @@ register({
 });
 register({
   ...singleFrameSprite(
+    "projectile:arcane",
+    "atlas:effects",
+    1,
+    0,
+    "projectile",
+  ),
+  // Crystal tip (45, 222) and trailing flare (215, 78) in the source cell.
+  sourceDirection: { x: -170, y: 144 },
+});
+register({
+  ...singleFrameSprite(
     "projectile:hostile",
     "atlas:effects",
     2,
