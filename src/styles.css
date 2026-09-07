@@ -1,6 +1,8 @@
 * {
   box-sizing: border-box;
 }
+/* Interface rules are loaded last so the older atlas layouts can be migrated
+   without changing the playfield's camera and pointer coordinate contract. */
 body {
   margin: 0;
   min-width: 280px;
@@ -2658,5 +2660,705 @@ button {
 
   .game .hud.bottom {
     bottom: max(7px, var(--safe-area-inset-bottom));
+  }
+}
+
+/* Readable interface: illustration supplies atmosphere; native text and solid
+   control surfaces supply legibility at every device pixel ratio. */
+body {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+#app .sprite-word > .sprite-glyph,
+#app .sprite-word > .sprite-glyph + .sprite-glyph {
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  margin: 0;
+  background: none;
+  filter: none;
+  font-style: normal;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-shadow: none;
+  font-size: max(14px, 1em);
+}
+.sprite-text,
+.sprite-word {
+  font-family: inherit;
+  letter-spacing: normal;
+}
+.sprite-text > .sprite-space {
+  flex-basis: 0.28em;
+  width: 0.28em;
+}
+button:focus-visible,
+summary:focus-visible,
+.selection-import:focus-within {
+  outline: 3px solid #ffe2a1;
+  outline-offset: 4px;
+}
+.touch-help {
+  display: none;
+}
+#app .selection-step,
+#app .selection-help,
+#app .class-choice,
+#app .run-options,
+#app .selection-v2 .selection-header .eyebrow,
+#app .selection-v2 .selected-class .sprite-stats,
+#app .quick-controls,
+#app .campaign-tools button {
+  font-size: 14px;
+}
+.selection.selection-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 100svh;
+  height: auto;
+  padding: 40px 24px 28px;
+  overflow: auto;
+}
+.selection-v2::after {
+  background: linear-gradient(
+    180deg,
+    #0407086b 0%,
+    transparent 30%,
+    #040708ad 55%,
+    #040708f5 100%
+  );
+}
+.selection-v2 .selection-art {
+  background-position: center 38%;
+}
+.selection-v2 .selection-header {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 100%;
+  text-align: center;
+}
+.selection-v2 .selection-header .eyebrow {
+  color: #e5cba5;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  margin-bottom: 12px;
+}
+.selection-v2 .selection-header h1 {
+  font-size: clamp(48px, 7vw, 86px);
+}
+.selection-v2 .choose {
+  position: relative;
+  inset: auto;
+  width: min(100%, 600px);
+  margin: clamp(80px, 14vh, 150px) auto 0;
+  padding: 24px;
+  border: 1px solid #736049;
+  border-radius: 14px;
+  background: #101619ed;
+  box-shadow: 0 20px 70px #0009;
+}
+.selection-step {
+  margin: 0 0 12px;
+  color: #f2e4ce;
+  font-size: 16px;
+  font-weight: 650;
+}
+.selection-v2 .selected-class {
+  text-align: left;
+  min-height: 0;
+  margin-bottom: 16px;
+  text-shadow: none;
+}
+.selection-v2 .selected-class h2 {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+.selection-v2 .selected-class > .sprite-text {
+  justify-content: flex-start;
+  margin: 3px 0;
+}
+.selection-v2 .selected-class .sprite-role {
+  font-size: 15px;
+}
+.selection-v2 .selected-class .sprite-stats {
+  color: #bfc7c6;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.selection-v2 .cards {
+  gap: 10px;
+}
+.selection-v2 .class-card,
+.selection-v2 .class-card.selected {
+  min-height: 102px;
+  border-radius: 7px;
+  transform: none;
+}
+.selection-v2 .class-card.selected {
+  border: 2px solid #f2be6e;
+  box-shadow: 0 0 0 1px #f2be6e44;
+}
+.selection-v2 .class-card strong {
+  bottom: 26px;
+  font-size: 19px;
+}
+.selection-v2 .class-card::after {
+  background: linear-gradient(transparent, #030709e8);
+}
+.class-choice {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  margin: 0 !important;
+  text-align: center;
+  font-size: 12px;
+  color: #e7d6bd;
+}
+.selected .class-choice {
+  color: #ffe0a4;
+  font-weight: 700;
+}
+.selection-v2 .run-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+.selection-v2 .begin {
+  order: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  padding: 14px 20px;
+  border: 1px solid #ffdb9b;
+  border-radius: 7px;
+  color: #20190e;
+  background: #edb86a;
+  font-size: 19px;
+  font-weight: 750;
+  box-shadow: 0 4px 14px #0005;
+  text-shadow: none;
+}
+.selection-v2 .begin:hover {
+  background: #ffd28c;
+}
+.selection-v2 .begin span {
+  float: none;
+  font-size: inherit;
+  line-height: 1.3;
+}
+.selection-v2 .begin > .sprite-text {
+  width: 100%;
+}
+.selection-v2 .secondary-start {
+  order: 1;
+  min-height: 44px;
+  background: #202b30;
+  color: #eee3d0;
+  border-color: #69716c;
+  font-size: 15px;
+}
+.selection-v2 .secondary-start:hover {
+  background: #354147;
+}
+.run-options {
+  order: 3;
+  font-size: 13px;
+  color: #c7c7bd;
+}
+.run-options summary {
+  cursor: pointer;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+.run-options summary::before {
+  content: "+ ";
+  margin-right: 8px;
+}
+.run-options[open] summary::before {
+  content: "− ";
+}
+.run-options p {
+  margin: 4px 0;
+}
+.selection-v2 .seed-label {
+  margin: 10px 0;
+}
+.selection-v2 .seed-label > .sprite-text {
+  font-size: 13px;
+  height: auto;
+}
+.selection-v2 .seed-control {
+  background: #090f12;
+  border: 1px solid #66716e;
+  border-radius: 5px;
+}
+.selection-v2 .seed-control input {
+  color: #f5ecdf;
+  -webkit-text-fill-color: #f5ecdf;
+  font-size: 15px;
+}
+.seed-display {
+  display: none;
+}
+.selection-import {
+  order: 2;
+  justify-content: flex-start;
+  width: max-content;
+  color: #cbd7d6;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 13px;
+}
+.selection-help {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: #b7c2c1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.game .objective,
+.game #monsters,
+.game .loot-log {
+  background: #10191eeb;
+  border: 1px solid #687271;
+  border-radius: 8px;
+  box-shadow: 0 5px 18px #0006;
+}
+.game .objective {
+  right: 150px;
+  width: 300px;
+  height: auto;
+  min-height: 72px;
+  padding: 12px;
+}
+.game .objective strong {
+  font-size: 17px;
+  line-height: 1.35;
+}
+.game .objective small {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #d7c8ae;
+}
+.game #monsters {
+  width: 122px;
+  height: auto;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+.game .brand small {
+  font-size: 12px;
+}
+.game .loot-log {
+  width: 200px;
+  padding: 14px;
+}
+.game .loot-log strong > .sprite-text,
+.game .loot-log .sprite-log {
+  font-size: 13px;
+}
+.game .health {
+  padding: 12px 14px;
+  border: 1px solid #64706d;
+  border-radius: 8px;
+  background: #10191eeb;
+}
+.game .health-label .sprite-text,
+.game .health-label .sprite-word {
+  font-size: 13px;
+}
+.game .health b {
+  height: 14px;
+  margin: 7px 0;
+  padding: 0;
+  border: 1px solid #69716c;
+  border-radius: 8px;
+  background: #303b3d;
+  overflow: hidden;
+}
+.game .health #hpbar {
+  height: 100%;
+  background: #be614d;
+}
+.game #hp {
+  font-size: 16px;
+  font-style: normal;
+}
+.game .skills button,
+.game .mobile-actions button,
+.game .mobile-actions .primary-action {
+  border: 1px solid #8a9389;
+  border-radius: 9px;
+  background: #17252bef;
+  color: #f7eee0;
+  filter: none;
+  box-shadow: 0 4px 12px #0007;
+}
+.game .skills button {
+  min-width: 104px;
+  width: 104px;
+  height: 88px;
+  padding: 10px 8px;
+  justify-content: center;
+}
+.game .skills [data-action="attack"],
+.game .mobile-actions .primary-action {
+  background: #ecc17b;
+  border-color: #ffe3b2;
+  color: #251a0b;
+}
+.game .mobile-actions .primary-action span,
+.game .mobile-actions .primary-action strong {
+  color: #251a0b;
+}
+.game .skills .sprite-shortcut {
+  min-height: 20px;
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.85;
+}
+.game .skills .sprite-action-label {
+  font-size: 17px;
+}
+.game #cd,
+.game #tonics {
+  font-size: 12px;
+}
+.quick-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  padding: 9px 14px;
+  border-radius: 7px;
+  background: #10191ee8;
+  color: #d8dfdb;
+  font-size: 13px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+.quick-controls b {
+  color: #f3c988;
+}
+.quick-controls span span {
+  padding: 0 8px;
+}
+.game:has(.campaign-tools) .campaign-tools {
+  left: 16px;
+  top: 48px;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  width: auto;
+  max-width: calc(100vw - 32px);
+  flex-wrap: wrap;
+  gap: 7px;
+  font-size: 13px;
+}
+.campaign-tools button {
+  border-radius: 6px;
+  background: #162229ed;
+  padding: 9px 12px;
+}
+.campaign-tools [data-checkpoint-indicator] {
+  align-self: center;
+  padding: 5px 8px;
+  background: #10191ee8;
+  color: #cad7c6;
+  border-radius: 4px;
+}
+.game .loot-log {
+  top: 104px;
+}
+.save-slots {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  font-size: 14px;
+}
+.save-slots dt {
+  color: #f1d1a0;
+}
+.save-slots dd {
+  margin: 0;
+}
+.save-location {
+  color: #c1cbc6;
+}
+[data-checkpoint-indicator][data-save-state="unavailable"] {
+  display: block;
+  color: #ffd399;
+}
+.game .city-service-sheet {
+  background: #111d22f5;
+  border: 1px solid #8b826d;
+  border-image: none;
+  border-radius: 9px;
+  padding: 14px;
+}
+.game .city-service-actions button {
+  background: #2a383a;
+  border: 1px solid #a0977b;
+  border-image: none;
+  border-radius: 6px;
+}
+.game .city-service-button-copy {
+  background: none;
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .desktop-help {
+    display: none;
+  }
+  .touch-help {
+    display: block;
+  }
+  .selection.selection-v2 {
+    padding: max(24px, var(--safe-area-inset-top)) 14px
+      max(14px, var(--safe-area-inset-bottom));
+  }
+  .selection-v2 .selection-header h1 {
+    font-size: 52px;
+  }
+  .selection-v2 .selection-header .eyebrow {
+    font-size: 11px;
+  }
+  .selection-v2 .selection-art,
+  .selection-v2[data-selected-class="arcanist"] .selection-art {
+    background-position: center top;
+    background-size: auto 72%;
+  }
+  .selection-v2 .choose {
+    margin-top: 160px;
+    padding: 16px;
+  }
+  .selection-v2 .selected-class h2 {
+    font-size: 26px;
+  }
+  .selection-v2 .selected-class .sprite-role {
+    font-size: 14px;
+  }
+  .selection-v2 .selected-class .sprite-stats {
+    font-size: 13px;
+  }
+  .selection-v2 .cards {
+    gap: 6px;
+  }
+  .selection-v2 .class-card,
+  .selection-v2 .class-card.selected {
+    min-height: 84px;
+  }
+  .selection-v2 .class-card strong {
+    font-size: 15px;
+  }
+  .selection-v2 .begin {
+    min-height: 52px;
+    font-size: 18px;
+  }
+  .selection-step {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .selection-help {
+    font-size: 12px;
+  }
+  .game .objective {
+    top: max(100px, calc(var(--safe-area-inset-top) + 90px));
+    left: 10px;
+    right: 10px;
+    width: auto;
+    min-height: 62px;
+    grid-template-columns: 32px minmax(0, 1fr);
+    padding: 10px;
+  }
+  .game .objective strong {
+    font-size: 15px;
+  }
+  .game .objective small {
+    font-size: 13px;
+  }
+  .game #monsters {
+    min-height: 36px;
+    width: 90px;
+    padding: 7px;
+    font-size: 12px;
+  }
+  .game:has(.campaign-tools) .campaign-tools {
+    top: max(45px, calc(var(--safe-area-inset-top) + 35px));
+    left: 10px;
+    max-width: calc(100vw - 20px);
+    gap: 5px;
+  }
+  .campaign-tools button {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+  .campaign-tools [data-interact] {
+    max-width: 140px;
+  }
+  .game .hud.bottom {
+    bottom: calc(150px + var(--safe-area-inset-bottom));
+  }
+  .game .health {
+    padding: 5px 10px;
+    grid-template-columns: auto auto;
+    column-gap: 8px;
+  }
+  .game .health-label {
+    display: none;
+  }
+  .game .health b {
+    width: 110px;
+    height: 10px;
+  }
+  .game #hp {
+    font-size: 13px;
+  }
+  .game .mobile-controls {
+    height: calc(140px + var(--safe-area-inset-bottom));
+    padding-bottom: max(8px, var(--safe-area-inset-bottom));
+    background: linear-gradient(transparent, #091015d9);
+  }
+  .game .move-pad {
+    border: 1px solid #86978f;
+    border-radius: 50%;
+    background: #19262be8;
+    filter: none;
+  }
+  .game .move-ring {
+    border: 1px solid #75847c;
+    background: none;
+    border-radius: 50%;
+  }
+  .game .move-knob {
+    background: #c9a369;
+    border: 2px solid #f3d69c;
+    border-radius: 50%;
+  }
+  .game .move-pad small > .sprite-text {
+    font-size: 12px;
+    color: #eee6d7;
+  }
+  .game .mobile-actions {
+    grid-template: "ability primary" 58px "tonic primary" 58px / 64px 86px;
+    width: 158px;
+  }
+  .game .mobile-actions button {
+    min-width: 64px;
+    width: 64px;
+    min-height: 58px;
+    height: 58px;
+  }
+  .game .mobile-actions .primary-action {
+    min-width: 86px;
+    width: 86px;
+    min-height: 86px;
+    height: 86px;
+  }
+  .game .mobile-actions .sprite-action-label {
+    font-size: 13px;
+  }
+  .game .mobile-actions .primary-action .sprite-action-label {
+    font-size: 18px;
+  }
+  .game .mobile-actions .sprite-action-detail {
+    font-size: 10px;
+    color: #342a19;
+  }
+  .game #mobile-cd,
+  .game #mobile-tonics {
+    font-size: 11px;
+    color: #ddcfb3;
+  }
+  .quick-controls {
+    bottom: calc(188px + var(--safe-area-inset-bottom));
+    padding: 6px 10px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .game:has(.campaign-tools) .city-service-sheet {
+    bottom: calc(194px + var(--safe-area-inset-bottom));
+    max-height: calc(100svh - 370px);
+  }
+}
+@media (max-height: 750px) and (orientation: portrait) {
+  .selection-v2 .choose {
+    margin-top: 70px;
+  }
+  .selection-v2 .selected-class .sprite-stats {
+    display: none;
+  }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .selection.selection-v2 {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 16px;
+  }
+  .selection-v2 .selection-header {
+    position: absolute;
+    top: 28px;
+    left: 16px;
+    width: 42%;
+  }
+  .selection-v2 .selection-header h1 {
+    font-size: 44px;
+  }
+  .selection-v2 .choose {
+    width: 50%;
+    margin: 0;
+    padding: 14px;
+  }
+  .selection-v2 .selection-art {
+    background-size: cover;
+  }
+  .selection-v2 .selected-class .sprite-stats,
+  .selection-help > span:last-child {
+    display: none;
+  }
+  .selection-v2 .class-card,
+  .selection-v2 .class-card.selected {
+    min-height: 65px;
+  }
+  .selection-v2 .selected-class {
+    margin-bottom: 8px;
+  }
+  .selection-v2 .run-controls {
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .selection-v2 .run-options summary,
+  .selection-import {
+    min-height: 28px;
+  }
+  .game .objective {
+    top: 10px;
+    left: auto;
+    right: 108px;
+    width: 260px;
+  }
+  .game .hud.bottom {
+    bottom: 12px;
+  }
+  .game .mobile-controls {
+    height: 110px;
+  }
+  .game .mobile-actions {
+    grid-template: "ability tonic primary" 86px / 64px 64px 86px;
+    width: 226px;
+  }
+  .quick-controls {
+    bottom: 94px;
+    max-width: 310px;
   }
 }
