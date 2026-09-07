@@ -34,6 +34,13 @@
   },
   "review": {
     "accepted": false,
-    "notes": "Prepared asset inspection on charcoal ground confirms upright spear finials along the vertical receding fence, with no magenta spill. Formal acceptance requires composed-screen review of the six sequential runtime slices at gameplay scale."
+    "notes": "The runtime uses the complete vertical image with preserved aspect ratio, not sequential slices. Independent composed-screen review accepted visible opening-scene barriers; this is not an exhaustive asset/environment acceptance.",
+    "composedScreenReview": {
+      "reviewer": "gpt-5.6-luna",
+      "verdict": "PASS",
+      "evidence": "quality-results/ui-final-review/review.json",
+      "manifest": "quality-results/ui-final-review/capture-manifest.json",
+      "scope": "Visible opening-gameplay barriers at desktop, narrow desktop, phone portrait and phone landscape sizes."
+    }
   }
 }

@@ -27,6 +27,13 @@
   },
   "review": {
     "accepted": false,
-    "notes": "Prepared asset inspection on charcoal ground confirms two posts, five inner uprights, two connecting rails and clear transparent gaps without magenta spill. Formal acceptance requires composed-screen review at gameplay scale."
+    "notes": "Prepared asset inspection confirms transparent rail gaps without magenta spill. Independent composed-screen review accepted the visible opening-scene fences; this is not an exhaustive asset/environment acceptance.",
+    "composedScreenReview": {
+      "reviewer": "gpt-5.6-luna",
+      "verdict": "PASS",
+      "evidence": "quality-results/ui-final-review/review.json",
+      "manifest": "quality-results/ui-final-review/capture-manifest.json",
+      "scope": "Visible opening-gameplay barriers at desktop, narrow desktop, phone portrait and phone landscape sizes."
+    }
   }
 }

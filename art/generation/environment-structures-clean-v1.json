@@ -36,6 +36,13 @@
   "review": {
     "intendedUse": "dark-ground structure cutouts with readable material edges",
     "accepted": false,
-    "notes": "Dark-ground atlas inspection confirms sixteen complete objects, preserved warm/cyan light, and removal of the rejected white weeds and outlines. Formal acceptance requires the composed-screen and independent review workflow."
+    "notes": "Automatic preparation checks cover all sixteen cells. Independent composed-screen review found no bright fringe, checkerboard or stray squares around visible opening-scene buildings. That scoped result does not certify every structure in every environment.",
+    "composedScreenReview": {
+      "reviewer": "gpt-5.6-luna",
+      "verdict": "PASS",
+      "evidence": "quality-results/ui-final-review/review.json",
+      "manifest": "quality-results/ui-final-review/capture-manifest.json",
+      "scope": "Visible opening-gameplay structures at desktop, narrow desktop, phone portrait and phone landscape sizes."
+    }
   }
 }
