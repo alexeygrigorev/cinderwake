@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "check": "npm run format:check && npm run lint && npm run build && npm run quality:presentation:lint && npm run test:compositor && npm run test:flicker && npm run test:crispness && npm run test:sprite-provenance && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:vanguard:splice:check && npm run art:residents:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:topology:check && npm run art:detail:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm run test:feedback && npm test",
+    "check": "npm run format:check && npm run lint && npm run build && npm run quality:action-review:lint && npm run test:action-review && npm run quality:presentation:lint && npm run test:compositor && npm run test:flicker && npm run test:crispness && npm run test:sprite-provenance && npm run art:check && npm run quality:environment:check && npm run art:animation:check && npm run art:selection:check && npm run art:generation:check && npm run art:vanguard:splice:check && npm run art:residents:check && npm run art:pose:guide:check && npm run art:anatomy:check && npm run art:pose:assembly:check && npm run art:topology:check && npm run art:detail:check && npm run art:pose:check && npm run art:candidate:expectations:check && npm run art:candidate:check && npm run art:presentation:audit && npm run test:feedback && npm test",
+    "test:action-review": "node --test scripts/test-action-visual-review.mjs",
+    "quality:action-review:lint": "node scripts/action-visual-review.mjs lint",
+    "quality:action-review:build": "node scripts/action-visual-review.mjs build",
+    "quality:action-review:accept": "node scripts/action-visual-review.mjs validate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
