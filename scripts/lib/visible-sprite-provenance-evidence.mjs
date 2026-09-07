@@ -99,6 +99,7 @@ export function nativeCampaignCopyPass(copy) {
     return false;
   const minimum = {
     P: 16,
+    STRONG: 16,
     H2: 24,
     H3: 16,
     BUTTON: 14,

@@ -246,6 +246,9 @@ describe("visible sprite provenance evidence", () => {
       fontSize: 16,
     };
     expect(nativeCampaignCopyPass(copy)).toBe(true);
+    expect(
+      nativeCampaignCopyPass({ ...copy, tag: "STRONG", fontSize: 16 }),
+    ).toBe(true);
     for (const mutation of [
       { rootTag: "DIV" },
       { modal: false },
@@ -254,6 +257,7 @@ describe("visible sprite provenance evidence", () => {
       { fontSize: 15 },
       { rootLabel: "Forged" },
       { tag: "SMALL", fontSize: 12 },
+      { tag: "STRONG", fontSize: 15 },
       { scope: "anything" },
     ])
       expect(nativeCampaignCopyPass({ ...copy, ...mutation })).toBe(false);
