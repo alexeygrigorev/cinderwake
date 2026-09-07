@@ -16,7 +16,7 @@ const VIEW_HEIGHT = 540;
 const UNITS_PER_TILE = 1024;
 const BELL_KEEPER_RANGE = 2 * UNITS_PER_TILE;
 const VANGUARD_ABILITY_RANGE = 2355;
-const DESKTOP_NAVIGATION_PULSE_MS = 220;
+const PHYSICAL_NAVIGATION_PULSE_MS = 220;
 // Match the production pointer controller's stop distance so a click-to-pursue
 // target and this driver agree on when the real held strike can take over.
 const ROUTE_TARGET_DISTANCE = ARCHETYPES.vanguard.attackRange * 0.9;
@@ -417,7 +417,7 @@ export class CampaignBrowserDriver {
         const fallbackStart = { ...before.player.position };
         await this.pulse(
           physicalDirection(before, target),
-          this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
+          PHYSICAL_NAVIGATION_PULSE_MS,
         );
         this.record("no-route-pulse", {
           label,
@@ -443,8 +443,16 @@ export class CampaignBrowserDriver {
         // ten-second no-progress ceiling.
         continue;
       }
-      const waypoint =
-        route[Math.min(route.length - 1, this.profile.hasTouch ? 4 : 6)]!;
+      // Keep pursuit chunks short enough to turn around scenery while an
+      // enemy is moving. The portrait canvas needs a longer no-combat chunk
+      // to avoid repeatedly falling back when distant route points are off
+      // screen; the wider desktop canvas is reliable at six cells.
+      const waypointIndex = this.profile.hasTouch
+        ? attackWhileMoving
+          ? 4
+          : 8
+        : 6;
+      const waypoint = route[Math.min(route.length - 1, waypointIndex)]!;
       const gesture = await this.navigateToPoint(
         waypoint,
         attackWhileMoving ? pursuitMonsterId : undefined,
@@ -460,6 +468,8 @@ export class CampaignBrowserDriver {
       const start = { ...before.player.position };
       const routeGesture =
         gesture.action.includes("route") || gesture.action.includes("pursuit");
+      const recoverableGesture =
+        routeGesture || gesture.action.includes("pulse");
       const waypointReached = (state: GameState): boolean =>
         complete(state) ||
         distance(state.player.position, waypoint) < 176 ||
@@ -472,16 +482,12 @@ export class CampaignBrowserDriver {
           routeGesture ? 5_500 : 10_000,
         );
       } catch (error) {
-        if (
-          !gesture.action.includes("route") &&
-          !gesture.action.includes("pursuit")
-        )
-          throw error;
+        if (!recoverableGesture) throw error;
         const fallback = await this.state();
         const fallbackStart = { ...fallback.player.position };
         await this.pulse(
           physicalDirection(fallback, route[0] ?? waypoint),
-          this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
+          PHYSICAL_NAVIGATION_PULSE_MS,
         );
         latest = await this.waitFor(
           `${label} keyboard fallback ${attempt}`,
@@ -696,12 +702,10 @@ export class CampaignBrowserDriver {
     }
     if (!devicePoint) {
       const fallback = await this.state();
-      const fallbackTarget = this.profile.hasTouch
-        ? point
-        : (routeFirstPoint ?? point);
+      const fallbackTarget = routeFirstPoint ?? point;
       await this.pulse(
         physicalDirection(fallback, fallbackTarget),
-        this.profile.hasTouch ? 800 : DESKTOP_NAVIGATION_PULSE_MS,
+        PHYSICAL_NAVIGATION_PULSE_MS,
       );
       return {
         action: this.profile.hasTouch ? "joystick-pulse" : "keyboard-pulse",
