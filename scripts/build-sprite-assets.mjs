@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import sharp from "sharp";
+import { cleanStructurePixels } from "./lib/structure-alpha.mjs";
 
 const ROOT = process.cwd();
 const ACTOR_SPEC_PATH = path.join(ROOT, "art", "actor-atlas-v1.json");
@@ -48,6 +49,7 @@ Options:
   --actors-only        Build actor atlases and their manifest only
   --environment-kit-only
                        Build only the approved environment-kit atlas
+  --structures-only   Build only the cleaned structure atlas, preserving other manifest entries
   --help               Show this help`);
 }
 
@@ -57,6 +59,7 @@ function parseArguments(args) {
   let outputDirectory = path.join(ROOT, "public", "assets", "sprites");
   let actorsOnly = false;
   let environmentKitOnly = false;
+  let structuresOnly = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--help") {
@@ -69,6 +72,10 @@ function parseArguments(args) {
     }
     if (argument === "--environment-kit-only") {
       environmentKitOnly = true;
+      continue;
+    }
+    if (argument === "--structures-only") {
+      structuresOnly = true;
       continue;
     }
     const [name, inlineValue] = argument.split("=", 2);
@@ -95,15 +102,16 @@ function parseArguments(args) {
       outputDirectory = path.resolve(ROOT, value);
     }
   }
-  if (actorsOnly && environmentKitOnly)
-    throw new Error(
-      "--actors-only and --environment-kit-only cannot be combined",
-    );
+  if (
+    [actorsOnly, environmentKitOnly, structuresOnly].filter(Boolean).length > 1
+  )
+    throw new Error("Only one isolated atlas mode can be selected");
   return {
     actors,
     actorsOnly,
     actorSourceDirectory,
     environmentKitOnly,
+    structuresOnly,
     outputDirectory,
   };
 }
@@ -527,6 +535,95 @@ async function buildGrid(sourcePath, destination, mode = undefined) {
   return destination;
 }
 
+async function buildStructureAtlas() {
+  const sourcePath = inputPath("environment", "structures-clean-source.png");
+  const { data, info } = await sharp(sourcePath)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  if (info.width !== 1254 || info.height !== 1254)
+    throw new Error(
+      "Structure source layout requires the recorded 1254px source",
+    );
+  const normalized = await sharp(
+    cleanStructurePixels(data, info.width, info.height),
+    { raw: info },
+  )
+    .png()
+    .toBuffer();
+  // The generated sheet is a visual 4x4, not exact quarters. These source
+  // bands retain whole bases; fitting into safe cells prevents adjacent-row bleed.
+  const rows = [
+    [0, 340],
+    [340, 292],
+    [626, 282],
+    [908, 346],
+  ];
+  const composites = [];
+  for (let row = 0; row < 4; row++) {
+    const columns =
+      row < 2
+        ? [
+            [0, 325],
+            [325, 325],
+            [650, 300],
+            [950, 304],
+          ]
+        : [
+            [0, 325],
+            [325, 310],
+            [635, 315],
+            [950, 304],
+          ];
+    for (let column = 0; column < 4; column++) {
+      const extracted = await sharp(normalized)
+        .extract({
+          left: columns[column][0],
+          top: rows[row][0],
+          width: columns[column][1],
+          height: rows[row][1],
+        })
+        .png()
+        .toBuffer();
+      const cleaned = await cleanLowAlpha(
+        await removeBoundaryArtifacts(extracted),
+        18,
+      );
+      const bounds = await alphaBounds(cleaned);
+      const scale = Math.min(
+        244 / bounds.width,
+        244 / bounds.height,
+        SOURCE_SIZE / info.width,
+      );
+      const width = Math.max(1, Math.round(bounds.width * scale));
+      const height = Math.max(1, Math.round(bounds.height * scale));
+      const sprite = await sharp(cleaned)
+        .extract(bounds)
+        .resize(width, height, { kernel: "lanczos3" })
+        .png()
+        .toBuffer();
+      composites.push({
+        input: sprite,
+        left: column * GRID_CELL + Math.round((GRID_CELL - width) / 2),
+        top: row * GRID_CELL + 250 - height,
+      });
+    }
+  }
+  const destination = outputPath("environment-structures.png");
+  await sharp({
+    create: {
+      width: SOURCE_SIZE,
+      height: SOURCE_SIZE,
+      channels: 4,
+      background: transparent,
+    },
+  })
+    .composite(composites)
+    .png({ compressionLevel: 9, palette: true, quality: 100 })
+    .toFile(destination);
+  return destination;
+}
+
 async function buildContinuousFloor(sourcePath, destination) {
   const source = await sharp(sourcePath)
     .resize(SOURCE_SIZE, SOURCE_SIZE, {
@@ -838,9 +935,13 @@ async function copyApprovedAtlas(spec) {
 
 await fs.mkdir(outputPath("."), { recursive: true });
 const outputs = [];
-if (!OPTIONS.environmentKitOnly)
+if (!OPTIONS.environmentKitOnly && !OPTIONS.structuresOnly)
   for (const actorId of OPTIONS.actors) outputs.push(await buildActor(actorId));
-if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
+if (
+  !OPTIONS.actorsOnly &&
+  !OPTIONS.environmentKitOnly &&
+  !OPTIONS.structuresOnly
+) {
   const terrainPath = await buildTerrainAtlas(
     inputPath("environment", "terrain-source.png"),
     outputPath("environment-terrain.png"),
@@ -853,11 +954,7 @@ if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
     inputPath("environment", "ground-source.png"),
     outputPath("environment-floor.png"),
   );
-  const structuresPath = await buildGrid(
-    inputPath("environment", "structures-source.png"),
-    outputPath("environment-structures.png"),
-    "light",
-  );
+  const structuresPath = await buildStructureAtlas();
   const propsPath = await buildGrid(
     inputPath("environment", "props-source.png"),
     outputPath("environment-props.png"),
@@ -894,7 +991,9 @@ if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
     await copyApprovedAtlas(RESIDENT_ATLAS_SPEC),
   );
 }
-if (!OPTIONS.actorsOnly) outputs.push(await buildEnvironmentKit());
+if (!OPTIONS.actorsOnly && !OPTIONS.structuresOnly)
+  outputs.push(await buildEnvironmentKit());
+if (OPTIONS.structuresOnly) outputs.push(await buildStructureAtlas());
 
 const manifest = {
   schemaVersion: 1,
@@ -930,11 +1029,41 @@ const manifest = {
     ),
   ),
 };
+if (OPTIONS.structuresOnly) {
+  const existing = await fs
+    .readFile(outputPath("build-manifest.json"), "utf8")
+    .then(JSON.parse)
+    .catch(() => null);
+  if (existing)
+    Object.assign(manifest, existing, {
+      outputs: { ...existing.outputs, ...manifest.outputs },
+    });
+}
+if (
+  manifest.outputs["environment-structures.png"] &&
+  !OPTIONS.environmentKitOnly &&
+  !OPTIONS.actorsOnly
+) {
+  manifest.outputs["environment-structures.png"] = {
+    ...manifest.outputs["environment-structures.png"],
+    source: "art/source/environment/structures-clean-source.png",
+    sourceSha256: await sha256(
+      inputPath("environment", "structures-clean-source.png"),
+    ),
+    generationRecord: "art/generation/environment-structures-clean-v1.json",
+    preparation:
+      "Native light-key and edge decontamination; preserve 16 silhouettes in padded 256px cells",
+  };
+}
 for (const spec of [CITY_KIT_SPEC, RESIDENT_ATLAS_SPEC]) {
   if (!manifest.outputs[spec.atlas.file]) continue;
   manifest.outputs[spec.atlas.file].source = spec.provenance.preparedFile;
 }
-if (!OPTIONS.actorsOnly && !OPTIONS.environmentKitOnly) {
+if (
+  !OPTIONS.actorsOnly &&
+  !OPTIONS.environmentKitOnly &&
+  !OPTIONS.structuresOnly
+) {
   const uiSource = inputPath("ui", "ui-source.png");
   const uiAtlas = outputPath("ui.png");
   const generationRecord = "art/generation/ui-service-components-v1.json";
