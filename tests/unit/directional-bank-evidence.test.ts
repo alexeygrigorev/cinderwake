@@ -250,6 +250,22 @@ function evidence() {
 }
 
 describe("PRES-FACING-015 evidence oracle", () => {
+  it("keeps a Ranger-only capture scoped and detects reversed reflection", () => {
+    const value = evidence();
+    value.requiredActorIds = ["ranger"];
+    for (const profile of value.profiles)
+      profile.runs = profile.runs.filter(({ actorId }) => actorId === "ranger");
+    expect(evaluateDirectionalBankEvidence(value).pass).toBe(true);
+    const call =
+      value.profiles[0]!.runs[0]!.directions[1]!.movement.after.manifest
+        .drawCalls[0]!;
+    call.flipX = !call.flipX;
+    expect(evaluateDirectionalBankEvidence(value).failures).toContain(
+      "east-reflection-missing",
+    );
+    value.requiredActorIds = [...DIRECTIONAL_BANK_ACTOR_IDS];
+    expect(evaluateDirectionalBankEvidence(value).pass).toBe(false);
+  });
   it("accepts every actor, profile, bank, turn, and authored origin", () => {
     const result = evaluateDirectionalBankEvidence(evidence());
 
