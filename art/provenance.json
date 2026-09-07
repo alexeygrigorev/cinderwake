@@ -251,6 +251,13 @@
       "generationRecord": "art/generation/iron-fence-v1.json"
     },
     {
+      "file": "art/source/environment/iron-fence-vertical-source.png",
+      "kind": "prop-source",
+      "grid": "single vertical fence",
+      "sha256": "ba179991dd41069f04929f15cdada2480d164dc949d42c181586d6fd3b97fd28",
+      "generationRecord": "art/generation/iron-fence-vertical-v1.json"
+    },
+    {
       "file": "art/source/environment/props-source.png",
       "kind": "prop-source",
       "grid": "4x4"

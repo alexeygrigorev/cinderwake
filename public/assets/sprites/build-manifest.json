@@ -149,6 +149,15 @@
       "preparation": "Native-resolution magenta key and spill removal; alpha-bound crop with 2px transparent padding",
       "width": 1086,
       "height": 471
+    },
+    "iron-fence-vertical.png": {
+      "sha256": "2519f53c8d26e6ae260c68c098079b101cfc6e9cda52a3bdeec21aca8eff7519",
+      "source": "art/source/environment/iron-fence-vertical-source.png",
+      "sourceSha256": "ba179991dd41069f04929f15cdada2480d164dc949d42c181586d6fd3b97fd28",
+      "generationRecord": "art/generation/iron-fence-vertical-v1.json",
+      "preparation": "Native-resolution magenta key and spill removal; alpha-bound crop with 2px transparent padding",
+      "width": 146,
+      "height": 1916
     }
   }
 }

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "id": "iron-fence-vertical-v1",
+  "status": "prepared-for-composed-screen-review",
+  "created": "2026-09-07",
+  "tool": "OpenAI built-in image generation tool",
+  "artifactId": "exec-f61dbd98-fb9e-4911-a2fd-248073417268",
+  "source": {
+    "file": "art/source/environment/iron-fence-vertical-source.png",
+    "sha256": "ba179991dd41069f04929f15cdada2480d164dc949d42c181586d6fd3b97fd28",
+    "observedWidth": 724,
+    "observedHeight": 2172,
+    "observedChannels": "srgb",
+    "background": "Generated magenta chroma key, removed deterministically"
+  },
+  "prompt": "art/generation/iron-fence-vertical-prompt.txt",
+  "preparation": {
+    "command": "node scripts/build-sprite-assets.mjs --fence-only",
+    "operation": "Use the established native magenta hue key and spill removal; discard alpha below 24, crop to visible alpha bounds, and add two transparent pixels on each side without resizing or rotating."
+  },
+  "output": {
+    "file": "public/assets/sprites/iron-fence-vertical.png",
+    "sha256": "2519f53c8d26e6ae260c68c098079b101cfc6e9cda52a3bdeec21aca8eff7519",
+    "width": 146,
+    "height": 1916,
+    "channels": "srgba"
+  },
+  "review": {
+    "accepted": false,
+    "notes": "Prepared asset inspection on charcoal ground confirms upright spear finials along the vertical receding fence, with no magenta spill. Formal acceptance requires composed-screen review of the six sequential runtime slices at gameplay scale."
+  }
+}
