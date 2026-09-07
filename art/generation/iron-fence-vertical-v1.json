@@ -14,6 +14,13 @@
     "background": "Generated magenta chroma key, removed deterministically"
   },
   "prompt": "art/generation/iron-fence-vertical-prompt.txt",
+  "references": [
+    {
+      "file": "art/source/environment/iron-fence-source.png",
+      "sha256": "027f644d074ab58a4cb64fc9e86e7642f2544e00ccddb74695f68b9cbfa61c8b",
+      "purpose": "Horizontal fence material and style reference"
+    }
+  ],
   "preparation": {
     "command": "node scripts/build-sprite-assets.mjs --fence-only",
     "operation": "Use the established native magenta hue key and spill removal; discard alpha below 24, crop to visible alpha bounds, and add two transparent pixels on each side without resizing or rotating."
