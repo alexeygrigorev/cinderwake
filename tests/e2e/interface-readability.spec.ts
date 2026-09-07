@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { CampaignBrowserDriver } from "../framework/campaign-browser-driver";
 
 test("shared production driver launches through Start and optional world settings", async ({
@@ -21,10 +21,76 @@ test("shared production driver launches through Start and optional world setting
 
 const profiles = [
   { name: "desktop", width: 1440, height: 900, touch: false },
+  { name: "narrow-desktop", width: 800, height: 600, touch: false },
   { name: "phone", width: 390, height: 844, touch: true },
   { name: "small-phone", width: 320, height: 568, touch: true },
   { name: "phone-landscape", width: 844, height: 390, touch: true },
 ];
+
+async function overlapArea(
+  page: Page,
+  firstSelector: string,
+  secondSelector: string,
+) {
+  const first = (await page.locator(firstSelector).boundingBox())!;
+  const second = (await page.locator(secondSelector).boundingBox())!;
+  return (
+    Math.max(
+      0,
+      Math.min(first.x + first.width, second.x + second.width) -
+        Math.max(first.x, second.x),
+    ) *
+    Math.max(
+      0,
+      Math.min(first.y + first.height, second.y + second.height) -
+        Math.max(first.y, second.y),
+    )
+  );
+}
+
+for (const width of [780, 800, 900]) {
+  test(`${width}px desktop separates save status, objective, helper and Strike`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 600 });
+    await page.goto("/?captureMode=1");
+    await page.locator("#begin").click();
+    await expect(page.locator("[data-checkpoint-indicator]")).toHaveText(
+      "Saved here",
+    );
+    expect(
+      await overlapArea(page, "[data-checkpoint-indicator]", "#objective"),
+    ).toBe(0);
+    expect(
+      await overlapArea(
+        page,
+        ".quick-controls",
+        ".skills [data-action='attack']",
+      ),
+    ).toBe(0);
+
+    if (width !== 800) return;
+    // Recreate each reviewed regression independently; an oversized toolbar
+    // must expose its status/objective collision, and the old hint offset must
+    // expose its collision with Strike rather than silently passing.
+    await page.locator(".campaign-tools").evaluate((element) => {
+      (element as HTMLElement).style.maxWidth = "calc(100vw - 32px)";
+    });
+    expect(
+      await overlapArea(page, "[data-checkpoint-indicator]", "#objective"),
+    ).toBeGreaterThan(0);
+    await page.locator(".quick-controls").evaluate((element) => {
+      (element as HTMLElement).style.bottom = "94px";
+    });
+    expect(
+      await overlapArea(
+        page,
+        ".quick-controls",
+        ".skills [data-action='attack']",
+      ),
+    ).toBeGreaterThan(0);
+  });
+}
 
 for (const profile of profiles) {
   test(`${profile.name}: a new player can find Start and read controls`, async ({
