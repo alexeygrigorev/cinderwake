@@ -210,6 +210,31 @@ function registeredTelegraphEvidence() {
 }
 
 describe("visible sprite provenance evidence", () => {
+  it("requires readable semantic interface text inside the actual game root", () => {
+    const copy: CampaignCopyFacts = {
+      scope: "interface",
+      rootTag: "MAIN",
+      rootClass: "game",
+      rootLabel: null,
+      gameChild: false,
+      interfaceRoot: true,
+      nativeElement: true,
+      unique: true,
+      modal: false,
+      tag: "SPAN",
+      fontSize: 14,
+    };
+    expect(nativeCampaignCopyPass(copy)).toBe(true);
+    for (const mutation of [
+      { interfaceRoot: false },
+      { nativeElement: false },
+      { unique: false },
+      { fontSize: 13 },
+      { fontSize: Number.NaN },
+    ]) {
+      expect(nativeCampaignCopyPass({ ...copy, ...mutation })).toBe(false);
+    }
+  });
   it("accepts a complete decoded-role and canvas manifest inventory", () => {
     const evidence = evidenceFixture();
     const result = evaluateVisibleSpriteProvenanceEvidence(evidence);
