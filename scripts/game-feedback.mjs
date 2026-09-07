@@ -146,7 +146,6 @@ const componentDefinitions = [
       "--workers=1",
       "--reporter=list,json",
       "--trace=off",
-      "--video=off",
       "--output",
       path.join(output, "campaign-browser-artifacts"),
     ],
