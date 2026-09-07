@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "status": "FAILED_RUN_DIAGNOSIS",
+  "observedOn": "2026-09-07",
+  "profileId": "phone-portrait-rAF",
+  "actorId": "arcanist",
+  "paceId": "normal",
+  "step": "ability",
+  "cause": "The opening enemy killed the player while real-time recording continued. The visible loss overlay correctly intercepted the subsequent ability tap.",
+  "evidence": {
+    "phase": "lost",
+    "deathTick": 845,
+    "lastPlayerAttackTick": 716,
+    "health": 0,
+    "maxHealth": 90,
+    "unusedTonics": 2,
+    "damageSource": "monster:01",
+    "damagePerHit": 7,
+    "browserFaults": [],
+    "failedRequests": [],
+    "visible": true,
+    "focused": true,
+    "ready": true,
+    "testBridgeExposed": false,
+    "interceptingElement": "#outcome[data-phase=lost]"
+  },
+  "provenance": "Summary of actual normal-failure.json and visually inspected normal-failure.png. The default recorder replaced that run directory on rerun; the original screenshot is not retained in this summary.",
+  "correction": "Use the visible tonic control before a low-health capture or action and verify health/inventory changes; fail immediately on a non-playing phase. Keep live AI, real input and the existing cadence thresholds."
+}
