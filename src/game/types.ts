@@ -204,6 +204,7 @@ export interface InputState {
   moveX: -1 | 0 | 1;
   moveY: -1 | 0 | 1;
   aim: Vec2 | null;
+  pickupTargetId: string | null;
   attack: boolean;
   ability: boolean;
   useTonic: boolean;
@@ -243,6 +244,7 @@ export const EMPTY_INPUT: InputState = {
   moveX: 0,
   moveY: 0,
   aim: null,
+  pickupTargetId: null,
   attack: false,
   ability: false,
   useTonic: false,

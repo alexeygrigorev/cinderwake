@@ -1299,11 +1299,16 @@ function updateProjectiles(
   state.projectiles = survivors;
 }
 
-function collectLoot(state: GameState): void {
-  if (!state.settings.autoPickup) return;
+function collectLoot(state: GameState, input: InputState): void {
+  const targetedLootId = input.pickupTargetId;
+  if (!state.settings.autoPickup && !targetedLootId) return;
   const remaining: LootState[] = [];
   for (const loot of state.loot) {
-    if (distanceSquared(loot.position, state.player.position) > 700 * 700) {
+    const isExplicitTarget = targetedLootId === loot.id;
+    if (
+      (!state.settings.autoPickup && !isExplicitTarget) ||
+      distanceSquared(loot.position, state.player.position) > 700 * 700
+    ) {
       remaining.push(loot);
       continue;
     }
@@ -1444,7 +1449,7 @@ export function stepGame(state: GameState, input: InputState): GameState {
   resolvePendingAttacks(state, scenery);
   updateProjectiles(state, scenery);
   resolveDeaths(state);
-  collectLoot(state);
+  collectLoot(state, input);
   checkExit(state);
   updateCityNpcContext(state);
   state.effects = state.effects.filter(

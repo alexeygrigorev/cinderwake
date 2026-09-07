@@ -13,11 +13,21 @@ export interface PointerAttackTarget {
   lineOfSight?: boolean;
 }
 
+export interface PointerLootTarget {
+  id: string;
+  position: Vec2;
+}
+
 /** A target id refreshes an existing selection; no id hit-tests a new click. */
 export type PointerTargetResolver = (
   point: Vec2,
   targetId?: string,
 ) => PointerAttackTarget | null;
+
+export type PointerLootTargetResolver = (
+  point: Vec2,
+  targetId?: string,
+) => PointerLootTarget | null;
 
 export class InputController {
   private static readonly TAP_ARRIVAL_DISTANCE = 96;
@@ -35,6 +45,7 @@ export class InputController {
   private mouseAim: { x: number; y: number } | null = null;
   private heldAttacks = new Set<number>();
   private attackTarget: PointerAttackTarget | null = null;
+  private pickupTarget: PointerLootTarget | null = null;
   private routedTarget: Vec2 | null = null;
   private attack = false;
   private ability = false;
@@ -47,6 +58,7 @@ export class InputController {
     private readonly getPlayerPosition: () => Vec2,
     private readonly resolveTouchRoute?: TouchRouteResolver,
     private readonly resolvePointerTarget?: PointerTargetResolver,
+    private readonly resolvePointerLoot?: PointerLootTargetResolver,
   ) {
     window.addEventListener(
       "keydown",
@@ -115,6 +127,7 @@ export class InputController {
         if (event.pointerType === "mouse") {
           this.mouseAim = { x: event.clientX, y: event.clientY };
           this.attackTarget = null;
+          this.pickupTarget = null;
           this.cancelTouchNavigation(false);
           if (event.button === 0) {
             if (event.shiftKey || !this.resolvePointerTarget) {
@@ -124,14 +137,20 @@ export class InputController {
             } else {
               this.attackTarget = this.resolvePointerTarget(this.aim);
               this.mouseAim = null;
-              this.navigateTo(this.attackTarget?.position ?? this.aim);
+              if (this.attackTarget)
+                this.navigateTo(this.attackTarget.position);
+              else {
+                this.pickupTarget = this.resolvePointerLoot?.(this.aim) ?? null;
+                this.navigateTo(this.pickupTarget?.position ?? this.aim);
+              }
             }
           }
           if (event.button === 2) this.ability = true;
         } else if (event.isPrimary) {
           this.mouseAim = null;
           this.attackTarget = null;
-          this.navigateTo(this.aim);
+          this.pickupTarget = this.resolvePointerLoot?.(this.aim) ?? null;
+          this.navigateTo(this.pickupTarget?.position ?? this.aim);
         }
       },
       { signal: this.listeners.signal },
@@ -187,6 +206,7 @@ export class InputController {
           this.mouseAim = null;
           if (kind !== "tonic") {
             this.attackTarget = null;
+            this.pickupTarget = null;
             this.cancelTouchNavigation();
           }
         }
@@ -213,6 +233,7 @@ export class InputController {
   /** Clear a world-space touch route after the map it was resolved against changes. */
   cancelNavigation(): void {
     this.attackTarget = null;
+    this.pickupTarget = null;
     this.cancelTouchNavigation();
     this.touchMove = { x: 0, y: 0 };
     this.resetMovePad?.();
@@ -371,6 +392,7 @@ export class InputController {
       (this.keys.has("s") || this.keys.has("arrowdown") ? 1 : 0);
     if (moveX !== 0 || moveY !== 0 || this.touchMove.x || this.touchMove.y) {
       this.attackTarget = null;
+      this.pickupTarget = null;
       this.cancelTouchNavigation();
     }
     let targetInRange = false;
@@ -404,6 +426,28 @@ export class InputController {
         if (targetInRange) this.cancelTouchNavigation(false);
       }
     }
+    let pickupTargetId: string | null = null;
+    if (this.pickupTarget && this.resolvePointerLoot) {
+      this.pickupTarget = this.resolvePointerLoot(
+        this.pickupTarget.position,
+        this.pickupTarget.id,
+      );
+      if (!this.pickupTarget) {
+        this.cancelTouchNavigation();
+      } else {
+        const target = this.pickupTarget;
+        if (
+          !this.routedTarget ||
+          Math.hypot(
+            target.position.x - this.routedTarget.x,
+            target.position.y - this.routedTarget.y,
+          ) > 256 ||
+          this.touchRoute.length === 0
+        )
+          this.navigateTo(target.position);
+        pickupTargetId = target.id;
+      }
+    }
     const tapMove = this.tapMove();
     const input = {
       ...EMPTY_INPUT,
@@ -424,6 +468,7 @@ export class InputController {
           : this.mouseAim
             ? this.point({ clientX: this.mouseAim.x, clientY: this.mouseAim.y })
             : this.aim,
+      pickupTargetId,
       attack:
         targetInRange ||
         this.attack ||

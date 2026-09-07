@@ -37,6 +37,11 @@ export function cloneInputPatch(
           throw new Error(`input.${key} must be boolean`);
         patch[key] = field;
         break;
+      case "pickupTargetId":
+        if (field !== null && typeof field !== "string")
+          throw new Error("input.pickupTargetId must be null or a string");
+        patch.pickupTargetId = field;
+        break;
       case "aim":
         if (field === null) {
           patch.aim = null;

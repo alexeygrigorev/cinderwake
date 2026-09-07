@@ -453,6 +453,31 @@ async function boot(scenario: ScenarioV1, saved?: CampaignSave): Promise<void> {
           }
         : null;
     },
+    (point, targetId) => {
+      const state = host!.getState();
+      const manifest = host!.getManifest();
+      const loot = targetId
+        ? state.loot.find((item) => item.id === targetId)
+        : [...manifest.drawCalls]
+            .reverse()
+            .filter((call) => call.type === "loot" && call.visible)
+            .map((call) => {
+              const rect = call.destinationRect;
+              const top = host!.worldAt(rect.x, rect.y);
+              const bottom = host!.worldAt(
+                rect.x + rect.width,
+                rect.y + rect.height,
+              );
+              return point.x >= top.x &&
+                point.x <= bottom.x &&
+                point.y >= top.y &&
+                point.y <= bottom.y
+                ? state.loot.find((item) => item.id === call.entityId)
+                : undefined;
+            })
+            .find(Boolean);
+      return loot ? { id: loot.id, position: loot.position } : null;
+    },
   );
   input.attachMovePad(app.querySelector<HTMLElement>(".move-pad")!);
   host.inputProvider = () => input!.sample();
