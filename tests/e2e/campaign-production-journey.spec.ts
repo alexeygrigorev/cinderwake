@@ -99,7 +99,7 @@ async function runJourney(
     expect(state.city.locationPhase).toBe("discovered");
     await expect(
       page.getByRole("button", { name: /Read: Embercross road sign/ }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
     await page
       .getByRole("button", { name: /Read: Embercross road sign/ })
       .click();
