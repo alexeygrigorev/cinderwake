@@ -55,6 +55,8 @@ const CATALOG_ASSET_FILES = {
   "atlas:ground": "environment-ground.png",
   "atlas:floor": "environment-floor.png",
   "atlas:structures": "environment-structures.png",
+  "atlas:iron-fence": "iron-fence.png",
+  "atlas:iron-fence-vertical": "iron-fence-vertical.png",
   "atlas:props": "environment-props.png",
   "atlas:decals": "environment-decals.png",
   "atlas:environment-kit-v2": "environment-kit-v2.png",

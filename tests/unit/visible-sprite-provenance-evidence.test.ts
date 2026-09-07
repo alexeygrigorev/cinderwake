@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import ts from "typescript";
+import { SPRITE_CATALOG } from "../../src/render/sprites";
 import {
   evaluateVisibleSpriteProvenanceEvidence,
   runVisibleSpriteProvenanceNegativeControls,
@@ -18,6 +21,43 @@ const scenarios = [
   "outcome-loss",
   "embercross-services",
 ];
+
+it("keeps the independent browser provenance inventory complete as assets are added", () => {
+  const source = ts.createSourceFile(
+    "provenance.mjs",
+    readFileSync("scripts/test-visible-sprite-provenance.mjs", "utf8"),
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.JS,
+  );
+  const inventory: Record<string, string> = {};
+  function visit(node: ts.Node) {
+    if (
+      ts.isVariableDeclaration(node) &&
+      node.name.getText(source) === "CATALOG_ASSET_FILES" &&
+      node.initializer &&
+      ts.isObjectLiteralExpression(node.initializer)
+    ) {
+      for (const property of node.initializer.properties) {
+        if (
+          ts.isPropertyAssignment(property) &&
+          ts.isStringLiteral(property.name) &&
+          ts.isStringLiteral(property.initializer)
+        ) {
+          inventory[property.name.text] =
+            `/assets/sprites/${property.initializer.text}`;
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  expect(inventory).toEqual(
+    Object.fromEntries(
+      Object.values(SPRITE_CATALOG.assets).map(({ id, url }) => [id, url]),
+    ),
+  );
+});
 
 function stateFixture(scenarioId: string): VisibleSpriteStateV1 {
   return {
