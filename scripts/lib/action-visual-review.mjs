@@ -128,14 +128,33 @@ export async function buildBundle({
         JSON.stringify(action.stages),
       `Missing/reordered stages: ${expected.id}`,
     );
-    let previous = -Infinity;
-    const frames = [];
-    for (const frame of capture.frames) {
+    const additionalFrames = capture.additionalFrames ?? [];
+    const closeups = capture.closeups ?? [];
+    for (const sequence of [capture.frames, additionalFrames]) {
+      let previous = -Infinity;
+      for (const frame of sequence) {
+        requireCondition(
+          Number.isFinite(frame.tick) && frame.tick > previous,
+          `Nonsequential ticks: ${expected.id}`,
+        );
+        previous = frame.tick;
+      }
+    }
+    const sceneFrames = [...capture.frames, ...additionalFrames];
+    const images = [...sceneFrames, ...closeups];
+    requireCondition(
+      unique(images.map(({ file }) => file)),
+      `Duplicate image: ${expected.id}`,
+    );
+    for (const closeup of closeups)
       requireCondition(
-        Number.isFinite(frame.tick) && frame.tick > previous,
-        `Nonsequential ticks: ${expected.id}`,
+        sceneFrames.some(
+          ({ file, tick }) =>
+            closeup.sourceFrame === file && closeup.tick === tick,
+        ),
+        `Detached closeup: ${expected.id}`,
       );
-      previous = frame.tick;
+    for (const frame of images) {
       requireCondition(
         typeof frame.file === "string" &&
           !path.isAbsolute(frame.file) &&
@@ -153,14 +172,15 @@ export async function buildBundle({
         hash(data) === frame.sha256,
         `Changed frame: ${frame.file}`,
       );
-      frames.push(frame);
     }
     entries.push({
       ...expected,
       expectation: capture.expectation,
       automatic: { ...capture.automatic, sha256: automaticHash },
       checks: action.checks,
-      frames,
+      frames: capture.frames,
+      additionalFrames,
+      closeups,
     });
   }
   const body = {
@@ -177,7 +197,7 @@ export async function buildBundle({
 export function reviewPrompt(bundle) {
   return `Inspect these game action images with visual tools. Preferred reviewer: ${bundle.reviewer.model}. This is a scoped visual review, not whole-game approval.
 You MUST open every listed PNG at original resolution using view_image or equivalent image input. Reading filenames, source code, JSON or automatic PASS results is not image inspection. The recorded input defines expected direction; independently identify the visible tip/front and compare it to motion. Do not infer visual correctness from metadata.
-For each case inspect frames in listed order: windup, release/impact, recovery (or that action's named stages). Compare adjacent frames. Zoom where needed without smoothing. If an arrow or effect is too small, obscured, absent or lacks enough consecutive flight frames to judge its heading, mark the relevant check UNCERTAIN and request a closer/denser capture. Do not guess or pass missing evidence.
+For each case merge frames and additionalFrames by tick, then inspect that ordered timeline: windup, release/impact, consecutive flight frames and recovery (or the action's named stages). Open every closeup beside its sourceFrame; these are unscaled native-pixel crops of the same scene, not standalone assets. Compare adjacent frames and track each visible projectile tip across them. Zoom where needed without smoothing. If an arrow or effect is too small, obscured, absent or lacks enough consecutive flight frames to judge its heading, mark the relevant check UNCERTAIN and request a closer/denser capture. Do not guess or pass missing evidence.
 For EACH check return PASS, FAIL or UNCERTAIN with a concrete observation and the exact supporting frame paths. FAIL or UNCERTAIN blocks acceptance. Mention backwards arrows, sideways flight, inconsistent flips, wrong emission points, detached effects, clipping, sliding or discontinuous recovery when present. Do not change code or images.
 Return JSON only with schemaVersion:1, bundleHash:${JSON.stringify(bundle.bundleHash)}, reviewer:{model:${JSON.stringify(bundle.reviewer.model)}}, and cases:[{id, inspectedFrames:[every frame path], checks:[{id,verdict,observation,frames:[supporting paths]}]}]. Every case and check is required; no blanket verdict.
 Cases and precise instructions:
@@ -226,7 +246,12 @@ export async function validateReview({ bundle, review, registry, root }) {
     );
     const actual = review.cases.find(({ id }) => id === expected.id);
     requireCondition(actual, `Missing case review: ${expected.id}`);
-    const paths = expected.frames.map(({ file }) => file);
+    const images = [
+      ...expected.frames,
+      ...(expected.additionalFrames ?? []),
+      ...(expected.closeups ?? []),
+    ];
+    const paths = images.map(({ file }) => file);
     requireCondition(
       Array.isArray(actual.inspectedFrames) &&
         unique(actual.inspectedFrames) &&
@@ -234,7 +259,7 @@ export async function validateReview({ bundle, review, registry, root }) {
         paths.every((file) => actual.inspectedFrames.includes(file)),
       `Images not inspected: ${expected.id}`,
     );
-    for (const frame of expected.frames)
+    for (const frame of images)
       requireCondition(
         hash(await fs.readFile(path.resolve(root, frame.file))) ===
           frame.sha256,

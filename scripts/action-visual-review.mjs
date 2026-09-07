@@ -57,6 +57,17 @@ if (command === "lint") {
           ["attack", "ability"].map((action) => {
             const sequence =
               action === "attack" ? direction.action : direction.ability;
+            const filePath = (file) =>
+              path.relative(
+                root,
+                path.join(evidenceDirectory, profile.profileId, file),
+              );
+            const sceneFrames = [
+              sequence.after,
+              sequence.impact,
+              ...(sequence.additionalFrames ?? []),
+              sequence.recovery,
+            ];
             return {
               id: `${run.actorId}/${action}/${direction.directionId.replace("move-", "")}/${profile.profileId}`,
               expectation: {
@@ -93,6 +104,25 @@ if (command === "lint") {
                 ),
                 sha256: frame.frameHash,
               })),
+              additionalFrames: (sequence.additionalFrames ?? []).map(
+                (frame) => ({
+                  stage: `flight+${frame.tick - sequence.impact.tick}`,
+                  tick: frame.tick,
+                  file: filePath(frame.frameFile),
+                  sha256: frame.frameHash,
+                  projectiles: frame.snapshot.projectiles,
+                }),
+              ),
+              closeups: sceneFrames
+                .filter(({ closeup }) => closeup)
+                .map((frame) => ({
+                  stage: "native-closeup",
+                  tick: frame.tick,
+                  file: filePath(frame.closeup.frameFile),
+                  sha256: frame.closeup.frameHash,
+                  sourceFrame: filePath(frame.frameFile),
+                  nativeCrop: frame.closeup.nativeCrop,
+                })),
             };
           }),
         ),

@@ -253,7 +253,10 @@ async function capture(page, label, retainFrame, actorId, expectedFacing) {
         snapshot,
         manifest,
         visualFacing,
-        frame: shouldRetainFrame ? bridge.captureFrame() : null,
+        // Preserve the actual backing pixels; logical capture downsamples tiny arrows.
+        frame: shouldRetainFrame
+          ? document.querySelector(".stage canvas").toDataURL("image/png")
+          : null,
       };
     },
     {
@@ -324,10 +327,32 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     actionAfter.snapshot.player.animation.lockedUntilTick -
     actionAfter.snapshot.tick +
     1;
+  const additionalFrames = [];
+  let currentTick = actionImpact.tick;
+  for (const offset of [1, 2, 3, 5, 8]) {
+    const targetTick = actionImpact.tick + offset;
+    await page.evaluate((ticks) => {
+      window.__GAME_TEST__.step(ticks, { render: true });
+    }, targetTick - currentTick);
+    additionalFrames.push(
+      await capture(
+        page,
+        `${actorId}-${direction.id}-${kind}-flight-${offset}`,
+        true,
+        actorId,
+        direction.facing,
+      ),
+    );
+    currentTick = targetTick;
+  }
+  const recoveryTarget = Math.max(
+    actionImpact.tick + recoveryTicks,
+    currentTick + 1,
+  );
   await page.evaluate((ticks) => {
     const bridge = window.__GAME_TEST__;
     bridge.step(Math.max(1, ticks), { render: true });
-  }, recoveryTicks);
+  }, recoveryTarget - currentTick);
   const actionRecovery = await capture(
     page,
     `${actorId}-${direction.id}-${kind}-recovery`,
@@ -342,6 +367,7 @@ async function runAction(page, scenarioId, actorId, direction, kind) {
     after: actionAfter,
     impact: actionImpact,
     recovery: actionRecovery,
+    additionalFrames,
     pendingAttack,
     produced: producedEntities(actorId, kind, actionImpact.snapshot),
   };
@@ -539,6 +565,12 @@ function normalizeCapture(raw, directory, index) {
     label: raw.label,
     frame,
     directory,
+    cropRects: raw.manifest.drawCalls
+      .filter(
+        ({ entityId, type }) =>
+          entityId === "player" || type === "projectile" || type === "effect",
+      )
+      .map(({ destinationRect }) => destinationRect),
   };
 }
 
@@ -551,6 +583,7 @@ function publicCapture(capture) {
     manifestHash: capture.manifestHash,
     frameHash: capture.frameHash,
     frameFile: capture.frameFile,
+    closeup: capture.closeup,
     snapshot: capture.snapshot,
     manifest: capture.manifest,
     visualFacing: capture.visualFacing,
@@ -630,20 +663,68 @@ async function normalizeProfile(raw, profileId) {
       action.before,
       action.after,
       action.impact,
+      ...action.additionalFrames,
       action.recovery,
       ability.before,
       ability.after,
       ability.impact,
+      ...ability.additionalFrames,
       ability.recovery,
     ]),
   );
   for (const [index, current] of rawTimeline.entries()) {
     const normalized = normalizeCapture(current, directory, index);
-    if (normalized.frameFile)
+    if (normalized.frameFile) {
       await fs.writeFile(
         path.join(directory, normalized.frameFile),
         normalized.frame,
       );
+      const image = sharp(normalized.frame);
+      const { width, height } = await image.metadata();
+      const viewport = normalized.manifest.viewport;
+      const rects = normalized.cropRects;
+      const left = Math.max(
+        0,
+        Math.floor(
+          ((Math.min(...rects.map(({ x }) => x)) - 24) * width) /
+            viewport.width,
+        ),
+      );
+      const top = Math.max(
+        0,
+        Math.floor(
+          ((Math.min(...rects.map(({ y }) => y)) - 24) * height) /
+            viewport.height,
+        ),
+      );
+      const right = Math.min(
+        width,
+        Math.ceil(
+          ((Math.max(...rects.map(({ x, width }) => x + width)) + 24) * width) /
+            viewport.width,
+        ),
+      );
+      const bottom = Math.min(
+        height,
+        Math.ceil(
+          ((Math.max(...rects.map(({ y, height }) => y + height)) + 24) *
+            height) /
+            viewport.height,
+        ),
+      );
+      if (right > left && bottom > top) {
+        const crop = { left, top, width: right - left, height: bottom - top };
+        const cropped = await image.extract(crop).png().toBuffer();
+        const file = normalized.frameFile.replace(/\.png$/, "-closeup.png");
+        await fs.writeFile(path.join(directory, file), cropped);
+        normalized.closeup = {
+          frameFile: file,
+          frameHash: sha256(cropped),
+          nativeCrop: crop,
+          sourceFrame: normalized.frameFile,
+        };
+      }
+    }
     normalizedCaptures.push(normalized);
     lookup.set(current.label, normalized);
   }
@@ -666,6 +747,9 @@ async function normalizeProfile(raw, profileId) {
         after: publicCapture(lookup.get(direction.action.after.label)),
         impact: publicCapture(lookup.get(direction.action.impact.label)),
         recovery: publicCapture(lookup.get(direction.action.recovery.label)),
+        additionalFrames: direction.action.additionalFrames.map((frame) =>
+          publicCapture(lookup.get(frame.label)),
+        ),
         pendingAttack: publicAttack(direction.action.pendingAttack),
         produced: direction.action.produced.map(publicProduced),
       },
@@ -676,6 +760,9 @@ async function normalizeProfile(raw, profileId) {
         after: publicCapture(lookup.get(direction.ability.after.label)),
         impact: publicCapture(lookup.get(direction.ability.impact.label)),
         recovery: publicCapture(lookup.get(direction.ability.recovery.label)),
+        additionalFrames: direction.ability.additionalFrames.map((frame) =>
+          publicCapture(lookup.get(frame.label)),
+        ),
         pendingAttack: publicAttack(direction.ability.pendingAttack),
         produced: direction.ability.produced.map(publicProduced),
       },
@@ -882,8 +969,12 @@ async function main() {
       directionIds: [...DIRECTIONAL_BANK_DIRECTION_IDS],
       actionKinds: ["primary", "ability"],
       capturePolicy: {
-        semanticCapturesPerDirection: 11,
-        retainedPngCapturesPerDirection: 8,
+        semanticCapturesPerDirection: 21,
+        retainedPngCapturesPerDirection: 18,
+        resolution: "native canvas backing pixels; lossless PNG",
+        additionalFlightOffsets: [1, 2, 3, 5, 8],
+        closeups:
+          "Unscaled native pixel crops enclosing player and visible projectiles/effects with 24 logical pixels padding",
         retainedPngStages: [
           "movement-after",
           "movement-turn",
