@@ -177,6 +177,36 @@ describe("portable campaign checkpoints", () => {
     disk.setItem(AUTO_SAVE_KEY, "broken");
     expect(loadSave(disk)?.savedAt).toBe(1);
   });
+  it("preserves the previous checkpoint if its replacement cannot be written", () => {
+    const disk = storage();
+    storeSave(disk, state(), [], "manual", 1);
+    const previous = disk.getItem(SAVE_KEY);
+    expect(() =>
+      storeSave(
+        {
+          ...disk,
+          setItem: () => {
+            throw new Error("Storage full");
+          },
+        },
+        state(),
+        ["scroll:ileya:warning"],
+        "manual",
+        2,
+      ),
+    ).toThrow("Storage full");
+    expect(disk.getItem(SAVE_KEY)).toBe(previous);
+    expect(loadSave(disk, "manual")?.savedAt).toBe(1);
+  });
+  it("preserves victory even when the final fight ended at low health", () => {
+    const completed = state();
+    completed.phase = "won";
+    completed.player.health = 1;
+    expect(safeToAutosave(completed)).toBe(true);
+    const disk = storage();
+    storeSave(disk, completed, [], "auto", 3);
+    expect(loadSave(disk)?.state.phase).toBe("won");
+  });
   it("never autosaves dead, endangered or low-health characters", () => {
     const world = state();
     world.monsters = [];
