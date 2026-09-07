@@ -43,6 +43,7 @@ Inference: improve the oracle before adding a more demanding encounter, so agent
 ## Coordinator work log
 
 - T12 — `REVIEW` / `PLAY_REVIEW_PENDING`: implemented in `9e45c34`, hardened through `9806916`, and integrated into the aggregate evidence contract in `a1b06cb`. The committed gate passed in `run-o2kNCf` with distinct desktop and portrait-phone cases, eight ordered checkpoints per profile, real browser input, observe-only state access, save/reload, and victory assertions. Final milestone evidence is retained at `quality-results/game-feedback/t12-final/`; independent human play review remains T13.
+- Post-T12 verification — the current source passes the complete `npm run check` gate, including 57 Vitest files / 501 tests. Two source-stable aggregate retries (`run-oc4s4B` and `run-eJ5VUz`) passed desktop but the phone journey exceeded its fixed 300-second physical budget under the loaded shared host; those failures remain retained and are not relabeled. `run-o2kNCf` remains the last accepted aggregate evidence; T13 human play review is still pending.
 
 A task is too large if it needs a new persistent schema, changes an unlisted subsystem, or cannot reach its stated gate without redesign. Stop and return a split proposal; do not improvise the architecture.
 
