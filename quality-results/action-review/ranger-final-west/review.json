@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "bundleHash": "929360a4ea652014b194c7c6e5701e3e54bae4aaf01eda501bf7bfe4996645b6",
+  "reviewer": {
+    "model": "gpt-5.6-luna"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/west/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The actual arrow is a narrow horizontal sprite whose dark metal point is the west-facing tip and whose bright blue fletching is the east-facing tail. Across the native closeups it faces left toward the target, not backwards or sideways.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The windup has no detached projectile; at release the arrow is visibly connected to the bow/hand region, then the same arrow separates westward in flight and remains far left while the actor returns to recovery. No extra projectile is baked into the actor cell.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "Native closeups establish continuous leftward displacement from flight+1 through flight+8 and recovery; the arrow remains visible, un-clipped and aligned horizontally. The full scenes show no misleading streak, equipment pop or discontinuous recovery.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery-closeup.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/west/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "All three fan arrows have identifiable dark metal points on their west-facing ends and blue feather tails on their east-facing ends. The upper, center and lower trajectories each point left and spread around west without a reversed or sideways arrow.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The windup is clear, the three arrows appear together at the bow/hand release point, and they then separate as a coherent westward fan while the actor transitions to recovery. The actor cells contain no extra differently oriented projectile; all visible arrows belong to the fan.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "The native closeups show three distinct, unclipped arrows over consecutive flight frames, with consistent leftward travel and increasing separation matching the fan. The final recovery frame keeps all three readable well away from the actor, with no unrelated white streak or visual overlap hiding intent.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery-closeup.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

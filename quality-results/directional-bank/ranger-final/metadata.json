@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "runtimeFingerprint": "80f0ab55ac97bd08f4d0b6b088eac14ddc6ed587e30253db8d323a8b72ccf917",
+  "checkId": "PRES-FACING-015",
+  "recipeId": "recipe:pres-facing-015",
+  "evaluator": "directional-bank-selection-v1",
+  "scenarioIds": [
+    "fixed-camera-open-floor"
+  ],
+  "actualScenarioIds": [
+    "fixed-camera-open-floor-ranger"
+  ],
+  "actorIds": [
+    "ranger"
+  ],
+  "profileIds": [
+    "desktop"
+  ],
+  "directionIds": [
+    "move-north",
+    "move-east",
+    "move-south",
+    "move-west"
+  ],
+  "actionKinds": [
+    "primary",
+    "ability"
+  ],
+  "capturePolicy": {
+    "semanticCapturesPerDirection": 21,
+    "retainedPngCapturesPerDirection": 18,
+    "resolution": "native canvas backing pixels; lossless PNG",
+    "additionalFlightOffsets": [
+      1,
+      2,
+      3,
+      5,
+      8
+    ],
+    "closeups": "Unscaled native pixel crops enclosing player and visible projectiles/effects with 24 logical pixels padding",
+    "retainedPngStages": [
+      "movement-after",
+      "movement-turn",
+      "primary-after",
+      "primary-impact",
+      "primary-recovery",
+      "ability-after",
+      "ability-impact",
+      "ability-recovery"
+    ]
+  },
+  "source": {
+    "commit": "83de4641b487e54710c3161397dacdbcf0270a6a",
+    "dirty": true,
+    "status": [
+      "M scripts/test-directional-bank.mjs"
+    ],
+    "patchSha256": "38fc12c08cdaffbc312d43980f0dd367fb705e8e161fcf55db3da64cfa566617"
+  },
+  "environment": {
+    "platform": "linux 6.8.0-138-generic x64",
+    "node": "v24.13.1",
+    "browser": "151.0.7922.34",
+    "packageVersion": "0.1.0",
+    "playwright": "1.62.1",
+    "vite": "8.2.2"
+  },
+  "reproductionCommand": "npm run test:directional-bank"
+}

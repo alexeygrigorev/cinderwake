@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "bundleHash": "6a4d8c6dc1ce2b9090a3ccf46ddd41fc29e8e175116c9fde5abcafe8bac94f79",
+  "reviewer": {
+    "model": "gpt-5.6-luna"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/north/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The actual arrow has a dark metal point leading upward and blue-white fletching trailing below it, matching the north displacement; the point stays above the fletching across the consecutive flight views with no sideways or backwards orientation.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The bow is readied in windup, the drawn bow and arrow are connected at release, and the same arrow is immediately above the bow on flight+1 before continuing upward; recovery returns to the idle bow pose without a detached or reflected projectile.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "At native closeup scale the projectile advances upward across ticks 8, 9, 10 and 12 with its metal point and fletching readable; by tick 15 it is occluded at the building edge, while the earlier consecutive frames establish continuous northward flight and no extra sideways projectile is baked into the ranger.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8-closeup.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/north/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "All three arrows show dark metal points leading upward and blue-white fletching trailing below; the left and right arrows angle outward while the center arrow remains vertical, giving the intended centered north fan with no reversed or sideways arrow.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The ability begins with an empty raised hand, then produces the three-arrow cluster directly at that hand at impact/release; the arrows separate into the fan while the actor remains coherent, and recovery removes the effect without a detached or differently oriented extra projectile.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "Native closeups show the three distinct arrows moving upward and spreading consistently from ticks 12 through 16; the tick-19 arrows are hidden by the building edge rather than turning sideways, and no unrelated white streak or actor-baked sideways projectile appears.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8-closeup.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

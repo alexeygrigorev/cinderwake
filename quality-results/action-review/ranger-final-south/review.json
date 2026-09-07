@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "bundleHash": "d5c123e1a45549888a15cf47fe28d06d62cac5dc20a95be50cb0fcd367fe7066",
+  "reviewer": {
+    "model": "gpt-5.6-luna"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/south/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The rendered arrow has blue fletching at its tail and a darker metal point at its lower end. Across the ordered flight frames the point remains down-facing while the arrow advances south; no backwards or sideways projectile is visible.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The arrow is visibly nocked at the bow/hand at impact, then appears immediately below the bow in flight+1 and continues with the same identity through recovery. The actor returns to a neutral recovery pose without an offset or reflection-side spawn.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "Native closeups provide a readable consecutive downward flight at actual pixel detail, while the full scenes show the same projectile moving away from the ranger. The pale westward shape in flight+2/flight+3 is the ranger's attached skin-colored hand and forearm, not an additional projectile; no misleading baked-in arrow, clipping, or detached effect is present.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8-closeup.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/south/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "All three fan arrows show blue fletching above their shafts and darker metal points below. Their ordered positions spread left, center, and right while each continues downward, producing a centered southward fan with no reversed tip.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The three arrows are visibly grouped at the bow/hand at impact, separate into the expected fan immediately at flight+1, and preserve their spacing and identity through flight. The ranger returns to a centered neutral recovery pose without a detached or mirrored-side effect.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "Native closeups show enough consecutive flight frames to track all three arrowheads and their outward spread without obscuration or unrelated streaks. The recovery capture only catches the arrows' feathered tails at the lower viewport edge after the established flight; this is natural off-screen continuation, not an in-flight clipping defect.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery-closeup.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

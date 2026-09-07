@@ -1,0 +1,3334 @@
+{
+  "schemaVersion": 1,
+  "registryHash": "ef6f237c11971195c247569a356860191567852283e52d97a80ae307afd4b308",
+  "sourceFingerprint": "80f0ab55ac97bd08f4d0b6b088eac14ddc6ed587e30253db8d323a8b72ccf917",
+  "scope": {
+    "actors": [
+      "ranger"
+    ],
+    "actions": [
+      "attack",
+      "ability"
+    ],
+    "profiles": [
+      "desktop"
+    ],
+    "directions": [
+      "north",
+      "east",
+      "south",
+      "west"
+    ]
+  },
+  "reviewer": {
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "high"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/north/desktop",
+      "actor": "ranger",
+      "action": "attack",
+      "direction": "north",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "north",
+        "input": {
+          "attack": true,
+          "aim": {
+            "x": 15872,
+            "y": 11776
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 0,
+              "y": -220
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the actual visible arrowhead or effect front independently of its bounding box and metadata. Does it point toward the declared target and along its displacement, in this cardinal direction? For melee, check the swing faces the target. A sideways or backwards arrow is FAIL."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Does the projectile visibly leave the bow, hand or weapon at release, with no detached start or incorrect side after reflection? Compare windup, impact and recovery for continuous identity and a readable connection between action and result."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check the action at actual gameplay scale and inspect small details at original resolution. Flag clipped arrows, misleading streaks, wrong orientation, equipment popping, incoherent recovery or unclear impact. If sparse frames cannot establish movement, return UNCERTAIN and request consecutive flight frames."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after.png",
+          "sha256": "3e204dd3d5ec8db1de72fb84dcb453b2fce8504ee3d2d8e55bdee0f1546b1c88"
+        },
+        {
+          "stage": "impact",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact.png",
+          "sha256": "f6e8d38183e5c5a2790d081f56842f0b0ae690be859f39865e05239cc45f476d"
+        },
+        {
+          "stage": "recovery",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery.png",
+          "sha256": "2b66b7c2becc38b619a352f12dbd4741a93332ac8f7f1802ea441b6218480f98"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1.png",
+          "sha256": "da3076b30655d5d82edbb0eb186b367653f823f0edbdde14e9372e9e2a7a80a9",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12580
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2.png",
+          "sha256": "9fd92261001efcfaf6dd2b8bdd9ea70c41b486a9d997721a2314d070d487ceb4",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12360
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12580
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3.png",
+          "sha256": "c252304cef76090dd80cd8631db022d61109413f57d84be0efaf23ad7445da0d",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12140
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12360
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5.png",
+          "sha256": "befea84eb0d708889977c2993cea82bb26e880309d1fcc31ef1161c461a0a034",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 11700
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 11920
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8.png",
+          "sha256": "da442713a406ba1451ec7a2a0289fd9c97f7f9cdc29753d5b8b7cc2f1cab471b",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 11040
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 11260
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after-closeup.png",
+          "sha256": "107f088fe31e66ff46bc4536320c8e4f97c58362dee0909b6ca165400d91a8ce",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0004-ranger-move-north-primary-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact-closeup.png",
+          "sha256": "09ecbb9e82cae1e42c22d1feab5a4da59c08c6ec6c1791461a248039d0fdbcee",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0005-ranger-move-north-primary-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1-closeup.png",
+          "sha256": "3a79a41f498cec274b85bff8467805b1305097d6d29d9ab9a453410abc134d30",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0006-ranger-move-north-primary-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2-closeup.png",
+          "sha256": "8e43a8c5cb16c64d9cbf28f9151c1aefd7dfd3756f51c7f6b5d0dbb9abaee54d",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0007-ranger-move-north-primary-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 245,
+            "width": 258,
+            "height": 262
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3-closeup.png",
+          "sha256": "9bb8ecd7c78b08ae58962e38a07157c84dabe2263fd5f97a98fa4f68970bb42d",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0008-ranger-move-north-primary-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 230,
+            "width": 258,
+            "height": 277
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5-closeup.png",
+          "sha256": "c4fd15bd99edf6b13a08abffe8b53519566fbab5f689991c0f510088d69472fd",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0009-ranger-move-north-primary-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 199,
+            "width": 258,
+            "height": 308
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8-closeup.png",
+          "sha256": "e768a06fb5d28dd1d8966c3978656e988b1a094253e04220724b67895d2557c7",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0010-ranger-move-north-primary-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 153,
+            "width": 258,
+            "height": 354
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery-closeup.png",
+          "sha256": "b005ee9d3425733a9df68a079863f95b65401e8e8edbe7e7a77472da18c048c3",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0011-ranger-move-north-primary-recovery.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/east/desktop",
+      "actor": "ranger",
+      "action": "attack",
+      "direction": "east",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "east",
+        "input": {
+          "attack": true,
+          "aim": {
+            "x": 16896,
+            "y": 12800
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 220,
+              "y": 0
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the actual visible arrowhead or effect front independently of its bounding box and metadata. Does it point toward the declared target and along its displacement, in this cardinal direction? For melee, check the swing faces the target. A sideways or backwards arrow is FAIL."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Does the projectile visibly leave the bow, hand or weapon at release, with no detached start or incorrect side after reflection? Compare windup, impact and recovery for continuous identity and a readable connection between action and result."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check the action at actual gameplay scale and inspect small details at original resolution. Flag clipped arrows, misleading streaks, wrong orientation, equipment popping, incoherent recovery or unclear impact. If sparse frames cannot establish movement, return UNCERTAIN and request consecutive flight frames."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after.png",
+          "sha256": "af54bd0637a4d5bb8b8a78b6320df366cd085742f8e00076716fbf33177cf2f5"
+        },
+        {
+          "stage": "impact",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact.png",
+          "sha256": "8b4bd5914ba7c02f258befe598ca0de72e10bf33793cbabcafb6b3e2d7e24646"
+        },
+        {
+          "stage": "recovery",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery.png",
+          "sha256": "bed5f28a489a5cdab61a784236508795de50f9905928141e3c1636fe019223f5"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1.png",
+          "sha256": "997550ec0ec8acba5e47a15d7605ed97a901597bf7b0fc2bdc1d1b39929a019a",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16092,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2.png",
+          "sha256": "507364da9b78820f76b0ddcc8be1f8aa1b750bbc40c66c9268e6aea84e4939dc",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16312,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16092,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3.png",
+          "sha256": "731cf7467baff3a75b86f0723a36230bb0a2006ad5b20e19bdf2e7bd8cc36a41",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16532,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16312,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5.png",
+          "sha256": "117fd6a7da239eb26bc5347a54036945768dfc04f27c78420f28f8235999a6e3",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16972,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16752,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8.png",
+          "sha256": "ad61bfec3389a1e58b29e5127bf8eed701f35e93e42401dda3f23b0861bcfe12",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 17632,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 17412,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after-closeup.png",
+          "sha256": "333bab067f584a0eef1f02c245d72527f0c964b99ccf0c6e771808ff241ace82",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact-closeup.png",
+          "sha256": "95535987866dbcf58248587f6a3c929170f95ff013fe2983ee591acac8788ac0",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1-closeup.png",
+          "sha256": "6182083bb0ac17d895c2dd1c780440cbc466b359e87d41e64f5e5d59fcbacca4",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2-closeup.png",
+          "sha256": "eb330fbda60e55fc8201cd7111398a3f409fabf196d111a9bce4ff289f77a1ef",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 264,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3-closeup.png",
+          "sha256": "094ab914399960e439b8b1d59c116dcc50428b798682a1da1511f7a7e16f7cf6",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 279,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5-closeup.png",
+          "sha256": "1ed0f3fb723a1b4deb3f0c7486027a2d1b5b37facbc7ccf6908f40a1139edab0",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 310,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8-closeup.png",
+          "sha256": "3c0c4f05f37e358583944630bd190f210469a479ec6fc274da5e462eadcdee57",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 357,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery-closeup.png",
+          "sha256": "a3fe24cbd10b6bff7898ff24e1923092cc956a791d136c1ee88ca5abd10c49d1",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 635,
+            "height": 258
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/south/desktop",
+      "actor": "ranger",
+      "action": "attack",
+      "direction": "south",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "south",
+        "input": {
+          "attack": true,
+          "aim": {
+            "x": 15872,
+            "y": 13824
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 0,
+              "y": 220
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the actual visible arrowhead or effect front independently of its bounding box and metadata. Does it point toward the declared target and along its displacement, in this cardinal direction? For melee, check the swing faces the target. A sideways or backwards arrow is FAIL."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Does the projectile visibly leave the bow, hand or weapon at release, with no detached start or incorrect side after reflection? Compare windup, impact and recovery for continuous identity and a readable connection between action and result."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check the action at actual gameplay scale and inspect small details at original resolution. Flag clipped arrows, misleading streaks, wrong orientation, equipment popping, incoherent recovery or unclear impact. If sparse frames cannot establish movement, return UNCERTAIN and request consecutive flight frames."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after.png",
+          "sha256": "ad3e0ce520f143a9d3033e7a61d3250822a729be05ee58148882dc46a811f579"
+        },
+        {
+          "stage": "impact",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact.png",
+          "sha256": "a76d8763f677de250689c3c369fff49e612b070b8fd788a44d2399cb201daf09"
+        },
+        {
+          "stage": "recovery",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery.png",
+          "sha256": "632387ade88f19a9afb585b4f0c849522a357076598c09e61929efdecf252362"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1.png",
+          "sha256": "0035b79099c6bc8ac635c8f3cb97870b37910b148d8bc60bf805dad63fd4ac53",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13020
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2.png",
+          "sha256": "e54ba43a881ae7e7e669582d96f70b10b66de4de67636f4ec75777f13906d9cc",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13240
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13020
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3.png",
+          "sha256": "f1f1a968fbe030c90feb280fdfd54675b91b8525b8ce50a1b0487c9654d1f0ab",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13460
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13240
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5.png",
+          "sha256": "2f830814aaa48a0f0e926db993c7284c1d5a3534886c7405160b054274ea9c75",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13900
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13680
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8.png",
+          "sha256": "7a65381a137e72747720f0516e5f3e520026ca096b93182f7ea65d76ca6a96c8",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 14560
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 14340
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after-closeup.png",
+          "sha256": "3e1dfece6a10c6cc0d7b422c4f746fea9ea1b236ea6b81f4388255e40fcf1354",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0046-ranger-move-south-primary-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact-closeup.png",
+          "sha256": "5ed16b41a7a73acd11a023bd5b66f1f1c986c63cf9f69d09ac7d7f64932bd14e",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0047-ranger-move-south-primary-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1-closeup.png",
+          "sha256": "455ad099025e5206268479d0b588a105c022db213907aa422c24b751af202ec6",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0048-ranger-move-south-primary-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2-closeup.png",
+          "sha256": "aa246f1136e4e254f9c1a70ebd03bef7fe3632a3716a413de3397a3a7a8c7d2e",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0049-ranger-move-south-primary-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3-closeup.png",
+          "sha256": "55dd564e7d2c0a6462119329b91d49fb709e83e5d678c343c057b4572e45dc37",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0050-ranger-move-south-primary-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5-closeup.png",
+          "sha256": "846b0064412b428139e4262b4ef2e7228ad2f77a87c313b04a2b31040f7997c7",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0051-ranger-move-south-primary-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 260
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8-closeup.png",
+          "sha256": "3571287739e8e42326609d1f7b908c102d42093d5cc4306c2e7fb50a479b0755",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0052-ranger-move-south-primary-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 307
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery-closeup.png",
+          "sha256": "0607eb3c8251e54f5473eb71db866bb450c1f51d462537d76cb9933bea2b9fe6",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0053-ranger-move-south-primary-recovery.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 585
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/west/desktop",
+      "actor": "ranger",
+      "action": "attack",
+      "direction": "west",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "west",
+        "input": {
+          "attack": true,
+          "aim": {
+            "x": 14848,
+            "y": 12800
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -220,
+              "y": 0
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the actual visible arrowhead or effect front independently of its bounding box and metadata. Does it point toward the declared target and along its displacement, in this cardinal direction? For melee, check the swing faces the target. A sideways or backwards arrow is FAIL."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Does the projectile visibly leave the bow, hand or weapon at release, with no detached start or incorrect side after reflection? Compare windup, impact and recovery for continuous identity and a readable connection between action and result."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check the action at actual gameplay scale and inspect small details at original resolution. Flag clipped arrows, misleading streaks, wrong orientation, equipment popping, incoherent recovery or unclear impact. If sparse frames cannot establish movement, return UNCERTAIN and request consecutive flight frames."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after.png",
+          "sha256": "409d1e26e7d3a2a39300bb61383bd6439d4027e08201c919012eb77edbd64738"
+        },
+        {
+          "stage": "impact",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact.png",
+          "sha256": "e77d732ab20b8e52280b51fe37e7f240880304c728a931e6db963bc2b300fb8c"
+        },
+        {
+          "stage": "recovery",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery.png",
+          "sha256": "6efb95125bb515c4935d95860e94d0df6cb46be57ee2a9f10f1306780ab1c093"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1.png",
+          "sha256": "56721cbbe72a19c8d0f785e1e95dc10fa5515a4962a938838c0a37b7999b685e",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15652,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2.png",
+          "sha256": "5fa5852bfdd5d790f1bac8d0028a65c269e69551042489102c44e8ec4281f5ea",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15432,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15652,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3.png",
+          "sha256": "ea78adfc88dde4ef1a50e21a8f33450cbaf50698cd082f6e4b88fbeb5cd3bacd",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15212,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15432,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5.png",
+          "sha256": "eb53d1412613c66879012991020a98c89040ef6656a22ccb5a202eb642b8aef3",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14772,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 14992,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8.png",
+          "sha256": "94c6968ac7becfa29f038531c36dcc87f6ef5a2474b30f805317682dddb9aa27",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14112,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 14332,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 6
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after-closeup.png",
+          "sha256": "2c80709ebc0d1a320ccff89b8ed560280e258ae71be2825aafa23512a56956a2",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0067-ranger-move-west-primary-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 7,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact-closeup.png",
+          "sha256": "54bd820c2dc6f76f3ea0270c090323e7bc2a766cc5a005c6d5e9b2f892ace37e",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0068-ranger-move-west-primary-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 8,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1-closeup.png",
+          "sha256": "41932e25cf6ef7c9eca5c79fa90923da78a975bed062820e6591a00c91d1a30c",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0069-ranger-move-west-primary-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 9,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2-closeup.png",
+          "sha256": "e134d304fa059283a7ffb831467bc93df5d22158c5f14eb79aa43037cf774cc7",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0070-ranger-move-west-primary-flight-2.png",
+          "nativeCrop": {
+            "left": 665,
+            "top": 249,
+            "width": 264,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 10,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3-closeup.png",
+          "sha256": "4685080c746bfd3a408b0483fae5d094b160be3959476f2387a68c3e2a3342a1",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0071-ranger-move-west-primary-flight-3.png",
+          "nativeCrop": {
+            "left": 650,
+            "top": 249,
+            "width": 279,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5-closeup.png",
+          "sha256": "4cfee2117e898e2d3fffa041f7a9cc581608f49b7cd0b79f47e892934f9a6f25",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0072-ranger-move-west-primary-flight-5.png",
+          "nativeCrop": {
+            "left": 619,
+            "top": 249,
+            "width": 310,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 15,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8-closeup.png",
+          "sha256": "5d2ab55376c757639b0d5e4af90b3ac0ea6166b2c89cac01822dba0f0b5b7c3a",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0073-ranger-move-west-primary-flight-8.png",
+          "nativeCrop": {
+            "left": 572,
+            "top": 249,
+            "width": 357,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 33,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery-closeup.png",
+          "sha256": "73772a3faf7ae3f2e19c9997b2047b884fa92c5ad7193d5707cffc844c3348a9",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0074-ranger-move-west-primary-recovery.png",
+          "nativeCrop": {
+            "left": 294,
+            "top": 249,
+            "width": 635,
+            "height": 258
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/north/desktop",
+      "actor": "ranger",
+      "action": "ability",
+      "direction": "north",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "north",
+        "input": {
+          "ability": true,
+          "aim": {
+            "x": 15872,
+            "y": 11776
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -40,
+              "y": -216
+            }
+          },
+          {
+            "id": "projectile:3",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 0,
+              "y": -220
+            }
+          },
+          {
+            "id": "projectile:4",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 40,
+              "y": -216
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the visible tip/front of every projectile or directional effect and compare it with target direction and displacement. A Ranger fan must spread around the intended direction and each arrowhead must align with its own travel. For radial effects inspect symmetry and centering."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Compare anticipation, release and recovery: effects must originate at the correct hand/weapon or actor center and remain attached through mirroring. Flag discontinuity, equipment popping, disconnected effects or unreadable consequence."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check each effect at gameplay size and original resolution. Flag clipping, unrelated white streaks, reversed tips and visual overlap that hides intent. Return UNCERTAIN when the frame interval or crop cannot reveal projectile motion."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after.png",
+          "sha256": "e3785a547dc7dcaf4527572ac24adf1974e2bc7e4b4316689640e5a37a21414b"
+        },
+        {
+          "stage": "impact",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact.png",
+          "sha256": "fed7524f1b994fa6272256d8ac71fa800efa8e883982c163572760f394f8beb8"
+        },
+        {
+          "stage": "recovery",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery.png",
+          "sha256": "a268449510f3af4f4c16e906c3f6cf5d5410d46b4adf517241b04d4a3d862cbe"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1.png",
+          "sha256": "68b570bf9a9bad177f529d7f68f3aa1af1b7a2ce1bf5025d9f4742542f058847",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15832,
+                "y": 12584
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12580
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15912,
+                "y": 12584
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2.png",
+          "sha256": "62e5eeed9d18e4e1f0950ef5e2643fe3841ac130af61f0119e8db9d340235423",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15792,
+                "y": 12368
+              },
+              "previousPosition": {
+                "x": 15832,
+                "y": 12584
+              },
+              "velocity": {
+                "x": -40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12360
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12580
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15952,
+                "y": 12368
+              },
+              "previousPosition": {
+                "x": 15912,
+                "y": 12584
+              },
+              "velocity": {
+                "x": 40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3.png",
+          "sha256": "f9cc753c7f7368602ff68aa759c34d3fce0e4eab9a053a9c55fd93c56217bf19",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15752,
+                "y": 12152
+              },
+              "previousPosition": {
+                "x": 15792,
+                "y": 12368
+              },
+              "velocity": {
+                "x": -40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 12140
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12360
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15992,
+                "y": 12152
+              },
+              "previousPosition": {
+                "x": 15952,
+                "y": 12368
+              },
+              "velocity": {
+                "x": 40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5.png",
+          "sha256": "ea8c7f553292ef856ae34d4f49c0f5f37771f5391d42df728ef8e5c45f516d54",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15672,
+                "y": 11720
+              },
+              "previousPosition": {
+                "x": 15712,
+                "y": 11936
+              },
+              "velocity": {
+                "x": -40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 11700
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 11920
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16072,
+                "y": 11720
+              },
+              "previousPosition": {
+                "x": 16032,
+                "y": 11936
+              },
+              "velocity": {
+                "x": 40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8.png",
+          "sha256": "da2461d4fd34d63c718fdf99d7d5d1be6641824be7c0eea12f0d56105f7d143f",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15552,
+                "y": 11072
+              },
+              "previousPosition": {
+                "x": 15592,
+                "y": 11288
+              },
+              "velocity": {
+                "x": -40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 11040
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 11260
+              },
+              "velocity": {
+                "x": 0,
+                "y": -220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16192,
+                "y": 11072
+              },
+              "previousPosition": {
+                "x": 16152,
+                "y": 11288
+              },
+              "velocity": {
+                "x": 40,
+                "y": -216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after-closeup.png",
+          "sha256": "6f99338558f0b732eead9a336b73a8e7b11857c40af20620e09fb90c352f5720",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0013-ranger-move-north-ability-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact-closeup.png",
+          "sha256": "bdbe4aa6e224a3be0377552bd7f1a151c90a7e12668f0e6c165c0862470ee3ed",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0014-ranger-move-north-ability-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1-closeup.png",
+          "sha256": "5318dca2a30440368a8f902242185a117a457e96e6abb3b236b82165d9b2f52d",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0015-ranger-move-north-ability-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2-closeup.png",
+          "sha256": "9964717126c9420ed64c7dcd61b2bb9bebf359df34b992acc04b557a51c5a124",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0016-ranger-move-north-ability-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 245,
+            "width": 258,
+            "height": 262
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3-closeup.png",
+          "sha256": "983548e65f3361a227943db36f6e4ed29a4be35c3cd0561c20233bca7858e164",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0017-ranger-move-north-ability-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 230,
+            "width": 258,
+            "height": 277
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5-closeup.png",
+          "sha256": "5c51057243b52a3dc52f03c0ad0f2f2409a9d3ed0a35e8c6811e37eeb221045d",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0018-ranger-move-north-ability-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 199,
+            "width": 262,
+            "height": 308
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8-closeup.png",
+          "sha256": "3940a93a80df0bc308a67189695e408c9339950826653913b5b6102c2bc29b96",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0019-ranger-move-north-ability-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 153,
+            "width": 271,
+            "height": 354
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery-closeup.png",
+          "sha256": "0ccdc942ed118ee04a8e9928a926a5787eddd778a41cde5606351d5bf618fe09",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0020-ranger-move-north-ability-recovery.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/east/desktop",
+      "actor": "ranger",
+      "action": "ability",
+      "direction": "east",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "east",
+        "input": {
+          "ability": true,
+          "aim": {
+            "x": 16896,
+            "y": 12800
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 216,
+              "y": -40
+            }
+          },
+          {
+            "id": "projectile:3",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 220,
+              "y": 0
+            }
+          },
+          {
+            "id": "projectile:4",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 216,
+              "y": 40
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the visible tip/front of every projectile or directional effect and compare it with target direction and displacement. A Ranger fan must spread around the intended direction and each arrowhead must align with its own travel. For radial effects inspect symmetry and centering."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Compare anticipation, release and recovery: effects must originate at the correct hand/weapon or actor center and remain attached through mirroring. Flag discontinuity, equipment popping, disconnected effects or unreadable consequence."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check each effect at gameplay size and original resolution. Flag clipping, unrelated white streaks, reversed tips and visual overlap that hides intent. Return UNCERTAIN when the frame interval or crop cannot reveal projectile motion."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after.png",
+          "sha256": "73ac012c448b03b5c5652618ea364d47d6dfcd19cb7f1b40dbef9ff365c28d38"
+        },
+        {
+          "stage": "impact",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact.png",
+          "sha256": "5fcb12f5020d21aaa4495bb933803949ff76de37b3b5552137004135ac3bf903"
+        },
+        {
+          "stage": "recovery",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery.png",
+          "sha256": "6b74cf788ff31535ac71b14ff14f908059bdb91ab046ac6bf6a9c0dd55cdaee0"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1.png",
+          "sha256": "c1151d8a2b044aff1cb90b6cbb08b974e74403c2944a90ec09b443d8a571016e",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16088,
+                "y": 12760
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16092,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16088,
+                "y": 12840
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2.png",
+          "sha256": "b308f8ed47f56015a70fb62081841ea55e32c2f35e91277784d76d67ec36757c",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16304,
+                "y": 12720
+              },
+              "previousPosition": {
+                "x": 16088,
+                "y": 12760
+              },
+              "velocity": {
+                "x": 216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16312,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16092,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16304,
+                "y": 12880
+              },
+              "previousPosition": {
+                "x": 16088,
+                "y": 12840
+              },
+              "velocity": {
+                "x": 216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3.png",
+          "sha256": "bf6e3868ad0dc9851fa0b06785f6ad0a5e8eb01064aa3aa955233095b1d1bf06",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16520,
+                "y": 12680
+              },
+              "previousPosition": {
+                "x": 16304,
+                "y": 12720
+              },
+              "velocity": {
+                "x": 216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16532,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16312,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16520,
+                "y": 12920
+              },
+              "previousPosition": {
+                "x": 16304,
+                "y": 12880
+              },
+              "velocity": {
+                "x": 216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5.png",
+          "sha256": "1d643ce73d2073c132ae56f5c404aff89244836f39ff61aa53595c3111cdcfbb",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16952,
+                "y": 12600
+              },
+              "previousPosition": {
+                "x": 16736,
+                "y": 12640
+              },
+              "velocity": {
+                "x": 216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16972,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 16752,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16952,
+                "y": 13000
+              },
+              "previousPosition": {
+                "x": 16736,
+                "y": 12960
+              },
+              "velocity": {
+                "x": 216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8.png",
+          "sha256": "97332655dd8f544236cd3d2478a0784d90b5fa6d371b4dc92c1b0c6ad8c1b85e",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 17600,
+                "y": 12480
+              },
+              "previousPosition": {
+                "x": 17384,
+                "y": 12520
+              },
+              "velocity": {
+                "x": 216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 17632,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 17412,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 17600,
+                "y": 13120
+              },
+              "previousPosition": {
+                "x": 17384,
+                "y": 13080
+              },
+              "velocity": {
+                "x": 216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after-closeup.png",
+          "sha256": "39cdb973cbdaf3c75d81d9a40bc27d6f0b6d65e0356baf88fdf9fe08f3bddc02",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact-closeup.png",
+          "sha256": "237c4fb405cdab17c39ee9798a05265a67b3ae541ab93f45d40b9c4874616e06",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1-closeup.png",
+          "sha256": "45eade0f00cfb508d8914b8f218730ff55affe93731b1a1bf13f97885f6d85f5",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2-closeup.png",
+          "sha256": "a450f5082f50b4559d3b776f98877ac0c083304ec846993199fe7d4601f5d7ce",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 264,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3-closeup.png",
+          "sha256": "d4f483c53a52d3ff8799744fe00deea00431f28575f7fb3d03c4a8ccd77d89a1",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 279,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5-closeup.png",
+          "sha256": "e509bdbbc21aec5d25401c7286a7831aca14d264213f9e5a4c107b9c09a5a988",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 310,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8-closeup.png",
+          "sha256": "8e23c6d2ff5e794dd545866fa153c5868a31f543afba4705d4287fee3611fa33",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 357,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery-closeup.png",
+          "sha256": "ad74ed8741626ca5f65857009134475331079bff174827ce72e1f05b967f8fc2",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 198,
+            "width": 790,
+            "height": 346
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/south/desktop",
+      "actor": "ranger",
+      "action": "ability",
+      "direction": "south",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "south",
+        "input": {
+          "ability": true,
+          "aim": {
+            "x": 15872,
+            "y": 13824
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 40,
+              "y": 216
+            }
+          },
+          {
+            "id": "projectile:3",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": 0,
+              "y": 220
+            }
+          },
+          {
+            "id": "projectile:4",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -40,
+              "y": 216
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the visible tip/front of every projectile or directional effect and compare it with target direction and displacement. A Ranger fan must spread around the intended direction and each arrowhead must align with its own travel. For radial effects inspect symmetry and centering."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Compare anticipation, release and recovery: effects must originate at the correct hand/weapon or actor center and remain attached through mirroring. Flag discontinuity, equipment popping, disconnected effects or unreadable consequence."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check each effect at gameplay size and original resolution. Flag clipping, unrelated white streaks, reversed tips and visual overlap that hides intent. Return UNCERTAIN when the frame interval or crop cannot reveal projectile motion."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after.png",
+          "sha256": "6e91ef4b1e3b781ac8dcc51f6be948bf46e0fb43f465d685a4546e7e2a8f5da3"
+        },
+        {
+          "stage": "impact",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact.png",
+          "sha256": "63cf7c0697e05b15e00f9e4402fb74c343080814f02441a3c9975e631ed750ea"
+        },
+        {
+          "stage": "recovery",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery.png",
+          "sha256": "9cb7d765add8762b8499d4ab2d67cdc601e753a79c6238450bc7779dbccf09f0"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1.png",
+          "sha256": "b4671ba1dcbeac7691f533b399eec696e528a0dd0b343cd1cf9e4b4946ad8d07",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15912,
+                "y": 13016
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13020
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15832,
+                "y": 13016
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2.png",
+          "sha256": "ac489dab41d333efd6b86f9b4e67d1abd754aceb16daa11c1780e0f0bc13f2a9",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15952,
+                "y": 13232
+              },
+              "previousPosition": {
+                "x": 15912,
+                "y": 13016
+              },
+              "velocity": {
+                "x": 40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13240
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13020
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15792,
+                "y": 13232
+              },
+              "previousPosition": {
+                "x": 15832,
+                "y": 13016
+              },
+              "velocity": {
+                "x": -40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3.png",
+          "sha256": "4e3098c22680937b852b07d45c94731632675620cbd060fd1dee0c3cb9434ea0",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15992,
+                "y": 13448
+              },
+              "previousPosition": {
+                "x": 15952,
+                "y": 13232
+              },
+              "velocity": {
+                "x": 40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13460
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13240
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15752,
+                "y": 13448
+              },
+              "previousPosition": {
+                "x": 15792,
+                "y": 13232
+              },
+              "velocity": {
+                "x": -40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5.png",
+          "sha256": "b11cd0a7e071d590e10c1bb0fbc7517246deeadfdb64f2cffccf369b39bec862",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16072,
+                "y": 13880
+              },
+              "previousPosition": {
+                "x": 16032,
+                "y": 13664
+              },
+              "velocity": {
+                "x": 40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 13900
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 13680
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15672,
+                "y": 13880
+              },
+              "previousPosition": {
+                "x": 15712,
+                "y": 13664
+              },
+              "velocity": {
+                "x": -40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8.png",
+          "sha256": "c97c7ccb7c8e73e625e22fb1f8a6cf70169b32b2d4f5206a4592663185ac5cb7",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 16192,
+                "y": 14528
+              },
+              "previousPosition": {
+                "x": 16152,
+                "y": 14312
+              },
+              "velocity": {
+                "x": 40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15872,
+                "y": 14560
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 14340
+              },
+              "velocity": {
+                "x": 0,
+                "y": 220
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15552,
+                "y": 14528
+              },
+              "previousPosition": {
+                "x": 15592,
+                "y": 14312
+              },
+              "velocity": {
+                "x": -40,
+                "y": 216
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after-closeup.png",
+          "sha256": "454491ca38869008caa3a01af8b0f99a80bb19f56545612ab5f58defd179a362",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0055-ranger-move-south-ability-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact-closeup.png",
+          "sha256": "7e8511b39c13e1e5fd77fb3ac67ec6ef00f1a6afb814744e45f3d174d63d14fd",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0056-ranger-move-south-ability-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1-closeup.png",
+          "sha256": "fa3aa5280a2d3119be059986cce7bec34bfa9be9295f3f69db66341c354fe091",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0057-ranger-move-south-ability-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2-closeup.png",
+          "sha256": "a120b52dd513b1407210802771a08f739ed0c9a51479a0f205bb075010de698d",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0058-ranger-move-south-ability-flight-2.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3-closeup.png",
+          "sha256": "0f6486c058e911545123eab5236c0540d7f37d8614cfc8eca56c7abe878a1392",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0059-ranger-move-south-ability-flight-3.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5-closeup.png",
+          "sha256": "862b73fa00798d07a91d0b3abf9730c235caa0c6f12ef8a0652107a6d85f8915",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0060-ranger-move-south-ability-flight-5.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 260
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8-closeup.png",
+          "sha256": "e5bfbeea204f98eecaadaee828a05c821d9345e350f7dd7015c3ffe5990f63ff",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0061-ranger-move-south-ability-flight-8.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 259,
+            "height": 307
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery-closeup.png",
+          "sha256": "c1468cb4a44696fc98bd5e19026c2d9053c5c40deb21d1062e7bc34f1a38697e",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0062-ranger-move-south-ability-recovery.png",
+          "nativeCrop": {
+            "left": 662,
+            "top": 249,
+            "width": 347,
+            "height": 651
+          }
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/west/desktop",
+      "actor": "ranger",
+      "action": "ability",
+      "direction": "west",
+      "profile": "desktop",
+      "expectation": {
+        "intendedDirection": "west",
+        "input": {
+          "ability": true,
+          "aim": {
+            "x": 14848,
+            "y": 12800
+          }
+        },
+        "produced": [
+          {
+            "id": "projectile:2",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -216,
+              "y": 40
+            }
+          },
+          {
+            "id": "projectile:3",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -220,
+              "y": 0
+            }
+          },
+          {
+            "id": "projectile:4",
+            "type": "projectile",
+            "ownerId": "player",
+            "position": {
+              "x": 15872,
+              "y": 12800
+            },
+            "velocity": {
+              "x": -216,
+              "y": -40
+            }
+          }
+        ],
+        "note": "Screen north is up, east right, south down, west left. Evaluate actual painted tips; direction metadata alone cannot establish them."
+      },
+      "automatic": {
+        "pass": true,
+        "evidence": "quality-results/directional-bank/ranger-final/comparison.json",
+        "sha256": "5acf55d08d73cb0095c6947e4533b910043fa506156126f67882debbeff4b591"
+      },
+      "checks": [
+        {
+          "id": "visible-heading",
+          "instruction": "Identify the visible tip/front of every projectile or directional effect and compare it with target direction and displacement. A Ranger fan must spread around the intended direction and each arrowhead must align with its own travel. For radial effects inspect symmetry and centering."
+        },
+        {
+          "id": "origin-and-timing",
+          "instruction": "Compare anticipation, release and recovery: effects must originate at the correct hand/weapon or actor center and remain attached through mirroring. Flag discontinuity, equipment popping, disconnected effects or unreadable consequence."
+        },
+        {
+          "id": "readable-motion",
+          "instruction": "Check each effect at gameplay size and original resolution. Flag clipping, unrelated white streaks, reversed tips and visual overlap that hides intent. Return UNCERTAIN when the frame interval or crop cannot reveal projectile motion."
+        }
+      ],
+      "frames": [
+        {
+          "stage": "windup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after.png",
+          "sha256": "b86afebfe1857ddd735a3b32e71eeb747b201c3293b88c27a35f2ede5fb3ccb7"
+        },
+        {
+          "stage": "impact",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact.png",
+          "sha256": "1f826ca52a12a69d9d66bdd4aad8980f1436df69f477f08a517d2595d5190b5a"
+        },
+        {
+          "stage": "recovery",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery.png",
+          "sha256": "646d3cfecc59bd9957aa291ca0538cc7444bee928bf6546e404c20c6798050db"
+        }
+      ],
+      "additionalFrames": [
+        {
+          "stage": "flight+1",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1.png",
+          "sha256": "bbbbbf03f3d5d520b474252b83fc20d115ae7c773d0b35865fc2bdefe4bf3fd4",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15656,
+                "y": 12840
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15652,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15656,
+                "y": 12760
+              },
+              "previousPosition": {
+                "x": 15872,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+2",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2.png",
+          "sha256": "7ec8d2f51cb5b2b84c74550060a963b55ee2313ad6699af3d6c6315a05564dae",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15440,
+                "y": 12880
+              },
+              "previousPosition": {
+                "x": 15656,
+                "y": 12840
+              },
+              "velocity": {
+                "x": -216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15432,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15652,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15440,
+                "y": 12720
+              },
+              "previousPosition": {
+                "x": 15656,
+                "y": 12760
+              },
+              "velocity": {
+                "x": -216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+3",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3.png",
+          "sha256": "b3c1bbcd8b72f0330430b833e4ab844af074a5beac31746bb8dee9cec318b9f1",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15224,
+                "y": 12920
+              },
+              "previousPosition": {
+                "x": 15440,
+                "y": 12880
+              },
+              "velocity": {
+                "x": -216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15212,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 15432,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 15224,
+                "y": 12680
+              },
+              "previousPosition": {
+                "x": 15440,
+                "y": 12720
+              },
+              "velocity": {
+                "x": -216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+5",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5.png",
+          "sha256": "df63f23ec14a98674d43ec563a39c9582747a55d5aecc14d2d30b86493dc3ac2",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14792,
+                "y": 13000
+              },
+              "previousPosition": {
+                "x": 15008,
+                "y": 12960
+              },
+              "velocity": {
+                "x": -216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14772,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 14992,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14792,
+                "y": 12600
+              },
+              "previousPosition": {
+                "x": 15008,
+                "y": 12640
+              },
+              "velocity": {
+                "x": -216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        },
+        {
+          "stage": "flight+8",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8.png",
+          "sha256": "47366e00553aa6b3ed08c04682250d1340fca7057fcdf2534c33c76e7c9a63e8",
+          "projectiles": [
+            {
+              "id": "projectile:2",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14144,
+                "y": 13120
+              },
+              "previousPosition": {
+                "x": 14360,
+                "y": 13080
+              },
+              "velocity": {
+                "x": -216,
+                "y": 40
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:3",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14112,
+                "y": 12800
+              },
+              "previousPosition": {
+                "x": 14332,
+                "y": 12800
+              },
+              "velocity": {
+                "x": -220,
+                "y": 0
+              },
+              "spawnedAtTick": 10
+            },
+            {
+              "id": "projectile:4",
+              "owner": "player",
+              "hostile": false,
+              "position": {
+                "x": 14144,
+                "y": 12480
+              },
+              "previousPosition": {
+                "x": 14360,
+                "y": 12520
+              },
+              "velocity": {
+                "x": -216,
+                "y": -40
+              },
+              "spawnedAtTick": 10
+            }
+          ]
+        }
+      ],
+      "closeups": [
+        {
+          "stage": "native-closeup",
+          "tick": 1,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after-closeup.png",
+          "sha256": "838a8b4e4ffcbd9ad646794c295db461dd19234b1e2d0dfac62ca51bc7db8e67",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0076-ranger-move-west-ability-after.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 11,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact-closeup.png",
+          "sha256": "ff80e8ed45a42ddf0398a7cfa13e066fd15ef53af7ef12ad809f8c0c18990584",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0077-ranger-move-west-ability-impact.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 12,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1-closeup.png",
+          "sha256": "a80e23097b793623d266c9bf8c2f1401c576a6b80a1f8d2130b8e0cce5586dec",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0078-ranger-move-west-ability-flight-1.png",
+          "nativeCrop": {
+            "left": 671,
+            "top": 249,
+            "width": 258,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 13,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2-closeup.png",
+          "sha256": "9cae98e5575079be6b504afa9701840098b598426dc08904d921453cdf217ac5",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0079-ranger-move-west-ability-flight-2.png",
+          "nativeCrop": {
+            "left": 665,
+            "top": 249,
+            "width": 264,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 14,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3-closeup.png",
+          "sha256": "4bc97a638903d8c5e17b92488216f3d10dfb95b96ddf86dba0d26e75ad3fbda5",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0080-ranger-move-west-ability-flight-3.png",
+          "nativeCrop": {
+            "left": 650,
+            "top": 249,
+            "width": 279,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 16,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5-closeup.png",
+          "sha256": "4a518349aa52f8c1ed70c3ba00a62d940b992b5770267bc21dba5df63b930495",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0081-ranger-move-west-ability-flight-5.png",
+          "nativeCrop": {
+            "left": 619,
+            "top": 249,
+            "width": 310,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 19,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8-closeup.png",
+          "sha256": "e76ef7e79e759e132b07f4be106f8b36de2dbebcddaf84096183d750d5e6f2f0",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0082-ranger-move-west-ability-flight-8.png",
+          "nativeCrop": {
+            "left": 572,
+            "top": 249,
+            "width": 357,
+            "height": 258
+          }
+        },
+        {
+          "stage": "native-closeup",
+          "tick": 47,
+          "file": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery-closeup.png",
+          "sha256": "af055ce4ad75e8573b54bde8b08e82c329d2d245d51d14f210e926def494c028",
+          "sourceFrame": "quality-results/directional-bank/ranger-final/desktop/frames/frame-0083-ranger-move-west-ability-recovery.png",
+          "nativeCrop": {
+            "left": 139,
+            "top": 198,
+            "width": 790,
+            "height": 346
+          }
+        }
+      ]
+    }
+  ],
+  "bundleHash": "321f2e1aa8450caf25f5b256156412494e2297ac948fbb170c0573846668c4fe"
+}

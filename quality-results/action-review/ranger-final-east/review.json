@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "bundleHash": "a1881cdf9c946c305ff9c4b9a55a1e42f7f383f7c9678ed3fd28e56860b3f27e",
+  "reviewer": {
+    "model": "gpt-5.6-luna"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/east/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The arrow's blue feather cluster is the tail on the left and its darker metal point is the tip on the right. Across the consecutive flight frames, the tip remains east-facing and the projectile advances rightward without a sideways or backward flip.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "Windup is clear before emission; the arrow is visibly connected to the bow/hand at release, then separates and remains continuous through flight before the actor returns to the recovery pose. No detached start or incorrect-side reflection is visible.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0025-ranger-move-east-primary-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0026-ranger-move-east-primary-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0032-ranger-move-east-primary-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "The native crops make the small arrow readable at every sampled flight stage, and the full scenes show its uninterrupted eastward travel. It is not clipped, and no unrelated white streak or second baked-in projectile points or moves differently from the emitted arrow.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0028-ranger-move-east-primary-flight-2.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0029-ranger-move-east-primary-flight-3.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0030-ranger-move-east-primary-flight-5.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0027-ranger-move-east-primary-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0031-ranger-move-east-primary-flight-8-closeup.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/east/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8-closeup.png",
+        "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery-closeup.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "All three fan arrows have blue feather tails on the left and distinct metal points on the right. The upper, center and lower arrows keep their respective up-right, right and down-right headings while the fan stays symmetric around east through the consecutive flight frames.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8-closeup.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "PASS",
+          "observation": "The ability begins with a readable anticipation, then the three arrows release together from the bow/hand fan. Their spacing and identities remain coherent as they separate, and the actor visibly returns to recovery after release with no detached effect or mirrored emission on the wrong side.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0034-ranger-move-east-ability-after-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0035-ranger-move-east-ability-impact-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0041-ranger-move-east-ability-recovery-closeup.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "PASS",
+          "observation": "At gameplay scale the full scenes show three distinct arrows leaving the actor and progressing east; the native crops preserve readable tips, tails and fan separation through flight+8. No arrow is clipped, reversed, or replaced by an unrelated white streak, and no extra projectile is baked into the actor animation.",
+          "frames": [
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0037-ranger-move-east-ability-flight-2.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0038-ranger-move-east-ability-flight-3.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0039-ranger-move-east-ability-flight-5.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0036-ranger-move-east-ability-flight-1-closeup.png",
+            "quality-results/directional-bank/ranger-final/desktop/frames/frame-0040-ranger-move-east-ability-flight-8-closeup.png"
+          ]
+        }
+      ]
+    }
+  ]
+}
