@@ -1,6 +1,6 @@
 # Next steps: an executable plan for bounded implementation agents
 
-Status: T12 automated gate passed; T13 play review remains. Evidence: `quality-results/game-feedback/t12-final/`. Baseline: `a44734b` (2026-09-06).
+Status: BEHAVIOR_VERIFIED / PLAY_REVIEW_PENDING. T12 automated gate passed; T13 human acceptance remains. Evidence: `quality-results/game-feedback/t12-final/` and `quality-results/game-feedback/t13-play-review/`. Baseline: `a44734b` (2026-09-06).
 Audience: a coordinator and agents such as Luna Max. Give an agent **one task card**, not this entire backlog as an implementation assignment.
 
 ## Outcome and scope
@@ -44,6 +44,7 @@ Inference: improve the oracle before adding a more demanding encounter, so agent
 
 - T12 — `REVIEW` / `PLAY_REVIEW_PENDING`: implemented in `9e45c34`, hardened through `9806916`, and integrated into the aggregate evidence contract in `a1b06cb`. The committed gate passed in `run-o2kNCf` with distinct desktop and portrait-phone cases, eight ordered checkpoints per profile, real browser input, observe-only state access, save/reload, and victory assertions. Final milestone evidence is retained at `quality-results/game-feedback/t12-final/`; independent human play review remains T13.
 - Post-T12 verification — the current source passes the complete `npm run check` gate, including 57 Vitest files / 501 tests. Two source-stable aggregate retries (`run-oc4s4B` and `run-eJ5VUz`) passed desktop but the phone journey exceeded its fixed 300-second physical budget under the loaded shared host; those failures remain retained and are not relabeled. `run-o2kNCf` remains the last accepted aggregate evidence; T13 human play review is still pending.
+- T13 — `BEHAVIOR_VERIFIED` / `PLAY_REVIEW_PENDING`: refreshed the four launch-contract baselines in `51c5de3`, then ran the Bell Keeper suite with tracing (`5/5` passed). Retained desktop pre-impact/after-dodge and portrait-phone pre-impact screenshots plus traces at `quality-results/game-feedback/t13-play-review/`; the visible slam ring reads clearly on both form factors. The independent review still requires a human sign-off, flags that the captured dodge does not make cause-and-effect obvious, and cannot judge the recovery/pickup frames from this bundle. The full E2E gate is `98/99`: all short cases and desktop journey pass, while phone exceeds the fixed 300-second budget (save/reload); an isolated retry also exceeded it at `approach monster:02`. Keep these timing failures honest; do not raise the budget or relabel them as transport failures. Human follow-up: play the windup-to-impact-to-recovery sequence with sound on and muted phone, verify pickup/save feedback and travel dead time, then record `ACCEPT` or a bounded follow-up card.
 
 A task is too large if it needs a new persistent schema, changes an unlisted subsystem, or cannot reach its stated gate without redesign. Stop and return a split proposal; do not improvise the architecture.
 
