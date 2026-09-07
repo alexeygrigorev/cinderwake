@@ -401,7 +401,7 @@ export class CampaignBrowserDriver {
   ): Promise<GameState> {
     for (let attempt = 0; attempt < 256; attempt += 1) {
       this.assertBudget(label);
-      let before = await this.state();
+      const before = await this.state();
       if (complete(before)) {
         await this.stopNavigation();
         return before;
