@@ -34,6 +34,8 @@ export interface SpriteDefinitionV1 {
   clips: Record<string, SpriteClipV1>;
   logicalSize?: { width: number; height: number };
   anchor?: { x: number; y: number };
+  /** Authored tail-to-tip vector in source pixels; canvas +y points down. */
+  sourceDirection?: { x: number; y: number };
 }
 
 export interface SpriteCatalogV1 {
@@ -543,12 +545,39 @@ lootIds.forEach((id, itemIndex) => {
   });
 });
 
-register(
-  singleFrameSprite("projectile:friendly", "atlas:effects", 0, 0, "projectile"),
-);
-register(
-  singleFrameSprite("projectile:hostile", "atlas:effects", 2, 0, "projectile"),
-);
+register({
+  ...singleFrameSprite(
+    "projectile:friendly",
+    "atlas:effects",
+    0,
+    0,
+    "projectile",
+  ),
+  // Arrowhead (49, 211), fletching (202, 80), measured on the source cell.
+  sourceDirection: { x: -153, y: 131 },
+});
+register({
+  ...singleFrameSprite(
+    "projectile:hostile",
+    "atlas:effects",
+    2,
+    0,
+    "projectile",
+  ),
+  sourceDirection: { x: -115, y: 145 },
+});
+
+/** Rotate the painted tip into the travel direction, not the atlas x-axis. */
+export function projectileRotation(
+  spriteId: string,
+  travel: { x: number; y: number },
+): number {
+  const source = SPRITE_CATALOG.sprites[spriteId]?.sourceDirection;
+  return (
+    Math.atan2(travel.y, travel.x) -
+    (source ? Math.atan2(source.y, source.x) : 0)
+  );
+}
 register(textureSprite("scenery:tile:floor", "atlas:floor"));
 register(textureSprite("scenery:tile:wall", "atlas:ground"));
 register(textureSprite("scenery:edge:floor-blend", "atlas:floor"));

@@ -21,7 +21,12 @@ import {
   type SpriteReferenceV2,
   type WorldUiCallV1,
 } from "./manifest";
-import { SPRITE_CATALOG, spriteImage, type SourceRectV1 } from "./sprites";
+import {
+  SPRITE_CATALOG,
+  spriteImage,
+  projectileRotation,
+  type SourceRectV1,
+} from "./sprites";
 
 interface ImageBackedReference {
   assetId: string;
@@ -709,7 +714,7 @@ export class CanvasRenderer {
 
   private rotationFor(call: DrawCallV1): number {
     if (call.type !== "projectile") return 0;
-    return Math.atan2(call.facing.y, call.facing.x);
+    return projectileRotation(call.spriteId ?? call.geometryId, call.facing);
   }
 
   private drawWorldSprite(
