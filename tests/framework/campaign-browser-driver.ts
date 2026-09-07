@@ -444,14 +444,9 @@ export class CampaignBrowserDriver {
         continue;
       }
       // Keep pursuit chunks short enough to turn around scenery while an
-      // enemy is moving. The portrait canvas needs a longer no-combat chunk
-      // to avoid repeatedly falling back when distant route points are off
-      // screen; the wider desktop canvas is reliable at six cells.
-      const waypointIndex = this.profile.hasTouch
-        ? attackWhileMoving
-          ? 4
-          : 8
-        : 6;
+      // enemy is moving. The same four-cell chunk keeps phone route taps
+      // within the slower aggregate browser budget; desktop can use six.
+      const waypointIndex = this.profile.hasTouch ? 4 : 6;
       const waypoint = route[Math.min(route.length - 1, waypointIndex)]!;
       const gesture = await this.navigateToPoint(
         waypoint,
@@ -473,7 +468,11 @@ export class CampaignBrowserDriver {
       const waypointReached = (state: GameState): boolean =>
         complete(state) ||
         distance(state.player.position, waypoint) < 176 ||
-        (!routeGesture && distance(state.player.position, start) > 64);
+        (!routeGesture && distance(state.player.position, start) > 64) ||
+        (this.profile.hasTouch &&
+          !attackWhileMoving &&
+          routeGesture &&
+          distance(state.player.position, start) > 512);
       let latest: GameState;
       try {
         latest = await this.waitFor(
