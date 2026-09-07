@@ -60,6 +60,13 @@ ordered windup, impact and recovery images, intended direction, input, emitted
 objects and explicit heading/origin/readability checks. The preferred reviewer
 is stored in the registry, not inferred by whoever runs the task.
 
+The recorder also captures release+1, +2, +3, +5 and +8 simulation ticks in
+`additionalFrames`. PNGs preserve native canvas backing pixels. Each retained
+frame has an unscaled crop enclosing the player and visible projectiles/effects;
+the crop stays tied to its complete scene and tick. The reviewer merges the
+main and additional frames by tick and inspects every scene and crop. Crops help
+resolve arrowheads without losing the bow, actor or surrounding context.
+
 Dispatch the contents of `quality-results/action-review/ranger/reviewer-prompt.md`
 through the available agent tool with `model: "gpt-5.6-luna"`,
 `reasoning_effort: "high"` and a fresh context (`fork_turns: "none"`). Tell it
@@ -118,6 +125,10 @@ recorder. The capture file contains `sourceFingerprint` from
 ```
 
 Stages must exactly match the action's registry entry and ticks must increase.
+Optional `additionalFrames` use the same image structure with increasing ticks.
+Optional `closeups` add `sourceFrame`, naming their same-tick full-scene image.
+Every additional image is hash-checked and must appear in `inspectedFrames`;
+reviewers can cite it as evidence for an individual criterion.
 The adapter is responsible for evaluating its automatic report honestly; the
 generic runner binds that report by hash and requires its declared pass. Bundle
 and review validation detect stale runtime/assets, edited PNGs or reports,
