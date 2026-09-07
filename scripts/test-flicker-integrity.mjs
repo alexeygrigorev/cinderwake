@@ -363,6 +363,16 @@ async function actionEventCount(page, eventType) {
 
 async function activateLiveAction(page, profile, action, pace) {
   const eventType = action === "ability" ? "ability_started" : "attack_started";
+  const readyTickKey =
+    action === "ability" ? "abilityReadyTick" : "attackReadyTick";
+  await page.waitForFunction(
+    (key) => {
+      const snapshot = window.__GAME_OBSERVE__?.snapshot();
+      return Boolean(snapshot && snapshot.tick >= snapshot.player[key]);
+    },
+    readyTickKey,
+    { timeout: 8_000 },
+  );
   const before = await actionEventCount(page, eventType);
   const button = page.locator(
     `${profile.hasTouch ? ".mobile-actions" : ".skills"} [data-action='${action}']`,
