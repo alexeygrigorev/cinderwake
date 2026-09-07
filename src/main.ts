@@ -693,14 +693,12 @@ function updateHud(state: GameState): void {
   const objectiveHeading = campaign
     ? state.phase === "won"
       ? "Rift sealed"
-      : journal?.cue.kind === "enemy"
-        ? journal.cue.title
-        : {
-            "break-ambush": "Break the ambush",
-            "silence-bell": "Silence the bell",
-            "carry-warning": "Reach Embercross",
-            "seal-night": "Seal the rift",
-          }[journal!.activeId]
+      : {
+          "break-ambush": "Break the ambush",
+          "silence-bell": "Silence the bell",
+          "carry-warning": "Reach Embercross",
+          "seal-night": "Seal the rift",
+        }[journal!.activeId]
     : state.phase === "won"
       ? "Rift sealed"
       : livingMonsters.length

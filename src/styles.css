@@ -3197,6 +3197,8 @@ summary:focus-visible,
     top: max(45px, calc(var(--safe-area-inset-top) + 35px));
     left: 10px;
     max-width: calc(100vw - 20px);
+    width: min(440px, calc(100vw - 20px));
+    flex-wrap: nowrap;
     gap: 5px;
   }
   .campaign-tools button {
@@ -3205,6 +3207,20 @@ summary:focus-visible,
   }
   .campaign-tools [data-interact] {
     max-width: 140px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .campaign-tools [data-sound-toggle] {
+    flex-shrink: 0;
+  }
+  .campaign-tools [data-save-state="unavailable"] {
+    position: absolute;
+    top: 48px;
+    left: 0;
+    white-space: nowrap;
+  }
+  .game:has([data-save-state="unavailable"]) .objective {
+    top: 140px;
   }
   .game .hud.bottom {
     bottom: calc(150px + var(--safe-area-inset-bottom));
