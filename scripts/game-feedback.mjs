@@ -145,6 +145,7 @@ const componentDefinitions = [
       "tests/e2e/campaign-production-journey.spec.ts",
       "--workers=1",
       "--reporter=list,json",
+      "--trace=off",
       "--output",
       path.join(output, "campaign-browser-artifacts"),
     ],
