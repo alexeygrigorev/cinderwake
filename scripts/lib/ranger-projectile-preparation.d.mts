@@ -7,4 +7,5 @@ export function removeRangerDetachedArrow(
 export function prepareRangerProjectileAtlas(
   buffer: Uint8Array,
   sourceSha256: string,
+  options?: { candidateOutput?: boolean },
 ): Promise<Buffer>;

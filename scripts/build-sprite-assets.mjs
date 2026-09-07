@@ -552,6 +552,11 @@ async function buildActor(actorId) {
               "ranger-direction-actions-source.png",
             ),
           ),
+          {
+            candidateOutput:
+              OPTIONS.outputDirectory !==
+              path.join(ROOT, "public", "assets", "sprites"),
+          },
         )
       : assembled;
   await fs.writeFile(destination, prepared);

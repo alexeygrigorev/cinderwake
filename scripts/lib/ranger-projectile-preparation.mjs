@@ -79,7 +79,21 @@ export function removeRangerDetachedArrow(cell, sourceSha256) {
   return output;
 }
 
-export async function prepareRangerProjectileAtlas(buffer, sourceSha256) {
+export async function prepareRangerProjectileAtlas(
+  buffer,
+  sourceSha256,
+  { candidateOutput = false } = {},
+) {
+  // An isolated generation trial can change other cells and hence the shared
+  // palette. This exact-pixel correction belongs only to the reviewed atlas;
+  // preserve an unreviewed candidate unchanged rather than applying that mask.
+  // Production builds never opt into this branch and still fail closed.
+  if (
+    candidateOutput &&
+    hash(buffer) !==
+      "d3def1e24d76dbba54db92b2d8bbde332eda542e1af3c08d744ec65566676862"
+  )
+    return Buffer.from(buffer);
   const { data, info } = await sharp(buffer)
     .ensureAlpha()
     .raw()
