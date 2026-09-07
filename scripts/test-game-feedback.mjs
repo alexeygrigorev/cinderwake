@@ -285,6 +285,42 @@ test("browser reports bind exact project, file and title identities", () => {
   );
 });
 
+test("browser identities distinguish equal titles in separate describe blocks", () => {
+  const browser = passingBrowser();
+  const template = browser.suites[0].suites[0].specs[0];
+  const makeSuite = (title) => ({
+    title,
+    file: "e2e/arena.spec.ts",
+    specs: [
+      {
+        ...structuredClone(template),
+        title: "same journey title",
+      },
+    ],
+  });
+  browser.suites[0].specs = [];
+  browser.suites[0].suites = [
+    makeSuite("desktop production journey"),
+    makeSuite("phone production journey"),
+  ];
+
+  const expectedBrowserCases = browserExpectation(browser);
+  assert.deepEqual(
+    expectedBrowserCases.map(({ titlePath }) => titlePath),
+    [
+      ["desktop production journey", "same journey title"],
+      ["phone production journey", "same journey title"],
+    ],
+  );
+  assert.equal(
+    componentReportValid("campaign-browser", browser, {
+      expectedBrowserCases,
+      repositoryRoot: "/repo",
+    }),
+    true,
+  );
+});
+
 test("rules reject a passing headline that disagrees with nested results", () => {
   const failedNested = passingRules();
   failedNested.testResults[0].assertionResults[0].status = "failed";
