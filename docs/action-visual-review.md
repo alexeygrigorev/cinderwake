@@ -23,6 +23,12 @@ recorder. Other games supply their own action catalog and ordered captures.
    origin, direction, movement, collision and rotation relative to the painted
    source tip. For a puzzle, check the moved piece, destination, score and undo.
    Keep failed automatic checks blocking; a visual opinion cannot override them.
+   Separate the simulation collision origin from the painted launch socket.
+   In an overhead game the simulation may use feet on the ground plane while
+   the visible projectile must leave a raised bow or hand. Bind that presentation
+   offset to the launch direction, not the player's later facing. Test the
+   release point across directions and zoom levels; Cinderwake's regression is
+   `tests/unit/projectile-release-socket.test.ts`.
 3. Record a reproducible sequence from real simulation/rendering, including the
    input, expected result, ordered ticks, original PNGs and automatic report.
    Capture before/anticipation, release/impact, and recovery. Small or fast effects
@@ -61,6 +67,11 @@ browser journeys and presentation checks.
 node scripts/test-directional-bank.mjs --profiles desktop
 node scripts/action-visual-review.mjs build --actors ranger --actions attack,ability --profiles desktop
 ```
+
+Use the recorder's `--output quality-results/directional-bank/round-name` and
+the bundle builder's matching `--directional-bank` option to preserve an earlier
+round while a reviewer is still inspecting it. Never overwrite evidence under
+an active review.
 
 The result is eight cases: primary and ability in four directions. Each case has
 ordered windup, impact and recovery images, intended direction, input, emitted
