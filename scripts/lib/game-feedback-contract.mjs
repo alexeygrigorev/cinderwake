@@ -98,7 +98,8 @@ export function collectBrowserCases(
   function visitSuite(suite, ancestors, inheritedFile) {
     if (!suite || typeof suite !== "object") return;
     const file = suite.file ?? inheritedFile;
-    const suiteTitles = suite.file
+    const rootFileSuite = suite.file && inheritedFile === null;
+    const suiteTitles = rootFileSuite
       ? ancestors
       : typeof suite.title === "string" && suite.title
         ? [...ancestors, suite.title]
