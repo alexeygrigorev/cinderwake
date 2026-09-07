@@ -25,6 +25,10 @@ const PHONE: CampaignBrowserProfile = {
   isMobile: true,
 };
 
+// The journey records named page/canvas checkpoints and a gesture timeline;
+// video encoding adds avoidable latency to this long physical route.
+test.use({ video: "off" });
+
 async function runJourney(
   page: Page,
   testInfo: TestInfo,
