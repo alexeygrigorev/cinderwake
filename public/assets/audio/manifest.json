@@ -4,7 +4,8 @@
   "credentialMethod": "ELEVENLABS_API_KEY loaded by Node --env-file; never stored in assets",
   "documentation": [
     "https://elevenlabs.io/docs/api-reference/text-to-sound-effects/convert",
-    "https://elevenlabs.io/docs/api-reference/text-to-speech/convert"
+    "https://elevenlabs.io/docs/api-reference/text-to-speech/convert",
+    "https://elevenlabs.io/docs/api-reference/music/compose"
   ],
   "assets": [
     {
@@ -264,6 +265,25 @@
         "gainDb": 3.4,
         "sourceSha256": "e759eb0564e8038845974a839d4e21c68e9924b7daffe8abddd11afc540d3b28"
       }
+    },
+    {
+      "cue": "music",
+      "kind": "music",
+      "duration": 45,
+      "text": "Instrumental exploration music for a dark fantasy adventure. Warm plucked lute motif, low soft bowed strings, airy wooden flute, restrained hand percussion at 76 BPM. Intimate, hopeful under a melancholy dusk, inviting the player forward. Clearly audible melody from the opening second, steady gentle energy throughout. No vocals, no choir, no dramatic crescendo, no long silent intro or outro. End on the same sustained D minor harmony as the opening so it loops naturally.",
+      "file": "music.mp3",
+      "model": "music_v1",
+      "generatedAt": "2026-09-07T09:56:47.016Z",
+      "bytes": 720188,
+      "processing": {
+        "method": "FFmpeg peak normalization",
+        "targetPeakDb": -3,
+        "sourcePeakDb": -1.5,
+        "gainDb": -1.5,
+        "sourceSha256": "67c9c377a46dc97fec0d8d62b0a2e6f0759835ef8603b25dd237107db865e982"
+      },
+      "sha256": "0c7373b8f54203db05d36920fb68fcf577f39fcdda60361c6c6ed425955d9406",
+      "requestId": null
     }
   ]
 }
