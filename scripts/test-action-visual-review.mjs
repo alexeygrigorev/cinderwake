@@ -234,3 +234,53 @@ test("rejects vague contracts before any reviewer is dispatched", () => {
   changed.actions[0].checks[0].instruction = "Looks good?";
   assert.throws(() => validateRegistry(changed), /Vague checks/);
 });
+
+test("requires inspection and hashes for every extra flight frame and native closeup", async (t) => {
+  const current = await fixture(t);
+  const source = current.input.captures[0].frames[1];
+  await fs.copyFile(
+    path.join(current.root, source.file),
+    path.join(current.root, "flight.png"),
+  );
+  await fs.copyFile(
+    path.join(current.root, source.file),
+    path.join(current.root, "flight-closeup.png"),
+  );
+  current.input.captures[0].additionalFrames = [
+    { ...source, stage: "flight+1", tick: 2.5, file: "flight.png" },
+  ];
+  current.input.captures[0].closeups = [
+    {
+      ...source,
+      stage: "native-closeup",
+      tick: 2.5,
+      file: "flight-closeup.png",
+      sourceFrame: "flight.png",
+    },
+  ];
+  current.bundle = await buildBundle(current.input);
+  current.review.bundleHash = current.bundle.bundleHash;
+  await assert.rejects(validateReview(current), /Images not inspected/);
+  current.review.cases[0].inspectedFrames.push(
+    "flight.png",
+    "flight-closeup.png",
+  );
+  assert.equal((await validateReview(current)).pass, true);
+  await fs.appendFile(path.join(current.root, "flight.png"), "changed");
+  await assert.rejects(validateReview(current), /Changed frame/);
+});
+
+test("rejects closeups not bound to the same-tick scene and out-of-order flight", async (t) => {
+  const { input } = await fixture(t);
+  const source = input.captures[0].frames[1];
+  input.captures[0].closeups = [
+    { ...source, tick: 99, file: "crop.png", sourceFrame: source.file },
+  ];
+  await assert.rejects(buildBundle(input), /Detached closeup/);
+  input.captures[0].closeups = [];
+  input.captures[0].additionalFrames = [
+    { ...source, tick: 5 },
+    { ...source, tick: 4 },
+  ];
+  await assert.rejects(buildBundle(input), /Nonsequential ticks/);
+});
