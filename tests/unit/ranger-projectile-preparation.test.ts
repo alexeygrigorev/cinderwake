@@ -39,6 +39,17 @@ const originalCell = () =>
     .toBuffer();
 
 describe("Ranger detached projectile preparation", () => {
+  it("does not apply a reviewed pixel mask to a different isolated generation candidate", async () => {
+    const candidate = readFileSync(atlasFile);
+    expect(
+      await prepareRangerProjectileAtlas(candidate, "unreviewed-source", {
+        candidateOutput: true,
+      }),
+    ).toEqual(candidate);
+    await expect(
+      prepareRangerProjectileAtlas(candidate, "unreviewed-source"),
+    ).rejects.toThrow(/art changed/);
+  });
   it("removes only the two detached components without moving or recoloring the actor and bow", async () => {
     const before = await originalCell();
     expect(hash(before)).toBe(RANGER_RELEASE_CELL_SHA256);
