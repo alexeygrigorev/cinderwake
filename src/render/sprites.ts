@@ -203,6 +203,13 @@ const assets: Record<string, SpriteAssetV1> = {
     1024,
   ),
   "atlas:props": asset("atlas:props", "environment-props.png", 1024, 1024),
+  "atlas:iron-fence": asset("atlas:iron-fence", "iron-fence.png", 1086, 471),
+  "atlas:iron-fence-vertical": asset(
+    "atlas:iron-fence-vertical",
+    "iron-fence-vertical.png",
+    146,
+    1916,
+  ),
   "atlas:decals": asset("atlas:decals", "environment-decals.png", 1024, 1024),
   "atlas:environment-kit-v2": asset(
     "atlas:environment-kit-v2",
@@ -609,6 +616,17 @@ const wallFrontFrames = Object.fromEntries(
       height: GRID_CELL,
     },
   ]),
+);
+register(
+  fullFrameSprite("scenery:boundary:iron-fence", "atlas:iron-fence", 1086, 471),
+);
+register(
+  fullFrameSprite(
+    "scenery:boundary:iron-fence-vertical",
+    "atlas:iron-fence-vertical",
+    146,
+    1916,
+  ),
 );
 register({
   id: "scenery:boundary:wall-front",

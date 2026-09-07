@@ -683,9 +683,8 @@ function buildSceneSprites(
     }
   }
 
-  // Thin raster masonry follows every blocked/walkable transition. Rotating
-  // one authored strip produces a continuous room outline without stamping a
-  // full facade onto every wall cell or obscuring the painted ground.
+  // Continuous masonry footings and iron railings show the collision edge.
+  // Upright posts make barriers recognizable at gameplay scale.
   const boundaryDirections = [
     { id: "north", dx: 0, dy: -1, ax: 0.5, ay: 0, rotation: 0 },
     { id: "east", dx: 1, dy: 0, ax: 1, ay: 0.5, rotation: Math.PI / 2 },
@@ -712,8 +711,7 @@ function buildSceneSprites(
           y: (y + direction.ay) * UNITS_PER_TILE,
         };
         const screenAnchor = screenFor(worldAnchor, camera);
-        const cadence = ((x * 3 + y * 5) % 5) - 2;
-        const width = 52 + cadence * 3;
+        const width = TILE_PIXELS + 1;
         const destinationRect = destinationAt(
           screenAnchor,
           width,
@@ -738,8 +736,48 @@ function buildSceneSprites(
           layer: "terrain",
           zOrder: scene.length,
           visible: intersectsViewport(destinationRect),
-          opacity: 0.38,
-          rotation: direction.rotation + cadence * 0.008,
+          opacity: 0.95,
+          rotation: direction.rotation,
+        });
+
+        // Separate authored orientations keep spear finials upright. Turning
+        // a side-view fence 90 degrees would make its posts lie on the ground.
+        const vertical = direction.dx !== 0;
+        const faceReference = sceneReference(
+          vertical
+            ? "scenery:boundary:iron-fence-vertical"
+            : "scenery:boundary:iron-fence",
+        );
+        const ratio =
+          faceReference.sourceRect.width / faceReference.sourceRect.height;
+        const faceWidth = vertical
+          ? (TILE_PIXELS + 1) * ratio
+          : TILE_PIXELS + 1;
+        const faceHeight = vertical ? TILE_PIXELS + 1 : faceWidth / ratio;
+        const faceAnchor = {
+          x: screenAnchor.x,
+          y: screenAnchor.y - (vertical ? 0 : faceHeight / 2) * camera.zoom,
+        };
+        const faceRect = destinationAt(
+          faceAnchor,
+          faceWidth,
+          faceHeight,
+          { x: 128, y: 128 },
+          camera.zoom,
+        );
+        scene.push({
+          ...faceReference,
+          objectId: `boundary-fence:${direction.id}:${x}:${y}`,
+          kind: "prop",
+          tile: { x, y },
+          worldAnchor,
+          screenAnchor: faceAnchor,
+          destinationRect: faceRect,
+          layer: "terrain",
+          zOrder: scene.length,
+          visible: intersectsViewport(faceRect),
+          opacity: 1,
+          rotation: 0,
         });
 
         // Legacy generated rooms without the authored north-wall feature keep
