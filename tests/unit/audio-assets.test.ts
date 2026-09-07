@@ -14,6 +14,7 @@ describe("generated audio provenance", () => {
       "quest",
       "danger",
       "ability",
+      "music",
       ...VOICE_CUES,
     ];
     expect(manifest.assets.map((asset) => asset.cue).sort()).toEqual(
@@ -34,6 +35,13 @@ describe("generated audio provenance", () => {
       if (asset.kind === "voice") expect(asset.voice?.category).toBe("premade");
       bytes += audio.length;
     }
-    expect(bytes).toBeLessThan(1_000_000);
+    expect(bytes).toBeLessThan(2_000_000);
+    expect(
+      manifest.assets.find((asset) => asset.kind === "music"),
+    ).toMatchObject({
+      cue: "music",
+      model: "music_v1",
+      duration: 45,
+    });
   });
 });

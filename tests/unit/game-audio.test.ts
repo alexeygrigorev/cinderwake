@@ -22,6 +22,11 @@ function setup(options: { fail?: boolean; muted?: boolean } = {}) {
           connect: vi.fn(),
           disconnect: vi.fn(),
         }),
+        createAnalyser: () => ({
+          fftSize: 256,
+          connect: vi.fn(),
+          getFloatTimeDomainData: (samples: Float32Array) => samples.fill(0),
+        }),
         createBufferSource: () => {
           const source = {
             buffer: null,
@@ -138,11 +143,11 @@ describe("game audio", () => {
     audio.activate();
     await flush();
     expect(createContext).toHaveBeenCalledTimes(1);
-    expect(fetcher).toHaveBeenCalledTimes(12);
+    expect(fetcher).toHaveBeenCalledTimes(13);
     expect(fetcher).toHaveBeenCalledWith(
       "/game/assets/audio/quest-arrival.mp3",
     );
-    expect(audio.snapshot().loaded).toBe(12);
+    expect(audio.snapshot().loaded).toBe(13);
   });
 
   it("sounds player attacks and impacts, leaving enemy windups silent", () => {
@@ -311,8 +316,55 @@ describe("game audio", () => {
     expect(audio.snapshot()).toMatchObject({
       loaded: 0,
       played: 0,
-      failed: 12,
+      failed: 13,
     });
-    expect(fetcher).toHaveBeenCalledTimes(12);
+    expect(fetcher).toHaveBeenCalledTimes(13);
+  });
+
+  it("starts one music loop after activation and keeps it through simulation resets", async () => {
+    const { audio, sources } = setup();
+    audio.startMusic();
+    await flush();
+    expect(sources).toHaveLength(0);
+    audio.activate();
+    audio.startMusic();
+    await flush();
+    expect(sources).toHaveLength(1);
+    expect(sources[0]).toMatchObject({ loop: true });
+    audio.observe(state());
+    audio.observe(state());
+    expect(sources[0].stop).not.toHaveBeenCalled();
+    audio.stop();
+    expect(sources[0].stop).toHaveBeenCalledOnce();
+    audio.activate();
+    await flush();
+    expect(sources).toHaveLength(1);
+  });
+
+  it("restores background music after unmute or raising zero volume without overlapping loops", async () => {
+    const { audio, sources } = setup();
+    audio.activate();
+    audio.startMusic();
+    await flush();
+    audio.setMuted(true);
+    expect(sources[0].stop).toHaveBeenCalledOnce();
+    audio.setMuted(false);
+    await flush();
+    expect(sources).toHaveLength(2);
+    audio.setVolume(0);
+    expect(sources[1].stop).toHaveBeenCalledOnce();
+    audio.setVolume(0.5);
+    audio.activate();
+    await flush();
+    expect(sources).toHaveLength(3);
+  });
+
+  it("cancels a pending music start when leaving the game", async () => {
+    const { audio, sources } = setup();
+    audio.activate();
+    audio.startMusic();
+    audio.stop();
+    await flush();
+    expect(sources).toHaveLength(0);
   });
 });
