@@ -19,6 +19,14 @@ const OUTPUT = path.resolve(
 const evidenceRoot = path.resolve("quality-results");
 if (!OUTPUT.startsWith(`${evidenceRoot}${path.sep}`))
   throw new Error("Directional capture output must be inside quality-results");
+const ACTOR_IDS = option("actors", DIRECTIONAL_BANK_ACTOR_IDS.join(",")).split(
+  ",",
+);
+if (
+  new Set(ACTOR_IDS).size !== ACTOR_IDS.length ||
+  ACTOR_IDS.some((id) => !DIRECTIONAL_BANK_ACTOR_IDS.includes(id))
+)
+  throw new Error("--actors must name unique known actors");
 const PROFILES = {
   desktop: {
     viewport: { width: 1_440, height: 900 },
@@ -818,7 +826,8 @@ function negativeControls(evidence) {
         const direction = value.profiles[0].runs[0].directions.find(
           ({ directionId }) => directionId === "move-east",
         );
-        direction.movement.after.manifest.drawCalls[0].flipX = false;
+        const call = direction.movement.after.manifest.drawCalls[0];
+        call.flipX = !call.flipX;
       },
     },
     {
@@ -868,9 +877,9 @@ function negativeControls(evidence) {
       id: "horizontal-raster-opposite",
       expectedSignal: "raster-facing-mismatch",
       mutate(value) {
-        const run = value.profiles[0].runs.find(
-          ({ actorId }) => actorId === "ranger",
-        );
+        const run =
+          value.profiles[0].runs.find(({ actorId }) => actorId === "ranger") ??
+          value.profiles[0].runs[0];
         const direction = run.directions.find(
           ({ directionId }) => directionId === "move-east",
         );
@@ -905,8 +914,10 @@ async function runProfile(browser, profileId, profile, baseURL) {
   try {
     await preparePage(page, baseURL);
     const runs = [];
-    for (const actorId of DIRECTIONAL_BANK_ACTOR_IDS)
+    for (const actorId of ACTOR_IDS) {
       runs.push(await runActor(page, actorId));
+      console.log(`Directional capture complete: ${profileId}/${actorId}`);
+    }
     return { profileId, runs };
   } finally {
     await context.close();
@@ -953,7 +964,7 @@ async function main() {
     }
     const evidence = {
       requiredProfiles: profileIds,
-      requiredActorIds: [...DIRECTIONAL_BANK_ACTOR_IDS],
+      requiredActorIds: [...ACTOR_IDS],
       requiredDirectionIds: [...DIRECTIONAL_BANK_DIRECTION_IDS],
       profiles,
     };
@@ -968,10 +979,10 @@ async function main() {
       recipeId: "recipe:pres-facing-015",
       evaluator: "directional-bank-selection-v1",
       scenarioIds: ["fixed-camera-open-floor"],
-      actualScenarioIds: DIRECTIONAL_BANK_ACTOR_IDS.map(
+      actualScenarioIds: ACTOR_IDS.map(
         (actorId) => `fixed-camera-open-floor-${actorId}`,
       ),
-      actorIds: [...DIRECTIONAL_BANK_ACTOR_IDS],
+      actorIds: [...ACTOR_IDS],
       profileIds,
       directionIds: [...DIRECTIONAL_BANK_DIRECTION_IDS],
       actionKinds: ["primary", "ability"],
@@ -1028,7 +1039,7 @@ async function main() {
       );
     }
     console.log(
-      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${DIRECTIONAL_BANK_ACTOR_IDS.length} actors, four directions, target-directed primary/ability recovery, and seven negative controls detected`,
+      `PRES-FACING-015 PASS: ${profileIds.length} profiles, ${ACTOR_IDS.length} actors, four directions, target-directed primary/ability recovery, and seven negative controls detected`,
     );
     console.log(`Evidence: ${path.relative(process.cwd(), OUTPUT)}`);
   } finally {
