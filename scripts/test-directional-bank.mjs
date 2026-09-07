@@ -13,7 +13,12 @@ import {
 import { hashJson, sha256 } from "./lib/state-replay-evidence.mjs";
 import { createCaptureWorkspace } from "./lib/capture-workspace.mjs";
 
-const OUTPUT = path.resolve("quality-results/directional-bank/pres-facing-015");
+const OUTPUT = path.resolve(
+  option("output", "quality-results/directional-bank/pres-facing-015"),
+);
+const evidenceRoot = path.resolve("quality-results");
+if (!OUTPUT.startsWith(`${evidenceRoot}${path.sep}`))
+  throw new Error("Directional capture output must be inside quality-results");
 const PROFILES = {
   desktop: {
     viewport: { width: 1_440, height: 900 },
