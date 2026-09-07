@@ -54,8 +54,11 @@
       "source": "public/assets/sprites/environment-floor.png"
     },
     "environment-structures.png": {
-      "sha256": "b7d94fac72c4814d74e68041432cfe1262eac67aaebdb4860792085703a9f7a8",
-      "source": "public/assets/sprites/environment-structures.png"
+      "sha256": "c3265e7079143f16f41682ee2504046cfca6b15252a69e96d7dfb0e733f2116e",
+      "source": "art/source/environment/structures-clean-source.png",
+      "sourceSha256": "a46c254bb9ce4917d15cb1ef95e149141c58d0c00d6f3e55b325cb556dd43fcb",
+      "generationRecord": "art/generation/environment-structures-clean-v1.json",
+      "preparation": "Native light-key and edge decontamination; preserve 16 silhouettes in padded 256px cells"
     },
     "environment-props.png": {
       "sha256": "e0cf84c5a665fff67fa69408154d51d5628d88cbd6dc95a33625db679bbfb25c",

@@ -236,6 +236,14 @@
       "grid": "4x4"
     },
     {
+      "file": "art/source/environment/structures-clean-source.png",
+      "kind": "structure-source",
+      "grid": "4x4 visual layout, packed into padded runtime cells",
+      "sha256": "a46c254bb9ce4917d15cb1ef95e149141c58d0c00d6f3e55b325cb556dd43fcb",
+      "generationRecord": "art/generation/environment-structures-clean-v1.json",
+      "reference": "art/source/environment/structures-source.png"
+    },
+    {
       "file": "art/source/environment/props-source.png",
       "kind": "prop-source",
       "grid": "4x4"
