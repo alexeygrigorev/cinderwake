@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "bundleHash": "0a095182e3596c9aa77937cae91e9ddc97a5fcc557f891544fc2a55850382dbf",
+  "reviewer": {
+    "model": "gpt-5.6-luna"
+  },
+  "cases": [
+    {
+      "id": "ranger/attack/north/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "UNCERTAIN",
+          "observation": "The impact frame shows the ranger drawing, but no separable arrowhead/front; the recovery frame contains no visible projectile. Northward heading cannot be established from the painted pixels.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "Windup and impact show a readable bow pose, but no release-adjacent image shows the projectile leaving the hand; the recovery image has no projectile to connect to the action.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "Only ticks 1, 7, and 33 are supplied and the flight is not visible between them. Request consecutive flight captures (ticks 2-6 or denser) with the northbound projectile in frame.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0048-ranger-move-north-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0049-ranger-move-north-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0050-ranger-move-north-primary-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/east/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The impact arrow is horizontal at the ranger and the recovery arrow is displaced to the right. Its blue fletching is on the left and its orange/bright tip is on the right, so the painted front points east.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The eastward displacement is visible from impact to recovery, but the sparse set has no release-adjacent frame proving a continuous leave-from-bow connection. Request a frame immediately after release.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "The arrow is legible at the endpoints, but ticks 1, 7, and 33 skip the flight; endpoint displacement alone is not consecutive motion evidence. Request dense flight frames between release and impact.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0059-ranger-move-east-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0060-ranger-move-east-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0061-ranger-move-east-primary-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/south/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The south impact image shows a vertical arrow at the ranger with blue fletching above the shaft; in recovery the same vertical arrow is below with its bright/orange tip lower than the fletching. The painted front points south.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "Impact and recovery support a southward displacement, but no release-adjacent frame shows the arrow leaving the bow/hand or preserves continuous identity through the large tick gap.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "The vertical arrow is small and only endpoint stages at ticks 1, 7, and 33 are supplied. Request consecutive southbound flight frames to rule out a discontinuous or clipped path.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0070-ranger-move-south-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0071-ranger-move-south-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0072-ranger-move-south-primary-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/attack/west/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The impact arrow is horizontal at the ranger and the recovery arrow is displaced to the left. Its orange/bright tip is on the left and blue fletching is on the right, so the painted front points west.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The westward displacement is visible from impact to recovery, but the sparse set has no release-adjacent frame proving a continuous leave-from-bow connection. Request a frame immediately after release.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "The arrow is legible at the endpoints, but ticks 1, 7, and 33 skip the flight; endpoint displacement alone is not consecutive motion evidence. Request dense flight frames between release and impact.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0081-ranger-move-west-primary-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0082-ranger-move-west-primary-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0083-ranger-move-west-primary-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/north/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "UNCERTAIN",
+          "observation": "The impact frame shows a hand glow and a small overlapping mark under the ranger, not a separable arrowhead/front; the recovery frame shows no visible northbound projectiles. Heading of the three effects cannot be judged.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The ability pose and hand glow are visible, but no release-adjacent frame shows the three projectiles leaving the hand and the recovery frame has no effects to connect to that release.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "Only ticks 1, 7, and 33 are supplied and the three-projectile flight is not visible. Request consecutive flight captures with all three northbound effects visible.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0052-ranger-move-north-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0053-ranger-move-north-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0054-ranger-move-north-ability-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/east/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The impact effect is horizontal at the ranger; recovery shows three separated arrows to the right, each with blue fletching on the left and orange/bright tip on the right. All three painted fronts point east.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The three arrows are visibly displaced east by recovery, but no release-adjacent frame proves all three emit from the bow/hand or preserves their continuous identity through the large tick gap.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "The three arrows are legible at recovery, but ticks 1, 7, and 33 omit consecutive flight. Request dense frames between release and recovery to establish continuous eastward motion.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0063-ranger-move-east-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0064-ranger-move-east-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0065-ranger-move-east-ability-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/south/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "UNCERTAIN",
+          "observation": "The impact frame contains overlapping blue/orange vertical marks beneath the ranger, but the three projectile fronts are not separable; recovery contains no visible southbound arrows. Request a closer capture where each arrowhead is distinct.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The hand effect is visible at impact, but no release-adjacent frame shows three projectiles leaving the hand and recovery has no effects to connect to that action.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "Only ticks 1, 7, and 33 are supplied; the small overlapping effects disappear before recovery and provide no consecutive southbound flight evidence. Request dense captures with all three effects in view.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0074-ranger-move-south-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0075-ranger-move-south-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0076-ranger-move-south-ability-recovery.png"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger/ability/west/desktop",
+      "inspectedFrames": [
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
+        "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+      ],
+      "checks": [
+        {
+          "id": "visible-heading",
+          "verdict": "PASS",
+          "observation": "The impact effect is horizontal at the ranger; recovery shows three separated arrows to the left, each with orange/bright tip on the left and blue fletching on the right. All three painted fronts point west.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "origin-and-timing",
+          "verdict": "UNCERTAIN",
+          "observation": "The three arrows are visibly displaced west by recovery, but no release-adjacent frame proves all three emit from the bow/hand or preserves their continuous identity through the large tick gap.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+          ]
+        },
+        {
+          "id": "readable-motion",
+          "verdict": "UNCERTAIN",
+          "observation": "The three arrows are legible at recovery, but ticks 1, 7, and 33 omit consecutive flight. Request dense frames between release and recovery to establish continuous westward motion.",
+          "frames": [
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0085-ranger-move-west-ability-after.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0086-ranger-move-west-ability-impact.png",
+            "quality-results/directional-bank/pres-facing-015/desktop/frames/frame-0087-ranger-move-west-ability-recovery.png"
+          ]
+        }
+      ]
+    }
+  ]
+}
